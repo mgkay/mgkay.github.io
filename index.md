@@ -48,7 +48,7 @@
           Decisions</a> </li>
       <li><a href="5-MIP/5-MIP-3.html">3: Set Covering, Bin Packing, and Graph
           Coloring Problems</a> </li>
-      <li><a href="5-MIP/5-MIP-4.html">4: </a><a href="5-MIP/5-MIP-4.html">Production-Inventory
+      <li><a href="5-MIP/5-MIP-4.html">4: </a><a href="5-MIP/5-MIP-3.html">Production-Inventory
           Planning</a> </li>
       <li><a href="5-MIP/HW5-MIP.html">HW 5: Mixed-Integer Programming</a> </li>
     </ul>
