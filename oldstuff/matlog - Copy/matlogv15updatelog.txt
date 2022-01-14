@@ -1,0 +1,14 @@
+Matlog Update Log
+
+07-Jan-2013  Matlog version 15 installed
+
+
+07-Jan-2013  Modified file Contents.m
+29-Jan-2013  Modified file minisumloc.m
+29-Jan-2013  Modified file mor.m
+29-Jan-2013  Modified file ala.m
+07-Feb-2013  Modified file Milp.m
+13-Feb-2013  Modified file iff.m
+04-Apr-2013  Modified file rte2idx.m
+05-Apr-2013  Modified file alaplot.m
+05-Apr-2013  Modified file alaplot.m

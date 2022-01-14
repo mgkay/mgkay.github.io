@@ -1,0 +1,120 @@
+<html>
+<head>
+<title>Matlog</title>
+</head><body>
+<h1 align="center">Matlog: Logistics Engineering Matlab Toolbox</h1>
+<p>&nbsp;</p>
+
+<table border="0">
+  <tr>
+    <td><img border="0" src="SumcostNC.jpg" width="293" height="229"></td>
+    <td>The <span style="font-variant: small-caps">Matlab</span> Toolbox Matlog
+      was developed for use in
+the courses <a href="http://legacy.eos.ncsu.edu/eos/info/ie/ie453_info/www/">IE
+453</a> and <a href="http://legacy.eos.ncsu.edu/eos/info/ie/ie754_info/www/">IE
+754</a> at NCSU. The toolbox contains functions for solving the following types
+      of problems:
+      <ul>
+        <li>Facility location: Continuous minisum facility location, alternate
+          location-allocation (ALA) procedure, discrete uncapacitated facility
+          location</li>
+        <li>Vehicle routing (VRP) and traveling salesman (TSP) problems</li>
+        <li>Networks: Shortest path, min cost network flow, minimum spanning
+          tree problems</li>
+        <li>Geocoding: U.S. city or ZIP code to longitude and latitude,
+          longitude and latitude to nearest city, Mercator projection plotting</li>
+        <li>Layout: Steepest descent pairwise interchange (SDPI) heuristic for
+          QAP</li>
+        <li>Material handling equipment selection</li>
+        <li>General purpose: Linear programming using the revised simplex
+          method, mixed-integer linear programming (MILP) branch and bound
+          procedure</li>
+        <li>Data: U.S. cities with populations of at least 10,000, U.S. highway
+          network (Oak Ridge National Highway Network), U.S. 3- and 5-digit ZIP
+          codes</li>
+      </ul>
+    </td>
+  </tr>
+</table>
+
+<h2>Matlab References</h2>
+
+<p><a href="../Basic%20Concepts%20in%20Matlab.pdf">Basic Concepts in <span style="font-variant: small-caps">Matlab</span></a>,
+provides an overview of <span style="font-variant: small-caps">Matlab</span>.&nbsp;</p>
+
+<p>The <a href="http://www.mathworks.com/access/helpdesk/help/techdoc/matlab.shtml">Documentation,
+Manuals, and Tutorials</a> on the MathWorks website (the developers of <span style="font-variant: small-caps">Matlab</span>)
+provide the most comprehensive and up-to-date reference source for <span style="font-variant: small-caps">Matlab</span>;
+in particular, <i>Getting Started</i> (<a href="http://www.mathworks.com/access/helpdesk/help/techdoc/learn_matlab/learn_matlab.shtml">HTML</a>)
+or (<a href="http://www.mathworks.com/access/helpdesk/help/pdf_doc/matlab/getstart.pdf">PDF</a>)
+provides a good introduction to <span style="font-variant: small-caps">Matlab</span>.</p>
+
+<h2>Matlog Reference</h2>
+
+<p><a href="MatlogRef.htm">Matlog Reference (HTML)</a> or <a href="MatlogRef.pdf">Matlog
+Reference (PDF)</a> provide a listing of all of the functions in the Matlog
+toolbox.</p>
+
+<h2>Installing Matlog</h2>
+
+<h3><b>If connected to the NCSU network:</b></h3>
+
+<p> Before using the toolbox for the
+first time and before starting <span style="font-variant: small-caps">matlab</span>, you should copy the file <font
+face="Courier">startup.m</font> to your
+home directory. This file creates a path to the toolbox each time
+you start <span style="font-variant: small-caps">Matlab</span>. <span style="font-variant: small-caps">Matlab</span> 
+and
+Matlog is accessible <b>only</b>  from NCSU computers.</p>
+
+<p><i>First time
+using toolbox, copy </i><font face="Courier New">startup.m</font><i>
+file to your home directory:</i></p>
+
+<p><a href="http://www.ise.ncsu.edu/kay/startup.m">http://www.ise.ncsu.edu/kay/startup.m</a></p>
+
+<p>Keep this file in you root K: directory; don't move it to a subdirectory
+because Matlog only looks into the root directory for the file when it starts.</p>
+
+<p><b>Start </b><span style="font-variant: small-caps"><b>Matlab</b></span><b>: </b><span style="font-variant: small-caps">Matlab</span>
+can be started from the icon in
+the Applications Window. A new window will appear for <span style="font-variant: small-caps">Matlab</span>. The
+<span style="font-variant: small-caps">Matlab</span> command prompt is &quot;<font face="Courier">&gt;&gt;</font>&quot;.
+Type <font face="Courier New">helpwin</font> to get a help window
+for all of the available <span style="font-variant: small-caps">Matlab</span> toolboxes&#151;click near the
+bottom to get <font face="Courier New">matlog</font> help.</p>
+
+<h3><b>If off-campus:</b></h3>
+
+<p>To use <span style="font-variant: small-caps">Matlab</span> and Matlog on an
+off-campus computer, you will need a local version of <span style="font-variant: small-caps">Matlab</span>
+ (a Student Version of <span style="font-variant: small-caps">Matlab</span> is available from the NCSU Bookstore) and you will need to copy
+a zipped file containing the Matlog directory to your local computer:</p>
+
+<p><a href="http://www.ise.ncsu.edu/kay/matlog.zip">Matlog.zip (5.29 MB)</a></p>
+
+<p><b>Updating Matlog:</b> Individual files in Matlog will change on a regular basis
+(e.g., fixing errors). The file Matlog.zip is not updated as frequently.
+Instead, the Matlog function <font face="Courier New">matlogupdate.m</font> can
+be run to automatically download updates to Matlog files. You can add <font face="Courier New">matlogupdate.m</font>
+to your <font face="Courier New">startup.m</font> file to have it check for
+updates each time you start <span style="font-variant: small-caps">Matlab</span>.</p>
+
+<p><b>Startup.m File:</b> The following statements can be used for your <font face="Courier New">startup.m</font>
+file (by saving them as a new file or adding them to an existing <font face="Courier New">startup.m</font>
+file). The <font face="Courier New">startup.m</font> file should be placed in
+the <font face="Courier New">/matlab/toolbox/local</font> folder on your
+off-campus computer.</p>
+
+<blockquote>
+  <pre><font size="3">% Matlab M-file to add Matlog toolbox to path list
+path(path, 'c:\matlab\matlog')
+cd c:\matlab\myfolder           % Make &quot;myfolder&quot; your current directory
+matlogupdate                    % Run to check for Matlog updates</font></pre>
+</blockquote>
+
+<p>&nbsp;</p>
+
+<p>&nbsp;</p>
+
+<p>&nbsp;</p>

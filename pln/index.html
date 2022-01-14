@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <title>Public Logistics Networks</title>
+    <style type="text/css">/*
+Copyright (c) 2008, Yahoo! Inc. All rights reserved.
+Code licensed under the BSD License:
+http://developer.yahoo.net/yui/license.txt
+version: 2.6.0
+*/
+html{color:#000;background:#FFF;}body,div,dl,dt,dd,ul,ol,li,h1,h2,h3,h4,h5,h6,pre,code,form,fieldset,legend,input,textarea,p,blockquote,th,td{margin:0;padding:0;}table{border-collapse:collapse;border-spacing:0;}fieldset,img{border:0;}address,caption,cite,code,dfn,em,strong,th,var{font-style:normal;font-weight:normal;}li{list-style:none;}caption,th{text-align:left;}h1,h2,h3,h4,h5,h6{font-size:100%;font-weight:normal;}q:before,q:after{content:'';}abbr,acronym{border:0;font-variant:normal;}sup{vertical-align:text-top;}sub{vertical-align:text-bottom;}input,textarea,select{font-family:inherit;font-size:inherit;font-weight:inherit;}input,textarea,select{*font-size:100%;}legend{color:#000;}del,ins{text-decoration:none;}body{font:13px/1.231 arial,helvetica,clean,sans-serif;*font-size:small;*font:x-small;}select,input,button,textarea{font:99% arial,helvetica,clean,sans-serif;}table{font-size:inherit;font:100%;}pre,code,kbd,samp,tt{font-family:monospace;*font-size:108%;line-height:100%;}body{text-align:center;}#ft{clear:both;}#doc,#doc2,#doc3,#doc4,.yui-t1,.yui-t2,.yui-t3,.yui-t4,.yui-t5,.yui-t6,.yui-t7{margin:auto;text-align:left;width:57.69em;*width:56.25em;min-width:750px;}#doc2{width:73.076em;*width:71.25em;}#doc3{margin:auto 10px;width:auto;}#doc4{width:74.923em;*width:73.05em;}.yui-b{position:relative;}.yui-b{_position:static;}#yui-main .yui-b{position:static;}#yui-main,.yui-g .yui-u .yui-g{width:100%;}{width:100%;}.yui-t1 #yui-main,.yui-t2 #yui-main,.yui-t3 #yui-main{float:right;margin-left:-25em;}.yui-t4 #yui-main,.yui-t5 #yui-main,.yui-t6 #yui-main{float:left;margin-right:-25em;}.yui-t1 .yui-b{float:left;width:12.30769em;*width:12.00em;}.yui-t1 #yui-main .yui-b{margin-left:13.30769em;*margin-left:13.05em;}.yui-t2 .yui-b{float:left;width:13.8461em;*width:13.50em;}.yui-t2 #yui-main .yui-b{margin-left:14.8461em;*margin-left:14.55em;}.yui-t3 .yui-b{float:left;width:23.0769em;*width:22.50em;}.yui-t3 #yui-main .yui-b{margin-left:24.0769em;*margin-left:23.62em;}.yui-t4 .yui-b{float:right;width:13.8456em;*width:13.50em;}.yui-t4 #yui-main .yui-b{margin-right:14.8456em;*margin-right:14.55em;}.yui-t5 .yui-b{float:right;width:18.4615em;*width:18.00em;}.yui-t5 #yui-main .yui-b{margin-right:19.4615em;*margin-right:19.125em;}.yui-t6 .yui-b{float:right;width:23.0769em;*width:22.50em;}.yui-t6 #yui-main .yui-b{margin-right:24.0769em;*margin-right:23.62em;}.yui-t7 #yui-main .yui-b{display:block;margin:0 0 1em 0;}#yui-main .yui-b{float:none;width:auto;}.yui-gb .yui-u,.yui-g .yui-gb .yui-u,.yui-gb .yui-g,.yui-gb .yui-gb,.yui-gb .yui-gc,.yui-gb .yui-gd,.yui-gb .yui-ge,.yui-gb .yui-gf,.yui-gc .yui-u,.yui-gc .yui-g,.yui-gd .yui-u{float:left;}.yui-g .yui-u,.yui-g .yui-g,.yui-g .yui-gb,.yui-g .yui-gc,.yui-g .yui-gd,.yui-g .yui-ge,.yui-g .yui-gf,.yui-gc .yui-u,.yui-gd .yui-g,.yui-g .yui-gc .yui-u,.yui-ge .yui-u,.yui-ge .yui-g,.yui-gf .yui-g,.yui-gf .yui-u{float:right;}.yui-g div.first,.yui-gb div.first,.yui-gc div.first,.yui-gd div.first,.yui-ge div.first,.yui-gf div.first,.yui-g .yui-gc div.first,.yui-g .yui-ge div.first,.yui-gc div.first div.first{float:left;}.yui-g .yui-u,.yui-g .yui-g,.yui-g .yui-gb,.yui-g .yui-gc,.yui-g .yui-gd,.yui-g .yui-ge,.yui-g .yui-gf{width:49.1%;}.yui-gb .yui-u,.yui-g .yui-gb .yui-u,.yui-gb .yui-g,.yui-gb .yui-gb,.yui-gb .yui-gc,.yui-gb .yui-gd,.yui-gb .yui-ge,.yui-gb .yui-gf,.yui-gc .yui-u,.yui-gc .yui-g,.yui-gd .yui-u{width:32%;margin-left:1.99%;}.yui-gb .yui-u{*margin-left:1.9%;*width:31.9%;}.yui-gc div.first,.yui-gd .yui-u{width:66%;}.yui-gd div.first{width:32%;}.yui-ge div.first,.yui-gf .yui-u{width:74.2%;}.yui-ge .yui-u,.yui-gf div.first{width:24%;}.yui-g .yui-gb div.first,.yui-gb div.first,.yui-gc div.first,.yui-gd div.first{margin-left:0;}.yui-g .yui-g .yui-u,.yui-gb .yui-g .yui-u,.yui-gc .yui-g .yui-u,.yui-gd .yui-g .yui-u,.yui-ge .yui-g .yui-u,.yui-gf .yui-g .yui-u{width:49%;*width:48.1%;*margin-left:0;}.yui-g .yui-g .yui-u{width:48.1%;}.yui-g .yui-gb div.first,.yui-gb .yui-gb div.first{*margin-right:0;*width:32%;_width:31.7%;}.yui-g .yui-gc div.first,.yui-gd .yui-g{width:66%;}.yui-gb .yui-g div.first{*margin-right:4%;_margin-right:1.3%;}.yui-gb .yui-gc div.first,.yui-gb .yui-gd div.first{*margin-right:0;}.yui-gb .yui-gb .yui-u,.yui-gb .yui-gc .yui-u{*margin-left:1.8%;_margin-left:4%;}.yui-g .yui-gb .yui-u{_margin-left:1.0%;}.yui-gb .yui-gd .yui-u{*width:66%;_width:61.2%;}.yui-gb .yui-gd div.first{*width:31%;_width:29.5%;}.yui-g .yui-gc .yui-u,.yui-gb .yui-gc .yui-u{width:32%;_float:right;margin-right:0;_margin-left:0;}.yui-gb .yui-gc div.first{width:66%;*float:left;*margin-left:0;}.yui-gb .yui-ge .yui-u,.yui-gb .yui-gf .yui-u{margin:0;}.yui-gb .yui-gb .yui-u{_margin-left:.7%;}.yui-gb .yui-g div.first,.yui-gb .yui-gb div.first{*margin-left:0;}.yui-gc .yui-g .yui-u,.yui-gd .yui-g .yui-u{*width:48.1%;*margin-left:0;} .yui-gb .yui-gd div.first{width:32%;}.yui-g .yui-gd div.first{_width:29.9%;}.yui-ge .yui-g{width:24%;}.yui-gf .yui-g{width:74.2%;}.yui-gb .yui-ge div.yui-u,.yui-gb .yui-gf div.yui-u{float:right;}.yui-gb .yui-ge div.first,.yui-gb .yui-gf div.first{float:left;}.yui-gb .yui-ge .yui-u,.yui-gb .yui-gf div.first{*width:24%;_width:20%;}.yui-gb .yui-ge div.first,.yui-gb .yui-gf .yui-u{*width:73.5%;_width:65.5%;}.yui-ge div.first .yui-gd .yui-u{width:65%;}.yui-ge div.first .yui-gd div.first{width:32%;}#bd:after,.yui-g:after,.yui-gb:after,.yui-gc:after,.yui-gd:after,.yui-ge:after,.yui-gf:after{content:".";display:block;height:0;clear:both;visibility:hidden;}#bd,.yui-g,.yui-gb,.yui-gc,.yui-gd,.yui-ge,.yui-gf{zoom:1;}</style>
+    <style type="text/css">/*
+Copyright (c) 2008, Yahoo! Inc. All rights reserved.
+Code licensed under the BSD License:
+http://developer.yahoo.net/yui/license.txt
+version: 2.6.0
+*/
+h1{font-size:138.5%;}h2{font-size:123.1%;}h3{font-size:108%;}h1,h2,h3{margin:1em 0;}h1,h2,h3,h4,h5,h6,strong{font-weight:bold;}abbr,acronym{border-bottom:1px dotted #000;cursor:help;} em{font-style:italic;}blockquote,ul,ol,dl{margin:1em;}ol,ul,dl{margin-left:2em;}ol li{list-style:decimal outside;}ul li{list-style:disc outside;}dl dd{margin-left:1em;}th,td{border:1px solid #000;padding:.5em;}th{font-weight:bold;text-align:center;}caption{margin-bottom:.5em;text-align:center;}p,fieldset,table,pre{margin-bottom:1em;}input[type=text],input[type=password],textarea{width:12.25em;*width:11.9em;}
+</style><meta content="Michael G. Kay" name="author">
+    <meta content="A public logistics network is proposed as an alternative to private logistics networks for the ground transport of parcels. "
+      name="description">
+    <meta content="logistics networks; modular warehouse; public logistics network; city logistics"
+      name="keywords">
+    <meta content="BlueGriffon wysiwyg editor" name="generator">
+  </head>
+  <body>
+    <div class="yui-t7" id="doc3">
+      <div style="text-align: center;" id="hd">
+        <h1>Public Logistics Networks</h1>
+      </div>
+      <div id="ft">
+        <p><span style="font-weight: bold;">A public logistics network</span> is
+          proposed as an alternative to private logistics networks for the
+          ground transport of parcels. Using the analogy between the packages
+          transported in the network and the packets transmitted through the
+          Internet, a package in a public logistics network could, for example,
+          be sent from a retail store and then routed through a sequence of
+          public distribution centers (DCs) located throughout the metropolitan
+          area and then delivered to a customer’s home in a matter of hours,
+          making a car trip to the store to get the package unnecessary. The DCs
+          in the network, functioning like the routers in the Internet, could
+          also be located at major highway interchanges for longer distance
+          transport.</p>
+        <table style="margin: auto;" border="1">
+          <tbody>
+            <tr>
+              <td><span style="font-weight: bold;">Public Logistics Network</span></td>
+              <td><span style="font-weight: bold;">Internet</span></td>
+            </tr>
+            <tr>
+              <td>Packages transported</td>
+              <td>Packets transmitted</td>
+            </tr>
+            <tr>
+              <td>Distribution centers (DCs)</td>
+              <td>Routers</td>
+            </tr>
+            <tr>
+              <td>Trucks</td>
+              <td>Wire, fiber</td>
+            </tr>
+          </tbody>
+        </table>
+        <p><span style="font-weight: bold;"></span><br>
+          Currently, it is common for a single logistics firm like UPS and FedEx
+          to handle a package throughout its transport. The such a private
+          logistics network, much of the technology used to coordinate the
+          operation of the network is proprietary. As a result, the principal
+          competitive advantage that a private logistics company has is the
+          barrier to entry due to the very large scale of operation (national or
+          international) required in order to be able to underwrite the
+          development of private facilities and propriety technologies.
+          Nevertheless, a single firm, unless it becomes a monopoly, is
+          ultimately limited in the scale of its operation, resulting in the use
+          of a limited number of large-scale hub transshipment points that can
+          result in packages making many circuitous hops before reaching their
+          destinations. In a public logistics network, the different functions
+          of the network would be separated so that a single firm is not
+          required for coordination. This would enable scale economies to be
+          realized in performing each logistics function since each element of
+          the network has access to potentially all of the network’s demand. The
+          increase in scale would make it economical to have many more
+          transshipment points. Each transshipment point, or distribution center
+          (DC), could be an independently operated facility that serves as both
+          a freight terminal and a public warehouse, and could be established in
+          small cities and towns that would never have such facilities if they
+          were served as part of a proprietary, private logistics network.</p>
+        <table style="margin: auto;" border="1">
+          <tbody>
+            <tr>
+              <td><span style="font-weight: bold;">Public Logistics Network</span></td>
+              <td><span style="font-weight: bold;">Private Logistics Network</span></td>
+            </tr>
+            <tr>
+              <td>Each truck and DC can be operated by different firm</td>
+              <td>Single firm (e.g., UPS) handles package throughout its
+                transport</td>
+            </tr>
+            <tr>
+              <td>Similar to <span style="font-style: italic;">mesh </span>computer
+                network topology, where each node is connected to many other
+                nodes</td>
+              <td>Similar to <span style="font-style: italic;">star </span>computer
+                network topology, where each node is connected to a central hub</td>
+            </tr>
+            <tr>
+              <td>Decentralized control via standard coordination protocols</td>
+              <td>Centralized control via firm-specific coordination procedures</td>
+            </tr>
+            <tr>
+              <td>Interoperability via standardized public DCs increases density
+                of logistics network </td>
+              <td>Private hubs/terminals result in sparse logistics network</td>
+            </tr>
+            <tr>
+              <td><em>Diseconomies of scale</em> with respect to package size
+                due to modular storage</td>
+              <td><em>Economies of scale</em> if traditional logistics
+                technology used </td>
+            </tr>
+          </tbody>
+        </table>
+        <h2>Research Issues</h2>
+        <p><a href="http://www.ise.ncsu.edu/kay/hdln/">Home delivery logistics
+            network</a>: Current research is focused on developing a public
+          logistics network in which goods can be delivered to the home in
+          reusable standardized containers transported by driverless delivery
+          vehicles (DDVs). Overall, the research on public logistics networks
+          has produced a set of designs and modeling tools that address the
+          following issues:</p>
+        <ul>
+          <li>
+            <p><span style="font-weight: bold;">Coordination:</span> Develop a
+              distributed mechanism for coordinating the operation of each
+              package, truck, and DC in the network. A pricing mechanism has
+              been developed in which each package, prior to its transport,
+              submits a bid that reflects its desired speed of delivery. This
+              bid is then used to pay each truck that transports the package and
+              each DC that stores the package along the path from its origin to
+              its destination. Thus, at each DC, all of the packages going to
+              the same DC are competing with each other to be in the next load
+              to be transported to that DC, and that next load is competing with
+              the loads going to other DCs to be selected by a truck as the next
+              load for transport. In addition, the trucks are themselves
+              competing with each other to select each load for transport.
+              Because of this competition, truck capacity can automatically
+              adjust to varying transport demand along each link in the network
+              without any type of centralized control. The mechanism consists of
+              truck and package protocols.</p>
+          </li>
+          <li>
+            <p><span style="font-weight: bold;">Modular storage design:</span>
+              In order to be cost-effective, the loading/unloading, sortation,
+              and storage activities at each DC in the public logistics network
+              must be highly automated since each load might visit a dozen or
+              more DCs while it’s in transit, likely traveling on a different
+              truck between each DC. Since existing automation technologies do
+              not provide the flexibility needed to allow any size load to move
+              to any location at anytime, a new DC design has been developed
+              that would allow packages of varying size to be automatically
+              unloaded at a DC, sorted, stored, and then loaded onto an outbound
+              truck. Such a design would result in diseconomies of scale because
+              it is cheaper to ship a single package compared to a larger
+              consolidated load. Integral to the design is use of arrays of
+              small square modules with orthogonal pop-up powered wheels.</p>
+          </li>
+          <li>
+            <p><span style="font-weight: bold;">Network design and performance
+                analysis:</span> Develop a set of modeling tools for estimating
+              the performance of logistics networks like the proposed home
+              delivery network. Design of the network would include determining
+              the number and location of the DCs in the network, but this
+              problem does not need to be "solved" in a finite optimization
+              sense since the coordination protocols and modular storage design
+              allows the network to adapt, with DCs added incrementally in
+              response to market conditions. Network design is used just to
+              predict performance.</p>
+          </li>
+        </ul>
+        <h2>Publications and Presentations</h2>
+        <ol>
+          <li>
+            <p>Kay, Michael G., and Parlikad, Ajithkumar N., <a href="IMHRC02.pdf">Material
+                Flow Analysis of Public Logistics Networks</a>, in<span style="font-style: italic;">
+                Progress in Material Handling Research: 2002</span>, R. Meller
+              et al., Eds., Charlotte, NC: The Material Handling Institute,
+              2002, pp. 205–218 (presented at the 7th International Material
+              Handling Research Colloquium, June 1–5, 2002, Portland, ME).
+              Compares the average transport time of a hypothetical public
+              logistics network covering the southeastern U.S. to the times of a
+              hub-and-spoke and a point-to-point network covering the same
+              region. The public logistics network provided the minimum average
+              transport time when the time required for loading/unloading at
+              each transshipment point in the network was short. This result is
+              robust with respect to a range of different transport demands and
+              truck capacities considered in the analysis.</p>
+          </li>
+          <li>
+            <p>Parlikad, Ajithkumar N., <a style="font-style: italic;" href="http://www.lib.ncsu.edu/resolver/1840.16/2833">Performance
+                Analysis of Intelligent Supply Chain Networks</a>, Master’s
+              Thesis, Dept. of Industrial Eng., North Carolina State Univ.,
+              Raleigh, NC, 2002.</p>
+          </li>
+          <li>
+            <p>Gandlur, Karthik S., <em><a href="http://www.lib.ncsu.edu/resolver/1840.16/444">Implementation
+                  of Adaptive Routing in Public Logistics Networks</a></em>,
+              Master’s Thesis, Dept. of Industrial Eng., North Carolina State
+              Univ., Raleigh, NC, 2002.</p>
+          </li>
+          <li>
+            <p>Kay, Michael G., and Jain, Ashish, <em><a href="IETR02-01.pdf">Issues
+                  in Agent-based Coordination of Public Logistics Networks</a></em>,
+              Tech. Rep. 02-01, Dept. of Industrial Engineering, North Carolina
+              State Univ., Raleigh, NC, October 2002, describes some of the
+              issues involved in research that is just starting to design an
+              agent architecture and protocols that can be used to coordinate
+              the operation of this type of network in order to facilitate
+              adaptive routing and in-transit trade.</p>
+          </li>
+          <li>
+            <p>Bansal, Amogh, <a style="font-style: italic;" href="http://www.lib.ncsu.edu/resolver/1840.16/524">Designing
+                a Public Logistics Network</a>, Master’s Thesis, Dept. of
+              Industrial Eng., North Carolina State Univ., Raleigh, NC, 2004.
+              Initial work on the public logistics network design problem. A GA
+              is used to design a PLN that covers the entire continental U.S.</p>
+          </li>
+          <li>
+            <p>Kay, Michael G., and Jain, Ashish, <a href="IERC04.pdf">Pricing
+                a Public Logistics Network</a>, extended abstract of
+              presentation at the Industrial Engineering Research Conference,
+              May 15-19, 2004, Houston, TX. Initial ideas on protocol
+              requirements.</p>
+          </li>
+          <li>
+            <p>Kay, Michael G., <a href="IMHRC04.pdf">Protocol Design for a
+                Public Logistics Network</a>, in <span style="font-style: italic;">Progress
+                in Material Handling Research: 2004</span>, R. Meller et al.,
+              Eds., Charlotte, NC: The Material Handling Institute, 2004, pp.
+              181–188 (presented at the International Material Handling Research
+              Colloquium, June 13–17, 2004, Graz, Austria). Initial
+              specification of truck and package protocols.</p>
+          </li>
+          <li>
+            <p>Kay, Michael G., <a href="DesignCoordPLNPresentation.pdf">Design
+                and Coordination of a Public Logistics Network</a>, slides used
+              for Poster Presentation at International Material Handling
+              Research Colloquium, June 13–17, 2004, Graz, Austria and Invited
+              Presentation at Distributed Information and Automation Laboratory,
+              Institute for Manufacturing, University of Cambridge, Cambridge,
+              U.K., June 18, 2004. Presents an overview of PLN and initial ideas
+              for the Design of a Public Logistics Network, Design of a Public
+              DC, and Network Coordination via Bidding.</p>
+          </li>
+          <li>
+            <p>Kay, Michael G., <a href="Design%20of%20a%20Public%20Distribution%20Center.pdf">Design
+                of a Public Distribution Center</a>, Department of Industrial
+              Engineering, North Carolina State University, June 30, 2004.
+              Whitepaper describing proposed design for the DCs in a public
+              logistics network. Main features of DC include: Fully automated
+              loading/unloading; packages can be redirected any time prior to
+              loading; low cost to build small DC, allowing many DCs to cover a
+              single metropolitan area; and a small exterior footprint to allow
+              locating in urban areas.</p>
+          </li>
+          <li>
+            <p>Jain, Ashish, <a style="font-style: italic;" href="http://www.lib.ncsu.edu/resolver/1840.16/952">Protocol
+                Design for a Public Logistics Network</a>, Master’s Thesis,
+              Dept. of Industrial Eng., North Carolina State Univ., Raleigh, NC,
+              2004. Simulation of a public logistics network in order to
+              estimate the waiting time at each DC, and implementation of a
+              portion of the truck and package protocols specified in [7]. Using
+              a simulation of a public logistics network, weighted average
+              waiting times with and without the use of the protocol were
+              determined and it was found that there was a statistically
+              significant decrease in the waiting time associated with the use
+              of the protocol.</p>
+          </li>
+          <li>
+            <p>Kay, Michael G., and Jain, Ashish, <a href="IERC05.pdf">Implementing
+                a Pricing Mechanism for Public Logistics Networks</a>, in <span
+                style="font-style: italic;">Proceedings of the Industrial
+                Engineering Research Conference</span>, Atlanta, GA, May 14–18,
+              2005. This paper describes an implementation of the pricing
+              mechanism specified in [7] and summarizes some of the results of
+              [10].</p>
+          </li>
+          <li>
+            <p>Xiang, Ling, Kay, Michael G., and Telford, John S., <a href="IERC07.pdf">Public
+                logistic network protocol design and implementation</a>, in <span
+                style="font-style: italic;">Proceedings of the Industrial
+                Engineering Research Conference</span>, Nashville, TN, May
+              19–23, 2007.</p>
+          </li>
+          <li>
+            <p>Xiang, Ling, Kay, Michael G., and Telford, John S., <a href="IERC08.pdf">Waiting
+                time approximation in public logistics network</a>, in <span style="font-style: italic;">Proceedings
+                of the Industrial Engineering Research Conference</span>,
+              Vancouver, BC, Canada, May 17–21, 2008.</p>
+          </li>
+          <li>
+            <p>Xiang, Ling, <a style="font-style: italic;" href="http://www.lib.ncsu.edu/resolver/1840.16/5752">Performance
+                Model for a Public Logistics Network</a>, Doctoral Dissertation,
+              Dept. of Industrial and Syst. Eng., North Carolina State Univ.,
+              Raleigh, NC, 2009. In this dissertation, a heuristic approach to
+              approximate the package average waiting time in a PLN is
+              presented; and then based on this waiting time approximation, a
+              PLN design procedure is developed.</p>
+          </li>
+          <li>
+            <p>Kay, Michael G., and Warsing, Donald P., <i>A Distributed
+                Coordination Mechanism for Shipment Consolidation</i>, Depts. of
+              Industrial and Syst. Eng. and Business Mgmt., North Carolina State
+              Univ., Raleigh, NC, Sep. 22, 2010. Describes a mechanism for
+              constructing consolidated shipment loads that uses only publically
+              available information concerning each shipment along with simple
+              standardized procedures to allocate the cost of transporting the
+              load to the shipments in each load, where a computationally
+              efficient pairwise Shapley value approximation is used for the
+              allocation.</p>
+          </li>
+          <li>
+            <p>Datar, Mohit A., <a href="http://www.lib.ncsu.edu/resolver/1840.16/6983">Priority-based
+                Control Algorithm for Movement of Packages in a Public
+                Distribution Center</a>, Master's Thesis, Dept. of Industrial
+              and Syst. Eng., North Carolina State Univ., Raleigh, NC, 2011.
+              This thesis describes a control system for the movement of
+              packages in a public DC.</p>
+          </li>
+          <li>Kadam, Praful S., <a style="font-style: italic;" href="http://www.lib.ncsu.edu/resolver/1840.16/7295">Design
+              of a Public Logistics Network for the Local Distribution of
+              Packages</a>, Master's Thesis, Dept. of Industrial and Syst. Eng.,
+            North Carolina State Univ., Raleigh, NC, 2011. This thesis describes
+            the design of a public logistics network that covers the
+            Raleigh-Durham-Cary combined statistical area of North Carolina.</li>
+          <li><a href="PennSt2019%20-%20Kay.pptx">Penn State</a> presentation </li>
+        </ol>
+        <h2>Data and Software</h2>
+        <p>The data used for the hypothetical 36-DC public logistics network,
+          shown below, is available as a Matlab file <a href="plnex36.mat">plnex36.mat</a>
+          (8 KB). The file contains the structure DC, with fields containing the
+          name, state, and longitude-latitude of each DC, and the population of
+          the region surrounding each DC; the matrix IJD, which is the arc list
+          for the network that connects adjacent DCs, with distances in miles;
+          and XYLim, which are the limits of the region covered. In IJD, the
+          distance along each arc is the total road distance between its DCs.
+          (See Publication 1, above, for more details and the <a href="http://www.ise.ncsu.edu/kay/matlog/">Matlog
+            </a>toolbox for functions that work with arc lists.)</p>
+        <div style="text-align: center;"><img title="Hypothetical public logistics network showing 36 public DCs covering the southeastern portion of the USA"
+            alt="" src="pln36.jpg"><br>
+          <span style="font-weight: bold;">Public Logistics Network Covering
+            Southeastern U.S.<br>
+          </span>
+          <div style="text-align: left;">
+            <p><span style="font-weight: bold;"></span></p>
+            <p><span style="font-weight: bold;"></span></p>
+          </div>
+          <div style="text-align: left;">
+            <p>Hypothetical public logistics network, above, shows 36 public DCs
+              covering the southeastern portion of the USA and connected via
+              interstate highways. Each of the interstate DCs would serve as a
+              hub in a sub-network of local DCs (not shown) covering the region
+              surrounding the interstate DC. A package being transported, for
+              example, from Jacksonville, FL (DC 4) to Richmond, VA (DC 30)
+              would travel on different trucks (operated by different firms)
+              between each of the DCs along the way (DCs 7, 24, 23 and 17) and
+              could be temporarily stored at each of the DCs (e.g., to wait for
+              lower-cost off-peak travel periods).</p>
+          </div>
+        </div>
+        <h2>Acknowledgement</h2>
+        <p>This research was supported, in part, by the National Science
+          Foundation under Grant CMS-0229720 (NSF/USDOT: Agent-based
+          Coordination in Public Logistics Networks, PI: Michael G. Kay)</p>
+        <h2>Contact</h2>
+        <p> <a href="http://www.ise.ncsu.edu/kay/">Michael G. Kay</a>, Fitts
+          Dept. of Industrial and Systems Engineering, North Carolina State
+          University, Raleigh, NC.</p>
+      </div>
+    </div>
+  </body>
+</html>

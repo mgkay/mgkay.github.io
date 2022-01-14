@@ -1,0 +1,82 @@
+Matlog Update Log
+
+16-Jan-2008  Matlog version 10 installed
+18-Jan-2008  Modified file Contents.m
+24-Jan-2008  Modified file Contents.m
+24-Jan-2008  Added file LTLrate.m added.
+24-Jan-2008  Modified file LTLrate.m
+24-Jan-2008  Modified file LTLrate.m
+24-Jan-2008  Modified file pplot.m
+31-Jan-2008  Modified file Contents.m
+31-Jan-2008  Added file aggshmt.m added.
+31-Jan-2008  Added file maxpayld.m added.
+31-Jan-2008  Added file rateLTL.m added.
+31-Jan-2008  Added file sdisp.m added.
+31-Jan-2008  Added file tlcLTL.m added.
+31-Jan-2008  Added file tlcTL.m added.
+31-Jan-2008  Added file varnames.m added.
+31-Jan-2008  Added file vdisp.m added.
+31-Jan-2008  Modified file Contents.m
+31-Jan-2008  Modified file vdisp.m
+31-Jan-2008  Modified file vdisp.m
+31-Jan-2008  Modified file vdisp.m
+25-Mar-2008  Modified file Contents.m
+25-Mar-2008  Added file arcang.m added.
+25-Mar-2008  Added file checkrte.m added.
+25-Mar-2008  Modified file list2adj.m
+25-Mar-2008  Added file loccost.m added.
+25-Mar-2008  Modified file makemap.m
+25-Mar-2008  Modified file maxpayld.m
+25-Mar-2008  Modified file mdisp.m
+25-Mar-2008  Added file mincostinsert.m added.
+25-Mar-2008  Added file pairwisesavings.m added.
+25-Mar-2008  Added file plotshmt.m added.
+25-Mar-2008  Modified file pplot.m
+25-Mar-2008  Added file rte2idx.m added.
+25-Mar-2008  Added file rte2ld.m added.
+25-Mar-2008  Added file rte2loc.m added.
+25-Mar-2008  Added file rteTC.m added.
+25-Mar-2008  Added file rtenorm.m added.
+25-Mar-2008  Added file savings.m added.
+25-Mar-2008  Modified file sdisp.m
+25-Mar-2008  Added file sub.m added.
+25-Mar-2008  Modified file tlcLTL.m
+25-Mar-2008  Modified file tlcTL.m
+25-Mar-2008  Added file tlcmin.m added.
+25-Mar-2008  Added file twoopt.m added.
+25-Mar-2008  Modified file vdisp.m
+25-Mar-2008  Added file vec2struct.m added.
+27-Mar-2008  Modified file mincostinsert.m
+27-Mar-2008  Modified file plotshmt.m
+27-Mar-2008  Modified file savings.m
+27-Mar-2008  Modified file twoopt.m
+27-Mar-2008  Modified file vdisp.m
+29-Mar-2008  Modified file adj2list.m
+01-Apr-2008  Modified file pairwisesavings.m
+01-Apr-2008  Modified file rteTC.m
+01-Apr-2008  Modified file savings.m
+01-Apr-2008  Modified file sdisp.m
+01-Apr-2008  Modified file tlcmin.m
+01-Apr-2008  Modified file twoopt.m
+07-Apr-2008  Modified file plotshmt.m
+12-Jun-2008  Modified file Contents.m
+12-Jun-2008  Modified file checkrte.m
+12-Jun-2008  Modified file maxpayld.m
+12-Jun-2008  Modified file mdisp.m
+12-Jun-2008  Modified file mincostinsert.m
+12-Jun-2008  Modified file plotshmt.m
+12-Jun-2008  Modified file rateLTL.m
+12-Jun-2008  Modified file rte2ld.m
+12-Jun-2008  Modified file rteTC.m
+12-Jun-2008  Modified file savings.m
+12-Jun-2008  Modified file sdisp.m
+12-Jun-2008  Added file sh2rte.m added.
+12-Jun-2008  Modified file tlcLTL.m
+12-Jun-2008  Modified file tlcTL.m
+12-Jun-2008  Modified file tlcmin.m
+12-Jun-2008  Modified file twoopt.m
+17-Oct-2008  Modified file Contents.m
+17-Oct-2008  Added file minTLC.m added.
+17-Oct-2008  Modified file plotshmt.m
+17-Oct-2008  Modified file rateLTL.m
+17-Oct-2008  Added file transcharge.m added.

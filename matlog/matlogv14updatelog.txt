@@ -1,0 +1,43 @@
+Matlog Update Log
+
+23-Jan-2012  Matlog version 14 installed
+
+
+
+03-Feb-2012  Modified file idxkey.m
+03-Feb-2012  Modified file xls2struct.m
+09-Feb-2012  Modified file Milp.m
+09-Feb-2012  Modified file lp2mcnf.m
+16-Feb-2012  Modified file Milp.m
+23-Feb-2012  Modified file Contents.m
+23-Feb-2012  Added file mand.m added.
+23-Feb-2012  Modified file milplog.m
+23-Feb-2012  Modified file mor.m
+23-Feb-2012  Modified file uscenblkgrp.m
+23-Feb-2012  Modified file uscity.m
+23-Feb-2012  Modified file uscity10k.m
+23-Feb-2012  Modified file uscity50k.m
+23-Feb-2012  Modified file uszip5.m
+23-Feb-2012  Modified file vec2struct.m
+28-Feb-2012  Modified file Milp.m
+28-Feb-2012  Modified file lev2adj.m
+01-Mar-2012  Modified file incid2list.m
+01-Mar-2012  Modified file list2incid.m
+01-Mar-2012  Modified file mcnf2lp.m
+01-Mar-2012  Modified file Contents.m
+01-Mar-2012  Added file dijkdemo.m added.
+01-Mar-2012  Added file gtrans.m added.
+01-Mar-2012  Modified file thin.m
+01-Mar-2012  Modified file thin.m
+29-Mar-2012  Modified file Milp.m
+29-Mar-2012  Modified file adj2lev.m
+29-Mar-2012  Modified file minTLC.m
+29-Mar-2012  Modified file totlogcost.m
+29-Mar-2012  Modified file vec2struct.m
+06-Aug-2012  Modified file Contents.m
+06-Aug-2012  Added file aggloc.m added.
+06-Aug-2012  Modified file ala.m
+06-Aug-2012  Modified file lev2adj.m
+06-Aug-2012  Modified file minisumloc.m
+06-Aug-2012  Modified file totlogcost.m
+06-Aug-2012  Modified file xls2struct.m

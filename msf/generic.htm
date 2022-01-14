@@ -1,0 +1,407 @@
+<!--This file created 9:54 PM  8/3/97 by Claris Home Page version 2.0-->
+<HTML>
+<HEAD>
+   <TITLE>Generic Camera Behaviors</TITLE>
+   <META NAME=GENERATOR CONTENT="Claris Home Page 2.0">
+   <X-SAS-WINDOW TOP=39 BOTTOM=446 LEFT=4 RIGHT=768>
+</HEAD>
+<BODY BGCOLOR="#FFFFFF">
+
+<H2>8 Generic Camera Behaviors</H2>
+
+<P>Camera motion can improve the performance of a vision system in
+several ways, such as:</P>
+
+<UL>
+   <LI>Allowing detection and/or tracking of objects outside the
+   field-of-view of a stationary camera
+   
+   <LI>Providing close-up inspection of selected objects at increased
+   resolution
+   
+   <LI>Reducing blur by matching target motion with visual servoing
+   
+   <LI>Converging multiple camera images on one object from different
+   viewpoints
+   
+   <LI>Reducing dependence on translation-invariant characteristics
+   of pattern recognition techniques
+</UL>
+
+<P>For this project, only the first two uses listed are exploited.
+The currently available hardware and processing resources on the
+personal computer do not allow optical-flow-based visual servoing,
+stereo vision, or sophisticated shape recognition to be performed in
+real-time. This chapter will present simple control strategies for
+basic active vision tasks of importance in human-computer
+interaction, namely, looking toward sounds, following faces, and
+following motion.</P>
+
+<P>&nbsp;</P>
+
+<H3>8.1 Types of Vision Movements</H3>
+
+<P>Two types of camera motion, analogous to biological eye movements,
+apply to this project: saccadic movement and servo motion. Saccadic
+eye movement involves rapid change in eye orientation to a new target
+angle, with negligible visual processing occurring during the motion.
+Such behavior would be desirable for this system in the case of
+sudden detection of a sound outside the camera field of view when no
+other targets are in sight. Servo motion involves fixation on a
+moving target and matching its trajectory with corresponding eye
+motion. In a surveillance application, this would be desirable for
+following a subject walking through a scene. In videoconferencing,
+however, the desired camera behavior may be to provide a stable
+camera gaze despite small motions of the current speaker, using
+slower, more conservative camera motions to compensate for these
+shifts.</P>
+
+<P>In order to detect features such as skin tone in an image, the
+camera must have an appropriate zoom setting to make the target large
+enough in the image to detect, yet small enough to determine its
+boundaries. Depending on target range, the optimum zoom setting may
+change. If the system should need to visually search for targets, a
+wider zoom will facilitate this by covering a larger area of the
+room. On the other hand, if the system needs to improve its
+estimation of given target's position, it may zoom in to provide a
+closer view. Zoom behavior will therefore be a dynamic function of
+the system's confidence in which targets are of interest and where
+they may be.</P>
+
+<P>&nbsp;</P>
+
+<H3>8.2 Resource Contention</H3>
+
+<P>As mentioned previously, not all of the system's perception goals
+can be met simultaneously. Sensing tasks must serialize their access
+to sensing resources, deciding how and when to move the camera, or
+what algorithms to use. One cannot perform motion detection, for
+example, while moving the camera. <A HREF="footnote.htm">(See
+Footnote 5)</A> In addition, the proximity of the pan-tilt camera to
+the microphones may cause interference with the sound localization
+task due to motor noise.<A HREF="footnote.htm"> (See Footnote 6)</A>
+Table 2 outlines conflicts between sensing tasks and camera
+behaviors:</P>
+
+<P><CENTER><B>Table 2: Conflicts between Sensing Tasks and Camera
+Motion</B></CENTER></P>
+
+<P><CENTER><TABLE BORDER=1>
+   <TR>
+      <TD WIDTH=128>
+         <P><CENTER><B>Camera Behavior</B></CENTER>
+      </TD><TD WIDTH=117>
+         <P><CENTER><B>Sound Localization</B></CENTER>
+      </TD><TD WIDTH=119>
+         <P><CENTER><B>Motion Detection</B></CENTER>
+      </TD><TD WIDTH=134>
+         <P><CENTER><B>Skin Tone Detection</B></CENTER>
+      </TD></TR>
+   <TR>
+      <TD WIDTH=128>
+         <P><CENTER>Slow Pan</CENTER>
+      </TD><TD WIDTH=117>
+         <P>
+      </TD><TD WIDTH=119>
+         <P><CENTER>X</CENTER>
+      </TD><TD WIDTH=134>
+         <P>
+      </TD></TR>
+   <TR>
+      <TD WIDTH=128>
+         <P><CENTER>Fast Pan</CENTER>
+      </TD><TD WIDTH=117>
+         <P><CENTER>X</CENTER>
+      </TD><TD WIDTH=119>
+         <P><CENTER>X</CENTER>
+      </TD><TD WIDTH=134>
+         <P><CENTER>X</CENTER>
+      </TD></TR>
+   <TR>
+      <TD WIDTH=128>
+         <P><CENTER>Slow Tilt</CENTER>
+      </TD><TD WIDTH=117>
+         <P><CENTER>X</CENTER>
+      </TD><TD WIDTH=119>
+         <P><CENTER>X</CENTER>
+      </TD><TD WIDTH=134>
+         <P>
+      </TD></TR>
+   <TR>
+      <TD WIDTH=128>
+         <P><CENTER>Fast Tilt</CENTER>
+      </TD><TD WIDTH=117>
+         <P><CENTER>X</CENTER>
+      </TD><TD WIDTH=119>
+         <P><CENTER>X</CENTER>
+      </TD><TD WIDTH=134>
+         <P><CENTER>X</CENTER>
+      </TD></TR>
+   <TR>
+      <TD WIDTH=128>
+         <P><CENTER>Zoom</CENTER>
+      </TD><TD WIDTH=117>
+         <P>
+      </TD><TD WIDTH=119>
+         <P><CENTER>X</CENTER>
+      </TD><TD WIDTH=134>
+         <P>
+      </TD></TR>
+</TABLE></CENTER></P>
+
+<P>The system behavior must be able to switch between sensing tasks
+in order to avoid starving the system for any vital piece of
+information. Also, concurrent sensing tasks must be made aware of
+what the camera is doing, in order to avoid making erroneous
+measurements when this action is incompatible with its sensing needs.
+For example, during camera motion the sound localization computations
+must be disabled if the camera motors are loud enough to interfere
+with the localization process. This task is made easier by the fact
+that sensing and control processes operate on the same platform,
+which allows them to share as much data as they need and gives them
+very high registration in time.</P>
+
+<P>&nbsp;</P>
+
+<H3>8.3 Control System Inputs and Outputs</H3>
+
+<P>Inputs to camera control behaviors may include both acoustic and
+visual information provided by the sensor processing stages described
+previously. Acoustic data may include:</P>
+
+<P>&nbsp;</P>
+
+<UL>
+   <LI>The azimuth of the loudest sound as returned by onset
+   correlation
+   
+   <LI>The onset correlation power at any given azimuth
+   
+   <LI>The average sound power over a time window of arbitrary size
+</UL>
+
+<P>Data extracted from the visual tracking and filtering operations
+may include:</P>
+
+<UL>
+   <LI>The estimated Cartesian and Polar coordinates of each target
+   being tracked
+   
+   <LI>The predicted position of each target being tracked
+   
+   <LI>The covariances of the position and prediction estimates
+   
+   <LI>The relative sound volume of each track (in conjunction sound
+   processing)
+   
+   <LI>The age of each track
+   
+   <LI>The amount of time each target has been visible or missing.
+</UL>
+
+<P>All of this information may useful when developing control actions
+for following conversations and exploring activities.</P>
+
+<P>The Canon VC-C1 camera allows software control of its pan, tilt,
+and zoom positions via an RS-232C serial communications link. The
+camera does not allow simultaneous pan and tilt motions; any change
+in position requires two separate movements. This hampers the
+fluidity of motion that might otherwise be incorporated into a camera
+servo-control scheme. Another limitation is the lack of explicit
+servo-control commands. The camera accepts commands to move to a
+specific position, report the current position, turn on an axis
+(continuously) in one direction or the other, and change motor speed.
+A computer program can approximate servo control in one axis or
+another, however, by reading the current position from the camera,
+comparing it to the desired position, and changing the camera motor
+direction and speed appropriately. In most applications where the
+camera is mounted at approximately eye level, tilt motion is less
+frequent and critical than pan motion. Pan movements were therefore
+given priority as a servo operation in this project, and tilt
+commands, when necessary, were given only after the pan motion
+stopped. The zoom setting control, however, can operate concurrently
+with pan or tilt movements, and was adjusted continuously as required
+by the control system.</P>
+
+<P>&nbsp;</P>
+
+<H3>8.4 Following a Sound</H3>
+
+<P>The simplest and most obvious control behavior to incorporate into
+a sound-enabled camera system is sound following. Given one pair of
+microphones, only azimuth can be localized; tilt and zoom must be
+preset using a priori information. It may be possible to use
+reverberative cues to estimate target range, but this was not
+attempted.</P>
+
+<P><B><A HREF="fig65.jpg">Figure 65: Sound-Following Behavior</A></B>
+</P>
+
+<P>&nbsp;Figure 65 illustrates the sound following behavior. With the
+speaker at a range of under 2.5 meters, normal speaking volumes were
+loud enough to escape interference from the camera motor noise during
+medium pan speeds. A simple behavior scheme was designed to move the
+camera to the azimuth corresponding to the peak of the onset
+correlation. Fuzzy control rules running in a time-critical thread on
+the PC were used for low-level servo-control to speed and slow the
+camera motion as appropriate for the measured position error. The
+onset correlation was generated from a moving two-second sample
+window of sound data. The cross-correlation was updated every 200
+msec by subtracting the 200 msec portion of the cross-correlation sum
+that was generated two seconds ago, and adding the component
+belonging to the most recent 200 msec worth of samples.
+Cross-correlation windows shorter than two seconds were more
+responsive to movements of the speaker, but were more likely to cause
+unpredictable control behavior during significantly long pauses in
+speech. This could potentially be remedied by passing the
+cross-correlation output into an IIR filter, so that peaks would not
+disappear completely during silent periods greater than the sample
+window, but would instead slowly decay.</P>
+
+<P>&nbsp;</P>
+
+<P>At speaker ranges greater than 2.5 meters, motor noise became a
+significant interference problem. Two options in camera behavior were
+available to remedy this: one, the camera could be allowed to move
+only at its slowest speed, which was the quietest, and two, the
+camera could use the following control sequence:</P>
+
+<BLOCKQUOTE><P>1. Sit still and listen for T seconds.</P>
+
+<P>2. Disable sound input and move quickly to the peak direction
+detected.</P>
+
+<P>3. Go to 1.</P></BLOCKQUOTE>
+
+<P>The first method is sluggish, and the second is extremely jerky.
+The suitability of each would depend on the intended application.
+Figure 66 shows the behavior of the camera controller following a
+sound. Note that the lag in the camera response is due primarily to
+the limited slew rate of the camera at its slowest speed, so as to
+avoid sound interference.</P>
+
+<P><B><A HREF="fig66.jpg">Figure 66: Camera Motion Following
+Sound</A></B></P>
+
+<P>&nbsp;</P>
+
+<H3>8.5 Following a Talking Head</H3>
+
+<P>The pixel-level fusion face detection scheme described in Chapter
+5 and target tracking system described in Chapter 6 make it easy for
+the camera to follow the face of the person speaking. The estimated
+position of a specific target being tracked can be used to aim the
+camera, with the range estimate being used to adjust the zoom. The
+zoom control policy was set so that the width of the face occupied
+approximately 20% of the width of the camera image. The decision of
+which target to follow may be based on a user command (e.g., clicking
+the mouse on one of the faces in the image) or by selecting the
+closest or loudest face target. Figure 67 illustrates the face
+following behavior.</P>
+
+<P><B><A HREF="fig67.jpg">Figure 67: Behavior for Following a
+Face</A></B></P>
+
+<P>If the speaker might suddenly move out of the camera field of
+view, the talking-head follower could recover by incorporating the
+sound localization behavior for this contingency. A
+behavior-switching agent could detect when the loudest sound source
+exists outside the field of view for more than an arbitrary time
+limit, and switch to the sound following behavior until this
+circumstance has been corrected. Figure 68 shows this combination of
+behaviors.</P>
+
+<P><B><A HREF="fig68.jpg">Figure 68: Integration of Face and Sound
+Tracking</A></B></P>
+
+<P><B><A HREF="fig69.jpg">Figure 69: Face Selection and Camera
+Response due to Sound Direction</A></B></P>
+
+<P>Figure 69 shows how the camera narrows in on the speaker's face.
+The top row of pictures show the pixel-level fusion of audiovisual
+data as the person on the right begins to peak. Skin-tone pixels for
+that speaker become stronger while other pixels of similar color
+become weaker and drop below the segmentation threshold. The camera
+controller chooses the rightmost face as the strongest target,
+subsequently panning over and zooming in on it. Figure 70 shows the
+camera following a conversation, where one speaker stops talking and
+the other begins. When the sound azimuth stays outside the field of
+view for too long, the sound following behavior takes over and pans
+to find the unseen speaker. When searching, the camera zooms out to
+cover a larger area; once the target is discovered, it zooms in
+again.</P>
+
+<P><B><A HREF="fig70.jpg">Figure 70: Camera Behavior while Following
+a Conversation</A></B></P>
+
+<P><B><A HREF="fig71.jpg">Figure 71: Camera Pan Behavior when
+Tracking a Face</A></B></P>
+
+<P>A plot of the camera pan motion while tracking a moving, speaking
+face is given in Figure 71.</P>
+
+<P>&nbsp;</P>
+
+<H3>8.6 Following a Moving Target</H3>
+
+<P>For tracking a person's body as they move about a room, either
+motion detection or background image subtraction may be used. When
+performing background image subtraction, a stationary camera must be
+used to detect objects while the active camera follows selected
+targets. When using image motion for active camera control, three
+options for sensing are available:</P>
+
+<OL>
+   <LI>Perform motion detection with the moving camera, while
+   compensating for camera motion. This requires very accurate
+   information about the camera motion, and often involves a great
+   deal of computation to achieve proper motion compensation due to
+   nonlinear effects in image optics during translation. This is
+   complicated further by changes in zoom, if present.
+   
+   <LI>Perform motion detection while the active camera is
+   stationary, and move in short bursts. This type of stop-start
+   behavior can work effectively for tracking moving targets, but the
+   resulting video from the active camera is not pleasant for human
+   viewing, which limits its application. Also, information may be
+   lost concerning any activities that may occur during camera
+   movements. For this reason, the camera performance should be fast,
+   allowing nearly instantaneous saccades. Many animals display
+   similar eye or head movements that solve this same problem.
+   
+   <LI>Perform motion detection with a stationary wide-angle camera,
+   and use the active camera for target following. If a wide-angle
+   camera is available, this solution allows the entire area to be
+   monitored. The only drawback is that image resolution limitations
+   may make it difficult to detect subtle movements at a distance,
+   while a narrower field of view focused in the area of expected
+   motion will be more sensitive.
+</OL>
+
+<P>&nbsp;Figure 72 shows the combination of body tracking and sound
+following behaviors for tracking a person in a room. Targets may be
+chosen on the basis of recognized identity (e.g., color histogram
+from clothing), sound level, or proximity. Figure 73 shows the
+performance of a camera panning to follow a target. The target lags
+somewhat due to slew rate limited by acoustic noise constraints.</P>
+
+<P><B><A HREF="fig72.jpg">Figure 72: Follow-Moving-Target Behavior
+Components</A></B></P>
+
+<P><B><A HREF="fig73.jpg">Figure 73: Camera Pan Behavior when
+Tracking a Body&nbsp;</A></B></P>
+
+<P>This chapter has presented the basic behavioral building blocks
+required for developing automatic camera control applications based
+on the sensor features described in this dissertation. The ability of
+the computer to actively control its vision improves its own
+perception of activities and allows it to provide better images to
+human viewers who may also consume the video content. In the
+<A HREF="apps.htm">next chapter</A>, commercial applications of these
+features will be described.</P>
+
+<P>&nbsp;</P>
+
+<P>&nbsp;</P>
+</BODY>
+</HTML>

@@ -1,0 +1,145 @@
+<html>
+<head>
+<title>Matlog</title>
+</head><body>
+<h1 align="center">Matlog: Logistics Engineering M<span style="font-variant: small-caps">atlab</span> Toolbox</h1>
+<p>&nbsp;</p>
+
+<table border="0">
+  <tr>
+    <td><img border="0" src="SumcostNC.jpg" width="293" height="229"></td>
+    <td>The M<span style="font-variant: small-caps">atlab</span> Toolbox Matlog
+      was developed for use in
+the courses <a href="http://courses.ncsu.edu/ie453/common/">IE
+453</a> and <a href="http://courses.ncsu.edu/ie754/common/">IE
+754</a> at NCSU. The toolbox contains functions for solving the following types
+      of problems:
+      <ul>
+        <li><b>Facility location:</b> Continuous minisum facility location, alternate
+          location-allocation (ALA) procedure, discrete uncapacitated facility
+          location</li>
+        <li><b>Vehicle routing:</b> VRP, VRP with time windows, traveling salesman
+          problem (TSP)</li>
+        <li><b>Networks:</b> Shortest path, min cost network flow, minimum spanning
+          tree problems</li>
+        <li><b>Geocoding:</b> U.S. city or ZIP code to longitude and latitude,
+          longitude and latitude to nearest city, Mercator projection plotting</li>
+        <li><b>Layout:</b> Steepest descent pairwise interchange (SDPI) heuristic for
+          QAP</li>
+        <li><b>Material handling:</b> Equipment selection</li>
+        <li><b>General purpose:</b> Linear programming using the revised simplex
+          method, mixed-integer linear programming (MILP) branch and bound
+          procedure</li>
+        <li><b>Data:</b> U.S. cities with populations of at least 10,000, U.S. highway
+          network (Oak Ridge National Highway Network), U.S. 3- and 5-digit ZIP
+          codes</li>
+      </ul>
+    </td>
+  </tr>
+</table>
+
+<h2>Matlog Reference</h2>
+
+<p><a href="MatlogRef.htm">Matlog Reference (HTML)</a> provides a listing of
+help information for each function in the Matlog
+toolbox. Matlog will work with Versions 6.5 and 7 of Matlab.</p>
+
+<h2>Matlab References</h2>
+
+<p><a href="../Basic_Concepts_in_Matlab.pdf">Basic Concepts in M<span style="font-variant: small-caps">atlab</span></a>,
+provides a short overview of M<span style="font-variant: small-caps">atlab</span>.&nbsp;</p>
+
+<p>The <a href="http://www.mathworks.com/access/helpdesk/help/techdoc/matlab.shtml">Documentation,
+Manuals, and Tutorials</a> on the MathWorks website (the developers of M<span style="font-variant: small-caps">atlab</span>)
+provide the most comprehensive and up-to-date reference source for M<span style="font-variant: small-caps">atlab</span>;
+in particular, <i>Getting Started</i> (<a href="http://www.mathworks.com/access/helpdesk/help/techdoc/learn_matlab/learn_matlab.shtml">HTML</a>)
+or (<a href="http://www.mathworks.com/access/helpdesk/help/pdf_doc/matlab/getstart.pdf">PDF</a>)
+provides a good introduction to M<span style="font-variant: small-caps">atlab</span>.</p>
+
+<h2>Installing Matlog</h2>
+
+<h3><b>If connected to the NCSU network:</b></h3>
+
+<p> Before using the toolbox for the
+first time and before starting M<span style="font-variant: small-caps">atlab</span>, you should copy the file <font
+face="Courier">startup.m</font> to your
+home directory. This file creates a path to the toolbox each time
+you start M<span style="font-variant: small-caps">atlab</span>. M<span style="font-variant: small-caps">atlab</span> 
+and
+Matlog is accessible <b>only</b>  from NCSU computers.</p>
+
+<p><b>NCSU Network Startup.m File:</b>  <i>First time
+using toolbox, copy </i><font face="Courier New">startup.m</font><i>
+file to your home directory:</i></p>
+
+<p><a href="http://www.ise.ncsu.edu/kay/matlog/startup.m"><font face="Courier New">http://www.ise.ncsu.edu/kay/matlog/startup.m</font></a></p>
+
+<p>Keep this file in you root K: directory; don't move it to a subdirectory
+because Matlog only looks into the root directory for the file when it starts.</p>
+
+<p><b>Start </b><span style="font-variant: small-caps"><b>Matlab</b></span><b>: </b><span style="font-variant: small-caps">Matlab</span>
+can be started from the icon in
+the Applications Window. A new window will appear for M<span style="font-variant: small-caps">atlab</span>. The
+M<span style="font-variant: small-caps">atlab</span> command prompt is &quot;<font face="Courier">&gt;&gt;</font>&quot;.
+Type <font face="Courier New">helpwin</font> to get a help window
+for all of the available M<span style="font-variant: small-caps">atlab</span> toolboxes&#151;click near the
+bottom to get <font face="Courier New">matlog</font> help.</p>
+
+<h3><b>If off-campus:</b></h3>
+
+<p>To use M<span style="font-variant: small-caps">atlab</span> and Matlog on an
+off-campus computer, you will need a local version of M<span style="font-variant: small-caps">atlab</span>
+ (a Student Version of M<span style="font-variant: small-caps">atlab</span> is available from the NCSU Bookstore) and you will need to copy
+a zipped file containing the Matlog directory to your local computer (usually,
+this will be the <font face="Courier New">work</font> subfolder in the main M<span style="font-variant: small-caps">atlab</span> 
+folder):</p>
+
+<p><a href="http://www.ise.ncsu.edu/kay/matlog/matlog.zip"><font face="Courier New">matlog.zip</font> (4.7 MB)</a></p>
+
+<p>Extracting the file will create the folder <font face="Courier New">matlog</font>.
+You should then update Matlog by using one of the methods described below. It is
+quickest to manually update via <font face="Courier New"><a href="updates.zip">updates.zip</a></font>
+when Matlog is first installed, and then automatically thereafter.</p>
+
+<p><b>Updating Matlog:</b> Individual files in Matlog will change on a regular basis
+(e.g., fixing errors). The Matlog zip file is not updated as frequently.
+Instead, there are two ways to get the updates:</p>
+
+<ul>
+  <li><i>Automatically:</i> The Matlog function <font face="Courier New">matlogupdate.m</font> can
+be run to automatically download updates to Matlog files. You can add <font face="Courier New">matlogupdate.m</font>
+to your <font face="Courier New">startup.m</font> file to have it check for
+updates each time you start M<span style="font-variant: small-caps">atlab</span>.</li>
+  <li><i>Manually</i>: All of the updated files are available in the zipped file
+    <font face="Courier New"><a href="updates.zip">updates.zip</a></font> (this
+    method will work if, for some reason, <font face="Courier New">matlogupdate</font>
+    is not working). Extract the files and then copy them into your Matlog
+    folder, replacing any existing files of the same name. A new <font face="Courier New">updates.zip</font>
+    file is created each time Matlog is updated.</li>
+</ul>
+
+<p>See <a href="matlogv9updatelog.txt"><font face="Courier New">log file</font></a> for a list of Matlog
+updates to date.</p>
+
+<p><b>Off-Campus Startup.m File:</b>  Assuming you are using Version 7 of
+Matlab, the following statements can be used for your <font face="Courier New">startup.m</font>
+file by saving them as a new file or adding them to an existing <font face="Courier New">startup.m</font>
+ file (you should not use the NCSU network <font face="Courier New">startup.m</font>
+file on your off-campus computer). The <font face="Courier New">startup.m</font> file should be placed in
+the <font face="Courier New">/matlab/toolbox/local</font> folder on your
+off-campus computer.</p>
+
+<blockquote>
+  <pre><font size="3">% Example startup.m file for off-campus computer
+path(path, 'C:\MATLAB7\work\matlog')    % Assuming you put the extracted matlog folder in the work folder
+matlogupdate                            % Run to check for Matlog updates</font></pre>
+</blockquote>
+
+<h2>Contact</h2>
+<p>&nbsp;<a href="http://www.ise.ncsu.edu/kay/">Michael G. Kay</a>,
+Department of Industrial Engineering, North Carolina State University, Raleigh,
+NC.</p>
+
+<p>&nbsp;</p>
+
+<p>&nbsp;</p>

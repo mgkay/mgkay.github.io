@@ -1,0 +1,384 @@
+<!--This file created 10:03 PM  8/3/97 by Claris Home Page version 2.0-->
+<HTML>
+<HEAD>
+   <TITLE>Target Tracking</TITLE>
+   <META NAME=GENERATOR CONTENT="Claris Home Page 2.0">
+   <X-SAS-WINDOW TOP=45 BOTTOM=472 LEFT=7 RIGHT=727>
+</HEAD>
+<BODY BGCOLOR="#FFFFFF">
+
+<H2>6 Target Tracking</H2>
+
+<P><B><A HREF="fig50.jpg">&nbsp;Figure 50: Tracking in Three
+Dimensions</A></B></P>
+
+<P>The vision and sensor fusion techniques described in the previous
+chapters provide a measurement of target locations for each image
+frame. In its raw form, this information is of limited use for camera
+control because it is imprecise due to measurement noise; it may
+include false-positive detections of people; and it provides no
+association between new measurements and previous target locations.
+This makes it difficult to develop smooth camera control motions from
+the raw measurements. In addition, the data is in polar coordinates
+which complicates the task of associating the data with other sensors
+or devices in the room that may not share the same coordinate system.
+For these reasons, target measurements are converted to a global
+Cartesian coordinate system, associated with previously tracked
+targets, and used to update a filter/state estimator for each target
+track. Figure 50 illustrates the tracking of target positions in
+Cartesian coordinates. The crosshairs represent position estimates
+for the targets, and the ellipsoids represent the relative
+uncertainty of the estimated position in three dimensions.&nbsp;</P>
+
+<P>&nbsp;</P>
+
+<H3>6.1 Coordinate Transformation</H3>
+
+<P>The coordinates measured by the camera system must be transformed
+into Cartesian coordinates for tracking and data association. This is
+important for measuring the distance between targets and
+measurements, and for using state estimation techniques based on
+Netwon's laws of motion. Each pixel location in a camera image
+represents a different azimuth and elevation with respect to the
+camera orientation. Adding these angles to the camera's pan and tilt
+position defines a line through the real world. One way that the
+distance to the target may be estimated is by considering the
+target's size in the image, and incorporating a priori knowledge
+about the actual size of the object. This was used for determining
+the range to faces, assuming that most heads are about the same size.
+Since this distance calculation is highly sensitive to sensor noise
+and variations in target size, the expected measurement error in
+depth is much larger that the expected error in directions orthogonal
+to depth. If one computes the error covariance and plots a locus of
+points of equal probability of being the actual target location
+around the measured target position, one will obtain an ellipsoid
+similar to those in Figure 50, with its major axis aligned along the
+vector pointing out from the camera. Other methods for calculating
+depth include the use of multiple orthogonally mounted cameras or
+making the assumption all of the targets exist within the same plane,
+measuring their position from a camera overhead.</P>
+
+<P>&nbsp;</P>
+
+<H3>6.2 Data Association</H3>
+
+<P>For the tracking system to perform properly, the most likely
+measured potential target location should be used to update the
+target's state estimator. This is generally known as the data
+association problem. The probability of the given measurement being
+correct is a distance function between the predicted state of the
+target and the measured state. Note that state is not limited to
+position; it may also consist of features such as color. This becomes
+especially important for targets that may come close to or cross one
+another, such as people. Popular association algorithms for
+single-target applications are based on the following schemes:</P>
+
+<UL>
+   <LI><I>Nearest Neighbor</I>: This algorithm always updates the
+   tracking filter with the measurement closest to the predicted
+   state.
+   
+   <LI><I>Multi-Hypothesis Track Splitting</I>: This scheme creates a
+   new hypothesis track for every measurement that is in the
+   validation region, and prunes unlikely tracks using a likelihood
+   ratio.
+   
+   <LI><I>Probabilistic Data Association</I>: Each measurement
+   affects the tracking filter to a degree based on the probability
+   that it is the correct given the predicted state.
+   
+   <LI><I>Optimal Bayesian Filter</I>: This variation of
+   Probabilistic Data Association splits multiple tracks, like the
+   Multi-Hypothesis algorithm, and eliminates unlikely tracks.
+</UL>
+
+<P>&nbsp;For multiple sensors and multiple targets, the problem
+becomes increasingly complex. Common association algorithms are:</P>
+
+<UL>
+   <LI><I>Joint Likelihood:</I> This variation on the
+   Multi-Hypothesis Track Splitting algorithm above extends to
+   multiple tracks.
+   
+   <LI><I>Joint Probabilistic Data Association:</I> This algorithm
+   updates the filter for each track based on a joint probability of
+   association between the latest set of measurements and each track.
+   
+   <LI><I>Multiple Hypothesis Joint Probabilistic: </I>This variation
+   of the Optimal Bayesian Filter uses joint probabilities among
+   multiple track associations for multiple hypotheses. It is by far
+   the most computationally complex algorithm, and requires
+   intelligent pruning techniques. It is NP-complete, which provides
+   considerable incentive to find non-exhaustive ways to search the
+   space of possible associations to maximize the joint probability.
+   One data association optimization technique based on iterative
+   relaxation is presented by Pattipati et al. in [114].
+</UL>
+
+<P>&nbsp;Some comparisons of target tracking data association
+techniques are provided by Drummond [115], Bar-Shalom and Fortmann
+[117], and Deb et al. [116].</P>
+
+<P>For tracking the positions of people walking around in a room for
+applications such as surveillance, image-difference is used to
+segment the person's body from the background, and their measured
+position is determined from room and camera geometry. For data
+association, object position as well as color is exploited as state
+variables. This allows objects to cross directly in front of one
+another without losing track of which is which after they separate.
+One may measure the color histogram difference, H(I,M), between each
+new measured object and the previously detected target data using
+Swain and Ballard's histogram intersection technique [111]:</P>
+
+<P>&nbsp;<IMG SRC="eq6_1.jpg" WIDTH=183 HEIGHT=77 X-SAS-UseImageWidth
+X-SAS-UseImageHeight ALIGN=bottom></P>
+
+<P>&nbsp;where <I>Ij </I>is the jth color histogram bin of an object
+in the current frame, and <I>Mj</I> is the <I>j</I>th color bin of a
+tracked object in the previous frame. 64 bins are currently used in
+each color histogram, which provides sufficient resolution to
+differentiate most colored objects, such as peoples' clothing, from
+one another.</P>
+
+<P>In order to obtain a distance metric for data association that
+incorporates both the histogram intersection and position difference,
+we calculate the joint probability of these two measurements. Let us
+define <I>Xi,j </I>as the event that a detected object i is actually
+the previous object <I>j</I>, <I>Yi,j</I> as the value of the
+histogram intersection between objects <I>i</I> and <I>j</I>, and
+<I>Zi,j</I> as the distance between the position of object <I>i</I>
+and the predicted position of object <I>j</I>. One may express the
+probability of a correct match conditioned on the statistically
+independent measures of color and position as</P>
+
+<P>&nbsp;<IMG SRC="eq6_2.jpg" WIDTH=323 HEIGHT=52 X-SAS-UseImageWidth
+X-SAS-UseImageHeight ALIGN=bottom></P>
+
+<P>This probability may be incorporated into association/tracking
+algorithms such as nearest-neighbor, joint probabilistic data
+association, and multi-hypothesis track splitting. For
+person-tracking, the color/position metric has been found to be good
+enough for a simple winner-take-all nearest-neighbor data association
+scheme to suffice. If one assumes equal prior probabilities for all
+<I>Xi,j</I>, one may simplify the nearest neighbor decision process
+to one that seeks to maximize the value
+<I>Fy</I>(<I>Yi,j</I>)<I>Fz</I>(<I>Zi,j</I>), where</P>
+
+<P>&nbsp;<IMG SRC="eq6_3.jpg" WIDTH=158 HEIGHT=56 X-SAS-UseImageWidth
+X-SAS-UseImageHeight ALIGN=bottom></P>
+
+<P>and</P>
+
+<P>&nbsp;<IMG SRC="eq6_4.jpg" WIDTH=160 HEIGHT=58 X-SAS-UseImageWidth
+X-SAS-UseImageHeight ALIGN=bottom></P>
+
+<P><I>Fy</I>(<I>Yi,j</I>) and <I>Fz</I>(<I>Zi,j</I>) are
+monotonically decreasing functions of the color histogram
+intersection and position differences, respectively. These functions
+may be generated by tasking statistics on typical color differences
+and position distances between the same and different objects in
+successive frames. By fitting the data to a parameterized model, such
+as a decaying exponential curve, a general matching function with
+appropriate weights for color and position may be obtained.</P>
+
+<P>When tracking faces, similar methods may be used for data
+association. However, since most faces are quite similar in color,
+and intensity may vary as the person moves through different lighting
+angles, position is the most reliable state variable. For this
+dissertation project, only position information was used for data
+association between detected faces and targets being tracked. Using
+the estimated measurement error covariance in polar coordinates, the
+covariance matrix was transformed to Cartesian coordinates (linear
+assumptions were made due to very small angle errors) and the
+Mahalanobis distance was used to calculate the distance between new
+measurements and previously tracked targets. For this project, a
+simple nearest-neighbor assignment policy was used for target
+measurement updates.</P>
+
+<P>&nbsp;</P>
+
+<H3>6.3 Kalman Filter</H3>
+
+<P>In target tracking applications, the most popular methods for
+updating target positions incorporate variations of the Kalman
+filter/state estimator [117,118,119]. The Kalman filter assumes that
+the dynamics of the target can be modeled, and that noise affecting
+the target dynamics and sensor data is stationary and zero mean. In
+cases where the target is actively maneuvering, the plant disturbance
+is not zero mean, and the performance of the Kalman filter degrades.
+To compensate, it is important to minimize sensor noise, such that
+the sensor data gains will be higher and the reliance on the model
+dynamics will be reduced. This is of considerable importance when
+tracking people, whose erratic movements are poorly matched to any
+model of more than second order.</P>
+
+<P>&nbsp;</P>
+
+<H4>6.3.1 Modeling the Target</H4>
+
+<P>Since the face is attached to the rest of the human body, its
+dynamics are directly related to those of the body. Head movements
+may be thought of as zero-mean random fluctuations with respect to
+the body position, so the same state model used for tracking the
+entire body has also been used for tracking head position. A human
+being has a complex locomotion system, which poses serious challenges
+in modeling. Rather than analyzing properties of the human gait, one
+may assume a drastically simplified model of the target as a mass
+under the influence of two forces: average leg force and friction.
+Leg force is used to push the body into motion, and friction comes
+from the inefficiency of the human body maintaining this motion.
+Intra-stride dynamics and rotation of the body, assuming that the
+body may move in any direction, are constrained only by leg force and
+inertia. A block diagram of the target model is given in Figure 51.
+</P>
+
+<P><B><A HREF="fig51.jpg">Figure 51: Model of Target Dynamics</A></B>
+</P>
+
+<P>&nbsp;This model is generic for any target mass with linear
+friction and force response. Actual forces and movements of the
+system are in three dimensions, but for now only one dimension of
+motion, x, will be considered. A target mass of 72.57 kg (160 lbs)
+and a friction coefficient of 100 N/m/s was assumed. This gives the
+continuous state space matrices</P>
+
+<P>&nbsp;<IMG SRC="eq6_5.jpg" WIDTH=155 HEIGHT=54 X-SAS-UseImageWidth
+X-SAS-UseImageHeight ALIGN=bottom></P>
+
+<P>where</P>
+
+<P>&nbsp;<IMG SRC="eq6_6.jpg" WIDTH=329 HEIGHT=51 X-SAS-UseImageWidth
+X-SAS-UseImageHeight ALIGN=bottom></P>
+
+<P>For the discrete computations of the Kalman filter, one needs a
+discrete state-space representation of the target, calculated for a
+sample rate of 5Hz as:</P>
+
+<P>&nbsp;<IMG SRC="eq6_7.jpg" WIDTH=304 HEIGHT=59 X-SAS-UseImageWidth
+X-SAS-UseImageHeight ALIGN=bottom></P>
+
+<P>The objective of using this model to remove measurement noise with
+a Kalman filter/state estimator. The Kalman filter used in this
+system is identical to a current observer, except that the feedback
+gain vector G varies with time, and is calculated to provide
+optimally low error. This optimal solution incorporates the target
+model, state disturbances, and estimates of sensor noise variance.
+Figure 52 shows the model of the target including the state
+disturbance noise, W(k) and the sensor noise, V(k).</P>
+
+<P><B><A HREF="fig52.jpg">&nbsp;Figure 52: Noise Entering the
+Plant</A></B></P>
+
+<P>&nbsp; Note that in this application, the input U(k), or leg
+force, cannot be measured by the system, and must be treated as part
+of the disturbance. Disturbance models for the Kalman filter assume
+stationary, zero mean, Gaussian noise distributions. While the human
+leg force may not be stationary, the Kalman filter may still
+compensate for its effects. For indoor applications, it is rare that
+a human being will accelerate faster than 0.3 m/s2. For the 72.57 kg
+model, this would require a 21.8 N force. Thus the variance of the
+input force is estimated to be approximately (21.8)2 = 474 N2. For
+visual sensor noise, sensor covariance changes depending on the
+position and range of the speaker, and is recalculated for every
+target during each frame. The covariance of <I>W</I>(<I>k</I>),
+assumed to be constant, shall be assigned to the variable <I>Rw</I>,
+and the covariance of <I>V</I>(<I>k</I>) shall be assigned to the
+variable <I>Rv</I>(<I>k</I>).</P>
+
+<P>&nbsp;</P>
+
+<H4>6.3.2 Estimation Update</H4>
+
+<P>This Kalman filter is based on a current observer state estimator
+that provides an estimate, <I>q</I>(<I>k</I>), of the current system
+state <I>x</I>(<I>k</I>), as well as a prediction, <IMG
+SRC="eq6_8.jpg" WIDTH=59 HEIGHT=17 X-SAS-UseImageWidth
+X-SAS-UseImageHeight ALIGN=bottom>, of the state at sample
+<I>k</I>+1. From [120], the filter equations are</P>
+
+<P>&nbsp;<IMG SRC="eq6_9.jpg" WIDTH=231 HEIGHT=45 X-SAS-UseImageWidth
+X-SAS-UseImageHeight ALIGN=bottom></P>
+
+<P>Kalman filter design develops the observer sensor feedback matrix
+<I>G</I>(<I>k</I>) such that the values of <I>G</I>(<I>k</I>) lead to
+an optimal estimator, where the expected values of the squared
+estimation errors are minimized. The determination of
+<I>G</I>(<I>k</I>) is recursive, and must be calculated at run-time
+for this application since the sensor covariance <I>Rv</I>(<I>k</I>)
+changes depending on target position. From [120], the following
+equations are used to find <I>G</I>(<I>k</I>):</P>
+
+<P>&nbsp;<IMG SRC="eq6_10.jpg" WIDTH=259 HEIGHT=79
+X-SAS-UseImageWidth X-SAS-UseImageHeight ALIGN=bottom></P>
+
+<P>Where <I>M</I>(<I>k</I>) is the covariance of the prediction
+errors, <I>P</I>(<I>k</I>) is the covariance of the estimation
+errors, and <I>B1</I> = <I>B</I>. When a new target is detected and
+its tracked path is initialized, the values of <I>q</I>(<I>k</I>) and
+<I>q</I>~(<I>k</I>) are set equal to the current sensor measurement
+and <I>M</I>(<I>k</I>) is set equal to the identity matrix.</P>
+
+<P>If the measurement error for each dimension of movement (x, y, and
+z) were statistically independent, then a separate Kalman filter
+state estimator could be used for each dimension. Unfortunately, the
+errors are not statistically independent, primarily because errors in
+depth perception in polar coordinates cause a measurement error that
+typically exists along a diagonal when transformed to Cartesian
+coordinates. For this reason, the three dimensions must be combined
+in the vector , increasing the size of the vectors and matrices that
+make up the filter. The new state representation becomes:</P>
+
+<P>&nbsp;<IMG SRC="eq6_11.jpg" WIDTH=387 HEIGHT=325
+X-SAS-UseImageWidth X-SAS-UseImageHeight ALIGN=bottom></P>
+
+<P>&nbsp;With this increase in dimensionality, <I>P</I>(<I>k</I>) and
+<I>M</I>(<I>k</I>) become 6 x 6 matrices, and <I>Rw</I> and
+<I>Rv</I>(<I>k</I>) become 3 x 3 matrices.</P>
+
+<P><B><A HREF="fig53.jpg">Figure 53: Tracking a Person
+Walking</A></B></P>
+
+<P><B><A HREF="fig54.jpg">Figure 54: Position Estimate while Tracking
+a Face</A></B></P>
+
+<P><B><A HREF="fig55.jpg">Figure 55: Target Tracking of a Face in
+3D</A></B></P>
+
+<P>Figure 53 shows the Kalman filter tracking a person walking. The
+rectangle shows the bounding box around the pixels extracted from the
+background, and the crosshairs show the projection of the estimated
+target state onto the current view. Here, color histogram data and
+position are used to associate regions measured by the vision system
+with active tracks. New tracks are created when new visual targets do
+not match any existing tracks with more than an acceptable threshold
+of probability, and tracks that have not been matched to new target
+data over an arbitrary time limit are deleted. An overview of
+applicable track initiation and pruning schemes is described in
+[117]. Figure 54 shows a screen-shot of the computer program while
+tracking a face. The rectangle around the face indicates the largest
+region of "noisy face pixels;" the red crosshairs mark position
+estimate from the Kalman filter, and the green vertical line
+indicates the angle of peak sound intensity. Kalman filter output
+results for tracking a face in three dimensions are given in Figure
+55. The Kalman filter suppresses sensor noise as well as occasional
+incorrect association of targets.</P>
+
+<P>The target tracking methods described in this chapter allow noisy
+sensor measurement to be combined into more reliable estimates of
+target positions. The model of human motion dynamics and in Cartesian
+coordinates provides the basis for filtering and smoothing the sensor
+data. Target position data may then be used for camera control or for
+intelligent room applications. However, question of which target to
+follow and how to look for targets still remains. In the
+<A HREF="behavior.htm">next chapter</A>, the foundations for
+behavior-based control will be presented.</P>
+
+<P>&nbsp;</P>
+
+<P>&nbsp;</P>
+
+<P>&nbsp;</P>
+
+<P>&nbsp;</P>
+</BODY>
+</HTML>

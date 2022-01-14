@@ -1,0 +1,468 @@
+<!--This file created 10:02 PM  8/3/97 by Claris Home Page version 2.0-->
+<HTML>
+<HEAD>
+   <TITLE>Sensor Fusion</TITLE>
+   <META NAME=GENERATOR CONTENT="Claris Home Page 2.0">
+   <X-SAS-WINDOW TOP=52 BOTTOM=456 LEFT=8 RIGHT=645>
+</HEAD>
+<BODY BGCOLOR="#FFFFFF">
+
+<H2>5 Audio-Visual Sensor Fusion for Face Detection</H2>
+
+<P>Fusion of multimodal data is far less common than fusion of data
+from the same sensor type. At present, little work in the literature
+describes the actual fusion of passive sound and vision. Mak and
+Allen [29] and Duchnowski et al. [28] describe the integration of lip
+motion and sound data for improved speech recognition. In related
+work, Bub, Hunke, and Waibel [51] use visual tracking of a human face
+to cue an acoustic beamforming algorithm, which reinforces the voice
+signal from an array of fifteen microphones. Each of these systems
+assumes that only one person is in the camera view, since they cannot
+distinguish which person is speaking. Takahashi and Yamasaki [52]
+demonstrate the calculation of sound source localization by using
+visual motion data to cue an adaptive FIR filter processing the
+signal from six microphones. Wasson [49] detects multiple sound
+targets and visual targets separately, associating them with one
+another at the symbolic level. Sound targets detected outside the
+camera field-of-view result in camera motion to confirm the target
+positions visually. These works suggest that directional sound and
+directional vision information may be used together for better
+localization of speech activity.</P>
+
+<P>&nbsp;</P>
+
+<H3>5.1 Detecting Noisy Face Pixels</H3>
+
+<P>Rather than associating sound and vision at the symbolic level,
+one may fuse this data at the pixel level. Given a spatially
+distributed cellular representation of the world such as an image,
+one may project sound information onto it and detect human activity
+using sound and image measurements simultaneously. In effect, the
+detector will look for "noisy" face-colored pixels. Figure 43
+illustrates how 1-D sound localization data (normalized onset
+correlation output) mapped to the same coordinates as the current
+camera image allows pixel-level fusion of these two sensing
+modalities. The main objective of this research is to use multimodal
+data at an early level of processing to improve the reliability of
+localization of the person speaking. If one combines sound
+localization evidence supporting the proposition of a location in the
+world being occupied by a person with visual evidence in support of
+that location being occupied, a more accurate detector may be
+designed.</P>
+
+<P><B><A HREF="fig43.jpg">&nbsp;Figure 43: Pixel-Level Audiovisual
+Fusion for Detecting a Talking Face</A></B></P>
+
+<P><B><A HREF="fig44.jpg">&nbsp;Figure 44: Images from Sound
+Localization Data</A></B></P>
+
+<P>&nbsp;With only two microphones, onset correlation provides a 1-D
+function of sound power versus azimuth, since interaural delay and
+azimuth are related by <A HREF="eq3_2.jpg">Equation (1)</A>. Figure
+44a shows this function mapped to a two-dimensional "sound image,"
+where image brightness indicates the level of onset correlation. In
+this example, it has been assumed that elevation is small enough that
+each column of pixels relates directly to an interaural delay value.
+(The actual locus of points defined by a given interaural delay is a
+hyperbolic cone, but this is approximated as a vertical plane in
+<A HREF="eq3_2.jpg">Equation (1)</A>.) If two orthoganal pairs of
+microphones are used for onset correlation, then sound energy may
+also be related to elevation. Figure 44b shows how onset correlation
+plots for azimuth and elevation may be combined to create a 2-D image
+of sound power. In this illustration, correlation values for
+elevation and azimuth are multiplied together to form each pixel in
+the sound image, thus highlighting the area where sound power from
+each direction intersects. (Onset correlation values from two pairs
+of microphones are statistically independent between azimuth and
+elevation. This means that the probability that a sound originates at
+a given azimuth and elevation may be calculated from the product of
+the individual azimuth and elevation probabilities for the two onset
+correlation plots. Multiplication of the raw correlation values
+between the independent measurements is not exacly the same as
+multiplying their probability densities conditional on the presense
+of a sound target, but is close enough for illustration purposes
+intended in Figure 44.) Only one pair of microphones was available
+for real-time processing for the implementation done in this
+research, so only the 1-D sound image is used in the remainder of
+this dissertation.</P>
+
+<P>&nbsp;</P>
+
+<H3>5.2 Common Coordinates</H3>
+
+<P>Sound localization and image pixel information both involve the
+angle at which target data arrives at the sensor. If one positions
+the cameras and microphones to share the same origin, then these
+sensors may use the same polar coordinate system.
+<A HREF="fig2.jpg">Figure 2</A> illustrates the placement of the
+wide-angle camera between the microphones. Naturally, both cameras
+may not be placed at the origin, so the pan-tilt-zoom camera is
+mounted about 15 cm above the wide-angle camera. Note also that the
+camera lens is horizontally offset about 3 cm from the center of the
+camera, and that the optical axis does not run through the pivot
+point. At close range, this less-than-ideal geometry adversely
+affects the accuracy of position measurements and movements, but for
+more distant targets, it may be ignored. Pixel-level fusion between
+two cameras, as performed in applications such as stereo vision,
+requires very precise alignment of optics. Sound localization data,
+however, is much lower resolution than the image data, requiring less
+precise alignment for fusion to take place and allowing a common
+origin to be assumed for each. It will also be assumed that the
+target's angle of elevation will be small enough that the estimation
+of sound azimuth will be approximately equal to the visually measured
+azimuth in polar coordinates.</P>
+
+<P><B><A HREF="fig45.jpg">&nbsp;Figure 45: Audiovisual Fusion
+Geometry</A></B></P>
+
+<P>&nbsp;To create a 1-D sound image that is registered with the
+current camera image, the pixel column number, <I>m</I>, must be
+mathematically related to the corresponding interaural delay,
+<I>dm</I>. This requires knowledge of the camera pan angle in radians
+(<IMG SRC="eq5_1.gif" WIDTH=12 HEIGHT=14 X-SAS-UseImageWidth
+X-SAS-UseImageHeight ALIGN=bottom><I>pan</I>), camera field-of-view
+in radians (<I>fov</I>), and the image width in pixels (<I>M</I>).
+Figure 45 shows the relationship between the camera pan angle, which
+is measured with respect to the the x axis, and sound angle, <IMG
+SRC="eq5_1.gif" WIDTH=12 HEIGHT=14 X-SAS-UseImageWidth
+X-SAS-UseImageHeight ALIGN=bottom>m, which is measured relative to
+the y axis (relative to the center of the field of view). For a given
+image column <I>m</I>, the sound angle <IMG SRC="eq5_1.gif" WIDTH=12
+HEIGHT=14 X-SAS-UseImageWidth X-SAS-UseImageHeight
+ALIGN=bottom><I>m</I> is calculated as</P>
+
+<P>&nbsp;<IMG SRC="eq5_2.jpg" WIDTH=215 HEIGHT=90 X-SAS-UseImageWidth
+X-SAS-UseImageHeight ALIGN=bottom></P>
+
+<P>This sound angle is then used to calculate the corresponding
+interaural delay, <I>dm</I>, as</P>
+
+<P>&nbsp;<IMG SRC="eq5_3.jpg" WIDTH=171 HEIGHT=54 X-SAS-UseImageWidth
+X-SAS-UseImageHeight ALIGN=bottom></P>
+
+<P>where <I>F</I>samp is the sampling frequency (44.1 kHz),
+<I>D</I>mikes is the the spacing betwen the microphones (0.30 m), and
+<I>V</I>sound is the speed of sound (approximately 344 m/s). A
+similar calculation could be used for elevation data, if available,
+using image rows and camera tilt.</P>
+
+<P>&nbsp;Each column of the resulting sound image is set to the value
+of the onset correlation, <IMG SRC="eq5_4.jpg" WIDTH=47 HEIGHT=20
+X-SAS-UseImageWidth X-SAS-UseImageHeight ALIGN=bottom>, for the
+corresponding interaural delay. This image provides a measure of
+acoustic power relating to each location in the camera image.
+However, in order to display the data as a gray-scale image like
+<A HREF="fig44.jpg">Figure 44</A>, it must be normalized by dividing
+through by its maximum value. Such normalization is also used to
+incorporate the sound data feature into the classifier described in
+the next section.</P>
+
+<P>&nbsp;</P>
+
+<H3>5.3 A Bayesian Multimodal Pixel Classifier</H3>
+
+<P>A statistical classifier was designed to classify image pixels as
+"Talking Face" or "Background" using the color and sound features
+described in the previous two chapters. From Therrien [66], the
+decision rule for a two-class minimum Bayes risk classifier is
+expressed in terms of the probability density likelihood ratio as
+</P>
+
+<P><IMG SRC="eq5_5.jpg" WIDTH=288 HEIGHT=101 X-SAS-UseImageWidth
+X-SAS-UseImageHeight ALIGN=bottom>(7)</P>
+
+<P>where</P>
+
+<P><IMG SRC="eq5_6.jpg" WIDTH=159 HEIGHT=46 X-SAS-UseImageWidth
+X-SAS-UseImageHeight ALIGN=bottom></P>
+
+<P>The terms <IMG SRC="eq5_7.jpg" WIDTH=78 HEIGHT=19
+X-SAS-UseImageWidth X-SAS-UseImageHeight ALIGN=bottom>and <IMG
+SRC="eq5_8.jpg" WIDTH=79 HEIGHT=20 X-SAS-UseImageWidth
+X-SAS-UseImageHeight ALIGN=bottom>are the probability densities of
+the measurement vector <IMG SRC="eq5_9.gif" WIDTH=15 HEIGHT=15
+X-SAS-UseImageWidth X-SAS-UseImageHeight ALIGN=bottom>for classes
+<I>w</I>1 and <I>w</I>2, respectively. Pr[<I>w</I>1] and
+Pr[<I>w</I>2] denote the prior probabilities of the two classes, and
+<I>C</I>ij is the cost of deciding on class<I> w</I>i when <IMG
+SRC="eq5_9.gif" WIDTH=15 HEIGHT=15 X-SAS-UseImageWidth
+X-SAS-UseImageHeight ALIGN=bottom>is actually from class <I>w</I>j.
+</P>
+
+<P>&nbsp;For a "noisy face pixel" detector, the measurement vector
+<IMG SRC="eq5_9.gif" WIDTH=15 HEIGHT=15 X-SAS-UseImageWidth
+X-SAS-UseImageHeight ALIGN=bottom>may be broken down into two
+vectors: <IMG SRC="eq5_10.gif" WIDTH=13 HEIGHT=15 X-SAS-UseImageWidth
+X-SAS-UseImageHeight ALIGN=bottom>, the chromaticity of the pixel
+under consideration, and <IMG SRC="eq5_11.gif" WIDTH=12 HEIGHT=12
+X-SAS-UseImageWidth X-SAS-UseImageHeight ALIGN=bottom>, the onset
+correlation strength corresponding to that pixel angle. Sound and
+color are assumed to be statistically independent features, allowing
+their joint probability density to be expressed as the product of two
+independent densities. For the two classes, "Talking Face" (<I>F</I>)
+and "Background" (<I>B</I>), one may write these density functions as
+</P>
+
+<P><IMG SRC="eq5_12.jpg" WIDTH=233 HEIGHT=27 X-SAS-UseImageWidth
+X-SAS-UseImageHeight ALIGN=bottom>(8)</P>
+
+<P>and</P>
+
+<P><IMG SRC="eq5_13.jpg" WIDTH=235 HEIGHT=23 X-SAS-UseImageWidth
+X-SAS-UseImageHeight ALIGN=bottom>(9)</P>
+
+<P>The probability density function for the chromaticity of face
+pixels, <IMG SRC="eq5_14.jpg" WIDTH=69 HEIGHT=20 X-SAS-UseImageWidth
+X-SAS-UseImageHeight ALIGN=bottom>, was defined by a Gaussian
+distribution in <A HREF="eq4_18.jpg">Equation (6)</A> as discussed in
+<A HREF="vision.htm">Chapter 4</A>. The chromaticity density function
+for background pixels, <IMG SRC="eq5_15.jpg" WIDTH=66 HEIGHT=23
+X-SAS-UseImageWidth X-SAS-UseImageHeight ALIGN=bottom>, depends on
+the particular room and view where the image was taken. Since this
+cannot always be known a priori, it may be approximated by a uniform
+distribution in the color space, with a constant density value <IMG
+SRC="eq5_16.jpg" WIDTH=22 HEIGHT=17 X-SAS-UseImageWidth
+X-SAS-UseImageHeight ALIGN=bottom>.</P>
+
+<P>&nbsp;The sound onset correlation feature must now be defined. In
+the previous section, the onset correlation, <IMG SRC="eq5_17.jpg"
+WIDTH=42 HEIGHT=17 X-SAS-UseImageWidth X-SAS-UseImageHeight
+ALIGN=bottom>, was related to the image pixel column <I>m</I> by
+interaural delay,</P>
+
+<P><IMG SRC="eq5_18.jpg" WIDTH=332 HEIGHT=110 X-SAS-UseImageWidth
+X-SAS-UseImageHeight ALIGN=bottom>(10)</P>
+
+<P>The cross-correlation value itself is awkward to use directly as a
+feature for statistical classification since it is highly sensitive
+to variations in gain and speaker volume. A normalized feature may be
+found by dividing by the sum of the correlation values over the valid
+interaural delay range:</P>
+
+<P><IMG SRC="eq5_19.jpg" WIDTH=92 HEIGHT=67 X-SAS-UseImageWidth
+X-SAS-UseImageHeight ALIGN=bottom>(11)</P>
+
+<P>Other possible normalizations include scaling by the dynamic range
+of <IMG SRC="eq5_17.jpg" WIDTH=42 HEIGHT=17 X-SAS-UseImageWidth
+X-SAS-UseImageHeight ALIGN=bottom>:</P>
+
+<P><IMG SRC="eq5_20.jpg" WIDTH=194 HEIGHT=46 X-SAS-UseImageWidth
+X-SAS-UseImageHeight ALIGN=bottom>(12)</P>
+
+<P>or dividing by the maximum:</P>
+
+<P><IMG SRC="eq5_21.jpg" WIDTH=111 HEIGHT=43 X-SAS-UseImageWidth
+X-SAS-UseImageHeight ALIGN=bottom>(13)</P>
+
+<P>Since the onset signal value is always non-negative, the
+cross-correlation value is always non-negative, and thus for all of
+these functions,</P>
+
+<P><IMG SRC="eq5_22.jpg" WIDTH=57 HEIGHT=16 X-SAS-UseImageWidth
+X-SAS-UseImageHeight ALIGN=bottom>.</P>
+
+<P>&nbsp;The probability density functions <IMG SRC="eq5_23.jpg"
+WIDTH=67 HEIGHT=21 X-SAS-UseImageWidth X-SAS-UseImageHeight
+ALIGN=bottom>and <IMG SRC="eq5_24.jpg" WIDTH=65 HEIGHT=21
+X-SAS-UseImageWidth X-SAS-UseImageHeight ALIGN=bottom>could be
+modeled for any of these representations of <IMG SRC="eq5_11.gif"
+WIDTH=12 HEIGHT=12 X-SAS-UseImageWidth X-SAS-UseImageHeight
+ALIGN=bottom>, and statistics gathered from experimental data to find
+the corresponding model parameters. However, a different approach was
+used in this work. The likelihood ratio</P>
+
+<P><IMG SRC="eq5_25.jpg" WIDTH=75 HEIGHT=50 X-SAS-UseImageWidth
+X-SAS-UseImageHeight ALIGN=bottom></P>
+
+<P>which represents the degree of belief in the "Talking Face" class
+given sound information, should be lowest for <IMG SRC="eq5_11.gif"
+WIDTH=12 HEIGHT=12 X-SAS-UseImageWidth X-SAS-UseImageHeight
+ALIGN=bottom>= 0, highest for <IMG SRC="eq5_11.gif" WIDTH=12
+HEIGHT=12 X-SAS-UseImageWidth X-SAS-UseImageHeight ALIGN=bottom>= 1,
+and a monotonically increasing function in between. Since it is
+difficult to fully characterize the exact probability density
+functions given changes in range to the target and other variables, a
+linear approximation for the likelihood ratio may be specified as
+</P>
+
+<P><IMG SRC="eq5_26.jpg" WIDTH=110 HEIGHT=50 X-SAS-UseImageWidth
+X-SAS-UseImageHeight ALIGN=bottom>(14)</P>
+
+<P>&nbsp;The minimum Bayes risk decision rule in Equation (7) is now
+rewritten for the talking face detector. Substituting equations (8)
+and (9) into the expression for the likelihood ratio one obtains:
+</P>
+
+<P><IMG SRC="eq5_27.jpg" WIDTH=155 HEIGHT=120 X-SAS-UseImageWidth
+X-SAS-UseImageHeight ALIGN=bottom></P>
+
+<P>Next, Equation (6) is substituted for <IMG SRC="eq5_14.jpg"
+WIDTH=69 HEIGHT=20 X-SAS-UseImageWidth X-SAS-UseImageHeight
+ALIGN=bottom>, kxB is substituted for <IMG SRC="eq5_15.jpg" WIDTH=66
+HEIGHT=23 X-SAS-UseImageWidth X-SAS-UseImageHeight ALIGN=bottom>, and
+Equation (14) is used to replace the remaining terms, resulting in
+the decision rule</P>
+
+<P><IMG SRC="eq5_28.jpg" WIDTH=434 HEIGHT=98 X-SAS-UseImageWidth
+X-SAS-UseImageHeight ALIGN=bottom>(15)</P>
+
+<P>Factoring out constants for inclusion in the decision threshold,
+one obtains</P>
+
+<P><IMG SRC="eq5_29.jpg" WIDTH=278 HEIGHT=93 X-SAS-UseImageWidth
+X-SAS-UseImageHeight ALIGN=bottom>(16)</P>
+
+<P>where</P>
+
+<P><IMG SRC="eq5_30.jpg" WIDTH=381 HEIGHT=54 X-SAS-UseImageWidth
+X-SAS-UseImageHeight ALIGN=bottom></P>
+
+<P>Because the costs Cij, prior probabilities, or constants
+<I>kxB</I> and <I>ks</I> may not be known, one may determine the
+decision threshold <I>T</I> empirically by running the system and
+manually adjusting <I>T</I> until the best detector performance is
+achieved. This technique was used for this dissertation project,
+where the number of false positive and false negative classifications
+were easily observable while the threshold was adjusted.</P>
+
+<P>&nbsp;</P>
+
+<H3>5.4 Performance Benefit</H3>
+
+<P>The addition of the sound localization feature to the face tone
+information reduces the number of false positive detections of
+talking face pixels by reducing the likelihood ratio of pixels that
+do not correspond to the direction of sound. For the binaural case
+considered in this dissertation, only one direction of sound
+localization, azimuth, is available, so pixels in the image are
+biased on a column-by-column basis. This still results in a
+significant reduction in false positive detections since the image is
+wider than it is tall and multiple faces usually appear beside one
+another. Any reduction in the number of pixels marked as skin-colored
+reduces the number of regions that must be analyzed further to
+determine their acceptability as face regions. In fact, it reduces
+the number of segmented regions to the point that the largest blob of
+detected pixels is almost always the speaker's face.&nbsp;</P>
+
+<P>The <I>Bhattacharyya distance</I> [66] may be used to bound the
+probability of error on the classifier and quantify the performance
+benefit of adding the sound feature. The Bhattacharyya distance is a
+measure of separability between classes based on their probability
+densities, and is defined as</P>
+
+<P><IMG SRC="eq5_31.jpg" WIDTH=278 HEIGHT=42 X-SAS-UseImageWidth
+X-SAS-UseImageHeight ALIGN=bottom></P>
+
+<P>A related quantity called the <I>Bhattacharyya coefficient</I> is
+defined as</P>
+
+<P><IMG SRC="eq5_32.jpg" WIDTH=298 HEIGHT=34 X-SAS-UseImageWidth
+X-SAS-UseImageHeight ALIGN=bottom>(17)</P>
+
+<P>For a minimum Bayes error classifier (Equation (7) with costs
+<I>C</I>ij removed) the probability of error is bound by the relation
+</P>
+
+<P><IMG SRC="eq5_33.jpg" WIDTH=175 HEIGHT=24 X-SAS-UseImageWidth
+X-SAS-UseImageHeight ALIGN=bottom>(18)</P>
+
+<P>called the Bhattacharyya bound. For the talking face pixel
+detector, substituting the joint probability densities from Equations
+(8) and (9) into (17) yields</P>
+
+<P><IMG SRC="eq5_34.jpg" WIDTH=374 HEIGHT=125 X-SAS-UseImageWidth
+X-SAS-UseImageHeight ALIGN=bottom></P>
+
+<P>Since <IMG SRC="eq5_35.jpg" WIDTH=171 HEIGHT=21
+X-SAS-UseImageWidth X-SAS-UseImageHeight ALIGN=bottom>shows the sound
+feature's contribution to lowering the bound on the probability of
+error.</P>
+
+<P>&nbsp;A closed form solution for Equation (17) for Gaussian
+probability densities is given in [66] as</P>
+
+<P><IMG SRC="eq5_36.jpg" WIDTH=411 HEIGHT=56 X-SAS-UseImageWidth
+X-SAS-UseImageHeight ALIGN=bottom></P>
+
+<P>Data from onset correlation experiments was manually sorted into
+face and background samples, and the feature was generated using
+Equation (13). The density functions and were matched to Gaussian
+curves with sample means m1 = 0.7582 and m2 = 0.2785, and sample
+variances K1 = 0.0439 and K2 = 0.0253, respectively. This resulted in
+a calculated of 0.4270, meaning that the addition of sound
+information to the original color classifier reduced the bound on the
+probability of error by 57.3%. If two pairs of microphones were used
+in orthogonal directions, one for azimuth and another for elevation,
+the effect of would be squared, with a total error bound reduction of
+81.7%.</P>
+
+<P>&nbsp;For the color feature , the statistics of foreground and
+background pixel samples in several images were processed to
+calculate . The chromaticity means for face samples and office
+background samples were</P>
+
+<P><IMG SRC="eq5_37.jpg" WIDTH=231 HEIGHT=55 X-SAS-UseImageWidth
+X-SAS-UseImageHeight ALIGN=bottom></P>
+
+<P>respectively, with covariances</P>
+
+<P><IMG SRC="eq5_38.jpg" WIDTH=363 HEIGHT=56 X-SAS-UseImageWidth
+X-SAS-UseImageHeight ALIGN=bottom></P>
+
+<P>This resulted in a <IMG SRC="eq5_39.gif" WIDTH=21 HEIGHT=17
+X-SAS-UseImageWidth X-SAS-UseImageHeight ALIGN=bottom>value of
+0.5735. If one assumes that the prior probabilities of face pixels
+and background pixels are 1/8 and 7/8, respectively, the
+Bhattacharyya bound on the probability of error of is
+(1/8)1/2(7/8)1/2(0.5735) = 0.1897 when using color information alone.
+When the classifier also incorporates the sound data, the
+Bhattacharyya bound drops to (1/8)1/2(7/8)1/2(0.5735)(0.4270) =
+0.0810, meaning the classifier will provide the correct answer at
+least 91.9% of the time.</P>
+
+<P>&nbsp;Figure 46 shows the detection of face pixels using both
+sound and skin tone. Note how many skin-colored background pixels
+such as those detected in Figure 41 have been eliminated in Figure
+46. In this way, sound information is used to simplify the visual
+task and improve performance. Figure 47 shows a similar frame after 3
+x 3 filtering and region-growing to reduce noise and delineate the
+face region. Figure 48 shows two people within the camera's view,
+with the person on the right speaking. Figure 49 shows the detected
+skin-colored face pixels that correspond to the direction of sound.
+This method allows non-speaking faces to be eliminated from
+consideration without detecting and processing the regions they
+occupy.</P>
+
+<P><B><A HREF="fig4647.jpg">Figure 46: Fusion of Sound Localization
+with Skin Tone</A></B></P>
+
+<P><B><A HREF="fig4647.jpg">Figure 47: Target Detection after
+Filtering and Segmentation</A></B></P>
+
+<P><B><A HREF="fig4849.jpg">Figure 48: Color Image</A></B></P>
+
+<P><B><A HREF="fig4849.jpg">Figure 49: Detection of Person
+Speaking</A></B></P>
+
+<P>&nbsp;This chapter has demonstrated how audio and visual
+information may be combined during the classification of pixels.
+After segmentation and region growing, the next task is to determine
+which of the remaining regions is a face. One may use size, bounding
+box aspect ratio, region moments, or other classifiers to make this
+determination. A person's arm, for example, may appear in the image
+and take up as much image area as the face. Region moments and
+bounding box information can be used to dismiss such a region.
+Ideally, background objects above and below the face will not be
+skin-colored, simplifying the region selection task. Otherwise, a
+more sophisticated face detector might be used, such as one based on
+pattern analysis, or complementary information such as that from an
+orthogonal microphone pair will be required. For this dissertation
+project, however, simply choosing the largest segmented region (e.g.,
+the box in Figure 47) was a surprisingly effective means of finding
+the speaker's face for the requirements of camera control.</P>
+
+<P><A HREF="tracking.htm">&nbsp;Next Chapter</A></P>
+
+<P>&nbsp;</P>
+</BODY>
+</HTML>

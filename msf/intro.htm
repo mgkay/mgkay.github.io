@@ -1,0 +1,351 @@
+<!--This file created 9:50 PM  8/3/97 by Claris Home Page version 2.0-->
+<HTML>
+<HEAD>
+   <TITLE>Intro</TITLE>
+   <META NAME=GENERATOR CONTENT="Claris Home Page 2.0">
+   <X-SAS-WINDOW TOP=51 BOTTOM=446 LEFT=12 RIGHT=709>
+</HEAD>
+<BODY BGCOLOR="#FFFFFF">
+
+<H2>1 Introduction</H2>
+
+<P>This dissertation presents sound localization and color vision
+techniques working together with target tracking and fuzzy behaviors
+for real-time automatic camera control. This system follows people
+with a pan-tilt-zoom camera for potential surveillance and
+videoconferencing applications. The strategy employed combines simple
+audio and visual sensory cues through a common spatial representation
+in order to extract likely target locations. For visual cues, skin
+tone color and motion are detected; while inter-aural time delay
+between stereo microphones provides directional sound information.
+The choices of sensory cues and fusion scheme reduce a potentially
+complex sensor interpretation problem into one that is practical for
+real-time tracking applications implemented on a personal computer.
+</P>
+
+<P>Equally important to the task of sensor interpretation is the
+manner in which the interpretation is used. This work also presents
+the use of behavior-based fuzzy control techniques to direct a
+pan-tilt-zoom camera as required by a videoconferencing or
+surveillance application. Fuzzy control is a useful technique for
+defining complex control functions according to subjective expert
+rules described by human beings. The behavior-based approach used in
+this work was borrowed from previous mobile robot research, which
+required robust autonomous operation despite noisy and incomplete
+sensor information. The problems faced by the robot and autonomous
+camera system are quite similar, allowing many of the same fuzzy
+behavior concepts to be applied.</P>
+
+<P>&nbsp;</P>
+
+<H3>1.1 Objectives</H3>
+
+<P>The major objectives of this research are:</P>
+
+<OL>
+   <LI>To show that fusion of stereo sound and color video
+   information via a common spatial representation early in
+   processing improves a system's ability to detect and track people
+   while reducing computational requirements; and
+   
+   <LI>To combine the sensor interpretation capability with
+   behavior-based active camera control, for realistic applications
+   such as automated videoconferencing and surveillance.
+</OL>
+
+<P>The reasons behind these objectives and the approach used to
+accomplish them are discussed in the remainder of this chapter.</P>
+
+<P>&nbsp;</P>
+
+<H3>1.2 Significance of the Research</H3>
+
+<P>The research presented in this dissertation extends the perceptual
+capabilities of a personal computer to allow detection and tracking
+of one or more people speaking. Video and sound information are
+interpreted by the computer to determine the location of a speaker's
+face in a room without requiring the intentional cooperation of the
+subject. This capability advances the field of human-computer
+interaction because it:</P>
+
+<UL>
+   <LI>identifies multiple "users" as dynamic, speaking entities that
+   occupy locations in the real three-dimensional world,
+   
+   <LI>enables automatic camera control for applications such as
+   videoconferencing and surveillance,
+   
+   <LI>demonstrates how existing consumer-grade multimedia hardware
+   can be exploited for sensing and interpreting human activity in
+   the environment, and
+   
+   <LI>paves the way for association of speech recognition
+   information with speaker location and identity to allow
+   context-dependent interaction with multiple people.
+</UL>
+
+<P>The most immediate application of the techniques described in this
+work is automatic camera control for videoconferencing.
+Videoconferencing has become widely popular means of collaboration
+between individuals or large groups, as in education. To effectively
+aim the video camera at the speaker for close-up views, the group has
+the option of hiring a camera operator, manually moving the camera,
+or forcing the speaker to move into the camera's field of view. The
+first may not be economically feasible, and the latter two can make
+the conference awkward. It is therefore desirable to automatically
+aim the camera at the person speaking. The system described in this
+dissertation achieves this by localizing the direction of sound and
+adjusting the pan, tilt, and zoom of the camera to frame the face of
+the speaker at that location.</P>
+
+<P>There is already a significant body of literature on the subjects
+of sound localization, active vision, face recognition, and to a
+lesser extent, face detection. This dissertation improves upon
+previous research in the following ways.</P>
+
+<P>&nbsp;</P>
+
+<UL>
+   <LI>This research involves the segmentation of a face region from
+   motion video in real-time, while the camera is moving. Despite the
+   considerable body of work on face recognition, the essential task
+   of isolating the face region in an image has received very little
+   attention, especially for motion video from a moving camera.
+</UL>
+
+<P>&nbsp;</P>
+
+<UL>
+   <LI>This research utilizes sound localization information to
+   assist in the segmentation of face regions in the camera image,
+   unlike any existing methods in the literature. This work is the
+   first in the literature to apply pixel-level audiovisual fusion
+   for face detection and localization. The use of complementary
+   sound and color information eliminates the need for more
+   sophisticated (and computationally expensive) shape-based image
+   processing techniques for extracting faces from cluttered
+   backgrounds.
+</UL>
+
+<P>&nbsp;</P>
+
+<UL>
+   <LI>This dissertation is the first work to present the development
+   and implementation of real-time active camera behaviors for
+   videoconferencing using both sound localization and computer
+   vision.
+</UL>
+
+<P>&nbsp;</P>
+
+<H3>1.3 Inspiration</H3>
+
+<P>The integrated use of vision and hearing is a fundamental skill
+for most animals in nature. Combining the spatial cues provided by
+these modalities is often essential for a creature to locate a
+predator, prey, or mate. Sound information cues the animal to
+redirect its vision toward new areas of interest, and vision allows
+the association of sounds with discrete objects in the world. This
+low level of sensor fusion is what enables higher level skills such
+as sound recognition, and should be considered a basic building block
+for the development of artificially intelligent systems that
+incorporate sound and vision.</P>
+
+<P>Traditional approaches to sensor-based AI involve the extraction
+of symbolic representations from images and sound separately, such as
+visual detection of an object in a static image and recognition of
+words in speech. Such systems integrate multimodal sensor information
+by reasoning at the symbolic level, e.g. "which of the objects in the
+world model said this word?" The work presented here, however,
+investigates the fusion of multimodal information at the pixel level.
+By performing an intersection operation between acoustic and visual
+data superimposed on a common cellular representation, a reduced
+number of potential targets needs to be extracted and processed at
+the symbolic level. The resulting reduction in computational
+requirements allows improvement in the real-time detection and
+tracking of human activity.</P>
+
+<P>Neurobiology research provides evidence that a cellular spatial
+representation is useful for fusing multimodal sensor information.
+The neural audio-visual processing mechanisms used by the barn owl,
+for example, have been extensively mapped by biologists. As explained
+by Knudsen [1, 2], auditory and visual information in the barn owl
+(and many other animals) converges at the optic tectum, where a
+receptive field of spatially distributed neurons responds to stimuli
+on the basis of the direction to corresponding sources. This
+structure can easily associate acoustic events with corresponding
+visual targets due to the proximity of vision and sound signals in
+the neural array. Knudsen, du Lac, and Esterly [3] describe this
+neural topography as a "computational map" that provides a direct
+representation for spatial information. A cellular map efficates
+fusion of multiple sensor modalities, and can efficiently
+cross-reference target sensation to appropriate motor actions for
+directional perception and pursuit behaviors.</P>
+
+<P><B><A HREF="fig1.jpg">Figure 1: Audio-Visual Sensor Fusion in the
+Barn Owl</A></B></P>
+
+<P>Figure 1 provides an artistic conception of how computational maps
+in the owl can improve target detection. Light reflected from the
+environment creates an image on the retina. The retina and other
+map-like neural structures in the eye preprocess the image to enhance
+motion and texture information, but preserve the image's
+two-dimensional spatial distribution as they pass the signals on to
+the optic tectum in the brain. Meanwhile, the owl's ears receive
+temporal signals that differ in arrival times and frequency spectra
+depending on the direction of the sound source [4]. These differences
+are mapped to target azimuth and elevation at the external nucleus of
+the inferior colliculus (ICx). This structure consists of a spatial
+array of neurons that respond to sound stimuli depending on direction
+-- a low-resolution "image," if you will, of sound origin. Signals
+from these neurons pass to the optic tectum where they may be
+processed in spatial registration with visual information. This
+arrangement allows the joint stimulation of acoustic and visual
+neurons corresponding to the same direction in space in order to
+distinguish a noisy, moving target against a background of other
+moving targets and uncorrelated noise. The appropriate intersection
+of two sensing modalities at a cellular "pixel" level improves the
+recognition of targets with multimodal features.</P>
+
+<P>In the owl, the rapid detection and localization of targets
+provided by computations in the optic tectum can be very quickly
+mapped to appropriate motor signals for tracking via head movements.
+<A HREF="footnote.htm">(See Footnote 1)</A> In both animals and
+robots, exploratory and target-tracking behaviors need not have a
+fully comprehensible and accurate model of the world in order to
+function <A HREF="footnote.htm">(See Footnote 2)</A>; however, they
+rely on timely sensor information to estimate position and velocity.
+Detection speed is therefore essential, which benefits from effective
+incorporation of each sensing modality early in processing. The
+apparent advantages of computational maps in animals have inspired
+analogous application to sensing and control problems in robotics.
+Pearson, Gelfand, Sullivan, Peterson, and Spence [5] apply
+computational maps to multimodal sensor systems for adaptive sensor
+registration. Similarly, the research presented in this dissertation
+applies this concept to audio-visual fusion for real-time camera
+control.&nbsp;</P>
+
+<H3>&nbsp;</H3>
+
+<H3>1.4 Feasibility</H3>
+
+<P>Recent trends in the personal computer industry have resulted in a
+drastic reduction in the cost capturing color video and stereo sound.
+In fact, many consumer PCs now come with these multimedia
+capabilities as standard features, and the number of people using
+computers for applications such as videoconferencing is growing
+quickly as PC processing capabilities improve. However, with the
+exception of some speech recognition programs, today's multimedia
+applications do not interpret the content of the multisensor data
+they receive; instead, they simply record and play back information
+to the user. This dissertation demonstrates how off-the-shelf
+multimedia PC hardware can be used for an interactive real-time
+camera control task simply by providing appropriate software.</P>
+
+<P>Consumer-grade NTSC video capture hardware on a PC is not the type
+of platform typically used for computer vision research. Compared to
+high-resolution, fast-processing professional RGB imaging systems,
+the PC hardware in this research is slow, low-resolution, and offers
+less faithful reproduction of color. Multimedia sound cards are not
+typically of the high grade used for signal processing research,
+either. But the advantage of the multimedia personal computer is its
+ability to provide software with access to sound and video data on
+the same platform, with very high registration in time. This avoids
+the problems of networking together separate processing platforms for
+sound, video, and control, and allows tighter integration of sensor
+fusion and behavior algorithms. Furthermore, the algorithms described
+in this work do not require high-resolution full frame-rate video or
+high computational capability. They perform adequately with
+low-resolution, low frame-rate color video, CD-quality sound capture,
+and a modest CPU.</P>
+
+<P>The risks faced by failure of a video camera control system are
+relatively benign. Failure means that the camera would be pointed in
+an inappropriate direction, and for most applications such as
+videoconferencing and surveillance, there is no direct damage to
+health or property. The cost is most likely to be a temporary
+annoyance to the human viewer. This is dramatically different from
+sensor-based military tracking, vehicle navigation, and industrial
+inspection and sorting systems which depend on very reliable
+performance. Low cost and low risk allows us to experiment with
+suboptimal sensing and control schemes that degrade gracefully in
+performance until they fail, but when they do so, fail cognizantly
+and recover. The simple sensing strategy and behavior-based control
+scheme presented in this dissertation provides useful performance
+with computational demands low enough to be implemented with
+inexpensive consumer-grade hardware.</P>
+
+<P>&nbsp;</P>
+
+<H3>1.5 Approach</H3>
+
+<P>An experimental test-bed was configured using multimedia PC
+components to test sound localization, color vision, sensor fusion,
+and target tracking algorithms. For accurate fusion of spatial sensor
+information, proper alignment among the sensors is required. Figure 2
+shows the configuration of sensors used for this system, including
+two electret microphones spaced 30 cm apart, a wide-angle color
+camera, and a computer-controlled pan-tilt-zoom color camera. The
+entire sensor assembly is mounted on a tripod next to the computer.
+</P>
+
+<P><B><A HREF="fig2.jpg">Figure 2: Sensor Configuration</A></B></P>
+
+<P>The wide-angle camera's fish-eye lens gives it a field of view 92
+degrees wide, allowing it to see nearly an entire room at once. The
+Canon VC-C1 camera is designed for videoconferencing, and features
+computer-controllable pan, tilt, and zoom features. The VC-C1 is used
+for close-up views of people for videoconferencing or surveillance.
+Either camera may be used for vision tasks, as they have different
+advantages. Note that the wide-angle camera is not necessary for the
+videoconferencing application described in this work, but it may be
+exploited to improve performance when detecting or tracking targets
+over a large area in a surveillance application.</P>
+
+<P><B><A HREF="fig3.jpg">Figure 3: Component Interconnections</A></B>
+</P>
+
+<P>A diagram of sensor, data acquisition, and processing components
+is shown in Figure 3. The computer is a 66 MHz 586-class PC running
+OS/2. <A HREF="footnote.htm">(See Footnote 3)</A> An inexpensive
+multimedia video capture card is used to grab 320 x 240 pixel color
+images from either camera, and a sound card equipped with an IBM
+IMDSP2780 MwaveTM chip is used to record and process stereo 16-bit
+44.1 kHz sampled digital sound. Since the 2780 chip is fully
+programmable in C or assembly, all audio processing can be performed
+on board the card in parallel with tasks running on the host CPU.
+Image processing, sensor fusion, and camera control are performed in
+real-time on the host x86-class processor.</P>
+
+<P><B><A HREF="fig4.jpg">Figure 4: Data Flow Block Diagram</A></B>
+</P>
+
+<P>A block diagram of the processing steps performed by the system is
+shown in Figure 4. Sound processing performed on the Mwave card
+preprocesses and cross-correlates sound signals from the left and
+right microphones to create a histogram relating sound power to
+azimuth. Meanwhile, the host CPU captures video from one (or even
+both) of the cameras, detecting motion and/or skin tone color. The
+sensor fusion task then combines the color information with the sound
+histogram when selecting which pixels are likely to be occupied by
+targets of interest. The resulting image is segmented, and regions
+are tracked using Kalman filtering in global Cartesian coordinates.
+Lastly, a fuzzy behavior-based control system interprets the sound
+and tracking data to control the pan-tilt-zoom camera.</P>
+
+<P>This chapter has presented the motivation behind this
+dissertation's research and the laboratory setup used for conducting
+experiments. The use of co-aligned camera and microphone sensors
+attached to a multimedia computer results in a convenient platform
+for audiovisual sensor fusion research, providing spatially and
+temporally registered multimodal data. The active pan-tilt-zoom
+camera provides the ability to actively explore the environment and
+respond to human beings in real time. In the
+<A HREF="related.htm">next chapter</A>, this research will be
+compared to related work in the literature.</P>
+
+<P>&nbsp;</P>
+
+<P>&nbsp;</P>
+</BODY>
+</HTML>

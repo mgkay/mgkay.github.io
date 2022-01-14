@@ -1,0 +1,315 @@
+<!--This file created 11:14 AM  8/3/97 by Claris Home Page version 2.0-->
+<HTML>
+<HEAD>
+   <TITLE>Conclusions</TITLE>
+   <META NAME=GENERATOR CONTENT="Claris Home Page 2.0">
+   <X-SAS-WINDOW TOP=36 BOTTOM=463 LEFT=103 RIGHT=722>
+</HEAD>
+<BODY BGCOLOR="#FFFFFF">
+
+<H2>10 Conclusions</H2>
+
+<P>This dissertation has demonstrated that improved computer
+awareness of people through audiovisual sensors may be accomplished
+by effective exploitation of available sensing and processing
+resources. Rather than using liberal amounts of computing resources
+to extract detailed features from a single type of sensor, the
+approach presented capitalizes on the relationships between two
+different sensor types to accomplish its goals. The detection of
+human activity was demonstrated by leveraging the spatial aspects of
+color and sound, with limited amounts of processing required. The
+sensor processing techniques presented in this dissertation scale
+linearly with the number of data samples captured by the system
+(e.g., only one or two passes through the image is required) compared
+to other pattern-search-based processing methods that involve higher
+order increases in computation.</P>
+
+<P>While the simplicity and limited levels of representation used are
+beneficial for speed, they also increase the likelihood of occasional
+misinterpretation of sensor data. This was compensated for by using
+reactive control methods that depend on frequent measurements rather
+than high-level information and recover quickly from mistakes. The
+fuzzy behavior-based control system rapidly maps sensor information
+to control actions in what emerges as competent real-time camera
+activity despite the lack of high-level planning.</P>
+
+<P>&nbsp;</P>
+
+<H3>10.1 Contributions</H3>
+
+<P>This research has extended and combined the work of others in
+computer vision and sound localization, and has applied behavioral
+control and active perception concepts to potentially mainstream
+computer applications. The most significant contributions of the work
+are broken down as follows:</P>
+
+<P>&nbsp;</P>
+
+<UL>
+   <LI>A new target class, "talking faces," was defined in terms of
+   skin pixel color and directional sound information. Pixel-level
+   fusion of these sensor features allowed effective detection of
+   this target class in cluttered, unstructured indoor office
+   environments.
+</UL>
+
+<P>&nbsp;</P>
+
+<UL>
+   <LI>Reactive fuzzy behavioral control of a camera using both sound
+   and vision cues was demonstrated. Sound localization was used as a
+   cue to guide the search for faces outside the field of view as
+   well as for the enhancement of skin tone detection. Motion of the
+   speaker as well as switches in conversation between speakers can
+   be handled by the system.
+</UL>
+
+<P>&nbsp;</P>
+
+<UL>
+   <LI>A fuzzy measure of incompatibility between control rules, or
+   strife, was incorporated into pan and zoom control for recovery
+   from uncertain situations. When multiple target objectives
+   demanded the camera's attention, this measure of strife was used
+   to calculate an appropriate zoom response.
+</UL>
+
+<P>&nbsp;</P>
+
+<UL>
+   <LI>Simultaneous color vision, sound localization, and camera
+   control were demonstrated in real-time on a consumer-grade
+   personal computer. Because these sensing and processing methods
+   may be performed on an ordinary multimedia PC rather than a custom
+   hardware solution, greater opportunity exists for its use in
+   videoconferencing and human-computer interaction applications.
+</UL>
+
+<P>&nbsp;</P>
+
+<H3>10.2 Limitations</H3>
+
+<P>The color and sound processing approaches described in this
+dissertation are not free of caveats. Care must be taken in how these
+methods are applied; it is important for these limitations to be
+understood when building similar systems. The most serious
+limitations discovered so far for these techniques are listed below,
+along with recommendations on how to address them.</P>
+
+<P>&nbsp;</P>
+
+<UL>
+   <LI><I>Sensitivity to changes in illumination: </I>Changes in
+   illumination color are the greatest source of problems faced by
+   the color vision techniques presented. Such color changes may
+   occur when window blinds are opened, because outdoor lighting can
+   change with weather and time of day, and is typically different
+   from artificial light. Illumination color also changes from one
+   room to the next, depending on decor and type of lighting fixtures
+   used. Changes in illumination intensity provide less trouble for
+   the color detector, but problems may arise when the video hardware
+   used delivers a nonlinear response to changes in intensity, such
+   as increased noise effects at low levels or saturation at high
+   levels. Lastly, camera settings can drastically affect color
+   perception. (It is the opinion of this engineer that most video
+   equipment has far too many knobs!) Fortunately, most of these
+   variables are carefully controlled in settings such as
+   videoconferencing rooms. Retraining on face data is typically
+   required when any of these conditions change. One possible remedy
+   is the incorporation of motion detection and shape-based face
+   detection to automatically calibrate the color detection system
+   while it is running.
+</UL>
+
+<P>&nbsp;</P>
+
+<UL>
+   <LI><I>Lack of shape-based verification of face detection:</I> The
+   current system reliably detects skin-colored objects, but does not
+   test these objects further to verify that they really are faces.
+   The fusion of sound information increases the classifier
+   reliability, but the spurious detection of brown objects such as
+   wood-finish bookshelves and doors still occurs. Similar works in
+   the literature exploit shape-based classifiers (typically
+   artificial neural networks) to analyze regions and accept only
+   those that match face characteristics. Since the number of
+   candidate regions detected by the audiovisual fusion process is
+   typically small, a shape-based classifier would not be an
+   excessive computational task to add to the system, and should work
+   well.
+</UL>
+
+<P>&nbsp;</P>
+
+<UL>
+   <LI><I>Limited number of microphones: </I>The binaural sound
+   localization technique used in this dissertation can only localize
+   sounds in one dimension. If all potential targets share the same
+   plane with the microphones, then this is sufficient for
+   localization; but in some applications the camera is likely to be
+   mounted higher, and would be expected to look over peoples' heads
+   and localize in two or more dimensions. This may be remedied with
+   more sophisticated visual processing to assist in identifying
+   which face is the speaker, or by enhanced audio processing to
+   improve localization resolution. One might even estimate azimuth
+   using artificial pinnae and a known head-related transfer
+   function. Lastly, more than two microphones may be used, which
+   would also provide a significant benefit through the use of
+   beamfoming for directional sound enhancement of the speaker's
+   voice. The drawbacks of requiring more than two microphones are
+   the inability to exploit the stereo recording capabilities built
+   into the typical PC today, and the added hardware costs.
+</UL>
+
+<P>&nbsp;</P>
+
+<UL>
+   <LI><I>Camera noise interference: </I>The co-location of the
+   pan-tilt-zoom camera and microphones (required for sharing the
+   same polar coordinate system) leaves the system susceptible to
+   interference from acoustic motor noise when the camera moves.
+   Audio processing may be suspended during movement, microphones may
+   be paced further away from the camera, or active noise rejection
+   might be added through an additional microphone mounted on or in
+   the camera housing. However, the best solution to this problem is
+   the use of a quieter pan-tilt unit.
+</UL>
+
+<P>&nbsp;</P>
+
+<UL>
+   <LI><I>Insensitivity of sound localization processing to target
+   motion:</I> When performing cross-correlation, the size of the
+   sample window used for correlation determines the age of the
+   oldest data present in the correlation output. If the target is
+   moving in azimuth, strong sounds occurring at the beginning of the
+   sample window will create a cross-correlation peak that will not
+   correspond to the target position at the end of the window. A
+   shorter sample window reduces this effect, but provides less
+   reliable position estimation for stationary targets. A possible
+   solution may be to calculate short-window cross-correlations and
+   associate the resulting sound energy with targets during each
+   frame. The sound correlation power could be accumulated within
+   each target representation over time as it moves, rather than
+   being accumulated in stationary delay bins.
+</UL>
+
+<P>&nbsp;</P>
+
+<H3>10.3 Obstacles to Performance Testing</H3>
+
+<P>Evaluation of the effectiveness of intelligent sensor-based
+systems is a major area of research in artificial intelligence, as
+the quantification of system performance is not a simple task. First,
+real-world sensor information (especially audio and video) is so
+rich, that it is often difficult to represent it effectively with a
+finite set of performance benchmarks. For face detection, as an
+example, it may be possible to construct a reasonably representative
+sample of the set of all possible faces that may need to be detected
+(including all races, expressions, hair styles, etc.). But how would
+one model the ensemble of all possible backgrounds and lighting
+conditions? Assumptions made with a given model may not apply in all
+situations. Second, different systems are often designed to
+accomplish different goals and assume different things about the
+conditions they will operate under, making direct comparison
+impossible. Finally, systems that actively control what they sense
+(like mobile robots and active cameras) make it impossible to repeat
+exactly the same sensory stimuli during testing since the stimuli are
+affected directly by the output behavior. This makes it nearly
+impossible to separate the performance of the sensory perception
+system from the control system. In mobile robotics, one method that
+has been used to directly compare systems is to hold competitions
+designed around specific tasks [81]. Here the overall performance of
+the system may be judged according to specific metrics. Hopefully,
+future work in automatic camera control behaviors applied to
+human-computer interaction will allow comparisons with the methods
+presented in this dissertation.</P>
+
+<P>&nbsp;</P>
+
+<H3><B>10.4 Recommendations for Future Work</B></H3>
+
+<P>At the time of this writing, the personal computer is rapidly
+evolving from a data manipulation device to a mainstream
+communications appliance. With the world-wide increase in networked
+users and applications, expectations are high that a convergence of
+telephone, television, multimedia, and data communications
+technologies in the near future will make applications like
+videoconferencing as common as word processing. Many or most machines
+in homes and business will have the capability of performing the
+sensing tasks described in this work. At the same time, users will
+expect friendlier and easier-to-use machines. They will not want to
+type in their name to log in; they will expect to be recognized on
+sight, and to even dictate commands and documents orally. The demand
+for intelligent sensing of people is increasing while the costs and
+availability of the technology steadily improve.&nbsp;</P>
+
+<P>Personal computers sold today are powerful enough to either take
+speech dictation, videoconference over a network, recognize faces, or
+track peoples' positions and activities. Tomorrow, they will have the
+computational speed to do all of these things at the same time. When
+this happens, the challenge for sensor-based machine intelligence
+will be to exploit these various capabilities together. Today,
+multimedia data is piped from one peripheral to another, often with
+one application having exclusive rights to access the data and
+locking out all other processes that might benefit from it. The
+management of shared real-time multimedia data for various processing
+and decision-making agents is an important area of research.
+Multimedia computer hardware and operating systems must evolve to
+allow the proper scheduling of real-time tasks, and distribute them
+appropriately among processing resources. Another obstacle to
+synergistic use of multiple sensor types is the diversity of
+disciplines required to accomplish it (e.g., computer vision, speech
+recognition, videoconferencing, etc.) A single company may not have
+the resources to develop all the parts of an intelligent sensing
+system, so the question arises how multiple hardware and software
+components created by multiple companies can share data in an
+effective way. The model of data integration and interdependence
+between agents will have significant impact on the capabilities of
+the system as a whole.</P>
+
+<P>Although component technologies for intelligent sensing have been
+demonstrated, the realization of a cognizant computer like "Hal" is
+nowhere near. Before attempting leaps like "Hal," practical solutions
+to the integration of two or more sensing modalities at a time should
+be investigated, to discover where bottlenecks, incompatibilities,
+and trade-offs exist. For example, speech recognition and sound
+localization can be combined in two ways: first, by allowing acoustic
+beamforming to reinforce the speech signal for improved recognition
+of words, and second, to associate the recognized words with a
+direction of origin so that the speaker location and identity may be
+ascertained. To implement the first scenario, the digital stream of
+sound samples produced by the beamforming process must be fed into
+the input of the speech recognition process. While this is simple to
+engineer, hardware and software abstractions currently in practice do
+not provide the hooks required to accomplish this unless all of the
+components are produced by the same organization, or two
+organizations agree on the same interface. In the second scenario,
+direction of sound may change dynamically with time, so the
+recognition of a word must be accompanied by an accurate time stamp
+of when the word was actually uttered. If the recognizer can provide
+results almost immediately, time stamps may not be required, but for
+slower or differed recognition, time stamps become important. The
+speech recognition component must cooperate with the real-time needs
+of the rest of the system to achieve these goals. None of these
+problems are difficult to solve from a technical standpoint; but from
+a practical engineering standpoint they are important to consider
+early on in the process of system integration, especially when
+attempting to re-use component technologies provided by other
+parties.</P>
+
+<P>The combination of face detection, face recognition, sound
+localization, speech recognition, speech synthesis, and natural
+language understanding promises to revolutionize the way humans and
+computers interact. The only way to achieve this panacea is to
+experiment with new ideas on how these activities inter-relate, and
+how drastically different disciplines may merge to serve practical
+applications. Today, the platform required for such research, a
+multimedia computer, is within reach of almost any student, which
+makes the prospects for innovation very good indeed.</P>
+
+<P>&nbsp;</P>
+
+<P>&nbsp;</P>
+</BODY>
+</HTML>

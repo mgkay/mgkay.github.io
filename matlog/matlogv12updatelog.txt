@@ -1,0 +1,33 @@
+Matlog Update Log
+
+02-Sep-2009  Matlog version 12 installed
+02-Sep-2009  Modified file Contents.m
+18-Sep-2009  Modified file iff.m
+18-Sep-2009  Modified file milp.m
+18-Sep-2009  Modified file minspan.m
+18-Sep-2009  Modified file ufl.m
+29-Sep-2009  Modified file Contents.m
+29-Sep-2009  Added file uflXchg.m added.
+29-Sep-2009  Added file ufladd.m added.
+29-Sep-2009  Added file ufldrop.m added.
+29-Sep-2009  Added file uflhybrid.m added.
+01-Oct-2009  Modified file uflXchg.m
+01-Oct-2009  Modified file ufldrop.m
+22-Oct-2009  Modified file mcnf.m
+22-Oct-2009  Modified file mdisp.m
+22-Oct-2009  Modified file milp.m
+22-Oct-2009  Modified file sdisp.m
+03-Nov-2009  Modified file rteTC.m
+03-Nov-2009  Modified file sdisp.m
+03-Nov-2009  Modified file tspnneighbor.m
+03-Nov-2009  Modified file tspspfillcur.m
+16-Nov-2009  Modified file sdisp.m
+30-Nov-2009  Modified file uflhybrid.m
+11-Dec-2009  Modified file uflXchg.m
+11-Dec-2009  Modified file ufladd.m
+11-Dec-2009  Modified file ufldrop.m
+11-Dec-2009  Modified file uflhybrid.m
+11-Dec-2009  Modified file ufldrop.m
+05-Jan-2010  Modified file ufl.m
+05-Jan-2010  Modified file ufl.m
+05-Jan-2010  Modified file ufl.m

@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="UTF-8" />
+    <title>ISE 453 - Design of PLS Systems</title>
+    <meta content="Michael G. Kay" name="author" />
+  </head>
+  <body>
+    <table style="width: 100%;" border="0">
+      <tbody>
+        <tr>
+          <td style="text-align: center;"><img alt="Optimal NC Location" src="idxsrc/nclocimg.jpg" /><br />
+          </td>
+          <td>
+            <h1 style="text-align: center;">ISE 453: Design of Production,
+              Logistics, and Service Systems</h1>
+            <h2 style="text-align: center;">Fitts Department of Industrial and
+              Systems Engineering<br />
+              North Carolina State University<br />
+            </h2>
+            <div style="text-align: center;"><font style="font-weight: bold; font-family: Helvetica,Arial,sans-serif;"
+                size="4">[ <a href="ISE_453_Fall_2018_Schedule.html">Schedule</a>
+                | </font><font style="font-weight: bold; font-family: Helvetica,Arial,sans-serif;"
+                size="4"><a href="Lec_Notes_for_Prod_Sys_Des.pdf"><font style="font-weight: bold; font-family: Helvetica,Arial,sans-serif;"
+                    size="4">Lecture Notes</font></a> </font><font style="font-weight: bold; font-family: Helvetica,Arial,sans-serif;"
+                size="4"> | <a href="slides/ISE453F18.pdf">Slides</a> </font><font
+                style="font-weight: bold; font-family: Helvetica,Arial,sans-serif;"
+                size="4"><font style="font-weight: bold; font-family: Helvetica,Arial,sans-serif;"
+                  size="4"></font><font style="font-weight: bold; font-family: Helvetica,Arial,sans-serif;"
+                  size="4">|</font> </font><font style="font-weight: bold; font-family: Helvetica,Arial,sans-serif;"
+                size="4"><a href="Syllabus_F18.pdf">Syllabus</a></font><font style="font-weight: bold; font-family: Helvetica,Arial,sans-serif;"
+                size="4"> </font><font style="font-weight: bold; font-family: Helvetica,Arial,sans-serif;"
+                size="4"> | </font><font style="font-weight: bold; font-family: Helvetica,Arial,sans-serif;"
+                size="4"><a href="https://moodle-courses1819.wolfware.ncsu.edu/course/view.php?id=4352">Moodle
+                  </a>] </font><br style="font-family: Helvetica,Arial,sans-serif;" />
+              <br />
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <table style="width: 100%;" border="1">
+      <tbody>
+        <tr>
+          <td style="text-align: center; font-weight: bold;"> <font size="5">Fall
+              2018</font> </td>
+          <td style="text-align: center; font-weight: bold;"> <font size="5">Tue
+              and Thu</font> </td>
+          <td style="text-align: center; font-weight: bold;"> <font size="5">11:45
+              – 1:00 p.m.</font> </td>
+          <td style="text-align: center; font-weight: bold;">  <font size="5">Daniels
+              216</font></td>
+          <td><br />
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <table style="width: 100%;" cellpadding="3" border="1">
+      <tbody>
+        <tr>
+          <td><strong>Instructors</strong><br />
+          </td>
+          <td><strong>Office</strong><br />
+          </td>
+          <td><strong>Telephone</strong><br />
+          </td>
+          <td><strong>Email</strong><br />
+          </td>
+          <td><strong>Office </strong><strong>Hours</strong><br />
+          </td>
+        </tr>
+        <tr>
+          <td><a href="http://www.ise.ncsu.edu/kay/">Michael G. Kay</a><br />
+          </td>
+          <td>DAN 306<br />
+          </td>
+          <td>515-2008<br />
+          </td>
+          <td><a href="mailto:kay@ncsu.edu?subject=ISE453">kay@ncsu.edu</a><br />
+          </td>
+          <td style="height: 20px;">Tue, Thu, 1:45-3:15 p.m., or by appointment<br />
+          </td>
+        </tr>
+        <tr>
+          <td><span style="font-weight: bold;">TA:</span> Ramin Ahmed</td>
+          <td>DAN 418<br />
+          </td>
+          <td><br />
+          </td>
+          <td><a href="mailto:rahman2@ncsu.edu?subject=ISE453">rahmed2</a><a href="mailto:rahmed2@ncsu.edu?subject=ISE453">@ncsu.edu</a>
+          </td>
+          <td>Mon, Wed, 11:30-1:00 p.m.<br />
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <p><span style="font-weight: bold;"></span><span style="font-weight: bold;"></span><span
+        style="font-weight: bold;">E-reserve:</span> W. Hopp and M. Spearman.
+      (2008) Factory Physics (<a href="https://reserves.lib.ncsu.edu/reservesViewer.php?reserve=428572">Chapter
+        7</a>, <a href="https://reserves.lib.ncsu.edu/reservesViewer.php?reserve=428576">Chapter
+        8</a>, and <a href="https://reserves.lib.ncsu.edu/reservesViewer.php?reserve=428580">Chapter
+        9</a> in library’s course reserves for ISE 453) </p>
+    <hr style="color: black;" />
+    <ol>
+      <li><a href="http://www.indo.com/distance/">How Far is It</a>, calculates
+        great circle distances</li>
+      <li><a href="http://maps.google.com/">Google Maps</a>, finds actual road
+        distances and city close to a longitude and latitude (enter location in
+        lat-lon (Y,X) decimal degrees)</li>
+      <li><a href="http://opensolver.org/installing-opensolver/">OpenSolver</a>
+        for Excel, open source alternative to Solver to solve MILPs (Solver OK
+        for nonlinear optimization). <em>Win:</em> Unzip download and place
+        files in folder:
+        C:\Users\[username]\AppData\Roaming\Microsoft\Excel\XLSTART, which is a
+        trusted location and will allow OpenSolver to load at startup just like
+        Solver (<em>note</em>: the folder "AppData" is usually hidden, so you
+        need to type the folder name). <em>Mac:</em> Instructions for
+        installing on Macs are at the bottom of the page.</li>
+      <li><a href="idxsrc/RetailWarehouseSites.xlsx">RetailWarehouseSites.xlsx</a>,
+        contains 13 retail warehouse locations that minimize the total
+        person-miles from the 877 3-digit-ZIP-code population centroids covering
+        the continental U.S.</li>
+      <li><a href="http://data.bls.gov/cgi-bin/dsrv?pc">TL and LTL PPI</a>,
+        select Series ID=PCU484121484121 (TL) and Series ID=PCU484122484122
+        (LTL) for current monthly and annual PPI values</li>
+      <li><a href="https://www.fedex.com/ratefinder/ltl?locale=en_US">FedEx LTL
+          rates</a>, provides one-time (spot) LTL rate quote</li>
+      <li><a href="https://www.freight101.com/rate/step1.php">Freight101.com</a>,
+        provides one-time LTL rate quotes from multiple carriers</li>
+      <li><a href="http://www.smc3.com/Applications/WebCzarLite/Entry.asp">CzarLite</a>,
+        provides demo LTL tariff</li>
+      <li><a href="http://www.forecasts.org/prime.htm">Prime Rate</a>, current
+        and forecasted prime lending rate (useful for determining interest rate
+        for economic analyses)</li>
+      <li><a href="http://www.forecasts.org/inflation.htm">Inflation Rate</a>,
+        forecasted year to year change in the Consumer Price Index</li>
+      <li><a href="http://data.bls.gov/cgi-bin/cpicalc.pl">Inflation Calculator</a>,
+        adjusts any given amount of money for inflation (useful for converting
+        historical cost estimates)</li>
+      <li><a href="idxsrc/TSWwp7.pdf">Truck Costs</a>, working paper from the
+        FHWA’s <a href="http://www.fhwa.dot.gov/reports/tswstudy/">Comprehensive
+          TS&amp;W Study</a> (useful source for data on truck costs)</li>
+      <li><a href="http://www.stats.gla.ac.uk/%7Elevers/software/tables/tables-uog.pdf">Statistical
+          Tables</a> </li>
+      <li><a href="idxsrc/Data%20for%20Capacity%20Planning.xls">Data</a> for
+        Capacity Planning </li>
+      <li>Kitchen Layout <a href="idxsrc/TC_Calculator.xls">Sample Excel File</a>
+      </li>
+      <li><a href="idxsrc/SDPI%20Machine%20Layout.xlsm">SDPI Machine Layout</a>
+        and <a href="idxsrc/SDPI%20Excel%20Handout.pdf">SDPI Excel Handout</a>
+        and <a href="idxsrc/DAN407.pdf">DAN 407 Layout </a></li>
+      <li><a href="idxsrc/Visio%20Tutorial.pdf">Visio Tutorial</a>, used for
+        facility layout (see <a href="https://www.itecs.ncsu.edu/helpdesk/kb/soc-support-ms-dreamspark/">Student-Owned
+          Computing: Microsoft Imagine</a> to download a copy of Visio)</li>
+      <li><a href="idxsrc/Storage%20Layout%20Planner.xls">Storage Layout Planner</a>,
+        used for DSAP </li>
+      <li><a href="http://www.ise.ncsu.edu/kay/Material_Handling_Equipment.pdf">Material
+          Handling Equipment</a>, describes each type of equipment </li>
+      <li><a href="https://axiomops.com/files/4813/7599/0184/SSM_Rules_of_Thumb.pdf">Rules
+          of Thumb</a>, cost estimates for material handling equipment</li>
+      <li><a href="idxsrc/ItemOrderData.xlsx">Item Order Data</a>, used for
+        activity profiling </li>
+    </ol>
+    <hr style="color: black;" />
+  </body>
+</html>
