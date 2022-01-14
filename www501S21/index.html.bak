@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <title>OR 501: Introduction to Operations Research</title>
+    <meta name="author" content="Michael G. Kay">
+    <meta name="description" content="Spring 2021">
+  </head>
+  <body>
+    <h2>OR/ISE 501: Introduction to Operations Research</h2>
+    <h3>Introduction</h3>
+    <ul>
+      <li><a href="1-Intro/1-Intro-1.html">Intro 1: Course Overview, Modeling,
+          and Installing Julia</a> </li>
+      <li><a href="1-Intro/1-Intro-2.html">Intro 2: Basic Concepts in Julia
+          (Part I)</a> </li>
+      <li><a href="1-Intro/1-Intro-3.html">Intro 3: Basic Concepts in Julia
+          (Part II)</a></li>
+      <li><a href="1-Intro/HW1-Julia-soln.html">HW 1: Julia<br>
+        </a></li>
+    </ul>
+    <h3>Nonlinear Optimization</h3>
+    <ul>
+      <li><a href="2-NL_Opt/2-NL_Opt-1.html">NL Opt 1: Univariate Optimization</a>
+      </li>
+      <li><a href="2-NL_Opt/2-NL_Opt-2.html">NL Opt 2: Operations Analysis and
+          DataFrames</a> </li>
+      <li><a href="2-NL_Opt/2-NL_Opt-3.html">NL Opt 3: Multivariate Optimization
+          and Regression Analysis</a> </li>
+      <li><a href="2-NL_Opt/HW2-NL_Opt-soln.html">HW 2: Nonlinear Optimization</a>
+      </li>
+    </ul>
+    <p><br>
+    </p>
+    <p><br>
+    </p>
+    <p>Michael G. Kay, NC State University, Spring 2021 </p>
+    <p><br>
+    </p>
+  </body>
+</html>

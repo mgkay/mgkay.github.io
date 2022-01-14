@@ -1,0 +1,356 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>HW 2 Solution - ISE 754 Fall 2019</title><meta name="generator" content="MATLAB 9.6"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2019-09-09"><meta name="DC.source" content="hw2solnF19.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h1>HW 2 Solution - ISE 754 Fall 2019</h1><!--introduction--><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">Question 1</a></li><li><a href="#2">Question 2</a></li><li><a href="#3">(a) First, determine monetary weights</a></li><li><a href="#4">(a) Next, determine location</a></li><li><a href="#5">(b) Weight gaining or weight losing</a></li><li><a href="#6">Question 3</a></li><li><a href="#7">Create data</a></li><li><a href="#8">Create IFF function if it doesn't exist (it's part of Matlog)</a></li><li><a href="#9">(a) Centroid</a></li><li><a href="#10">(b) Minisum</a></li><li><a href="#11">(c) Minimax</a></li><li><a href="#12">(d) Constrained</a></li><li><a href="#13">Use region corner points as staring points</a></li><li><a href="#15">(e) Maximin</a></li><li><a href="#16">View surface</a></li><li><a href="#17">Approach 1: Use min value in Z as x0</a></li><li><a href="#18">Approach 2: Use each EF as x0</a></li><li><a href="#19">Use best result</a></li></ul></div><h2 id="1">Question 1</h2><pre class="codeinput">P = [85 40; 75 40; 75 85; 45 35; 40 55; 35 55; 30 85; 55 90];
+w = [11 46 36 20 32 23 20 18];
+d1h = @(x,P) sum(abs(x - P), 2);
+TDh = @(x) sum(w(:).*d1h(x,P));
+xy = fminsearch(TDh,mean(P,1))
+</pre><pre class="codeoutput">xy =
+   55.0000   55.0000
+</pre><h2 id="2">Question 2</h2><h2 id="3">(a) First, determine monetary weights</h2><p>Outbound</p><pre class="codeinput">fout = [10 38 20 46];         <span class="comment">% ton/yr</span>
+rout = 0.8;                   <span class="comment">% $/ton-mi</span>
+wout = fout * rout            <span class="comment">% $/mi-yr</span>
+<span class="comment">% Inbound</span>
+BOM = [2 0.35 1.2 0.55];        <span class="comment">% Bill-of-material ratio</span>
+fin = BOM * sum(fout)         <span class="comment">% ton/yr</span>
+rin = [0.08 0.05 0.15 0.03];  <span class="comment">% $/ton-mi</span>
+win = fin .* rin              <span class="comment">% $/mi-yr</span>
+w = [win wout]                <span class="comment">% $/mi-yr</span>
+</pre><pre class="codeoutput">wout =
+    8.0000   30.4000   16.0000   36.8000
+fin =
+  228.0000   39.9000  136.8000   62.7000
+win =
+   18.2400    1.9950   20.5200    1.8810
+w =
+  Columns 1 through 7
+   18.2400    1.9950   20.5200    1.8810    8.0000   30.4000   16.0000
+  Column 8
+   36.8000
+</pre><h2 id="4">(a) Next, determine location</h2><pre class="codeinput">P = [270 150 420 50 50 190 220 295]';
+d2h = @(x,P) sqrt(sum((x - P).^2, 2));  <span class="comment">% mi</span>
+TCh = @(x) sum(w(:).*d2h(x,P));         <span class="comment">% $/yr</span>
+x = fminsearch(TCh,mean(P,1));
+disp([<span class="string">'2(a) Optimal location is at mile marker '</span> num2str(x) <span class="string">'.'</span>])
+fprintf(<span class="string">'2(a) Optimal location is at mile marker %d.\n'</span>,round(x))
+</pre><pre class="codeoutput">2(a) Optimal location is at mile marker 270.
+2(a) Optimal location is at mile marker 270.
+</pre><h2 id="5">(b) Weight gaining or weight losing</h2><pre class="codeinput">[sum(fin) sum(fout)]
+[sum(win) sum(wout)]
+disp([<span class="string">'2(b) The product is '</span> <span class="keyword">...</span>
+   iff(sum(win) &lt; sum(wout),<span class="string">'Weight Gaining'</span>,<span class="string">'Weight Losing'</span>) <span class="string">'.'</span>]);
+</pre><pre class="codeoutput">ans =
+  467.4000  114.0000
+ans =
+   42.6360   91.2000
+2(b) The product is Weight Gaining.
+</pre><h2 id="6">Question 3</h2><h2 id="7">Create data</h2><pre class="codeinput">R = [2 1; 10 7];
+rng(2073)
+P = R(1,:) + diff(R).*rand(20,size(R,2))
+d2h = @(x,P) sqrt(sum((x - P).^2, 2));
+close <span class="string">all</span>, plot(P(:,1),P(:,2),<span class="string">'r.'</span>,<span class="string">'Markersize'</span>,10,<span class="string">'DisplayName'</span>,<span class="string">'EFs'</span>)
+hold <span class="string">on</span>
+</pre><pre class="codeoutput">P =
+    6.1202    3.0974
+    6.2233    2.6487
+    2.8022    1.7467
+    2.9882    1.2117
+    5.3677    5.3171
+    3.3957    2.4854
+    6.8266    5.4593
+    7.5767    3.6306
+    3.7383    3.4221
+    5.7014    4.7630
+    3.8717    1.1909
+    9.1379    3.9075
+    7.3905    4.2412
+    5.5334    4.8545
+    7.5604    6.5166
+    6.5018    6.1859
+    7.7479    4.7861
+    6.9053    1.1484
+    7.1775    4.9868
+    8.5597    1.1078
+</pre><img vspace="5" hspace="5" src="hw2solnF19_01.png" alt=""> <h2 id="8">Create IFF function if it doesn't exist (it's part of Matlog)</h2><pre class="codeinput"><span class="keyword">if</span> ~exist(<span class="string">'iff'</span>)
+   fid = fopen(<span class="string">'iff.m'</span>,<span class="string">'wt'</span>);
+   fprintf(fid,<span class="string">'function x=iff(a,b,c)\n if a,x=b;else x=c;end\n'</span>);
+   fclose(fid);
+<span class="keyword">end</span>
+</pre><h2 id="9">(a) Centroid</h2><pre class="codeinput">TCh = @(x) sum(d2h(x,P).^2);
+x = mean(P,1); TCh(x)
+[x,TC] = fminsearch(TCh,[0 0])  <span class="comment">% Validate know mean solution</span>
+plot(x(1),x(2),<span class="string">'g*'</span>,<span class="string">'DisplayName'</span>,<span class="string">'Centroid'</span>)
+</pre><pre class="codeoutput">ans =
+  123.8131
+x =
+    6.0563    3.6354
+TC =
+  123.8131
+</pre><img vspace="5" hspace="5" src="hw2solnF19_02.png" alt=""> <h2 id="10">(b) Minisum</h2><pre class="codeinput">opt = optimset(<span class="string">'fminsearch'</span>); opt.MaxFunEvals = 1e8; opt.TolFun = 1e-8;
+TCh = @(x) sum(d2h(x,P));
+[x,TC] = fminsearch(TCh,mean(P,1),opt)
+plot(x(1),x(2),<span class="string">'bd'</span>,<span class="string">'DisplayName'</span>,<span class="string">'Minisum'</span>)
+</pre><pre class="codeoutput">x =
+    6.2904    3.9868
+TC =
+   45.5094
+</pre><img vspace="5" hspace="5" src="hw2solnF19_03.png" alt=""> <h2 id="11">(c) Minimax</h2><pre class="codeinput">TC = @(x) max(d2h(x,P));
+[x,TCh] = fminsearch(TC,mean(P,1),opt)
+plot(x(1),x(2),<span class="string">'c*'</span>,<span class="string">'DisplayName'</span>,<span class="string">'Minimax'</span>)
+</pre><pre class="codeoutput">x =
+    5.8157    3.3975
+TCh =
+    3.5739
+</pre><img vspace="5" hspace="5" src="hw2solnF19_04.png" alt=""> <h2 id="12">(d) Constrained</h2><pre class="codeinput">Z = [5 3; 7 5];
+isinX = @(x,X) x(1)&gt;=X(1,1)&amp;&amp;x(1)&lt;=X(2,1)&amp;&amp;x(2)&gt;=X(1,2)&amp;&amp;x(2)&lt;=X(2,2);
+TCh = @(x) iff(isinX(x,Z),Inf,sum(d2h(x,P)));
+</pre><h2 id="13">Use region corner points as staring points</h2><pre class="codeinput">TC = Inf;
+<span class="keyword">for</span> i = 1:2
+   <span class="keyword">for</span> j = 1:2
+      [xij,TCij] = fminsearch(TCh,[R(i,1) R(j,2)],opt)
+      <span class="keyword">if</span> TCij &lt; TC, x = xij; TC = TCij; <span class="keyword">end</span>
+   <span class="keyword">end</span>
+<span class="keyword">end</span>
+x, TC
+</pre><pre class="codeoutput">xij =
+    6.1557    3.0000
+TCij =
+   47.7253
+xij =
+    5.0000    3.7869
+TCij =
+   50.7557
+xij =
+    6.1557    3.0000
+TCij =
+   47.7253
+xij =
+    6.3263    5.0000
+TCij =
+   48.7032
+x =
+    6.1557    3.0000
+TC =
+   47.7253
+</pre><pre class="codeinput">rectangle(<span class="string">'Position'</span>,[Z(1,:) diff(Z,[],1)])
+plot(x(1),x(2),<span class="string">'bo'</span>,<span class="string">'DisplayName'</span>,<span class="string">'Constrained'</span>)
+</pre><img vspace="5" hspace="5" src="hw2solnF19_05.png" alt=""> <h2 id="15">(e) Maximin</h2><pre class="codeinput">TCh = @(x) iff(isinX(x,R),-min(d2h(x,P)),Inf);
+</pre><h2 id="16">View surface</h2><pre class="codeinput">[X,Y] = meshgrid(linspace(R(1,1),R(2,1)),linspace(R(1,2),R(2,2)));
+Z = zeros(size(X));
+<span class="keyword">for</span> i = 1:size(X,1)
+   <span class="keyword">for</span> j = 1:size(X,2)
+      Z(i,j) = TCh([X(i,j) Y(i,j)]);
+   <span class="keyword">end</span>
+<span class="keyword">end</span>
+h = gcf; figure
+surf(X,Y,Z)
+</pre><img vspace="5" hspace="5" src="hw2solnF19_06.png" alt=""> <h2 id="17">Approach 1: Use min value in Z as x0</h2><pre class="codeinput">[i,j] = ind2sub(size(Z),argmin(Z(:)));
+[x1,TC1] = fminsearch(TCh,[X(i,j) Y(i,j)])
+</pre><pre class="codeoutput">x1 =
+     2     7
+TC1 =
+   -3.7648
+</pre><h2 id="18">Approach 2: Use each EF as x0</h2><pre class="codeinput">TCh = @(x) iff(isinX(x,R),-min(d2h(x,P)),Inf);
+TC2 = Inf;
+<span class="keyword">for</span> i = 1:size(P,1)
+   [x2i,TC2i] = fminsearch(TCh,P(i,:));
+   <span class="keyword">if</span> TC2i &lt; TC2, x2 = x2i; TC2 = TC2i; <span class="keyword">end</span>
+<span class="keyword">end</span>
+x2, TC2
+</pre><pre class="codeoutput">x2 =
+    9.9998    7.0000
+TC2 =
+   -2.4869
+</pre><h2 id="19">Use best result</h2><pre class="codeinput"><span class="keyword">if</span> TC1 &lt; TC2
+   x = x1;
+<span class="keyword">else</span> x = x2
+<span class="keyword">end</span>
+figure(h)
+plot(x(1),x(2),<span class="string">'cv'</span>,<span class="string">'DisplayName'</span>,<span class="string">'Maximin'</span>)
+</pre><img vspace="5" hspace="5" src="hw2solnF19_07.png" alt=""> <pre class="codeinput">legend(<span class="string">'show'</span>)
+title(<span class="string">'HW 2: Question 3'</span>)
+</pre><img vspace="5" hspace="5" src="hw2solnF19_08.png" alt=""> <p class="footer"><br><a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2019a</a><br></p></div><!--
+##### SOURCE BEGIN #####
+%% HW 2 Solution - ISE 754 Fall 2019
+
+%% Question 1
+P = [85 40; 75 40; 75 85; 45 35; 40 55; 35 55; 30 85; 55 90];
+w = [11 46 36 20 32 23 20 18];
+d1h = @(x,P) sum(abs(x - P), 2);
+TDh = @(x) sum(w(:).*d1h(x,P));
+xy = fminsearch(TDh,mean(P,1))
+
+%% Question 2
+%% (a) First, determine monetary weights
+% Outbound
+fout = [10 38 20 46];         % ton/yr
+rout = 0.8;                   % $/ton-mi
+wout = fout * rout            % $/mi-yr
+% Inbound
+BOM = [2 0.35 1.2 0.55];        % Bill-of-material ratio
+fin = BOM * sum(fout)         % ton/yr
+rin = [0.08 0.05 0.15 0.03];  % $/ton-mi
+win = fin .* rin              % $/mi-yr
+w = [win wout]                % $/mi-yr
+%% (a) Next, determine location
+P = [270 150 420 50 50 190 220 295]';
+d2h = @(x,P) sqrt(sum((x - P).^2, 2));  % mi
+TCh = @(x) sum(w(:).*d2h(x,P));         % $/yr
+x = fminsearch(TCh,mean(P,1));
+disp(['2(a) Optimal location is at mile marker ' num2str(x) '.'])
+fprintf('2(a) Optimal location is at mile marker %d.\n',round(x))
+%% (b) Weight gaining or weight losing
+[sum(fin) sum(fout)]
+[sum(win) sum(wout)]
+disp(['2(b) The product is ' ...
+   iff(sum(win) < sum(wout),'Weight Gaining','Weight Losing') '.']);
+
+%% Question 3
+%% Create data
+R = [2 1; 10 7];
+rng(2073)
+P = R(1,:) + diff(R).*rand(20,size(R,2))
+d2h = @(x,P) sqrt(sum((x - P).^2, 2));
+close all, plot(P(:,1),P(:,2),'r.','Markersize',10,'DisplayName','EFs')
+hold on
+%% Create IFF function if it doesn't exist (it's part of Matlog)
+if ~exist('iff')
+   fid = fopen('iff.m','wt');
+   fprintf(fid,'function x=iff(a,b,c)\n if a,x=b;else x=c;end\n');
+   fclose(fid);
+end
+%% (a) Centroid
+TCh = @(x) sum(d2h(x,P).^2);
+x = mean(P,1); TCh(x)
+[x,TC] = fminsearch(TCh,[0 0])  % Validate know mean solution
+plot(x(1),x(2),'g*','DisplayName','Centroid')
+%% (b) Minisum
+opt = optimset('fminsearch'); opt.MaxFunEvals = 1e8; opt.TolFun = 1e-8;
+TCh = @(x) sum(d2h(x,P));
+[x,TC] = fminsearch(TCh,mean(P,1),opt)
+plot(x(1),x(2),'bd','DisplayName','Minisum')
+%% (c) Minimax
+TC = @(x) max(d2h(x,P));
+[x,TCh] = fminsearch(TC,mean(P,1),opt)
+plot(x(1),x(2),'c*','DisplayName','Minimax')
+
+%% (d) Constrained
+Z = [5 3; 7 5];
+isinX = @(x,X) x(1)>=X(1,1)&&x(1)<=X(2,1)&&x(2)>=X(1,2)&&x(2)<=X(2,2);
+TCh = @(x) iff(isinX(x,Z),Inf,sum(d2h(x,P)));
+%% Use region corner points as staring points
+TC = Inf;
+for i = 1:2
+   for j = 1:2
+      [xij,TCij] = fminsearch(TCh,[R(i,1) R(j,2)],opt)
+      if TCij < TC, x = xij; TC = TCij; end
+   end
+end
+x, TC
+%%
+rectangle('Position',[Z(1,:) diff(Z,[],1)])
+plot(x(1),x(2),'bo','DisplayName','Constrained')
+
+%% (e) Maximin
+TCh = @(x) iff(isinX(x,R),-min(d2h(x,P)),Inf);
+%% View surface
+[X,Y] = meshgrid(linspace(R(1,1),R(2,1)),linspace(R(1,2),R(2,2)));
+Z = zeros(size(X));
+for i = 1:size(X,1)
+   for j = 1:size(X,2)
+      Z(i,j) = TCh([X(i,j) Y(i,j)]);
+   end
+end
+h = gcf; figure
+surf(X,Y,Z)
+%% Approach 1: Use min value in Z as x0
+[i,j] = ind2sub(size(Z),argmin(Z(:)));
+[x1,TC1] = fminsearch(TCh,[X(i,j) Y(i,j)])
+%% Approach 2: Use each EF as x0
+TCh = @(x) iff(isinX(x,R),-min(d2h(x,P)),Inf);
+TC2 = Inf;
+for i = 1:size(P,1)
+   [x2i,TC2i] = fminsearch(TCh,P(i,:));
+   if TC2i < TC2, x2 = x2i; TC2 = TC2i; end
+end
+x2, TC2
+%% Use best result
+if TC1 < TC2
+   x = x1;
+else x = x2
+end
+figure(h)
+plot(x(1),x(2),'cv','DisplayName','Maximin')
+%%
+legend('show')
+title('HW 2: Question 3')
+
+
+##### SOURCE END #####
+--></body></html>

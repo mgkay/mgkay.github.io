@@ -1,0 +1,149 @@
+<!--This file created 12:47 PM  7/27/97 by Claris Home Page version 2.0-->
+<HTML>
+<HEAD>
+   <TITLE>Appendix B</TITLE>
+   <META NAME=GENERATOR CONTENT="Claris Home Page 2.0">
+   <X-SAS-WINDOW TOP=25 BOTTOM=457 LEFT=4 RIGHT=608>
+</HEAD>
+<BODY BGCOLOR="#FFFFFF">
+
+<P><CENTER><B><FONT SIZE="+3">Appendix B: Tips on
+Implementation</FONT></B></CENTER></P>
+
+<P>This section includes a few words of advice to those who may want
+to implement some or all of the ideas presented in this work.  This
+information did not fit anywhere else in the dissertation, but is
+practical knowledge that took some time for me to gather, and I'd
+like to pass it on.</P>
+
+<P><B><FONT SIZE="+1">Microphones</FONT></B></P>
+
+<P>The two most popular types of microphones used for audio recording
+are the moving coil (dynamic) microphone, and the electret
+microphone.  I recommend using electret microphones for computer
+applications involving voice, because they are affected less by
+electromagnetic interference from the computer and monitor.  The coil
+of wire in a dynamic microphone vibrates back and forth within the
+field of a fixed magnet when activated by sound waves, generating an
+alternating current.  But this coil of wire is also highly sensitive
+to the magnetic fields put out by the monitor, computer, and other
+devices.  Electret microphones operate on changes in capacitance
+induced by vibration.  They are not affected much by magnetic fields,
+and are often mounted directly on a computer monitor when used for
+conferencing and speech recognition.  The main drawback of electret
+microphones is their relatively poor high-frequency response, but
+this is not critical for speech applications.  Another consideration
+is that electret microphones require a bias voltage to be applied
+before the signal can be amplified.  This may be in the form of a
+battery built into the microphone, or may be added to the
+preamplifier circuit (which I did).  If you wish to run the
+microphone into a Line In jack on your sound card, a preamp gain of
+100 to 1000 may be required depending on the microphone, sound card,
+and the distance to the speaker.</P>
+
+<P><B><FONT SIZE="+1">Sound Sampling Parameters</FONT></B></P>
+
+<P>Changes in speaker distance can have a dramatic effect on the
+output level of the microphones.  For this reason, its important to
+get the maximum dynamic range possible during digitization, which
+means 16 bits/sample. At 8 bits/sample, it is very likely that
+quantization effects will trash your sampled signal's SNR when the
+volume gets weak.  I suspect this is a major cause of problems for
+unsuccessful sound projects I've seen that used 8-bit sampling.  To
+measure interaural delay, a higher sampling rate provides better
+resolution.  I used 44,100 samples per second sampling in order to
+get an interaural delay range of about (38 samples for a 30 cm
+microphone spacing.   </P>
+
+<P><B><FONT SIZE="+1">Sound Cards </FONT></B></P>
+
+<P>There are two possible places to process sound data: on the sound
+card, or on the host processor.  Most sound cards do not allow the
+user to run a DSP program on board the card; Mwave(TM) -based cards
+are a notable exception. (Creative Labs Sound Blaster 16/32/64 "ASP"
+cards cannot, if you were wondering.)  Examples of Mwave cards are
+the IBM Multimedia Modem, Spectrum Office FX and similar cards
+bundled with some IBM and Acer computers.  The IBM IMDSP2080 Mwave
+chip on my IBM DSP Sound Card is a Harvard-architecture DSP that runs
+at 20 million instructions per second, with some of those
+instructions being parallel load, multiply and add operations,
+yielding up to 60 million integer operations per second for assembly
+code written to take advantage of it.  This is a great way to offload
+sound processing from the host CPU and save those cycles for image
+processing.  The Mwave programmer's toolkits for OS/2 and Windows are
+available from IBM. </P>
+
+<P>To process sound on the host CPU, the samples must be copied (via
+DMA) into system memory buffers by the sound card's device driver. 
+The multimedia programming libraries for the operating system will
+define how the programmer may access the sound data.  Under OS/2, the
+programming interface is called "Direct Audio Real Time," or "DART." 
+Under Windows, the functions are called WaveInOpen(), WaveInread(),
+etc..  I do not know how to accomplish this under Linux or Macintosh.
+  Note that sample buffers will be transferred to memory a few
+thousand bytes at a time, rather than one sample at a time, so your
+software must be designed to process batches of data efficiently.  
+The large buffer sizes are designed to reduce the amount of
+interruptions and context switch overhead on the CPU.  For processing
+on board the sound card, on the other hand, buffer sizes of only 32
+bytes are required as it is designed for frequent context switches
+(the Mwave card has a real-time operating system that runs multiple
+DSP tasks on board.)</P>
+
+<P>Besides putting a greater computational burden on the host,
+processing sound on the main CPU may also lock out other multimedia
+tasks from accessing the sound data.  For example,  a speech
+recognition program may not be able to read the sound samples if the
+sound card has already been opened by the program that is performing
+sound localization.  Device sharing mechanisms are not very
+sophisticated at the time of this writing.  Some cards like those
+based on Mwave allow multiple programs to read and write from the
+card at the same time, mixing and splitting the samples as required,
+while others like Sound Blaster do not.</P>
+
+<P><B><FONT SIZE="+1">Cross-Correlation</FONT></B></P>
+
+<P>For closely spaced microphones, the range of possible interaural
+delay values may be quite small.  For this reason, time-domain
+cross-correlation may be just as if not more efficient than
+frequency-domain cross-correlation.  In my case, only (38 delay
+values needed to be computed for each batch of samples.  It is not
+necessary to convolve across the entire buffer of thousands of
+samples to test the entire overlap of two sound signals.  Only
+compute what you need for the valid delay range.  </P>
+
+<P><B><FONT SIZE="+1">Video Capture Cards</FONT></B></P>
+
+<P>A wide variety of video capture cards and cameras exist on the
+market today for a variety of uses.  If you want to do computer
+vision, avoid the extremely low-end products like the Connectix
+QuickCam.  These are slow and do not offer good quality color images,
+as they do all sorts of awful things to the data to squeeze it over
+low bitrate I/O ports.  ISA-bus capture cards can provide very good
+quality images, but capture speed will be limited by the speed of the
+ISA-bus.  Some ISA-bus cards like the Jovian Logic boards used in
+this work do not use DMA to transfer images to main memory, making
+them less efficient than DMA by tying up CPU cycles for the transfer.
+ PCI based video capture cards are preferable due to their fast bus
+speed, but are a little more expensive and were not very common at
+the time I started this project in 1994.   Most consumer-grade
+capture cards capture either NTSC or PAL video signals from common
+color video cameras.  RGB cards and RGB cameras are much more
+expensive, but result in better color images.  I have found a
+significant improvement in NTSC video capture by using the S-Video
+(or Y/C) jack as opposed to the composite jack when connecting my
+camera.  The color quality did not get as good as RGB, but satisfied
+my needs for capturing 320 x 240 pixel color face images.  Note that
+I only capture a single field of NTSC video; at higher resolutions
+you will need to pay more for hardware that captures both fields.   
+</P>
+
+<P>&nbsp;</P>
+
+<P>&nbsp;</P>
+
+<P>&nbsp;</P>
+
+<P>&nbsp;</P>
+</BODY>
+</HTML>

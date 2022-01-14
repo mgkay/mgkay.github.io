@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta content="text/html; charset=UTF-8" http-equiv="content-type">
+    <title>Home Delivery Logistics Networks</title>
+    <style type="text/css">/*
+Copyright (c) 2008, Yahoo! Inc. All rights reserved.
+Code licensed under the BSD License:
+http://developer.yahoo.net/yui/license.txt
+version: 2.6.0
+*/
+html{color:#000;background:#FFF;}body,div,dl,dt,dd,ul,ol,li,h1,h2,h3,h4,h5,h6,pre,code,form,fieldset,legend,input,textarea,p,blockquote,th,td{margin:0;padding:0;}table{border-collapse:collapse;border-spacing:0;}fieldset,img{border:0;}address,caption,cite,code,dfn,em,strong,th,var{font-style:normal;font-weight:normal;}li{list-style:none;}caption,th{text-align:left;}h1,h2,h3,h4,h5,h6{font-size:100%;font-weight:normal;}q:before,q:after{content:'';}abbr,acronym{border:0;font-variant:normal;}sup{vertical-align:text-top;}sub{vertical-align:text-bottom;}input,textarea,select{font-family:inherit;font-size:inherit;font-weight:inherit;}input,textarea,select{*font-size:100%;}legend{color:#000;}del,ins{text-decoration:none;}body{font:13px/1.231 arial,helvetica,clean,sans-serif;*font-size:small;*font:x-small;}select,input,button,textarea{font:99% arial,helvetica,clean,sans-serif;}table{font-size:inherit;font:100%;}pre,code,kbd,samp,tt{font-family:monospace;*font-size:108%;line-height:100%;}body{text-align:center;}#ft{clear:both;}#doc,#doc2,#doc3,#doc4,.yui-t1,.yui-t2,.yui-t3,.yui-t4,.yui-t5,.yui-t6,.yui-t7{margin:auto;text-align:left;width:57.69em;*width:56.25em;min-width:750px;}#doc2{width:73.076em;*width:71.25em;}#doc3{margin:auto 10px;width:auto;}#doc4{width:74.923em;*width:73.05em;}.yui-b{position:relative;}.yui-b{_position:static;}#yui-main .yui-b{position:static;}#yui-main,.yui-g .yui-u .yui-g{width:100%;}{width:100%;}.yui-t1 #yui-main,.yui-t2 #yui-main,.yui-t3 #yui-main{float:right;margin-left:-25em;}.yui-t4 #yui-main,.yui-t5 #yui-main,.yui-t6 #yui-main{float:left;margin-right:-25em;}.yui-t1 .yui-b{float:left;width:12.30769em;*width:12.00em;}.yui-t1 #yui-main .yui-b{margin-left:13.30769em;*margin-left:13.05em;}.yui-t2 .yui-b{float:left;width:13.8461em;*width:13.50em;}.yui-t2 #yui-main .yui-b{margin-left:14.8461em;*margin-left:14.55em;}.yui-t3 .yui-b{float:left;width:23.0769em;*width:22.50em;}.yui-t3 #yui-main .yui-b{margin-left:24.0769em;*margin-left:23.62em;}.yui-t4 .yui-b{float:right;width:13.8456em;*width:13.50em;}.yui-t4 #yui-main .yui-b{margin-right:14.8456em;*margin-right:14.55em;}.yui-t5 .yui-b{float:right;width:18.4615em;*width:18.00em;}.yui-t5 #yui-main .yui-b{margin-right:19.4615em;*margin-right:19.125em;}.yui-t6 .yui-b{float:right;width:23.0769em;*width:22.50em;}.yui-t6 #yui-main .yui-b{margin-right:24.0769em;*margin-right:23.62em;}.yui-t7 #yui-main .yui-b{display:block;margin:0 0 1em 0;}#yui-main .yui-b{float:none;width:auto;}.yui-gb .yui-u,.yui-g .yui-gb .yui-u,.yui-gb .yui-g,.yui-gb .yui-gb,.yui-gb .yui-gc,.yui-gb .yui-gd,.yui-gb .yui-ge,.yui-gb .yui-gf,.yui-gc .yui-u,.yui-gc .yui-g,.yui-gd .yui-u{float:left;}.yui-g .yui-u,.yui-g .yui-g,.yui-g .yui-gb,.yui-g .yui-gc,.yui-g .yui-gd,.yui-g .yui-ge,.yui-g .yui-gf,.yui-gc .yui-u,.yui-gd .yui-g,.yui-g .yui-gc .yui-u,.yui-ge .yui-u,.yui-ge .yui-g,.yui-gf .yui-g,.yui-gf .yui-u{float:right;}.yui-g div.first,.yui-gb div.first,.yui-gc div.first,.yui-gd div.first,.yui-ge div.first,.yui-gf div.first,.yui-g .yui-gc div.first,.yui-g .yui-ge div.first,.yui-gc div.first div.first{float:left;}.yui-g .yui-u,.yui-g .yui-g,.yui-g .yui-gb,.yui-g .yui-gc,.yui-g .yui-gd,.yui-g .yui-ge,.yui-g .yui-gf{width:49.1%;}.yui-gb .yui-u,.yui-g .yui-gb .yui-u,.yui-gb .yui-g,.yui-gb .yui-gb,.yui-gb .yui-gc,.yui-gb .yui-gd,.yui-gb .yui-ge,.yui-gb .yui-gf,.yui-gc .yui-u,.yui-gc .yui-g,.yui-gd .yui-u{width:32%;margin-left:1.99%;}.yui-gb .yui-u{*margin-left:1.9%;*width:31.9%;}.yui-gc div.first,.yui-gd .yui-u{width:66%;}.yui-gd div.first{width:32%;}.yui-ge div.first,.yui-gf .yui-u{width:74.2%;}.yui-ge .yui-u,.yui-gf div.first{width:24%;}.yui-g .yui-gb div.first,.yui-gb div.first,.yui-gc div.first,.yui-gd div.first{margin-left:0;}.yui-g .yui-g .yui-u,.yui-gb .yui-g .yui-u,.yui-gc .yui-g .yui-u,.yui-gd .yui-g .yui-u,.yui-ge .yui-g .yui-u,.yui-gf .yui-g .yui-u{width:49%;*width:48.1%;*margin-left:0;}.yui-g .yui-g .yui-u{width:48.1%;}.yui-g .yui-gb div.first,.yui-gb .yui-gb div.first{*margin-right:0;*width:32%;_width:31.7%;}.yui-g .yui-gc div.first,.yui-gd .yui-g{width:66%;}.yui-gb .yui-g div.first{*margin-right:4%;_margin-right:1.3%;}.yui-gb .yui-gc div.first,.yui-gb .yui-gd div.first{*margin-right:0;}.yui-gb .yui-gb .yui-u,.yui-gb .yui-gc .yui-u{*margin-left:1.8%;_margin-left:4%;}.yui-g .yui-gb .yui-u{_margin-left:1.0%;}.yui-gb .yui-gd .yui-u{*width:66%;_width:61.2%;}.yui-gb .yui-gd div.first{*width:31%;_width:29.5%;}.yui-g .yui-gc .yui-u,.yui-gb .yui-gc .yui-u{width:32%;_float:right;margin-right:0;_margin-left:0;}.yui-gb .yui-gc div.first{width:66%;*float:left;*margin-left:0;}.yui-gb .yui-ge .yui-u,.yui-gb .yui-gf .yui-u{margin:0;}.yui-gb .yui-gb .yui-u{_margin-left:.7%;}.yui-gb .yui-g div.first,.yui-gb .yui-gb div.first{*margin-left:0;}.yui-gc .yui-g .yui-u,.yui-gd .yui-g .yui-u{*width:48.1%;*margin-left:0;} .yui-gb .yui-gd div.first{width:32%;}.yui-g .yui-gd div.first{_width:29.9%;}.yui-ge .yui-g{width:24%;}.yui-gf .yui-g{width:74.2%;}.yui-gb .yui-ge div.yui-u,.yui-gb .yui-gf div.yui-u{float:right;}.yui-gb .yui-ge div.first,.yui-gb .yui-gf div.first{float:left;}.yui-gb .yui-ge .yui-u,.yui-gb .yui-gf div.first{*width:24%;_width:20%;}.yui-gb .yui-ge div.first,.yui-gb .yui-gf .yui-u{*width:73.5%;_width:65.5%;}.yui-ge div.first .yui-gd .yui-u{width:65%;}.yui-ge div.first .yui-gd div.first{width:32%;}#bd:after,.yui-g:after,.yui-gb:after,.yui-gc:after,.yui-gd:after,.yui-ge:after,.yui-gf:after{content:".";display:block;height:0;clear:both;visibility:hidden;}#bd,.yui-g,.yui-gb,.yui-gc,.yui-gd,.yui-ge,.yui-gf{zoom:1;}</style>
+    <style type="text/css">/*
+Copyright (c) 2008, Yahoo! Inc. All rights reserved.
+Code licensed under the BSD License:
+http://developer.yahoo.net/yui/license.txt
+version: 2.6.0
+*/
+h1{font-size:138.5%;}h2{font-size:123.1%;}h3{font-size:108%;}h1,h2,h3{margin:1em 0;}h1,h2,h3,h4,h5,h6,strong{font-weight:bold;}abbr,acronym{border-bottom:1px dotted #000;cursor:help;} em{font-style:italic;}blockquote,ul,ol,dl{margin:1em;}ol,ul,dl{margin-left:2em;}ol li{list-style:decimal outside;}ul li{list-style:disc outside;}dl dd{margin-left:1em;}th,td{border:1px solid #000;padding:.5em;}th{font-weight:bold;text-align:center;}caption{margin-bottom:.5em;text-align:center;}p,fieldset,table,pre{margin-bottom:1em;}input[type=text],input[type=password],textarea{width:12.25em;*width:11.9em;}
+</style><meta content="Michael G. Kay" name="author">
+    <meta content="A home delivery logistics network is proposed in which goods are delivered to the home in reusable containers transported by driverless delivery vehicles. "
+      name="description">
+    <meta content="home delivery; logistics networks; driverless delivery vehicle; modular warehouse; modular storage device; non-recreational shopping; public logistics network; city logistics"
+      name="keywords">
+    <meta content="BlueGriffon wysiwyg editor" name="generator">
+  </head>
+  <body>
+    <div class="yui-t7" id="doc3">
+      <div style="text-align: center;" id="hd">
+        <h1>Home Delivery Logistics Networks using <br>
+          Driverless Delivery Vehicles</h1>
+      </div>
+      <div id="ft">
+        <p><span style="font-weight: bold;">A home delivery logistics network</span>
+          is proposed in which goods are delivered to the home in reusable
+          standardized containers transported by <span style="font-weight: bold;">
+          </span><span style="text-decoration: underline; font-style: italic;">driverless
+            delivery vehicles</span> (DDV). Since the delivery vehicle does not
+          have a human driver, it is cost-effective to have direct deliveries to
+          the home and to have the vehicle wait to be unloaded. A single
+          shipment delivered to a home can consist of either a direct delivery
+          of a single order from a store or, more economically, several orders
+          from stores at different locations can be sent to a small distribution
+          center (DC) located near the home and then delivered. Reusable
+          containers can be used for each order, with the empty containers
+          returned immediately to the DC. In order to be located close to a
+          home, the size of each DC has to be small, serving just several
+          thousand people. A <span style="text-decoration: underline; font-style: italic;">modular
+            storage device</span> is proposed that would make it possible to
+          operate a DC at a small scale since no human presence is required
+          onsite. The same module storage device used in the DC is used onboard
+          each DDV to make automated loading/unloading possible, thereby
+          allowing a single order to be transported between multiple DCs at a
+          low cost. A home delivery logistics network, as envisioned, would make
+          it possible to eliminate all non-recreational shopping for most
+          people. In addition to general merchandise, meals and groceries could
+          be delivered to the home. This would be especially important for the
+          disabled and the elderly, and would allow them to live in a typical
+          sprawling suburban neighborhood and still have their shopping needs
+          met, at low cost, without the need to drive.</p>
+        <p> </p>
+        <div style="text-align: center;">
+          <p><img title="Home delivery logistics network example" alt="" src="HDLN.jpg"></p>
+          <p> </p>
+        </div>
+        <div style="text-align: center;">
+          <p><span style="font-weight: bold;">Home Delivery Logistics Network
+              Example<br>
+            </span>(DCs shown as blue squares)<span style="font-weight: bold;"><br>
+            </span></p>
+        </div>
+        <p> <span style="font-weight: bold;">An example </span>of the
+          operation of a home delivery logistics network is illustrated in the
+          figure above. Three orders originating from stores located far from
+          the home would be sent a DC close to each store and then transported
+          through a sequence of DCs until reaching the DC close to the home. If
+          these orders do not need immediate delivery, they can accumulate at
+          the local DC and then, when a new order needs immediate delivery
+          (e.g., a take-out order from a restaurant), it serves to trigger the
+          delivery of all of the accumulated orders to the home in one trip.
+          Since the final DC is located close to the home, the lead time for
+          delivery is short and, since the <span style="text-decoration: underline; font-style: italic;">trigger
+            order</span> is presumably of no value until it is in the hands of
+          the person, it doesn’t matter that it has to be unloaded from the DDV
+          as opposed to it waiting for him or her on their front porch, as is
+          current practice for most parcel delivery in the U.S.</p>
+        <h2>Design Details</h2>
+        <p><span style="font-weight: bold;">The driverless delivery vehicle
+            (DDV) </span>shown below represents a possible design that could be
+          built on top of the chassis of a low cost electric utility vehicle
+          since it would not have to travel at a high speed (max 25 mph) or for
+          long distances (40 miles between charges). It would be fitted with the
+          same suite of sensors and computers as used on a <span style="text-decoration: underline; font-style: italic;">driverless
+            car</span>, with the addition of a flashing warning light and large
+          emergency stop buttons on all sides since a human passenger would not
+          be onboard the vehicle to stop it in an emergency. Its only payload
+          would be enclosed array of storage modules that would be accessible
+          for loading/unloading from either side.</p>
+        <p> </p>
+        <div style="text-align: center;">
+          <p><img title="Driverless delivery vehicle" alt="" src="DDV.jpg"></p>
+          <p> </p>
+          <p><span style="font-weight: bold;">Driverless Delivery Vehicle<br>
+            </span></p>
+        </div>
+        <p> Although a DDV could be designed to be just a driverless version of
+          the today’s typically UPS delivery van, this does not take advantage
+          of the big reduction in cost possible due to the elimination of the
+          driver’s labor cost. Instead, a DDV can be designed to have a small
+          payload, making it cost-effective to provide direct delivery to the
+          home. Assuming that it is not going to possible (at least initially)
+          to have a DDV automatically unload goods at the home due to the cost
+          of providing automated unloading equipment at the home, a person would
+          be needed at the home to unload the vehicle. As a result, instead of
+          the packages of an individual order being delivered, multiple packages
+          from several orders are delivered to the home in one direct trip from
+          a DC located close to the home. </p>
+        <p> </p>
+        <div style="text-align: center;">
+          <p><img title="Module and container designs" alt="" src="Mod1.jpg">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+            <img title="Orthogonal turning of a container (side view)" alt="" src="Mod2.jpg"></p>
+        </div>
+        <div style="text-align: center;">
+          <p><span style="font-weight: bold;">Modular Storage Device and
+              Standardized Container<br>
+            </span></p>
+        </div>
+        <p> <span style="font-weight: bold;">A modular storage device</span> is
+          needed in a home delivery logistics network so that all
+          loading/unloading, sortation, and storage activities can be fully
+          automated. Full automation is needed for cost effectiveness because
+          each order from a store to the home might visit a several DCs while
+          it’s in transit. The figure above shows a small square module with
+          orthogonal pop-up powered wheels. Arrays of identical modules are used
+          to form a planar surface in each DDV and DC. Loads in standardized
+          containers have recessed tracks on the undersides that mate with the
+          module wheels to allow their transport along a module array using a
+          series of orthogonal translations without rotation. The modules in the
+          proposed design could be produced at a low cost due to the scale
+          economies associated with using only a single uniform module design
+          and the fact that each individual module would not have to be designed
+          to handle the heaviest container because the larger containers would
+          occupy more modules and have their weight spread over these modules,
+          thus lowering the cost of producing each module. Also, it is likely
+          that several small, single-module containers will be as cheap or
+          cheaper to store and transport between DCs as compare to an equivalent
+          multi-module container because it would be easier for the smaller
+          containers to find space available on a DDV for transit and within a
+          DC for storage; this is in contrast with the economies of scale
+          typically found when shipping larger consolidated unit loads.</p>
+        <p style="text-align: center;"> <img title="Top view of one level of a four-dock DC"
+            alt="" src="DC1.jpg"></p>
+        <p style="text-align: center;"><span style="font-weight: bold;">Top View
+            of One Level of a Four-dock DC</span><span style="font-weight: bold;"><br>
+            <br>
+          </span></p>
+        <p style="text-align: center;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+          <img title="Side view of the DC showing the L/U and sortation  level and five storage levels"
+            alt="" src="DC2.jpg"></p>
+        <p style="text-align: center;"><span style="font-weight: bold;">Side
+            View of DC<br>
+          </span></p>
+        <p><span style="font-weight: bold;">Design of a DC</span> is shown in
+          the figures above. The proposed design provides the flexibility needed
+          to allow any size container to move to any location at any time by
+          integrating sortation with storage using arrays of modules. It enables
+          high cube utilization during sortation and storage together with full
+          accessibility to different size containers. High cube utilization
+          reduces the amount of storage space required within a DC, while full
+          accessibility provides the flexibility needed to re-route containers
+          at any time and it reduces the time and cost associated with
+          retrieving items from storage. All loading/unloading, sortation, and
+          storage operations are performed on a large open surface composed of
+          arrays of pop-up wheel modules. Only individual arrays are visible,
+          not the individual modules. In the top figure, DDVs are at three of
+          the loading/unloading (L/U) docks. The DC has six levels: one level
+          for L/U and sortation and five levels for longer-term storage. The top
+          level provides storage for goods requiring frozen storage, and two
+          levels provide refrigerated storage. Four elevators are used to move
+          loads between levels. As compared to a design that uses traditional
+          sortation and storage equipment (e.g., conveyors or an AS/RS), the
+          proposed module-based design provides complete container accessibility
+          at all times. The design differs from traditional designs by trading
+          mechanical complexity for control complexity: each module is a simple
+          mechanism, but each container in the system must be continuously
+          controlled (even when it is in storage, since it will be continuously
+          moving to provide clear paths for other loads. Loading/unloading at a
+          DC dock is shown below, where individual modules are visible. At each
+          dock, loads of containers are automatically loaded and unloaded to and
+          from a fixed array in the DC by positioning a moveable array onboard a
+          DDV.</p>
+        <p style="text-align: center;"> <img title="Automatic loading/unloading at DC dock"
+            alt="" src="L-U.jpg"></p>
+        <p style="text-align: center;"><span style="font-weight: bold;">Automatic
+            Loading/Unloading at DC Dock</span></p>
+        <h2>Long-Term Impact</h2>
+        <p> A home delivery logistics network, as envisioned, would make it
+          possible to eliminate all non-recreational shopping for most people.
+          In addition to general merchandise, meals and groceries could be
+          delivered to the home. This would be especially important for the
+          disabled and the elderly, and would allow them to live in a typical
+          sprawling suburban neighborhood and still have their shopping needs
+          met without the need to drive or own a car. Also, since empty
+          containers would be available after delivery, each vehicle would
+          provide a low cost means of shipping items from the home; e.g., waste
+          requiring special recycling, sending specimens obtained at home to a
+          lab, or goods manufactured by a home-based business.</p>
+        <p>The proposed delivery service is meant to be cost-effective even
+          during the early stages of development for those like the elderly and
+          disabled who would likely value the service even at a higher cost and
+          longer delivery lead time (initially, relatively few DCs would be
+          available in the network). The only two major factors impacting
+          overall long-term cost would be the cost of manufacturing the modules
+          and the cost of providing driverless technology for a DDV. A DDV is
+          likely to provide a good test bed to first deploy driverless
+          technology due to their slow speed of operation as compared to a
+          driverless car, and so would be the beneficiary of nearly all early
+          driverless car developments.</p>
+        <p>Initially, the cost of this type of delivery service would only add
+          to the cost of the goods purchased at the store (although it would
+          eliminate the cost and time required for non-recreational shopping).
+          Over time, this cost would decrease because stores would be able to
+          eliminate many of their costs associated with stocking shelves and
+          checkout, and they could implement a more efficient means of
+          fulfilling orders, using more automated material handling equipment to
+          receive goods and the same modular storage arrays used in the DCs to
+          load orders directly onto DDVs for shipment to customers. Also, as the
+          cost of a module decreases, many people might want to purchase a
+          modular storage array for use inside their garage (since garage space
+          would become available once people are able to call driverless cars on
+          demand for their transportation needs).</p>
+        <p> </p>
+        <h2>Public Logistics Networks</h2>
+        <p>The proposed home delivery network is a based on work done since 2002
+          on <a href="http://www.ise.ncsu.edu/kay/pln/">public logistics
+            networks</a>. This research has produced a rich set of modeling
+          tools for estimating the performance of logistics networks like the
+          proposed home delivery network and for generating representative
+          loads. In a public logistics network, it is assumed that the different
+          entities in the network are separated so that a single firm is not
+          required for coordination and that decentralized control can be
+          achieved via standard coordination protocols and standardized design.
+          All of this work applies to the proposed home delivery network: each
+          DC and each DDV can be owned and operated by a separate firm, and
+          could coordinate their interactions through the use of a <a href="http://www.ise.ncsu.edu/kay/pln/IMHRC04.pdf">bidding-based
+            protocol</a> and a <a href="http://www.ise.ncsu.edu/kay/pln/DSC.pdf">distributed
+            coordination mechanism for shipment consolidation</a> developed as
+          part of public logistics network research. </p>
+        <h2>Publications and Presentations </h2>
+        <ol>
+          <li>
+            <p>Kay, Michael G. <a href="HDLNuDDV.pdf">Home Delivery Logistics
+                Networks using Driverless Delivery Vehicles</a>, Dept. of
+              Industrial and Syst. Eng., North Carolina State Univ., Raleigh,
+              NC, Feb. 22, 2013. Whitepaper describing proposed home delivery
+              logistic network. </p>
+          </li>
+          <li>
+            <p>Sittivijan, Peerapol. <span style="text-decoration: underline;">Modular
+                Warehouse Control: Simultaneous Rectilinear Movement of Multiple
+                Multi-size Objects within Limited Free Space Environment</span>.
+              Doctoral Dissertation, Dept. of Industrial and Syst. Eng., North
+              Carolina State Univ., Raleigh, NC, in preparation. This
+              dissertation research in progress is developing the control system
+              needed to operate the DCs in the proposed home delivery logistic
+              network.</p>
+          </li>
+        </ol>
+        <h2>Contact</h2>
+        <p> <a href="http://www.ise.ncsu.edu/kay/">Michael G. Kay</a>, Fitts
+          Dept. of Industrial and Systems Engineering, North Carolina State
+          University, Raleigh, NC.</p>
+      </div>
+    </div>
+  </body>
+</html>

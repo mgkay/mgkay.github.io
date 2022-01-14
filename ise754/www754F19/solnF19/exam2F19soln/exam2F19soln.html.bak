@@ -1,0 +1,596 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>Exam 2 Solution - ISE 754 Fall 2019</title><meta name="generator" content="MATLAB 9.6"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2019-11-27"><meta name="DC.source" content="exam2F19soln.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h1>Exam 2 Solution - ISE 754 Fall 2019</h1><!--introduction--><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">Problem 1</a></li><li><a href="#2">Data</a></li><li><a href="#3">Create model inputs</a></li><li><a href="#4">Create MILP model</a></li><li><a href="#5">Solve using INTLINPROG</a></li><li><a href="#6">Solve using Gurobi</a></li><li><a href="#7">Report results</a></li><li><a href="#8">Problem 2</a></li><li><a href="#9">Read data</a></li><li><a href="#10">Get road network</a></li><li><a href="#11">Shortest time routes</a></li><li><a href="#12">Distance of shortest time route</a></li><li><a href="#13">Create routing structures</a></li><li><a href="#14">Construct &amp; improve routes</a></li><li><a href="#15">Plot routes</a></li><li><a href="#16">Determine total weight and cube per route</a></li><li><a href="#17">Route time and delivered/picked-up packages</a></li><li><a href="#18">Number of tractor trailers</a></li></ul></div><h2 id="1">Problem 1</h2><h2 id="2">Data</h2><pre class="codeinput">T = 26; rng(3446), D = gamrnd(4,2,1,T);
+d = 847; <span class="comment">% Per Google Maps</span>
+ppiTL = 135.7; <span class="comment">% Oct 2019 (P)</span>
+tr = struct(<span class="string">'r'</span>,2*(ppiTL/102.7),<span class="string">'Kwt'</span>,25,<span class="string">'Kcu'</span>,2750);
+s = 6.78; <span class="comment">% lb/cft</span>
+v = 2869; <span class="comment">% $/ton</span>
+h_ob = 0.1/(2/(365.25/7))
+UBx = repmat([12.2; sum(D)],1,T);
+UBx(1,[15:16]) = 0;
+yinit = [1; 1];
+yfinal = yinit;
+</pre><pre class="codeoutput">h_ob =
+    2.6089
+</pre><h2 id="3">Create model inputs</h2><pre class="codeinput">cTL = tr.r*d;
+qmax = maxpayld(s,tr);
+Q = [sum(D); qmax];
+Cp = [v; 0];
+Ct = [0; cTL];
+h = (0.05 + 0.06 + h_ob)/(365.25/7)
+Ci = cumsum(Cp + Ct./Q)*h     <span class="comment">% Allocated fixed cost on per-ton basis</span>
+ymax = sum(D);
+M = size(Q,1);
+</pre><pre class="codeoutput">h =
+    0.0521
+Ci =
+  149.4983
+  162.0094
+</pre><h2 id="4">Create MILP model</h2><pre class="codeinput">Cp = repmat(Cp,1,T)
+Ci = repmat(Ci,1,T+1);
+Ci(:,1,:) = 0              <span class="comment">% Initial inv cost not included</span>
+Ct = repmat(Ct,1,T)
+clear <span class="string">mp</span>
+mp = Milp(<span class="string">'PPlan'</span>);
+mp.addobj(<span class="string">'min'</span>,Cp,Ci,Ct)  <span class="comment">% Objective</span>
+<span class="keyword">for</span> t = 1:T  <span class="comment">% Flow balance constraints</span>
+   <span class="keyword">for</span> m = 1:M-1
+      mp.addcstr({[1 -1],{[m m+1],t}},{[1 -1],{m,[t t+1]}},0,<span class="string">'='</span>,0)
+   <span class="keyword">end</span>
+   mp.addcstr({M,t},{[1 -1],{M,[t t+1]}},0,<span class="string">'='</span>,D(t))
+   <span class="keyword">for</span> m = 1:M
+      mp.addcstr({m,t},0,<span class="string">'&lt;='</span>,{Q(m),{m,t}})
+   <span class="keyword">end</span>
+<span class="keyword">end</span>
+mp.addlb(0,[yinit zeros(M,T-1) yfinal],0)  <span class="comment">% Lower bounds</span>
+mp.addub(UBx,[yinit repmat(ymax,M,T-1) yfinal],Inf) <span class="comment">% Upper bounds</span>
+mp.addctype(<span class="string">'C'</span>,<span class="string">'C'</span>,<span class="string">'I'</span>)
+</pre><pre class="codeoutput">Cp =
+  Columns 1 through 6
+        2869        2869        2869        2869        2869        2869
+           0           0           0           0           0           0
+  Columns 7 through 12
+        2869        2869        2869        2869        2869        2869
+           0           0           0           0           0           0
+  Columns 13 through 18
+        2869        2869        2869        2869        2869        2869
+           0           0           0           0           0           0
+  Columns 19 through 24
+        2869        2869        2869        2869        2869        2869
+           0           0           0           0           0           0
+  Columns 25 through 26
+        2869        2869
+           0           0
+Ci =
+  Columns 1 through 7
+         0  149.4983  149.4983  149.4983  149.4983  149.4983  149.4983
+         0  162.0094  162.0094  162.0094  162.0094  162.0094  162.0094
+  Columns 8 through 14
+  149.4983  149.4983  149.4983  149.4983  149.4983  149.4983  149.4983
+  162.0094  162.0094  162.0094  162.0094  162.0094  162.0094  162.0094
+  Columns 15 through 21
+  149.4983  149.4983  149.4983  149.4983  149.4983  149.4983  149.4983
+  162.0094  162.0094  162.0094  162.0094  162.0094  162.0094  162.0094
+  Columns 22 through 27
+  149.4983  149.4983  149.4983  149.4983  149.4983  149.4983
+  162.0094  162.0094  162.0094  162.0094  162.0094  162.0094
+Ct =
+   1.0e+03 *
+  Columns 1 through 7
+         0         0         0         0         0         0         0
+    2.2383    2.2383    2.2383    2.2383    2.2383    2.2383    2.2383
+  Columns 8 through 14
+         0         0         0         0         0         0         0
+    2.2383    2.2383    2.2383    2.2383    2.2383    2.2383    2.2383
+  Columns 15 through 21
+         0         0         0         0         0         0         0
+    2.2383    2.2383    2.2383    2.2383    2.2383    2.2383    2.2383
+  Columns 22 through 26
+         0         0         0         0         0
+    2.2383    2.2383    2.2383    2.2383    2.2383
+</pre><h2 id="5">Solve using INTLINPROG</h2><pre class="codeinput">ilp = mp.milp2ilp;
+[x,TC,exitflag,output] = intlinprog(ilp{:});
+TC,output
+x = mp.namesolution(x);
+</pre><pre class="codeoutput">LP:                Optimal objective value is 753364.445827.                                        
+
+Heuristics:        Found 1 solution using rounding.                                                 
+                   Upper bound is 777292.808501.                                                    
+                   Relative gap is 2.15%.                                                          
+
+Heuristics:        Found 1 solution using rounding.                                                 
+                   Upper bound is 777084.444463.                                                    
+                   Relative gap is 2.12%.                                                          
+
+Heuristics:        Found 1 solution using rounding.                                                 
+                   Upper bound is 771141.664426.                                                    
+                   Relative gap is 1.37%.                                                          
+
+Heuristics:        Found 1 solution using rounding.                                                 
+                   Upper bound is 771141.664426.                                                    
+                   Relative gap is 1.37%.                                                          
+
+Heuristics:        Found 1 solution using rounding.                                                 
+                   Upper bound is 770909.787548.                                                    
+                   Relative gap is 1.34%.                                                          
+
+Heuristics:        Found 1 solution using rounding.                                                 
+                   Upper bound is 770909.787548.                                                    
+                   Relative gap is 1.34%.                                                          
+
+Cut Generation:    Applied 25 Gomory cuts, and 72 mir cuts.                                         
+                   Lower bound is 760573.519569.                                                    
+                   Relative gap is 1.34%.                                                          
+
+Heuristics:        Found 1 solution using rounding.                                                 
+                   Upper bound is 767543.819263.                                                    
+                   Relative gap is 0.91%.                                                          
+
+Heuristics:        Found 3 solutions using rounding.                                                
+                   Upper bound is 764701.551843.                                                    
+                   Relative gap is 0.54%.                                                          
+
+Branch and Bound:
+
+   nodes     total   num int        integer       relative                                          
+explored  time (s)  solution           fval        gap (%)                                         
+     153      0.12        16   7.612699e+05   0.000000e+00                                          
+
+Optimal solution found.
+
+Intlinprog stopped because the objective value is within a gap tolerance of the
+optimal value, options.AbsoluteGapTolerance = 0 (the default value). The intcon
+variables are integer within tolerance, options.IntegerTolerance = 1e-05 (the
+default value).
+
+TC =
+   7.6127e+05
+output = 
+  struct with fields:
+
+        relativegap: 0
+        absolutegap: 0
+      numfeaspoints: 16
+           numnodes: 153
+    constrviolation: 4.3521e-14
+            message: 'Optimal solution found.&#8629;&#8629;Intlinprog stopped because the objective value is within a gap tolerance of the optimal value, options.AbsoluteGapTolerance = 0 (the default value). The intcon variables are integer within tolerance, options.IntegerTolerance = 1e-05 (the default value).'
+</pre><h2 id="6">Solve using Gurobi</h2><pre class="codeinput">clear <span class="string">params</span>
+model = mp.milp2gb
+params.outputflag = 1;
+result = gurobi(model, params);
+x = mp.namesolution(result.x)
+TC = result.objval
+</pre><pre class="codeoutput">model = 
+  struct with fields:
+
+          name: 'PPlan'
+    modelsense: 'minimize'
+           obj: [158&times;1 double]
+            lb: [158&times;1 double]
+            ub: [158&times;1 double]
+         vtype: 'CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII'
+             A: [104&times;158 double]
+         sense: [104&times;1 char]
+           rhs: [104&times;1 double]
+Optimize a model with 104 rows, 158 columns and 286 nonzeros
+Variable types: 106 continuous, 52 integer (0 binary)
+Coefficient statistics:
+  Matrix range     [1e+00, 2e+02]
+  Objective range  [1e-08, 3e+03]
+  Bounds range     [1e+00, 2e+02]
+  RHS range        [3e+00, 2e+01]
+Found heuristic solution: objective 816769.18694
+Presolve removed 7 rows and 14 columns
+Presolve time: 0.02s
+Presolved: 97 rows, 144 columns, 265 nonzeros
+Variable types: 95 continuous, 49 integer (24 binary)
+
+Root relaxation: objective 7.538042e+05, 133 iterations, 0.02 seconds
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+     0     0 753804.152    0   31 816769.187 753804.152  7.71%     -    0s
+H    0     0                    777292.80850 753804.152  3.02%     -    0s
+H    0     0                    777263.09066 753804.152  3.02%     -    0s
+H    0     0                    774177.70575 753804.152  2.63%     -    0s
+     0     0 759983.097    0   14 774177.706 759983.097  1.83%     -    0s
+H    0     0                    772925.24326 759983.097  1.67%     -    0s
+H    0     0                    770439.17655 759983.097  1.36%     -    0s
+H    0     0                    770263.48499 759983.097  1.33%     -    0s
+H    0     0                    768984.03258 759983.097  1.17%     -    0s
+     0     0 760188.151    0   17 768984.033 760188.151  1.14%     -    0s
+H    0     0                    767046.88352 760188.151  0.89%     -    0s
+     0     0 760241.626    0   15 767046.884 760241.626  0.89%     -    0s
+     0     0 760241.799    0   16 767046.884 760241.799  0.89%     -    0s
+     0     0 760254.637    0   17 767046.884 760254.637  0.89%     -    0s
+     0     0 760254.637    0   17 767046.884 760254.637  0.89%     -    0s
+H    0     0                    765447.76231 760254.637  0.68%     -    0s
+H    0     0                    765446.01123 760254.637  0.68%     -    0s
+     0     2 760254.637    0   17 765446.011 760254.637  0.68%     -    0s
+H    4     8                    765140.06201 760275.436  0.64%   1.0    0s
+H   12    15                    763603.23772 760275.436  0.44%   2.5    0s
+H   16    16                    763062.44052 760275.436  0.37%   3.4    0s
+H   18    16                    761300.86664 760275.436  0.13%   3.4    0s
+H  231    10                    761269.87107 760680.415  0.08%   3.2    0s
+
+Cutting planes:
+  Gomory: 30
+  MIR: 11
+  Flow cover: 2
+
+Explored 307 nodes (1263 simplex iterations) in 0.17 seconds
+Thread count was 8 (of 8 available processors)
+
+Solution count 10: 761270 761301 763062 ... 770263
+
+Optimal solution found (tolerance 1.00e-04)
+Best objective 7.612698710665e+05, best bound 7.612698710665e+05, gap 0.0000%
+x = 
+  struct with fields:
+
+    Cp: [2&times;26 double]
+    Ci: [2&times;27 double]
+    Ct: [2&times;26 double]
+TC =
+   7.6127e+05
+</pre><h2 id="7">Report results</h2><pre class="codeinput">mdisp(D)
+Fp = x.Cp; mdisp(Fp)
+Fi = x.Ci; mdisp(Fi)
+Ft = x.Ct; mdisp(Ft)
+TCp = sum(sum(Cp.*Fp));
+TCi = sum(sum(Ci.*Fi));
+TCt = sum(sum(Ct.*Ft));
+vdisp(<span class="string">'TCp,TCi,TCt,TC'</span>)
+</pre><pre class="codeoutput"> 
+D:    1      2     3     4     5      6     7      8     9    10    11     12    13     14    15    16     17     18    19     20    21    22     23     24    25    26 
+-:----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+1:  3.40  10.63  4.49  5.23  8.93  13.86  7.98  17.92  8.22  9.53  4.49  10.68  8.04  12.66  6.67  3.62  17.16  15.90  5.17  13.56  3.68  2.78  14.31  15.97  4.59  6.49
+ 
+Fp:    1     2    3    4     5      6      7      8      9     10     11     12     13     14    15   16    17     18    19    20    21    22     23    24    25    26 
+--:--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ 1:  7.25  9.32   0  9.32  9.32  10.81  12.20  12.20  11.65  12.20  12.20  12.20  12.20  12.20  0.00   0  12.20  12.20  9.32  9.32  8.77  6.45  12.20  9.32  4.59  8.49
+ 2:  8.25  9.32   0  9.32  9.32   9.32   7.98  17.92   8.43   9.32   8.87   9.32   9.32   9.32  9.32   0  17.16  15.98  9.32  9.32  8.77  0.00  18.65  9.32  4.59  7.49
+ 
+Fi:   1    2     3      4      5     6     7     8    9   10    11    12     13     14     15    16    17    18     19     20   21   22    23    24   25  26  27
+--:-------------------------------------------------------------------------------------------------------------------------------------------------------------
+ 1:   1  0.00  0.00  0.0000  0.00  0.00  1.49  5.72   0  3.22  6.10  9.43  12.31  15.18  18.06  8.74  8.74  3.78  0.0000  0.00   0  0.00  6.45  0.00   0   0   1
+ 2:   1  5.86  4.55  0.0586  4.15  4.54  0.00  0.00   0  0.20  0.00  4.38   3.02   4.31   0.97  3.62  0.00  0.00  0.0836  4.24   0  5.09  2.31  6.65   0   0   1
+ 
+Ft:   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15  16  17  18  19  20  21  22  23  24  25  26
+--:--------------------------------------------------------------------------------------------------------
+ 1:   1   1  -0   1   1   1   1   1   1   1   1   1   1   1  -0  -0   1   1   1   1   1   1   1   1   1   1
+ 2:   1   1   0   1   1   1   1   2   1   1   1   1   1   1   1   0   2   2   1   1   1   0   2   1   1   1
+ 
+ :      TCp        TCi        TCt         TC    
+-:----------------------------------------------
+1:  676,939.44  23,895.70  60,434.73  761,269.87
+</pre><h2 id="8">Problem 2</h2><h2 id="9">Read data</h2><pre class="codeinput">close <span class="string">all</span>, clear
+fn = <span class="string">'Exam2DataF19.xlsx'</span>;
+inDC = table2struct(readtable(fn,<span class="string">'Sheet'</span>,<span class="string">'P2-DC'</span>));
+inC = table2struct(readtable(fn,<span class="string">'Sheet'</span>,<span class="string">'P2-Customers'</span>));
+XY = [[inDC.lon inDC.lat]; [inC.lon]' [inC.lat]'];
+wt = [inC.wt]';
+cu = [inC.cu]';
+</pre><h2 id="10">Get road network</h2><pre class="codeinput">expansionAroundXY = 0.12;
+[XY2,IJD,isXY,isIJD] = subgraph(usrdnode(<span class="string">'XY'</span>),<span class="keyword">...</span>
+   isinrect(usrdnode(<span class="string">'XY'</span>),boundrect(XY,expansionAroundXY)),usrdlink(<span class="string">'IJD'</span>));
+<span class="comment">% Label type of road</span>
+s = usrdlink(isIJD);
+isI = s.Type == <span class="string">'I'</span>;         <span class="comment">% Interstate highways</span>
+isIR = isI &amp; s.Urban == <span class="string">' '</span>; <span class="comment">% Rural Interstate highways</span>
+isIU = isI &amp; ~isIR;          <span class="comment">% Urban Interstate highways</span>
+isR = s.Urban == <span class="string">' '</span> &amp; ~isI; <span class="comment">% Rural non-Interstate roads</span>
+isU = ~isI &amp; ~isR;           <span class="comment">% Urban non-Interstate roads</span>
+<span class="comment">% Add connector roads from cities to road network</span>
+[IJD11,IJD12,IJD22] = addconnector(XY,XY2,IJD);
+<span class="comment">% Convert road distances to travel times (needs to be after ADDCONNECTOR)</span>
+IJT = IJD;
+IJT(isIR,3) = IJD(isIR,3)/70; IJT(isIU,3) = IJD(isIU,3)/50;
+IJT(isR,3) = IJD(isR,3)/45; IJT(isU,3) = IJD(isU,3)/20;
+IJT22 = IJD22; IJT22(:,3) = IJT(:,3);
+IJT12 = IJD12; IJT12(:,3) = IJD12(:,3)/15; <span class="comment">% No IJD11 since commercial</span>
+</pre><h2 id="11">Shortest time routes</h2><pre class="codeinput">n = size(XY,1);
+[T,P] = dijk(list2adj([IJT12; IJT22]),1:n,1:n);
+</pre><h2 id="12">Distance of shortest time route</h2><pre class="codeinput">A = list2adj([IJD12; IJD22]);
+</pre><h2 id="13">Create routing structures</h2><pre class="codeinput">maxt = 12;  <span class="comment">% 6a-6p</span>
+tr = struct(<span class="string">'b'</span>,1,<span class="string">'e'</span>,1,<span class="string">'Kwt'</span>,25,<span class="string">'Kcu'</span>,2750,<span class="string">'maxTC'</span>,maxt);
+b = 1;
+e = 2:length(T);
+tL = 0; tU = 15/60;
+T(1,2:end) = T(1,2:end) + 30/60;  <span class="comment">% Loading time at DC</span>
+sh = vec2struct(<span class="string">'b'</span>,b,<span class="string">'e'</span>,e,<span class="string">'q'</span>,wt/2000,<span class="string">'s'</span>,wt./cu,<span class="string">'tL'</span>,tL,<span class="string">'tU'</span>,tU);
+</pre><h2 id="14">Construct &amp; improve routes</h2><pre class="codeinput">rTCh = @(rte) rteTC(rte,sh,T,tr);
+[r,~,Time] = sh2rte(sh,twoopt(savings(<span class="keyword">...</span>
+   rTCh,sh,pairwisesavings(rTCh,sh)),rTCh),rTCh);
+</pre><h2 id="15">Plot routes</h2><pre class="codeinput">plotshmt(sh,XY,r,tr)
+pplot(XY(1,:),<span class="string">'ks'</span>)
+</pre><img vspace="5" hspace="5" src="exam2F19soln_01.png" alt=""> <h2 id="16">Determine total weight and cube per route</h2><pre class="codeinput">clear <span class="string">Wt</span> <span class="string">Cu</span>
+<span class="keyword">for</span> i = 1:length(r)
+   idx = rte2idx(r{i});
+   Wt(i) = sum(2000*[sh(idx).q]);
+   Cu(i) = sum(2000*[sh(idx).q]./[sh(idx).s]);
+<span class="keyword">end</span>
+</pre><h2 id="17">Route time and delivered/picked-up packages</h2><pre class="codeinput">vdisp(<span class="string">'Time,Wt,Cu'</span>,true)
+</pre><pre class="codeoutput"> 
+     :   Time     Wt        Cu   
+-----:---------------------------
+    1:   8.71   18,664   2,720.48
+    2:   7.94   22,440   2,547.21
+    3:   4.39   15,503   2,639.54
+    4:   7.94   29,131   2,735.43
+    5:   8.67   21,506   2,725.92
+    6:   9.45   32,531   2,709.17
+    7:   3.90    6,066   2,519.02
+    8:   6.01   26,489   2,426.18
+    9:   8.56   28,236   2,689.99
+   10:   6.80   25,173   2,725.53
+   11:   3.37   12,727   2,724.99
+   12:   6.12   18,121   2,727.81
+   13:   5.32   17,629   2,723.03
+Total:  87.17  274,216  34,614.30
+</pre><h2 id="18">Number of tractor trailers</h2><pre class="codeinput">truck = {}; t = Time; tpertr = [];
+<span class="keyword">for</span> i = 1:length(t)
+   <span class="keyword">if</span> t(i) &lt; maxt
+      truck(end+1) = {i};
+      tpertr(end+1) = t(i);
+      <span class="keyword">for</span> j = i+1:length(t)
+         <span class="keyword">if</span> tpertr(end) + t(j) &lt;= maxt
+            truck{end}(end+1) = j;
+            tpertr(end) = tpertr(end) + t(j);
+            t(j) = Inf;
+         <span class="keyword">end</span>
+      <span class="keyword">end</span>
+   <span class="keyword">end</span>
+<span class="keyword">end</span>
+truck{:}
+nRte = cellfun(<span class="string">'length'</span>,truck);
+vdisp(<span class="string">'nRte,tpertr'</span>)
+fprintf(<span class="string">'Number of trucks = %d\n'</span>,length(truck))
+</pre><pre class="codeoutput">ans =
+     1
+ans =
+     2     7
+ans =
+     3     8
+ans =
+     4    11
+ans =
+     5
+ans =
+     6
+ans =
+     9
+ans =
+    10
+ans =
+    12    13
+ 
+ :  nRte  tpertr
+-:--------------
+1:    1     8.71
+2:    2    11.84
+3:    2    10.40
+4:    2    11.30
+5:    1     8.67
+6:    1     9.45
+7:    1     8.56
+8:    1     6.80
+9:    2    11.44
+Number of trucks = 9
+</pre><p class="footer"><br><a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2019a</a><br></p></div><!--
+##### SOURCE BEGIN #####
+%% Exam 2 Solution - ISE 754 Fall 2019
+
+%% Problem 1
+%% Data
+T = 26; rng(3446), D = gamrnd(4,2,1,T);
+d = 847; % Per Google Maps
+ppiTL = 135.7; % Oct 2019 (P)
+tr = struct('r',2*(ppiTL/102.7),'Kwt',25,'Kcu',2750); 
+s = 6.78; % lb/cft
+v = 2869; % $/ton
+h_ob = 0.1/(2/(365.25/7))
+UBx = repmat([12.2; sum(D)],1,T);
+UBx(1,[15:16]) = 0;
+yinit = [1; 1];
+yfinal = yinit;
+%% Create model inputs
+cTL = tr.r*d;
+qmax = maxpayld(s,tr);
+Q = [sum(D); qmax];
+Cp = [v; 0];
+Ct = [0; cTL];
+h = (0.05 + 0.06 + h_ob)/(365.25/7)
+Ci = cumsum(Cp + Ct./Q)*h     % Allocated fixed cost on per-ton basis
+ymax = sum(D);
+M = size(Q,1);
+%% Create MILP model
+Cp = repmat(Cp,1,T)
+Ci = repmat(Ci,1,T+1);
+Ci(:,1,:) = 0              % Initial inv cost not included
+Ct = repmat(Ct,1,T)
+clear mp
+mp = Milp('PPlan');
+mp.addobj('min',Cp,Ci,Ct)  % Objective
+for t = 1:T  % Flow balance constraints
+   for m = 1:M-1
+      mp.addcstr({[1 -1],{[m m+1],t}},{[1 -1],{m,[t t+1]}},0,'=',0)
+   end
+   mp.addcstr({M,t},{[1 -1],{M,[t t+1]}},0,'=',D(t))
+   for m = 1:M
+      mp.addcstr({m,t},0,'<=',{Q(m),{m,t}})
+   end
+end
+mp.addlb(0,[yinit zeros(M,T-1) yfinal],0)  % Lower bounds
+mp.addub(UBx,[yinit repmat(ymax,M,T-1) yfinal],Inf) % Upper bounds
+mp.addctype('C','C','I')
+%% Solve using INTLINPROG
+ilp = mp.milp2ilp;
+[x,TC,exitflag,output] = intlinprog(ilp{:});
+TC,output
+x = mp.namesolution(x);
+%% Solve using Gurobi
+clear params
+model = mp.milp2gb
+params.outputflag = 1;
+result = gurobi(model, params);
+x = mp.namesolution(result.x)
+TC = result.objval
+%% Report results
+mdisp(D)
+Fp = x.Cp; mdisp(Fp)
+Fi = x.Ci; mdisp(Fi)
+Ft = x.Ct; mdisp(Ft)
+TCp = sum(sum(Cp.*Fp));
+TCi = sum(sum(Ci.*Fi));
+TCt = sum(sum(Ct.*Ft));
+vdisp('TCp,TCi,TCt,TC')
+
+%% Problem 2
+%% Read data
+close all, clear
+fn = 'Exam2DataF19.xlsx';
+inDC = table2struct(readtable(fn,'Sheet','P2-DC'));
+inC = table2struct(readtable(fn,'Sheet','P2-Customers'));
+XY = [[inDC.lon inDC.lat]; [inC.lon]' [inC.lat]'];
+wt = [inC.wt]';
+cu = [inC.cu]';
+%% Get road network
+expansionAroundXY = 0.12;
+[XY2,IJD,isXY,isIJD] = subgraph(usrdnode('XY'),...
+   isinrect(usrdnode('XY'),boundrect(XY,expansionAroundXY)),usrdlink('IJD'));
+% Label type of road
+s = usrdlink(isIJD);
+isI = s.Type == 'I';         % Interstate highways
+isIR = isI & s.Urban == ' '; % Rural Interstate highways
+isIU = isI & ~isIR;          % Urban Interstate highways
+isR = s.Urban == ' ' & ~isI; % Rural non-Interstate roads
+isU = ~isI & ~isR;           % Urban non-Interstate roads
+% Add connector roads from cities to road network
+[IJD11,IJD12,IJD22] = addconnector(XY,XY2,IJD);
+% Convert road distances to travel times (needs to be after ADDCONNECTOR)
+IJT = IJD;
+IJT(isIR,3) = IJD(isIR,3)/70; IJT(isIU,3) = IJD(isIU,3)/50;
+IJT(isR,3) = IJD(isR,3)/45; IJT(isU,3) = IJD(isU,3)/20;
+IJT22 = IJD22; IJT22(:,3) = IJT(:,3);
+IJT12 = IJD12; IJT12(:,3) = IJD12(:,3)/15; % No IJD11 since commercial
+%% Shortest time routes
+n = size(XY,1);
+[T,P] = dijk(list2adj([IJT12; IJT22]),1:n,1:n);
+%% Distance of shortest time route
+A = list2adj([IJD12; IJD22]);
+%% Create routing structures
+maxt = 12;  % 6a-6p
+tr = struct('b',1,'e',1,'Kwt',25,'Kcu',2750,'maxTC',maxt);
+b = 1;
+e = 2:length(T);
+tL = 0; tU = 15/60;
+T(1,2:end) = T(1,2:end) + 30/60;  % Loading time at DC
+sh = vec2struct('b',b,'e',e,'q',wt/2000,'s',wt./cu,'tL',tL,'tU',tU);
+%% Construct & improve routes
+rTCh = @(rte) rteTC(rte,sh,T,tr);
+[r,~,Time] = sh2rte(sh,twoopt(savings(...
+   rTCh,sh,pairwisesavings(rTCh,sh)),rTCh),rTCh);
+%% Plot routes
+plotshmt(sh,XY,r,tr)
+pplot(XY(1,:),'ks')
+%% Determine total weight and cube per route
+clear Wt Cu
+for i = 1:length(r)
+   idx = rte2idx(r{i});
+   Wt(i) = sum(2000*[sh(idx).q]);
+   Cu(i) = sum(2000*[sh(idx).q]./[sh(idx).s]);
+end
+%% Route time and delivered/picked-up packages
+vdisp('Time,Wt,Cu',true)
+%% Number of tractor trailers
+truck = {}; t = Time; tpertr = [];
+for i = 1:length(t)
+   if t(i) < maxt
+      truck(end+1) = {i};
+      tpertr(end+1) = t(i);
+      for j = i+1:length(t)
+         if tpertr(end) + t(j) <= maxt
+            truck{end}(end+1) = j;
+            tpertr(end) = tpertr(end) + t(j);
+            t(j) = Inf;
+         end
+      end
+   end
+end
+truck{:}
+nRte = cellfun('length',truck);
+vdisp('nRte,tpertr')
+fprintf('Number of trucks = %d\n',length(truck))
+
+
+##### SOURCE END #####
+--></body></html>

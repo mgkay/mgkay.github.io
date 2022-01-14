@@ -1,0 +1,3896 @@
+<html>
+<head>
+<title>Matlog Reference</title>
+</head><body>
+<h1 align="center">Matlog Reference</h1>
+<p align="center"><font size="4"><b>Matlog: Logistics Engineering Matlab Toolbox<br>
+Version 17 26-Jul-2020</b></font></p>
+<h2>Contents</h2>
+</table>
+<h3>  Location:</h3><table>
+<tr><td><a href="#ala" name="Top-ala">ala</a><td>          - Alternate location-allocation procedure
+<tr><td><a href="#alaplot" name="Top-alaplot">alaplot</a><td>      - Plot ALA iterations
+<tr><td><a href="#minisumloc" name="Top-minisumloc">minisumloc</a><td>   - Continuous minisum facility location
+<tr><td><a href="#pmedian" name="Top-pmedian">pmedian</a><td>      - Hybrid algorithm for p-median location
+<tr><td><a href="#randX" name="Top-randX">randX</a><td>        - Random generation of new points
+<tr><td><a href="#sumcost" name="Top-sumcost">sumcost</a><td>      - Determine total cost of new facilities
+<tr><td><a href="#ufladd" name="Top-ufladd">ufladd</a><td>       - Add construction procedure
+<tr><td><a href="#ufldrop" name="Top-ufldrop">ufldrop</a><td>      - Drop construction procedure
+<tr><td><a href="#ufl" name="Top-ufl">ufl</a><td>          - Hybrid algorithm for uncapacitated facility location
+<tr><td><a href="#uflxchg" name="Top-uflxchg">uflxchg</a><td>      - Exchange best improvement procedure
+</table>
+<h3>  Freight transport:</h3><table>
+<tr><td><a href="#aggshmt" name="Top-aggshmt">aggshmt</a><td>      - Aggregate multiple shipments
+<tr><td><a href="#maxpayld" name="Top-maxpayld">maxpayld</a><td>     - Determine maximum payload
+<tr><td><a href="#plotshmt" name="Top-plotshmt">plotshmt</a><td>     - Plot shipments
+<tr><td><a href="#rateLTL" name="Top-rateLTL">rateLTL</a><td>      - Determine estimated LTL rate
+<tr><td><a href="#mincharge" name="Top-mincharge">mincharge</a><td>    - Minimum transport charge for TL, LTL, or multistop route
+<tr><td><a href="#minTLC" name="Top-minTLC">minTLC</a><td>       - Minimum total logistics cost comparing TL and LTL
+<tr><td><a href="#totlogcost" name="Top-totlogcost">totlogcost</a><td>   - Calculate total logistics cost
+<tr><td><a href="#transcharge" name="Top-transcharge">transcharge</a><td>  - Transport charge for TL and LTL
+</table>
+<h3>  Routing:</h3><table>
+<tr><td><a href="#checkrte" name="Top-checkrte">checkrte</a><td>     - Check if valid route vector
+<tr><td><a href="#drte" name="Top-drte">drte</a><td>         - Convert destination in route to negative value
+<tr><td><a href="#isorigin" name="Top-isorigin">isorigin</a><td>     - Identify origin of each shipment in route
+<tr><td><a href="#loccost" name="Top-loccost">loccost</a><td>      - Calculate location sequence cost
+<tr><td><a href="#insertimprove" name="Top-insertimprove">insertimprove</a><td> - Insert with improvement for route construction
+<tr><td><a href="#mincostinsert" name="Top-mincostinsert">mincostinsert</a><td> - Min cost insertion of route i into route j
+<tr><td><a href="#pairwisesavings" name="Top-pairwisesavings">pairwisesavings</a><td> - Calculate pairwise savings
+<tr><td><a href="#rte2idx" name="Top-rte2idx">rte2idx</a><td>      - Convert route to route index vector
+<tr><td><a href="#rte2ldmx" name="Top-rte2ldmx">rte2ldmx</a><td>     - Convert route vector to load-mix cell array
+<tr><td><a href="#rte2loc" name="Top-rte2loc">rte2loc</a><td>      - Convert route to location vector
+<tr><td><a href="#rtesegid" name="Top-rtesegid">rtesegid</a><td>     - Identify shipments in each segment of route
+<tr><td><a href="#rtesegsum" name="Top-rtesegsum">rtesegsum</a><td>    - Cumulative sum over each segment of route
+<tr><td><a href="#rtenorm" name="Top-rtenorm">rtenorm</a><td>      - Normalize route vector
+<tr><td><a href="#rteTC" name="Top-rteTC">rteTC</a><td>        - Total cost of route
+<tr><td><a href="#savings" name="Top-savings">savings</a><td>      - Savings procedure for route construction
+<tr><td><a href="#sh2rte" name="Top-sh2rte">sh2rte</a><td>       - Create routes for shipments not in existing routes
+<tr><td><a href="#twoopt" name="Top-twoopt">twoopt</a><td>       - 2-optimal exchange procedure for route improvement
+</table>
+<h3>  Vehicle routing (VRP) and traveling salesman (TSP) problems:</h3><table>
+<tr><td><a href="#combineloc" name="Top-combineloc">combineloc</a><td>   - Combine non-overlapping location sequences
+<tr><td><a href="#locTC" name="Top-locTC">locTC</a><td>        - Calculate total cost of location sequences
+<tr><td><a href="#sfcpos" name="Top-sfcpos">sfcpos</a><td>       - Compute position of points along 2-D spacefilling curve
+<tr><td><a href="#tspchinsert" name="Top-tspchinsert">tspchinsert</a><td>  - Convex hull insertion algorithm for TSP construction
+<tr><td><a href="#tspnneighbor" name="Top-tspnneighbor">tspnneighbor</a><td> - Nearest neighbor algorithm for TSP construction
+<tr><td><a href="#tspspfillcur" name="Top-tspspfillcur">tspspfillcur</a><td> - Spacefilling curve algorithm for TSP construction
+<tr><td><a href="#tsp2opt" name="Top-tsp2opt">tsp2opt</a><td>      - 2-optimal exchange procedure for TSP improvement
+<tr><td><a href="#vrpcrossover" name="Top-vrpcrossover">vrpcrossover</a><td> - Crossover procedure for VRP improvement
+<tr><td><a href="#vrpexchange" name="Top-vrpexchange">vrpexchange</a><td>  - Two-vertex exchange procedure for VRP improvement
+<tr><td><a href="#vrpinsert" name="Top-vrpinsert">vrpinsert</a><td>    - Insertion algorithm for VRP construction
+<tr><td><a href="#vrpsavings" name="Top-vrpsavings">vrpsavings</a><td>   - Clark-Wright savings algorithm for VRP construction
+<tr><td><a href="#vrpsweep" name="Top-vrpsweep">vrpsweep</a><td>     - Gillett-Miller sweep algorithm for VRP construction
+<tr><td><a href="#vrptwout" name="Top-vrptwout">vrptwout</a><td>     - Generate output VRP with time windows
+</table>
+<h3>  Networks:</h3><table>
+<tr><td><a href="#addconnector" name="Top-addconnector">addconnector</a><td> - Add connector from new location to transport. network
+<tr><td><a href="#adj2incid" name="Top-adj2incid">adj2incid</a><td>    - Convert weighted adjacency matrix to incidence matric
+<tr><td><a href="#adj2lev" name="Top-adj2lev">adj2lev</a><td>      - Convert weighted adjacency to weighted interlevel matrix
+<tr><td><a href="#adj2list" name="Top-adj2list">adj2list</a><td>     - Convert weighted adjacency matrix to arc list
+<tr><td><a href="#dijk" name="Top-dijk">dijk</a><td>         - Shortest paths using Dijkstra algorithm
+<tr><td><a href="#dijkdemo" name="Top-dijkdemo">dijkdemo</a><td>     - Demonstrate Dijkstra's algorithm to find shortest path
+<tr><td><a href="#gtrans" name="Top-gtrans">gtrans</a><td>       - Greedy heuristic for the transportation problem
+<tr><td><a href="#lev2adj" name="Top-lev2adj">lev2adj</a><td>      - Convert weighted interlevel to weighted adjacency matrix
+<tr><td><a href="#lev2list" name="Top-lev2list">lev2list</a><td>     - Weighted interlevel to arc list representation
+<tr><td><a href="#incid2list" name="Top-incid2list">incid2list</a><td>   - Convert node-arc incidence matrix to arc list
+<tr><td><a href="#list2adj" name="Top-list2adj">list2adj</a><td>     - Convert arc list to weighted adjacency matrix
+<tr><td><a href="#list2incid" name="Top-list2incid">list2incid</a><td>   - Convert arc list to incidence matrix
+<tr><td><a href="#lp2mcnf" name="Top-lp2mcnf">lp2mcnf</a><td>      - Convert LP solution to MCNF arc and node flows
+<tr><td><a href="#mcnf2lp" name="Top-mcnf2lp">mcnf2lp</a><td>      - Convert minimum cost network flow to LP model
+<tr><td><a href="#minspan" name="Top-minspan">minspan</a><td>      - Minimum weight spanning tree using Kruskal algorithm
+<tr><td><a href="#pred2path" name="Top-pred2path">pred2path</a><td>    - Convert predecessor indices to shortest path
+<tr><td><a href="#loc2listidx" name="Top-loc2listidx">loc2listidx</a><td>  - Find indices of loc seq segments in arc list
+<tr><td><a href="#subgraph" name="Top-subgraph">subgraph</a><td>     - Create subgraph from graph
+<tr><td><a href="#thin" name="Top-thin">thin</a><td>         - Thin degree-two nodes from graph
+<tr><td><a href="#trans" name="Top-trans">trans</a><td>        - Transportation and assignment problems
+<tr><td><a href="#tri2adj" name="Top-tri2adj">tri2adj</a><td>      - Triangle indices to adjacency matrix representation
+<tr><td><a href="#tri2list" name="Top-tri2list">tri2list</a><td>     - Convert triangle indices to arc list representation
+<tr><td><a href="#trineighbors" name="Top-trineighbors">trineighbors</a><td> - Find neighbors of a triangle
+</table>
+<h3>  Geocoding:</h3><table>
+<tr><td><a href="#destloc" name="Top-destloc">destloc</a><td>      - Destination location from starting location
+<tr><td><a href="#fipsnum2alpha" name="Top-fipsnum2alpha">fipsnum2alpha</a><td> - Convert numeric state FIPS code to alphabetic
+<tr><td><a href="#invproj" name="Top-invproj">invproj</a><td>      - Inverse Mercator projection
+<tr><td><a href="#lonlat2city" name="Top-lonlat2city">lonlat2city</a><td>  - Determine nearest city given a location
+<tr><td><a href="#makemap" name="Top-makemap">makemap</a><td>      - Create projection plot of World or US
+<tr><td><a href="#normlonlat" name="Top-normlonlat">normlonlat</a><td>   - Convert longitude and latitude to normal form
+<tr><td><a href="#proj" name="Top-proj">proj</a><td>         - Mercator projection
+</table>
+<h3>  Layout:</h3><table>
+<tr><td><a href="#binaryorder" name="Top-binaryorder">binaryorder</a><td>  - Binary ordering of machine-part matrix
+<tr><td><a href="#loc2W" name="Top-loc2W">loc2W</a><td>        - Converts routings to weight matrix
+<tr><td><a href="#sdpi" name="Top-sdpi">sdpi</a><td>         - Steepest descent pairwise interchange heuristic for QAP
+</table>
+<h3>  General purpose:</h3><table>
+<tr><td><a href="#dists" name="Top-dists">dists</a><td>        - Metric distances between vectors of points
+<tr><td><a href="#gantt" name="Top-gantt">gantt</a><td>        - Gantt chart
+<tr><td><a href="#lplog" name="Top-lplog">lplog</a><td>        - Matlog linear programming solver
+<tr><td><a href="#milplog" name="Top-milplog">milplog</a><td>      - Matlog mixed-integer linear programming solver
+<tr><td><a href="#Milp" name="Top-Milp">Milp</a><td>         - Mixed-integer linear programming model
+<tr><td><a href="#pplot" name="Top-pplot">pplot</a><td>        - Projection plot
+</table>
+<h3>  Utility:</h3><table>
+<tr><td><a href="#arcang" name="Top-arcang">arcang</a><td>       - Arc angles (in degrees) from xy to XY
+<tr><td><a href="#argmax" name="Top-argmax">argmax</a><td>       - Indices of maximum component
+<tr><td><a href="#argmin" name="Top-argmin">argmin</a><td>       - Indices of minimum component
+<tr><td><a href="#argsort" name="Top-argsort">argsort</a><td>      - Indices of sort in ascending order
+<tr><td><a href="#boundrect" name="Top-boundrect">boundrect</a><td>    - Bounding rectangle of XY points
+<tr><td><a href="#cell2padmat" name="Top-cell2padmat">cell2padmat</a><td>  - Convert cell array of vectors to NaN-padded matrix
+<tr><td><a href="#deletelntag" name="Top-deletelntag">deletelntag</a><td>  - Delete last tagged line objects from plot
+<tr><td><a href="#editcellstr" name="Top-editcellstr">editcellstr</a><td>  - Edit or create a cell array of strings
+<tr><td><a href="#file2cellstr" name="Top-file2cellstr">file2cellstr</a><td> - Convert file to cell array
+<tr><td><a href="#findXY" name="Top-findXY">findXY</a><td>       - Find XY points in rectangle
+<tr><td><a href="#fixseq" name="Top-fixseq">fixseq</a><td>       - Fixed sequence proportional to percentage of demand
+<tr><td><a href="#getfile" name="Top-getfile">getfile</a><td>      - Download file from Internet and save local copy
+<tr><td><a href="#grect" name="Top-grect">grect</a><td>        - Get rectangular region in current axes
+<tr><td><a href="#idx2is" name="Top-idx2is">idx2is</a><td>       - Convert index vector to n-element logical vector
+<tr><td><a href="#iff" name="Top-iff">iff</a><td>          - Conditional operator as a function
+<tr><td><a href="#in2out" name="Top-in2out">in2out</a><td>       - Convert variable number of inputs to outputs
+<tr><td><a href="#idxkey" name="Top-idxkey">idxkey</a><td>       - Create index key to array from unique integer values
+<tr><td><a href="#inputevaldlg" name="Top-inputevaldlg">inputevaldlg</a><td> - Input dialog with evaluation of values
+<tr><td><a href="#invperm" name="Top-invperm">invperm</a><td>      - Inverse permutation
+<tr><td><a href="#isinrect" name="Top-isinrect">isinrect</a><td>     - Are XY points in rectangle
+<tr><td><a href="#isint" name="Top-isint">isint</a><td>        - True for integer elements (within tolerance)
+<tr><td><a href="#is0" name="Top-is0">is0</a><td>          - True for zero elements (within tolerance)
+<tr><td><a href="#loaddatafile" name="Top-loaddatafile">loaddatafile</a><td> - Common code for data file functions
+<tr><td><a href="#mand" name="Top-mand">mand</a><td>         - Multiple AND with real or cellstr vector pairs
+<tr><td><a href="#matlogupdate" name="Top-matlogupdate">matlogupdate</a><td> - Automatically download updates to Matlog files
+<tr><td><a href="#mat2vec" name="Top-mat2vec">mat2vec</a><td>      - Convert columns of matrix to vectors
+<tr><td><a href="#mdisp" name="Top-mdisp">mdisp</a><td>        - Display matrix
+<tr><td><a href="#mor" name="Top-mor">mor</a><td>          - Multiple OR with each element of real or cellstr vector
+<tr><td><a href="#num2cellstr" name="Top-num2cellstr">num2cellstr</a><td>  - Create cell array of strings from numerical vector
+<tr><td><a href="#optstructchk" name="Top-optstructchk">optstructchk</a><td> - Validate 'opt' structure
+<tr><td><a href="#padmat2cell" name="Top-padmat2cell">padmat2cell</a><td>  - Convert rows of NaN-padded matrix to cell array
+<tr><td><a href="#pauseplot" name="Top-pauseplot">pauseplot</a><td>    - Drawnow and then pause after plotting
+<tr><td><a href="#projtick" name="Top-projtick">projtick</a><td>     - Project tick marks on projected axes
+<tr><td><a href="#randreorder" name="Top-randreorder">randreorder</a><td>  - Random re-ordering of an array
+<tr><td><a href="#sdisp" name="Top-sdisp">sdisp</a><td>        - Display structure vector with all scalar field values
+<tr><td><a href="#struct2scalar" name="Top-struct2scalar">struct2scalar</a><td> - Remove non-scalar values from structure vector
+<tr><td><a href="#subsetstruct" name="Top-subsetstruct">subsetstruct</a><td> - Extract subset of each field of a structure
+<tr><td><a href="#sub" name="Top-sub">sub</a><td>          - Create subarray
+<tr><td><a href="#varnames" name="Top-varnames">varnames</a><td>     - Convert input to cell arrays of variable name and value
+<tr><td><a href="#vec2struct" name="Top-vec2struct">vec2struct</a><td>   - Add each element in vector to field in structure array
+<tr><td><a href="#vdisp" name="Top-vdisp">vdisp</a><td>        - Display vectors
+<tr><td><a href="#wtbinselect" name="Top-wtbinselect">wtbinselect</a><td>  - Weighted binary selection
+<tr><td><a href="#wtrand" name="Top-wtrand">wtrand</a><td>       - Weighted random number
+<tr><td><a href="#wtrandperm" name="Top-wtrandperm">wtrandperm</a><td>   - Weighted random permutation
+<tr><td><a href="#wtrouselect" name="Top-wtrouselect">wtrouselect</a><td>  - Weighted roulette selection
+<tr><td><a href="#xls2struct" name="Top-xls2struct">xls2struct</a><td>   - Convert Excel database to structure array
+</table>
+<h3>  Data:</h3><table>
+<tr><td><a href="#mapdata" name="Top-mapdata">mapdata</a><td>      - Data for maps of the World, US, and North Carolina
+<tr><td><a href="#nccity" name="Top-nccity">nccity</a><td>       - North Carolina cities with populations of at least 10k
+<tr><td><a href="#uscenblkgrp" name="Top-uscenblkgrp">uscenblkgrp</a><td>  - US census block group data
+<tr><td><a href="#uscity" name="Top-uscity">uscity</a><td>       - US cities data
+<tr><td><a href="#uscity10k" name="Top-uscity10k">uscity10k</a><td>    - US cities with populations of at least 10,000 data
+<tr><td><a href="#uscity50k" name="Top-uscity50k">uscity50k</a><td>    - US cities with populations of at least 50,000 data
+<tr><td><a href="#uscounty" name="Top-uscounty">uscounty</a><td>     - US county data
+<tr><td><a href="#usrdlink" name="Top-usrdlink">usrdlink</a><td>     - US highway network links data
+<tr><td><a href="#usrdnode" name="Top-usrdnode">usrdnode</a><td>     - US highway network nodes data
+<tr><td><a href="#uszip3" name="Top-uszip3">uszip3</a><td>       - US 3-digit ZIP code data
+<tr><td><a href="#uszip5" name="Top-uszip5">uszip5</a><td>       - US 5-digit ZIP code data
+<tr><td><a href="#vrpnc1" name="Top-vrpnc1">vrpnc1</a><td>       - Christofiles' VRP problem 1 data
+<tr><td><a href="#vrpsolrc101" name="Top-vrpsolrc101">vrpsolrc101</a><td>  - Soloman's VRP with Time Windows problem RC101 data
+</table>
+<hr>
+<h2><a href="#Top-addconnector" name="addconnector">addconnector</a></h2>
+<p><b>Add connector from new location to transportation network</b></p>
+<pre> [IJC11,IJC12,IJC22] = addconnector(XY1,XY2,IJC2,p,cir,thresh)
+    XY1 = m1 x 2 matrix of m1 new location longitude-latitude pairs 
+          (in decimal degrees)
+    XY2 = m2 x 2 matrix of longitude-latitude pairs of original network   
+          nodes (in decimal degrees)
+   IJC2 = n2 x 3 matrix arc list of original network
+      p = distance parameter for DISTS, should be in same units as the
+          distances in IJC2
+        = 'mi', default, great circle distance in statute miles
+    cir = circuity factor (between 1 and 2) for connectors that represents 
+          the expected increase in arc distance compared to DISTS distance
+        = 1.50, default
+ thresh = threshold (between 0 and 1) to only add arc to closest node in
+          original network (if ratio of distance from new location to 
+          closest node and to second closest node is less than threshold)
+        = 0.10, default
+        = 0 => don't consider threshold
+        = 1 => only add arc to closest node
+  IJC11 = 3-column matrix arc list of connectors between new locations
+  IJC12 = 3-column matrix arc list of connectors from new location to
+          original nodes
+  IJC22 = 3-column matrix arc list of modified original network, where arc 
+          [i j] becomes [i+m1 j+m1]
+ 
+  Examples:
+  % 3 new nodes connected to 4 original nodes (Euclidean arc distances)
+  XY1 = [2 1; 5 -1]; 
+  XY2 = [0 0; 4 3; 4 -3; 8 0];
+  IJC2 = [1 2 5; 1 3 5; 2 4 5; 3 4 5];
+  [IJC11,IJC12,IJC22] = addconnector(XY1,XY2,IJC2,2)
+  pplot(IJC11,XY1,'r-')
+  pplot(IJC12,[XY1; XY2],'g-')
+  pplot(IJC22,[XY1; XY2],'b-')
+ 
+  % Connect cites around Raleigh, NC to road network
+  xy1xy2 = [-79 35.5; -78 36];
+  [XY,IJD] = subgraph(usrdnode('XY'),isinrect(usrdnode('XY'),xy1xy2),...
+     usrdlink('IJD'));
+  [Name,XYcity] = uscity10k('Name','XY',isinrect(uscity10k('XY'),xy1xy2));
+  [IJD11,IJD12,IJD22] = addconnector(XYcity,XY,IJD);
+  makemap(XY)
+  pplot(IJD11,XYcity,'r-')
+  pplot(IJD12,[XYcity; XY],'g-')
+  pplot(IJD22,[XYcity; XY],'b-')
+  pplot(XYcity,'k.')
+  pplot(XYcity,Name)
+ 
+  Note: (1) Arc between a new location and the node in the original network
+   is added to the combined network when the great circle distance times 
+   circuity factor is less than shortest distance between the locations in 
+   remainder of network. Nodes considered are those defining the location's
+   triangle (using DELAUNAY) and, if not a triangle node, the closest node 
+   to the location (using DISTS).
+   (2) Single connector arc from new location to closest node in original
+   network if distance < thresh x distance to second closest node; 
+   connectors to other new locations added only their distance x thresh <= 
+   distance of shortest connector.
+   (3) Arc between two new locations in the same or adjacent triangles is
+   added to combined network when the great circle distance times circuity
+   factor is less than shortest distance between the locations in remainder
+   of network.
+   (4) Arc between new locations outside the convex hull of XY2 added to 
+   any new location that is one of the three closest nodes to the location.
+</pre>
+<h2><a href="#Top-adj2incid" name="adj2incid">adj2incid</a></h2>
+<p><b>Node-node weighted adjacency matrix to node-arc incidence matrix</b></p>
+<pre>  [I,c] = adj2incid(A)
+      A = m x m node-node weighted adjacency matrix of arc lengths
+      I = m x n node-arc incidence matrix
+      c = n-element vector of arc weights (nonzero elements of A)
+ 
+  Note: A(i,j) = 0   => Arc (i,j) does not exist
+        A(i,j) = NaN => Arc (i,j) exists with 0 weight
+        All A(i,j) = A(j,i) => A is symmetric => all undirected arcs in I 
+        Wrapper for [I,c] = LIST2INCID(ADJ2LIST(A))
+        I is column major relative to A for speed purposes
+ 
+  Examples:
+  A = [0 1 0
+       0 0 0
+       3 2 0]
+  [I,c] = adj2incid(A)  % I = -1  1  0   c = 3
+                               0 -1 -1       1
+                               1  0  1       2
+ 
+  A = [0 1 0            % Arc (3,1) has 0 weight
+       0 0 0
+     NaN 2 0]
+  [I,c] = adj2incid(A)  % I = -1  1  0   c = 0
+                               0 -1 -1       1
+                               1  0  1       2
+ 
+  A = [0 1 3            % A is symmetric
+       1 0 2
+       3 2 0]
+  [I,c] = adj2incid(A)  % I =  1  1  0   c = 1
+                               1  0  1       3
+                               0  1  1       2
+ 
+  See also LIST2INCID, LIST2ADJ, and ADJ2LIST
+</pre>
+<h2><a href="#Top-adj2lev" name="adj2lev">adj2lev</a></h2>
+<p><b>Weighted adjacency to weighted interlevel matrix representation</b></p>
+<pre>             C = adj2lev(A,m)
+ [C12,C23,...] = adj2lev(A,m)
+      A = SUM(m) x SUM(m) node-node wt. adjacency matrix of arc lengths
+        = (SUM(m) x t) x (SUM(m) x t) matrix, t > 1, if multiple periods
+      m = [m1 m2 m3 ...], vector of number of nodes at each level, where
+      C = {C12,C23,...}, cell array of weighted interlevel matrices
+    Cij = mi x mj matrix from level i to level j
+        = mi x mj x t matrix, t > 1, if multiple periods
+     mi = number of nodes in level i
+      t = number of periods
+ 
+  Examples:
+  A = [0 3 4
+       0 0 0
+       0 0 0]
+  C = adj2lev(A,[1 2])            % (1 period   C = 3 4
+                                  %  2 levels)
+ 
+  A = blkdiag(A,2*A)
+  C = adj2lev(A,[1 2])            % (2 periods  C(:,:,1) = 3 4
+                                  %  2 levels)  C(:,:,2) = 6 8
+  A = [0 3 4 0
+       0 0 0 5
+       0 0 0 6
+       0 0 0 0]
+ 
+  [C12,C23] = adj2lev(A,[1 2 1])  % (1 period   C12 = 3 4
+                                  %  3 levels)  C23 = 5
+                                                      6
+  See also LEV2ADJ
+</pre>
+<h2><a href="#Top-adj2list" name="adj2list">adj2list</a></h2>
+<p><b>Node-node weighted adjacency matrix to arc list representation</b></p>
+<pre>      IJC = adj2list(A)
+  [i,j,c] = adj2list(A)
+      A = m x m node-node weighted adjacency matrix of arc lengths
+    IJC = n x 2-3 matrix arc list [i j c], where
+      i = n-element vector of arc tails nodes
+      j = n-element vector of arc head nodes
+      c = n-element vector of arc weights
+ 
+  Note: All A(i,j) = A(j,i) => [i -j c] (symmetric A)
+        A(i,j) = 0   => Arc (i,j) does not exist
+        A(i,j) = NaN => Arc (i,j) exists with 0 weight
+        Wrapper for [i,j,c] = FIND(C); c(ISNAN(c)) = 0)
+ 
+  Examples:
+  A = [0 1 0
+       0 0 0
+       3 2 0]
+  IJC = adj2list(A)  % IJC = 3  1  3
+                     %       1  2  1
+                     %       3  2  2
+ 
+  A = [0 1 0            % Arc (3,1) has 0 weight
+       0 0 0
+     NaN 2 0]
+  IJC = adj2list(A)  % IJC = 3  1  0
+                     %       1  2  1
+                     %       3  2  2
+ 
+  A = [0 1 3            % A is symmetric
+       1 0 2
+       3 2 0]
+  IJC = adj2list(A)  % IJC = 1 -2  1
+                     %       1 -3  3
+                     %       2 -3  2
+ 
+  See also LIST2INCID, LIST2ADJ, and ADJ2INCID
+</pre>
+<h2><a href="#Top-aggshmt" name="aggshmt">aggshmt</a></h2>
+<p><b>Aggregate multiple shipments</b></p>
+<pre>  shagg = aggshmt(sh)
+        = aggshmt(sh,dof)
+     sh = structure array with fields:
+        .f = annual demand (tons/yr)
+        .q = single shipment weight (tons)
+        .s = shipment density (lb/ft^3)
+        .v = shipment value ($/ton)
+        .h = annual holding cost fraction (1/yr)
+        .a = inventory 0-D fraction
+    dof = use "f" unless field missing = true, default
+  shagg = single aggregate structure
+ 
+  Note: 1. Aggregation based on "f" values unless "f" field is missing or
+           empty, in which case it is based on "q" values.
+        2. Aggregate field determined for "f", "s", "a", "v", and "h" 
+           only if respective fields are present in each shipment
+        3. All other fields are passed to aggregate shipment based on
+           their values in the first input shipment structure sh(1)
+</pre>
+<h2><a href="#Top-ala" name="ala">ala</a></h2>
+<p><b>Alternate location-allocation procedure</b></p>
+<pre> [X,TC,W] = ala(X0,w,P,p)           % Use default allocate and locate
+          = ala(X0,alloc_h,P,p)     % Use MINISUMLOC(P,W,p) to locate NFs
+          = ala(X0,w,P,p,loc_h)     % Use MIN(DISTS(X,P,p)) to allocate NFs
+          = ala(X0,alloc_h,loc_h)   % User-defined allocate and locate
+       X0 = n-row matrix of n new facility (NF) starting locations
+            (use X0 = randX(P,n) to generate n random locations, where any
+             unallocated NFs are randomly relocated to EFs)
+        P = m-row matrix of m existing facility (EF) locations
+        w = m-element vector of weights
+        p = parameter for DISTS (default 'mi')
+  alloc_h = handle to anonymous function to allocate NFs
+          = @(X) myalloc(...,X,...), where MYALLOC must return W and TC
+            [W,TC] = myalloc(...,X,...)
+    loc_h = handle to anonymous function to locate NFs
+          = @(W,X0) myloc(...,W,...,X0,...), where MYLOC must return X
+            X = myloc(...,W,...,X0,...)
+        X = n-row matrix of n NF locations
+       TC = total cost of allocation
+        W = n x m matrix of weights, where W(i,j) represents the weight
+            allocated to/from NF(i) from EF(j)
+ 
+  Run PPLOT(P,'r.') or MAKEMAP(P) before running ALA, if you want to plot
+      intermediate results, and use "Set Pauseplot Time" on the "Matlog"
+      menu in the figure to to adjust the frequency.
+  Run ALAPLOT(X,W,P) to plot only the final results.
+ 
+  %Example 1: Locate three NFs to serve customers in North Carolina cities
+  [P,w] = nccity('XY','Pop'); p = 'mi';
+  makemap(P), pplot(P,'r.')
+  ala(randX(P,3),w,P,p)
+ 
+  %Example 2: Take the best of 'nruns' runs of ALA
+  nruns = 5; TC = Inf;
+  for i=1:nruns, [X1,TC1,W1] = ala(randX(P,3),w,P,p); ...
+  fprintf('%d %e\n',i,TC1); if TC1 < TC, TC=TC1; X=X1; W=W1; end, end
+ 
+  %Example 3: Constrained NFs (each NF can handle a third of total demand)
+  alloc_h = @(XY) trans(dists(XY,P,p),ones(1,3)*sum(w)/3,w);
+  [XYc,TCc,Wc] = ala(randX(P,3),alloc_h,P,p);  % Constrained NFs
+  TCc, pctdemC = full(sum(Wc,2))/sum(w)  % Percentage of total demand
+ 
+  %Example 4: Compare constrained to unconstrained NFs 
+  [XYu,TCu,Wu] = ala(XYc,w,P,p);
+  TCu, pctdemU = full(sum(Wu,2))/sum(w)
+</pre>
+<h2><a href="#Top-alaplot" name="alaplot">alaplot</a></h2>
+<p><b>Plot ALA iterations</b></p>
+<pre>   alaplot(X,W,P)
+ 
+  Example: Plot final results from ALA
+  P = [0 0;2 0;2 3], w = [1 2 1]
+  [X,TC,W] = ala(2,w,P,2)
+  pplot
+  alaplot(X,W,P)
+</pre>
+<h2><a href="#Top-arcang" name="arcang">arcang</a></h2>
+<p><b>Arc angles (in degrees) from xy to XY</b></p>
+<pre>  ang = arcang(xy,XY), counterclockwise in degrees from east
+</pre>
+<h2><a href="#Top-argmax" name="argmax">argmax</a></h2>
+<p><b>Indices of maximum component</b></p>
+<pre> [i,j,y] = argmax(X),     where y = X(i,j) = MAX(MAX(X))
+       i = argmax(X),     where [y,i] = MAX(X)
+       i = argmax(X,DIM), where [y,i] = MAX(X,[],dim)
+</pre>
+<h2><a href="#Top-argmin" name="argmin">argmin</a></h2>
+<p><b>Indices of minimum component</b></p>
+<pre> [i,j,y] = argmin(X),     where y = X(i,j) = MIN(MIN(X))
+       i = argmin(X),     where [y,i] = MIN(X)
+       i = argmin(X,DIM), where [y,i] = MIN(X,[],dim)
+</pre>
+<h2><a href="#Top-argsort" name="argsort">argsort</a></h2>
+<p><b>Indices of sort in ascending order</b></p>
+<pre> [i,j,y] = argsort(X),     where [i,j] = IND2SUB(SIZE(X),ARGSORT(X(:)))
+       I = argsort(X),     where [Y,II] = SORT(X);
+       I = argsort(X,DIM), where [Y,II] = SORT(X,DIM);
+</pre>
+<h2><a href="#Top-binaryorder" name="binaryorder">binaryorder</a></h2>
+<p><b>Binary ordering of machine-part matrix</b></p>
+<pre>  [A,idxi,idxj] = binaryorder(Ain)
+    Ain = m x n 0-1 machine-part matrix
+      A = machine-part matrix in binary order, where A = Ain(idxi,idxj)
+   idxi = m-element index vector of machine orderings
+   idxj = n-element index vector of part orderings
+</pre>
+<h2><a href="#Top-boundrect" name="boundrect">boundrect</a></h2>
+<p><b>Bounding rectangle of XY points</b></p>
+<pre>   xy1xy2 = boundrect(XY,expand)
+   expand = nonnegative expansion factor for bounding rectangle, where
+            expansion of "expand" times max X,Y extent is added to all 
+            sides of rectangle
+          = 0, default
+          = 0.1 => 10% expansion
+   xy1xy2 = bounding rectangle
+          = [min(X) min(Y); max(X) max(Y)]
+</pre>
+<h2><a href="#Top-cell2padmat" name="cell2padmat">cell2padmat</a></h2>
+<p><b>Convert cell array of vectors to NaN-padded matrix</b></p>
+<pre>      M = cell2padmat(C,align)
+  align = 1, left alignment (default)
+        = 2, right alignment
+</pre>
+<h2><a href="#Top-checkrte" name="checkrte">checkrte</a></h2>
+<p><b>Check if valid route vector</b></p>
+<pre>  checkrte(rte)              % Check route and throw error if not correct
+  checkrte(rte,sh)           % Also check that rte values in sh range
+                             % and that sh has all scalar field values
+  checkrte([],sh)            % Just check sh has all scalar field values
+  checkrte(rte,[],isvec)     % Require single vector rte
+     rte = route vector
+         = m-element cell array of m route vectors
+      sh = structure array of shipments
+   isvec = rte must be only a single vector, not a cell array
+         = false, default
+</pre>
+<h2><a href="#Top-combineloc" name="combineloc">combineloc</a></h2>
+<p><b>Combine non-overlapping loc seqs</b></p>
+<pre>  [cmbloc,st] = combineloc(out)
+    out = m-element struct array of timing output from LOCTC
+ cmbloc = combine non-overlapping loc seqs, where 
+          cmbloc{i} = [j k] represents the i-th combined loc seq consisting
+          of seq j followed by seq k
+ 
+  Uses greedy combination heuristic
+ 
+  Example:
+  [TC,out] = locTC(loc,C,cap,twin)
+  [cmbloc,st] = combineloc(out);
+  [TC,out] = locTC(cmbloc,C,cap,twin);  % Re-calc "out"
+</pre>
+<h2><a href="#Top-deletelntag" name="deletelntag">deletelntag</a></h2>
+<p><b>Delete last tagged line objects from plot</b></p>
+<pre>  deletelntag()
+ 
+  Executes commands:
+     s = get(gca,'UserData');
+     delete(findobj(s.LastLineTag))
+     projtick
+</pre>
+<h2><a href="#Top-destloc" name="destloc">destloc</a></h2>
+<p><b>Destination location given distance and bearing from start loc</b></p>
+<pre>  xy2 = destpt(xy1,brg,d)
+  xy1 = starting location
+  brg = bearing, clockwise in degrees from north
+    d = distance (in miles)
+  xy2 = destination location
+ 
+  Source:
+  http://www.movable-type.co.uk/scripts/latlong.html
+</pre>
+<h2><a href="#Top-dijk" name="dijk">dijk</a></h2>
+<p><b>Shortest paths from nodes 's' to nodes 't' using Dijkstra algorithm</b></p>
+<pre>  [D,P] = dijk(A,s,t)
+      A = n x n node-node weighted adjacency matrix of arc lengths
+          (Note: A(i,j) = 0   => Arc (i,j) does not exist;
+                 A(i,j) = NaN => Arc (i,j) exists with 0 weight)
+      s = FROM node indices
+        = [] (default), paths from all nodes
+      t = TO node indices
+        = [] (default), paths to all nodes
+      D = |s| x |t| matrix of shortest path distances from 's' to 't'
+        = [D(i,j)], where D(i,j) = distance from node 'i' to node 'j'
+                                 = Inf, if no path from 'i' to 'j'
+      P = |s| x n matrix of predecessor indices, where P(i,j) is the
+          index of the predecessor to node 'j' on the path from 's(i)' to
+          'j',where P(i,i) = 0 and P(i,j) = NaN is 'j' not on path to
+          's(i)' (use PRED2PATH to convert P to paths)
+        = path from 's' to 't', if |s| = |t| = 1
+ 
+  Example:
+  A = [0 1 3 0
+       0 0 0 2
+       0 0 0 4
+       0 0 0 0]
+  [d,p] = dijk(A,1,4)   % (Single path) d =  3
+                        %               p =  1   2   4
+ 
+  [D,P] = dijk(A)       % (All paths)   D =  0   1   3   3
+                        %                  Inf   0 Inf   2
+                        %                  Inf Inf   0   4
+                        %                  Inf Inf Inf   0
+                        %               P =  0   1   1   2
+                        %                  NaN   0 NaN   2
+                        %                  NaN NaN   0   3
+                        %                  NaN NaN NaN   0
+  p = pred2path(P,1,4)  %               p =  1   2   4
+ 
+  GRAPHSHORTESTPATH from Bioinformatics Toolbox used (if avaiable) for A
+  matrices with a nonzero density of less than 20% and non-triangular;
+  otherwise, a full array version of Dijkstra is used that is based on 
+  Fig. 4.6 in Ahuja, Magnanti, and Orlin, Network Flows,Prentice-Hall,
+  1993, p. 109.).
+ 
+  Does not perform the computationally intensive test for A being a
+  directed acyclic graph (DAG), but if A is a triangular matrix, then
+  computationally intensive node selection step not needed since graph is a
+  DAG (triangularity is a sufficient, but not a necessary, condition for a
+  graph to be a DAG) and A can have non-negative elements). Can use
+  GRAPHTOPOORDER to make a DAG A triangleuar, or can use GRAPHSHORTESTPATH
+  with the 'Acyclic' method value.
+</pre>
+<h2><a href="#Top-dijkdemo" name="dijkdemo">dijkdemo</a></h2>
+<p><b>Dijkstra's algorithm to find shortest path from s to t in A</b></p>
+<pre>      *** Only for demo purposes; use DIJK for applications
+ [d,p,pred] = dijkdemo(A,s,t)
+          A = N x N adjacency matrix
+          s = index of starting node
+          t = index of ending node
+ 
+  (Based on Fig. 4.6 in Ahuja, Magnanti, and Orlin, Network Flows,
+   Prentice-Hall, 1993, p. 109.)
+ 
+  Example (Fig. 4.7 in Ahuja):
+  IJD = [
+       1     2     6
+       1     3     4
+       2     3     2
+       2     4     2
+       3     4     1
+       3     5     2
+       4     6     7
+       5     4     1
+       5     6     3];
+  [d,p] = dijkdemo(list2adj(IJD),1,6)
+</pre>
+<h2><a href="#Top-dists" name="dists">dists</a></h2>
+<p><b>Metric distances between vectors of points</b></p>
+<pre>      D = dists(X1,X2,p,e)
+     X1 = n x d matrix of n d-dimensional points
+     X2 = m x d matrix of m d-dimensional points
+      D = n x m matrix of distances
+      p = 2, Euclidean (default): D(i,j) = sqrt(sum((X1(i,:) - X2(j,:))^2))
+        = 1, rectilinear: D(i,j) = sum(abs(X1(i,:) - X2(j,:))
+        = Inf, Chebychev dist: D(i,j) = max(abs(X1(i,:) - X2(j,:))
+        = (1 Inf), lp norm: D(i,j) = sum(abs(X1(i,:) - X2(j,:))^p)^(1/p)
+        = 'rad', great circle distance in radians of a sphere
+          (where X1 and X2 are decimal degree longitudes and latitudes)  
+        = 'mi' or 'sm', great circle distance in statute miles on the earth
+        = 'km', great circle distance in kilometers on the earth
+      e = epsilon for hyperboloid approximation gradient estimation
+        = 0 (default); no error checking if any non-empty 'e' input
+       ~= 0 => general lp used for rect., Cheb., and p outside [1,2]
+ 
+  Examples:
+  x1 = [1 1], x2 = [2 3]
+  d = dists(x1,x2,1)       %  d = 3
+ 
+  X2 = [0 0;2 0;2 3]
+  d = dists(x1,X2,1)       %  d = 2  2  3
+ 
+  D = dists(X2,X2,1)       %  D = 0  2  5
+                           %      2  0  3
+                           %      5  3  0
+ 
+  city2lonlat = @(city,st) ...
+     uscity('XY',strcmp(city,uscity('Name'))&strcmp(st,uscity('ST')));
+  d=dists(city2lonlat('Raleigh','NC'),city2lonlat('Gainesville','FL'),'mi')
+ 
+                           %  d = 475.9923
+ 
+  Great circle distances are calculated using the Haversine Formula (R.W.
+  Sinnott, "Virtues of the Haversine", Sky and Telescope, vol 68, no 2,
+  1984, p 159, reported in "http://www.census.gov/cgi-bin/geo/gisfaq?Q5.1")
+</pre>
+<h2><a href="#Top-drte" name="drte">drte</a></h2>
+<p><b>Convert destination of each shipment in route to negative value</b></p>
+<pre>  rte = drte(rte)
+    rte = route vector
+        = m-element cell array of m route vectors
+</pre>
+<h2><a href="#Top-editcellstr" name="editcellstr">editcellstr</a></h2>
+<p><b>Edit or create a cell array of strings</b></p>
+<pre>  c = editcellstr(c)  % Edit an existing cell array of strings "c"
+    = editcellstr(n)  % Create an "n"-element array
+    = editcellstr     % Create up to 10-element array, with empty trailing
+                      % elements removed
+ 
+  Examples:
+  c = {'Boston','New York','Chicago'};
+  c = editcellstr(c)
+ 
+  c = editcellstr(3)
+ 
+  c = editcellstr
+</pre>
+<h2><a href="#Top-file2cellstr" name="file2cellstr">file2cellstr</a></h2>
+<p><b>Convert file to cell array</b></p>
+<pre>  c = file2cellstr(fname)
+  fname = name of file
+        = [], open dialog to get file name
+      c = cell array of strings, where each string is a line of the file
+</pre>
+<h2><a href="#Top-findXY" name="findXY">findXY</a></h2>
+<p><b>Find XY points inside rectangle</b></p>
+<pre>    idx = findXY(XY,xy1xy2)
+        = findXY(XY)          Graphical selection of rectangle
+ xy1xy2 = rectangle
+        = [min(X) min(Y); max(X) max(Y)]
+ 
+  Graphical selection of rectangle:
+     (1) Press <SPACEBAR> or select point outside axes to toggle zoom
+     (2) Press <ESC> key to erase last points selected
+     (3) Press <RETURN> to stop selecting points
+     (4) Use 'Erase Iter Plot' on Matlog figure menu to erase green circles
+         around selected points (or 'delete(findobj('Tag','iterplot'))')
+ 
+  Note: Wrapper for idx = FIND(ISINRECT(XY,xy1xy2))
+</pre>
+<h2><a href="#Top-fipsnum2alpha" name="fipsnum2alpha">fipsnum2alpha</a></h2>
+<p><b>Convert numeric state FIPS code to alphabetic</b></p>
+<pre>  [alpha,num] = fipsnum2alpha(num)
+          num = numeric FIPS code
+              = [], default, to return all alpha codes except 88 and 91
+                (and numeric codes, if second output argument provided)
+ 
+               1 AL Alabama       22 LA Louisiana      40 OK Oklahoma
+               2 AK Alaska        23 ME Maine          41 OR Oregon
+               4 AZ Arizona       24 MD Maryland       42 PA Pennsylvania
+               5 AR Arkansas      25 MA Massachusetts  44 RI Rhode Island
+               6 CA California    26 MI Michigan       45 SC South Carolina
+               8 CO Colorado      27 MN Minnesota      46 SD South Dakota
+               9 CT Connecticut   28 MS Mississippi    47 TN Tennessee
+              10 DE Delaware      29 MO Missouri       48 TX Texas
+              11 DC Dist Columbia 30 MT Montana        49 UT Utah
+              12 FL Florida       31 NE Nebraska       50 VT Vermont
+              13 GA Georgia       32 NV Nevada         51 VA Virginia
+              15 HI Hawaii        33 NH New Hampshire  53 WA Washington
+              16 ID Idaho         34 NJ New Jersey     54 WV West Virginia
+              17 IL Illinois      35 NM New Mexico     55 WI Wisconsin
+              18 IN Indiana       36 NY New York       56 WY Wyoming
+              19 IA Iowa          37 NC North Carolina 72 PR Puerto Rico
+              20 KS Kansas        38 ND North Dakota   88    Canada
+              21 KY Kentucky      39 OH Ohio           91    Mexico
+ 
+  FIPS Code Source: Federal Information Processing, Standards
+                    Publication 5-2, May 28, 1987
+</pre>
+<h2><a href="#Top-fixseq" name="fixseq">fixseq</a></h2>
+<p><b>Fixed sequence proportional to percentage of demand</b></p>
+<pre>  s = fixseq(a,tol)
+     a = n-element vector of demands
+   tol = tolerance of rational approximation to demand percentage
+       = 1e-2, default
+     s = sequence of indices i = 1 to n, where the frequency of i's in "s"
+         is proportional to the percentage of a(i) in the total demand,
+         i.e., |sum(s == i)/length(s) - a(i)/sum(a)| < tol
+ 
+  Example:
+  If a = [0.1193  0.0504] then
+  a/sum(a) is [0.7030 0.2970]
+  fixseq(a) is [1  1  2  1  1  1  2  1  1  2]
+  fixseq(a,1e-1) is [1  1  2]
+</pre>
+<h2><a href="#Top-gantt" name="gantt">gantt</a></h2>
+<p><b>Gantt chart</b></p>
+<pre>      h = gantt(Bars)                                  % Plot activity bars
+        = gantt(Bars,'PropName',PropValue,...)         % Bar properties
+        = gantt(Bars,Labels)                           % Label each bar
+        = gantt(Bars,Labels,'PropName',PropValue,...)  % Label properties
+   Bars = m-element cell array, where Bars{i} = n x 2 matrix of n activity
+          bars for resource i and Bars{i}(j,1) and Bars{i}(j,2) are the 
+          beginning and ending times for activity j
+        = m x 2 matrix, if each resource has only one activity
+ Labels = m-element cell array of bar labels
+      h = m-element cell array of handles to bar rectangles or labels
+ 
+  Example:
+  Bars = {[1 4]; [2 4; 5 6]; [1 2; 2 3]}
+  Labels = {'bar1';{'bar2','bar3'};{'bar4','bar5'}}
+  hbars = gantt(Bars)
+  hlabels = gantt(Bars,Labels)
+</pre>
+<h2><a href="#Top-getfile" name="getfile">getfile</a></h2>
+<p><b>Download file from Internet and save local copy</b></p>
+<pre>  XFlg = getfile(baseurl,fnin,fnout)
+  baseurl = base URL address
+          = 'http://www.ie.ncsu.edu/kay/matlog/', default
+     fnin = name of file to read from from web
+    fnout = name of file to write to local directory
+          = 'fnin', default
+     XFlg = 1, able to get file
+          = 0, not able
+</pre>
+<h2><a href="#Top-grect" name="grect">grect</a></h2>
+<p><b>Get rectangular region in current axes</b></p>
+<pre>   xy1xy2 = grect
+   xy1xy2 = [min(X) min(Y); max(X) max(Y)]
+ 
+  In order to support the features of FINDXY: 
+     if key pressed instead of mouse button, then decimal current character
+        is returned;
+     if first point selected is outside axes, then empty return and zoom
+        state is toggled;
+     if second point selected is outside axes, then empty return
+</pre>
+<h2><a href="#Top-gtrans" name="gtrans">gtrans</a></h2>
+<p><b>Greedy Heuristic for the transportation problem</b></p>
+<pre> [F,TC] = gtrans(C,s,d)
+      C = m x n matrix of costs
+      s = m-element vector of supplies
+        = [1], default
+      d = n-element vector of demands
+        = [1], default
+      F = m x n matrix of flows
+     TC = total cost
+</pre>
+<h2><a href="#Top-idx2is" name="idx2is">idx2is</a></h2>
+<p><b>Convert index vector to n-element logical vector</b></p>
+<pre>     is = idx2is(idx,n)
+    idx = index vector
+      n = length of logical vector
+     is = logical vector, is(idx) = 1
+ 
+  Inverse of FIND(is) = idx, used to convert logical to index vectors.
+</pre>
+<h2><a href="#Top-idxkey" name="idxkey">idxkey</a></h2>
+<p><b>IDXKEY Create index key to array from unique integer values</b></p>
+<pre>  key = idxkey(i)
+    i = m-element vector of unique positive integer values
+  key = max(i)-element sparse vector, where, for scalar j,
+        key(j) <=> find(i == j) and, for j not in i,
+        key(j) => 0 <=> find(i == j) => []
+ 
+  Example
+  key = idxkey(uszip5('Code5'));
+  uszip5(key(27606))
+  % ans = 
+  %         Code5: 27606
+  %            XY: [-78.7155 35.7423]
+  %            ST: {'NC'}
+  %           Pop: 43210
+  %         House: 19275
+  %      LandArea: 24.7970
+  %     WaterArea: 0.9000
+</pre>
+<h2><a href="#Top-iff" name="iff">iff</a></h2>
+<p><b>Conditional operator as a function</b></p>
+<pre>  x = iff(a,b,c) <=> if a, x = b; else x = c; end
+ 
+  IF-statement as a function is used to allow a conditional in an
+  anynomous fucntions; e.g., fh = @(x) iff(x < 0, Inf, x)
+</pre>
+<h2><a href="#Top-in2out" name="in2out">in2out</a></h2>
+<p><b>IN2OUT Convert variable number of inputs to outputs</b></p>
+<pre> [i,j,...] = in2out(i,j,...)
+  Used in an anonymous function to provide two output arguments; e.g., to
+  specify user-defined inequality and equality constraints in FMINCON:
+  @(x) in2out(conineq(x),coneq(x))
+</pre>
+<h2><a href="#Top-incid2list" name="incid2list">incid2list</a></h2>
+<p><b>Node-arc incidence matrix to arc list representation</b></p>
+<pre>      IJC = incid2list(I,c)
+  [i,j,c] = incid2list(I,c)
+      I = m x n node-arc incidence matrix
+      c = (optional) n-element vector of arc weights
+    IJC = n x 2-3 matrix arc list [i j c], where
+      i = n-element vector of arc tails nodes
+      j = n-element vector of arc head nodes
+ 
+  Example:
+  I = [1 -1  0
+      -1  0 -1
+       0  1  1]
+  c = [1  3  2]
+  IJC = incid2list(I,c)  % IJC = 1  2  1
+                         %       3  1  3
+                         %       3  2  2
+ 
+  See also LIST2INCID
+</pre>
+<h2><a href="#Top-inputevaldlg" name="inputevaldlg">inputevaldlg</a></h2>
+<p><b>Input dialog with evaluation of values</b></p>
+<pre> [val1,val2,...] = inputevaldlg(prompt,title,defval)  % Cell array inputs
+             val = inputevaldlg(s,title)              % Structure input
+  prompt = cell array of prompt strings for each input value
+       s = single structure, where the name of each field is prompt string
+           and default values are the field values (empty values are
+           ignored)
+   title = title for the dialog
+         = name of structure, default for structure input
+  defval = default values for inputs (optional)
+           (new dialog is created for any single structure default values)
+ [val1,val2,...] = output values, if cell array inputs (cell array of 
+           output values, if single output argument)
+    val  = structure of values, if structure input
+         = [], if dialog cancelled
+ 
+ 
+  Examples:
+  % Calling dialog directly
+  x = 0;
+  y = false;
+  z = 'Hello';
+  prompt = {'x = ','y = ','z = '};
+  title = 'Example Dialog';
+  defval = {x,y,z};
+  [x,y,z] = inputevaldlg(prompt,title,defval)
+ 
+  % Calling from within a function
+  function [x,y,z] = myfun(x,y,z)
+  %MYFUN My function that calls INPUTEVALDLG
+  if nargin < 1 | isempty(x), x = 0; end
+  if nargin < 2 | isempty(y), y = false; end
+  if nargin < 3 | isempty(z), z = 'Hello'; end
+  if nargin < 1  % Use dialog when no input arguments
+     prompt = {'x = ','y = ','z = '};
+     title = 'MYFUN My function that calls INPUTEVALDLG';
+     defval = {x,y,z};
+     [x,y,z] = inputevaldlg(prompt,title,defval);
+     if isempty(x), [x,y,z] = deal([]); return, end  % Cancelled dialog
+  end
+ 
+  % Creating an option structure for MCNF
+  opt = mcnf('defaults')
+  opt = inputevaldlg(opt)
+ 
+  (When called within a function, the previous output values are used as
+  default values for inputs if function has previousely called the dialog.
+  Same as INPUTDLG except that the input values are evaluated instead of
+  being returned as strings.)
+ 
+  See also INPUTDLG
+</pre>
+<h2><a href="#Top-insertimprove" name="insertimprove">insertimprove</a></h2>
+<p><b>Insert with improvement procedure for route construction</b></p>
+<pre> [rte,TC] = insertimprove(idxsh,rteTC_h,sh)
+    idxsh = shipment index vector specifying insertion order
+  rteTC_h = handle to route total cost function, rteTC_h(rte)
+       sh = structure array with fields:
+           .b = beginning location of shipment
+           .e = ending location of shipment
+      rte = route vector
+       TC = total cost of route
+</pre>
+<h2><a href="#Top-invperm" name="invperm">invperm</a></h2>
+<p><b>Inverse permutation</b></p>
+<pre>   inva = invperm(a)
+      a = permutation vector of the integers 1 to length(a)
+ 
+  See also RANDPERM
+</pre>
+<h2><a href="#Top-invproj" name="invproj">invproj</a></h2>
+<p><b>Inverse Mercator projection</b></p>
+<pre>    XY = invproj(XY)
+     y = invproj(y)
+    XY = two-column matrix of longitude-latitude pairs (in decimal degrees)
+     y = column vector of latitudes (in decimal degrees)
+ 
+  (Only latitudes are modified in the inverse Mercator projection, 
+   longitudes are unmodified and are not required.)
+ 
+  (Based on Eric Weisstein's Mathworld website 
+   "http://mathworld.wolfram.com/MapProjection.html)
+</pre>
+<h2><a href="#Top-is0" name="is0">is0</a></h2>
+<p><b>True for zero elements (within tolerance)</b></p>
+<pre>      y = is0(x,Tol)
+        = abs(x) < Tol
+    Tol = tolerance
+        = [0.01*sqrt(eps)], default
+</pre>
+<h2><a href="#Top-isinrect" name="isinrect">isinrect</a></h2>
+<p><b>Are XY points in rectangle</b></p>
+<pre>     isin = isinrect(XY,xy1xy2)
+          = isinrect(XY)       % Graphical input of rectangle using GRECT
+   xy1xy2 = rectangle
+          = [min(X) min(Y); max(X) max(Y)]
+ 
+  Note: isin = XY(:,1) >= min(X) & XY(:,1) <= max(X) & ...
+               XY(:,2) >= min(Y) & XY(:,2) <= max(Y)
+</pre>
+<h2><a href="#Top-isint" name="isint">isint</a></h2>
+<p><b>True for integer elements (within tolerance)</b></p>
+<pre>       y = isint(x,TolInt)
+         = abs(x-round(x)) < TolInt
+  TolInt = integer tolerance
+         = [0.01*sqrt(eps)], default
+</pre>
+<h2><a href="#Top-isorigin" name="isorigin">isorigin</a></h2>
+<p><b>Identify origin of each shipment in route</b></p>
+<pre>  is = isorigin(rte)
+    rte = route vector
+     is = logical vector, such that is(i) = true if rte(i) is origin
+</pre>
+<h2><a href="#Top-lev2adj" name="lev2adj">lev2adj</a></h2>
+<p><b>Weighted interlevel to weighted adjacency matrix representation</b></p>
+<pre>      A = lev2adj(C)
+      A = lev2adj(C12,C23,...)
+      C = {C12,C23,...}, cell array of weighted interlevel matrices
+    Cij = mi x mj matrix from level i to level j
+     mi = number of nodes in level i
+      m = m1 + m2 + ..., total number of nodes
+      A = m x m node-node weighted adjacency matrix of arc lengths
+          (returns sparse if less than 10% nonzero values)
+ 
+  Note: Predecessor Cij and successor Cjk must be (mi x mj) and (mj x mk)
+        matrices, respectively.
+        Zero values in interlevel matrices indicate no arc (must use NaN to
+        indicate arc with 0 weight).
+ 
+  Examples:
+  C = [3 4]
+  A = lev2adj(C)        % (1 level)  A = 0 3 4
+                        %                0 0 0
+                        %                0 0 0
+ 
+  C12 = C, C23 = [5 6]
+  A = lev2adj(C12,C23)  % (2 levels)  A = 0 3 4 0
+                        %                 0 0 0 5
+                        %                 0 0 0 6
+                        %                 0 0 0 0
+ 
+  See also ADJ2LEV, LIST2INCID, ADJ2LIST, and ADJ2INCID
+</pre>
+<h2><a href="#Top-lev2list" name="lev2list">lev2list</a></h2>
+<p><b>Weighted interlevel to arc list representation</b></p>
+<pre>    IJC = lev2list(C)
+    IJC = lev2list(C12,C23,...)
+      C = {C12,C23,...}, cell array of weighted interlevel matrices
+    Cij = mi x mj matrix from level i to level j
+     mi = number of nodes in level i
+      m = m1 + m2 + ..., total number of nodes
+    IJC = n x 2-3 matrix arc list [i j c], where
+      i = n-element vector of arc tails nodes
+      j = n-element vector of arc head nodes
+      c = n-element vector of arc weights
+ 
+  Examples:
+  C = [3 4]
+  IJC = lev2list(C)       % (1 level)  IJC = 1 2 3
+                          %                  1 3 4
+ 
+  C12 = C, C23 = [5 6]'
+  IJC = lev2list(C12,C23) % (2 levels) IJC = 1 2 3
+                          %                  1 3 4
+                          %                  2 4 5
+                          %                  3 4 6
+ 
+  Wrapper for IJC = ADJ2LIST(LEV2ADJ(C))
+ 
+  See also LIST2INCID and ADJ2INCID
+</pre>
+<h2><a href="#Top-list2adj" name="list2adj">list2adj</a></h2>
+<p><b>Arc list to node-node weighted adjacency matrix representation</b></p>
+<pre>      A = list2adj(IJC,m,spA)
+    IJC = n x 2-5 matrix arc list [i j c u l], where
+      i = n-element vector of arc tails nodes
+      j = n-element vector of arc head nodes
+      c = (optional) n-element vector of arc costs, where n = number arcs
+        = (default) ONES(n,1)
+      u = (optional) ignored
+      l = (optional) ignored
+      m = (optional) scalar size of A if greater than 
+          max{max(i),max(abs(j))} 
+    spA = (optional) make A sparse matrix if n <= spA x m x m
+        = 1, always make A sparse
+        = 0.1 (default), A sparse if 10% arc density
+        = 0, always make A full matrix
+      A = m x m node-node weighted adjacency matrix
+ 
+  Transforms: If j(k) > 0, then [i(k) j(k) c(k)] -> A[i(k),j(k)]  = c(k)
+ 
+              If j(k) < 0, then [i(k) j(k) c(k)] -> A[i(k),-j(k)] = c(k)
+                                                    A[-j(k),i(k)] = c(k)
+ 
+  Note: Weights of any duplicate arcs added together in A
+        c(k) = 0 => A(i(k),j(k)) = NaN
+        Wrapper for c(c==0) = NaN; A = SPARSE(i,j,c,m,m);
+ 
+  Examples:
+  IJC = [1 2 1
+         3 1 3
+         3 2 2]
+  A = list2adj(IJC)  % A =  0  1  0
+                            0  0  0
+                            3  2  0
+ 
+  IJC(3,1) = 0             % Arc (3,1) has 0 weight
+  A = list2adj(IJC)  % A =  0  1  0
+                            0  0  0
+                          NaN  2  0
+ 
+  IJC = [1 -2  1           % Symmetric arcs
+         3 -1  3
+         3 -2  2]
+  A = list2adj(IJC)  % A =  0  1  3
+                            1  0  2
+                            3  2  0
+ 
+  See also LIST2INCID, ADJ2LIST, and ADJ2INCID
+</pre>
+<h2><a href="#Top-list2incid" name="list2incid">list2incid</a></h2>
+<p><b>Arc list to node-arc incidence matrix representation</b></p>
+<pre>  [I,c,u,l] = list2incid(IJCUL,spI)
+  IJCUL = n x 2-5 matrix arc list [i j c u l], with i and j required and
+          c, u, and l optional (just passed through)
+      i = n-element vector of arc tails nodes
+      j = n-element vector of arc head nodes
+      c = n-element vector of arc costs, where n = number of arcs
+      u = n-element vector of arc upper bounds
+      l = n-element vector of arc lower bounds
+    spI = (optional) make I sparse matrix if no. of nodes (m) >= 1/spI
+        = 1, always make I sparse
+        = 0.05 (default), make I sparse if m >= 20
+        = 0, always make I full matrix
+      I = m-row node-arc incidence matrix, where number of columns >= n
+          (> n if some elements of j < 0)
+ 
+  Given arc list elements i(k) and j(k):
+          j(k) > 0 => column k in I: (i(k),j(k))
+          j(k) < 0 => undirected arc (i(k),j(k)) converted to two
+                      directed arcs corresponding to columns k and k' in I:
+                      (i(k),-j(k)) and (-j(k') -i(k'))
+ 	    i(k) = j(k) => (self-loop) => I[i(k),k] = I[j(k),k] = 1
+ 
+  Examples:
+  IJC = [1 2 1
+         3 1 3
+         3 2 2]
+  [I,c] = list2incid(IJC)  % I =  1 -1  0   c = 1
+                                 -1  0 -1       3
+                                  0  1  1       2
+ 
+  IJC = [1 -2  1           % Symmetric arcs
+         3 -1  3
+         3 -2  2]
+  [I,c] = list2incid(IJC)  % I =  1 -1  0 -1  1  0   c = 1
+                                 -1  0 -1  1  0  1       2
+                                  0  1  1  0 -1 -1       3
+                                                         1
+                                                         2
+                                                         3
+  See also LIST2ADJ, ADJ2LIST, and ADJ2INCID
+</pre>
+<h2><a href="#Top-loaddatafile" name="loaddatafile">loaddatafile</a></h2>
+<p><b>Common code for data file functions</b></p>
+<pre>  varargout = loaddatafile(varargin0,nargout0,vn,fn)
+  varargin0 = 'varargin' of calling function
+   nargout0 = 'nargout' of calling function
+         vn = 'varnames' of calling function
+         fn = MFILENAME of calling function
+</pre>
+<h2><a href="#Top-loc2listidx" name="loc2listidx">loc2listidx</a></h2>
+<p><b>Find indices of loc seq segments in arc list</b></p>
+<pre>              idx = loc2listidx(loc,IJC)            % Single arc list
+      [idx1,idx2] = loc2listidx(loc,IJC1,IJC2)      % Multipart arc lists
+ [idx1,idx2,idx3] = loc2listidx(loc,IJC1,IJC2,IJC3)
+    loc = vector of single-seq vertices
+    IJC = n-row matrix arc list
+        = [IJC1; IJC2; IJC3], arc list composed of up to 3 separate parts
+    idx = index vector of rows in IJC, where idx(1) is arc IJC(idx(1),:)
+          corresponding to first segment [loc(1) loc(2)] of loc seq
+   idx1 = index vector of rows in IJC1
+   idx2 = index vector of rows in IJC2 offset by size(IJC1,1)
+   idx3 = index vector of rows in IJC3 offset by size([IJC1; IJC2],1)
+ 
+  Use of a multipart arc list allows reference to be made to the
+  original arc lists (e.g., in the label roads example, the "LinkTag" is
+  refinded with respect to the original list IJD, not IJD2).
+ 
+  Examples:
+  % 4-node graph
+  XY = [0 0; 1 1; 1 -1; 2 0];
+  IJC = [1 2 12; 1 3 13; 2 4 24; 3 4 34];
+  loc = [1 2 4];
+  idx = loc2listidx(loc,IJC)                 % idx = 1  3
+ 
+  % Label roads along shortest loc seq from Fayetteville to Raleigh
+  xy1xy2 = [-79 35; -78 36];
+  [XY,IJD,isXY,isIJD] = subgraph(usrdnode('XY'),...
+     isinrect(usrdnode('XY'),xy1xy2),usrdlink('IJD'));
+  s = usrdlink(isIJD);
+  [Name,XYcity] = uscity50k('Name','XY',isinrect(uscity50k('XY'),xy1xy2));
+  [IJD11,IJD12,IJD22] = addconnector(XYcity,XY,IJD);
+  makemap(XY)
+  pplot([IJD11; IJD12; IJD22],[XYcity; XY],'r-')
+  pplot(XYcity,'b.')
+  pplot(XYcity,Name)
+  idxFay = strmatch('Fayetteville',Name);
+  idxRal = strmatch('Raleigh',Name);
+  [d,loc] = dijk(list2adj([IJD11; IJD12; IJD22]),idxFay,idxRal);
+  [idx11,idx12,idx22] = loc2listidx(loc,IJD11,IJD12,IJD22);
+  pplot({loc},[XYcity; XY],'y-','Linewidth',2)
+  isEndTag = any(diff(double(s.LinkTag(idx22,:)),1,1)')'; % Don't use
+  isEndTag = [[isEndTag; 0] | [0; isEndTag]];             % repeated tags
+  pplot(IJD(idx22(isEndTag),:),cellstr(s.LinkTag(idx22(isEndTag),:)),XY)
+</pre>
+<h2><a href="#Top-loc2W" name="loc2W">loc2W</a></h2>
+<p><b>Converts routings to weight matrix</b></p>
+<pre>    W = loc2W(loc,f,h)
+  loc = routings; e.g., loc = {[1 2 3];[4 1]}, for routing 1-2-3 and 4-1
+    f = flow
+    h = handling cost (or equivalence factor)
+ 
+  Example:
+  loc = {[1 2 3 4],[2 4 1 2 3],[3 4 1 2 4]};
+  f = [8 5 12];
+  h = [3 2 1];
+  W = loc2W(loc,f,h)
+</pre>
+<h2><a href="#Top-loccost" name="loccost">loccost</a></h2>
+<p><b>Calculate location sequence cost</b></p>
+<pre>  c = loccost(loc,C)
+    loc = location vector
+      C = n x n matrix of costs between n locations
+ 
+  Example:
+  loc = [1   2   4   3];
+    C = triu(magic(4),1); C = C + C'
+                                      % C =  0   2   3  13
+                                      %      2   0  10   8
+                                      %      3  10   0  12
+                                      %     13   8  12   0
+  c = loccost(loc,C)
+                                      % c =  2
+                                             8
+                                            12
+</pre>
+<h2><a href="#Top-locTC" name="locTC">locTC</a></h2>
+<p><b>Calculate total cost of loc seq with time windows</b></p>
+<pre>             TC = locTC(loc,C)
+  [TC,XFlg,out] = locTC(loc,C,cap,twin,locfeas)
+                = locTC(loc),  use arguments C,twin,... from previous call
+                               and do not check input for errors
+     loc = vector of single-seq vertices
+         = m-element cell array of m loc seqs
+           (to get sum(TC) as output, use vector loc = [loc{:}] as input)
+       C = n x n matrix of costs between n vertices
+      TC = m-element vector of loc seq costs, where 
+           TC(i) = Inf if loc seq i is infeasible
+ 
+  Optional input and output arguments used to determine loc seq feasibility:
+     cap = {q,Q} = cell array of capacity arguments, where
+               q = n-element vector of vertex demands, with depot q(1) = 0
+               Q = maximum loc seq load
+    twin = {ld,TW,st} = cell array of time window arguments, where
+              ld = n or (n+1)-element vector of loading/unloading
+                   timespans, where
+                      ld(loc(1))   = load at depot
+                      ld(n+1)      = unload at depot, if loc(1) == loc(end)
+                 = scalar of constant values "ld" for loc(2) ... loc(end)  
+                   and 0 for loc(1); or loc(2) ... loc(end-1) and 0 for
+                    loc(end), if loc(1) == loc(end)
+                 = 0, default
+              TW = n or (n+1) x 2 matrix of time windows, where
+                      TW(i,1)      = start of time window for vertex i
+                      TW(i,2)      = end of time window
+                      TW(loc(1),:) = start time window at depot
+                      TW(n+1,:)    = finish time window at depot, 
+                                     if loc(1) = loc(end)
+                 = (n+1)-element cell array, if multiple windows, where
+                      TW{i}        = (2 x p)-element vector of p window 
+                                     (start,end) pairs
+              st = (optional) m-element vector of starting times at depot
+                 = TW(1,1) or min(TW{1}), default (earliest starting time)
+ locfeas = {'locfeasfun',P1,P2,...} = cell array specifying user-defined
+           function to test the feasibility of a single loc seq (in addition  
+           to time windows, capacity, and maximum cost), where LOCTC 
+           argument out(i) along with user-specified arguments P1,P2,... 
+           are passed to function and a logical value should be returned: 
+                  isfeas = LOCFEASFUN(out(i),P1,P2,...)
+         = {'maxTCfeas',maxTC} is a predefined loc seq feasibility function
+           to test if the total cost of a loc seq (including loading/
+           unloading times "ld") exceeds the maximum waiting time "maxTC"
+           (see below for code)
+ XFlg(i) = exitflag
+         =  1, if loc seq is feasible
+         = -1, if infeasible due to capacity
+         = -2, if infeasible due to time windows
+         = -3, if infeasible due to user-defined feasibility function
+     out = m-element struct array of outputs
+  out(i) = output structure with fields:
+         .Loc     = loc seq indices, loc{i}
+         .Cost    = cost from vertex j-1 to j, 
+                    Cost(j) = C(r{i}(j-1),r{i}(j)) and Cost(1) = 0
+                  = drive timespan from vertex j-1 to j
+         .Demand  = demands of vertices on loc seq, q(loc{i})
+         .Arrive  = time of arrival
+         .Wait    = wait timespan if arrival prior to beginning of window
+         .Start   = time loading/unloading started (starting time for
+                    loc seq is "Start(1)")
+         .LD      = loading/unloading timespan, ld(loc{i})
+         .Depart  = time of departure (finishing time is "Depart(end)")
+         .Total   = total timespan from departing vtx j-1 to depart. vtx j
+                    (= drive + wait + loading/unloading timespan)
+         .EarlySF = earliest starting and finishing times (default starting
+                    time is "st" and default finish. time is "EarlySF(2)")
+         .LateSF  = latest starting and finishing times
+ 
+  For each seq loc{i}, feasibility is determined in the following order:
+     1. Capacity feasibility: SUM(q(loc{i})) <= Q if feasible
+     2. Time window feasiblity: [TCi,ignore,outi] = LOCTC(loc{i},C,twin);
+                                TCi < Inf if feasible
+     3. User defined feasibility: isfeas = LOCFEASFUN(outi,P1,P2,...);
+                                  isfeas == true if feasible
+ 
+  Code for example loc seq feasibility function:
+ 
+  function isfeas = maxTCfeas(outi,maxTC)
+  %MAXTCFEAS Maximum total cost loc seq feasibility function.
+  % isfeas = maxwaitfeas(outi,maxTC)
+  %   outi = struct array of outputs from LOCTC for single seq i
+  %          (automatically passed to function)
+  %  maxTC = scalar max. total cost (including un/loading times) of loc seq
+  %
+  % Loc Seq is feasible if sum(outi.Total) <= maxTC
+  %
+  % This function can be used as a template for developing other
+  % loc seq feasibility functions.
+  
+  % Input error check
+  if ~isnumeric(maxTC) || length(maxTC(:)) ~= 1 || maxTC < 0
+     error('"maxTC" must be a nonnegative scalar.')
+  end
+  
+  % Feasibility test
+  if sum(outi.Total) <= maxTC
+     isfeas = true;
+  else
+     isfeas = false;
+  end
+ 
+ 
+  Examples:
+  % 4-vertex graph
+  IJD = [1 -2 1; 2 -3 2; 3 -4 1; 4 -1 1];
+  C = dijk(list2adj(IJD))                  %  C =  0   1   2   1
+                                           %       1   0   2   2
+                                           %       2   2   0   1
+                                           %       1   2   1   0
+  loc = [1 2 3 4 1];
+  TC = locTC(loc,C)                        % TC =  5
+ 
+  % Different loc seq, same C from previous call
+  TC = locTC([1 2 3 4])                    % TC =  4
+ 
+  % Time-windows
+  ld = 0
+  TW = [ 6 18       % Start time window at depot
+         8 11
+        12 14
+        15 18
+        18 24]      % Finish time window at depot
+  [TC,XFlg,out] = locTC([1 2 3 4 1],C,[],{ld,TW})
+                                           %   TC =  8
+                                           % XFlg =  1
+                                           %  out = 
+                                           %          Loc: [1 2 3 4 1]
+                                           %         Cost: [0 1 2 1 1]
+                                           %       Demand: []
+                                           %       Arrive: [0 11 13 14 16]
+                                           %         Wait: [0 0 0 1 2]
+                                           %        Start: [10 11 13 15 18]
+                                           %           LD: [0 0 0 0 0]
+                                           %       Depart: [10 11 13 15 18]
+                                           %        Total: [0 1 2 2 3]
+                                           %      EarlySF: [10 18]
+                                           %       LateSF: [10 18]
+ 
+  % Not feasible if total cost exceeds 4
+  [TC,XFlg] = locTC([1 2 3 4 1],C,[],[],{'maxTCfeas',4})
+                                           %   TC = Inf
+                                           % XFlg =  -3
+  [TC,XFlg] = locTC([1 2 3 4 1],C,[],[],{'maxTCfeas',4})
+                                           %   TC = Inf
+                                           % XFlg =  -3
+</pre>
+<h2><a href="#Top-lonlat2city" name="lonlat2city">lonlat2city</a></h2>
+<p><b>Determine nearest city given longitude-latitude of location</b></p>
+<pre>  [idx,dist,drt,dstr] = lonlat2city(XY,city)
+     XY = n x 2 matrix of lon-lat (in decimal degrees) of n locations
+ 
+  Optional input argument:
+   city = stucture with fields:
+        .Name = m-element cell array of m city name strings
+        .ST = m-element cell array of m 2-char state abbreviations
+        .XY = m x 2 matrix of city lon-lat (in decimal deg)
+        = USCITY50K, default (which contains all cities in US with
+                              population of at least 50,000)
+ 
+  Output arguments: 'dstr' is displayed if no output arguments specified
+        idx = index of nearest city
+       dist = distance to nearest city (in miles)
+        drt = direction to nearest city, reported from 0 to 2PI 
+              radians clockwise from north
+       dstr = display of nearest city to lat-lon (in city, if dist < 4 mi)
+            = string, if n == 1
+            = n-element cell array, if n > 1 (use disp(dstr{i}) to display 
+                                               ith display string)
+  Example:
+  xy = uszip5('XY',28711==uszip5('Code5'));
+  lonlat2city(xy)                     %  xy is 14.72 mi E of Asheville, NC
+  lonlat2city(xy,uscity)              %  xy is in Montreat, NC
+</pre>
+<h2><a href="#Top-lp2mcnf" name="lp2mcnf">lp2mcnf</a></h2>
+<p><b>Convert LP solution to MCNF arc and node flows</b></p>
+<pre>  [f,TC,nf] = lp2mcnf(x,IJCUL,SCUL)
+      x = solution returned from solving lp = mcnf2lp(IJCUL,SCUL)
+  IJCUL = [i j c u l],  arc data
+   SCUL = [s nc nu nl], node data
+      f = arc flows
+     TC = total cost (LP TC does not include demand node costs)
+        = c'*f + nc'*nf
+     nf = node flows
+ 
+  See MCNF2LP for more details and an example
+</pre>
+<h2><a href="#Top-lplog" name="lplog">lplog</a></h2>
+<p><b>Matlog linear programming solver</b></p>
+<pre>  [x,TC,XFlg,out] = lplog(c,Alt,blt,Aeq,beq,LB,UB,idxB0,opt) solves
+         
+   min TC = c'*x  s.t.  Alt*x <= blt, Aeq*beq == beq, LB <= x <= UB
+    x
+        c = n-element vector of variable costs
+      Alt = mlt x n inequality constraint matrix
+      blt = mlt-element RHS vector
+      Aeq = meq x n equality constraint matrix
+      beq = meq-element RHS vector
+       LB = n-element lower bound vector
+          = [0], default
+       UB = n-element upper bound vector
+          = [Inf], default
+    idxB0 = meq-element vector of initial basis indices
+            (problem must be in standard form: all Aeq, LB = 0, UB = Inf)
+          = [] (default) => Use Phase I to find initial basis
+  Options:
+      opt = options structure, with fields:
+          .Display  =  2, show steps of evaluation
+                    =  1, warning messages (default)
+                    = -1, no warning messages
+          .Pivot    = method used to select pivot variable
+                    = 1, (default) Steepest edge
+                    = 2, Bland's Rule (prevents cycling)
+                    = 3, Dantzig's Rule
+          .Tol      = tolerance for variable at zero
+                    = 1e-8, default
+          .MaxCond  = maximum initial basis condition estimate
+                    = 1e8, default
+          .MaxIter  = maximum number of simplex iterations before switching
+                      to Bland's Rule ('Pivot' = 2)
+                    = n + 1, default
+          = 'Field1',value1,'Field2',value2, ..., where multiple input
+            arguments or single cell array can be used instead of the full
+            options structure to change only selected fields
+      opt = LPRSM('defaults'), to get defaults values for option structure
+     XFlg =  1, solution found
+          =  0, maximum number of iterations reached
+          = -1, initial basis is ill conditioned or infeasible
+          = -2, problem is infeasible
+          = -3, problem is unbounded
+          = -4, redundant row in constraints
+      out = output structure, with fields:
+          .idxB = final basis indices
+          .r    = reduced costs
+          .w    = dual variables
+          .iter = number of simplex iterations
+ 
+  (Based on revised simplex method reported in Sec. 3.7 of S.C. Fang and 
+   S.Puthenpura, Linear Optimization and Extensions: Theory and Algorithms, 
+   Pretice-Hall: Englewood Cliffs, NJ, 1993.)
+ 
+  (Jeffery A. Joines developed the initial version of the RSM subroutine
+   used in this procedure.)
+</pre>
+<h2><a href="#Top-makemap" name="makemap">makemap</a></h2>
+<p><b>Create projection plot of World or US</b></p>
+<pre>      h = makemap(region)
+        = makemap(XY,expand)
+ region = 'World', (default) world coastline and international borders
+        = 'US', United States coastline and state and international borders
+        = 'NC', North Carolina state border
+     XY = longitude-latitude pairs (in decimal degrees) used to fix axes
+          limits by calling BOUNDRECT(XY,expand) to get bounding rectangle
+ expand = nonnegative expansion factor for bounding rectangle (if XY input)
+        = 0.10, default
+      h = handle of line objects created
+   h(1) = coastlines
+   h(2) = international borders
+   h(3) = (World) arctic (66.5) and antarctic (-66.5) circles and tropics
+          of Cancer (23.5) and Capricorn (-23.5) parallels
+        = (US) State borders
+ 
+  Calls MAPDATA to get map data
+</pre>
+<h2><a href="#Top-mand" name="mand">mand</a></h2>
+<p><b>Multiple AND with real or cellstr vector pairs</b></p>
+<pre>   [idx,idxm] = mand(x1,y1,x2,y2,...,is1,is2,...)
+              = mand(x1,y1,x2,y2,...)
+    x1,x2,... = real or cellstr n-element vectors
+    y1,y2,... = real array or cellstr vectors, where each x-y forms a
+                pair
+  is1,is2,... = (optional) logical vectors, with same number of elements
+                as each y
+          idx = n-element index vector of matches, where idx(i) = NaN if
+                no match or multiple matches found for element i
+         idxm = n-element cell array of possible multiple matches, where
+                idxmulti{i} = index vector of matches for element i, where
+                error is thrown if multiple matches found and idxmulti is
+                not returned
+ 
+  Returns: idxm(i) = find(x1(i) == y1 & x2(i) == y2 & ...), for real x
+           idxm(i) = find(strncmpi(x1{i},y1,length(x1(i)) & ...
+                     strncmpi(x2{i},y2,length(x1(i)) & ...), for cellstr x
+     Note: If idxm not returned and multiple matches for element i, then 
+           tries to find one exact match amoung the idxm{i} to return as
+           idx(i)
+ 
+  Example 1: Find the lon-lat of ZIP codes 32606 and 27606 
+  XY = uszip5('XY',mand([32606 27606],uszip5('Code5')))
+  % XY =
+  %   -82.4441   29.6820
+  %   -78.7155   35.7423
+ 
+  Example 2: Find the lon-lat of Gainesville, FL and Raleigh, NC
+  XY = uscity('XY',mand({'Gainesville','Raleigh'},uscity('Name'),...
+                        {'FL','NC'},uscity('ST')))
+  % XY =
+  %   -82.3459   29.6788
+  %   -78.6414   35.8302
+</pre>
+<h2><a href="#Top-mapdata" name="mapdata">mapdata</a></h2>
+<p><b>Data for maps of the World, US, and North Carolina</b></p>
+<pre>       s = mapdata          Output all variables as structure 's'
+ [x1,x2] = mapdata          Output only first 1, 2, etc., variables
+       s = mapdata('x',...) Output only variables 'x', ... as structure 's'
+ [x,...] = mapdata('x',...) Output variables 'x', ... as variables
+         = mapdata(...,is)  Output subset 'x(is)' using SUBSETSTUCT(s,is)
+                            where 'is' is vector of elements to extract
+ 
+  Loads data file "mapdata.mat" that contain the following variables:
+  World = structure of World data with fields:
+        .XYB = international borders
+        .XYC = world coastline
+     US = structure of United States data with fields:
+        .XYB = US international borders
+        .XYC = US coastline
+        .XYS = US state borders
+     NC = structure of North Carolina data with fields:
+        .XYS = NC state border
+ 
+  Data source: World from World Coast Line (1:5,000,000) and US from World
+  Data Bank II (1:2,000,000; N 53.61 S 14.9 W -125 E -65) of the Coastline 
+  Extractor created by Rich Signell of US Geological Survey and hosted by 
+  NOAA/National Geophysical Data Center, Marine Geology & Geophysics 
+  Division (http://rimmer.ngdc.noaa.gov/coast/). Data thined and sorted 
+  using REDUCEM from Mapping Toolbox and JOIN_CST from Coastline Extractor.
+</pre>
+<h2><a href="#Top-mat2vec" name="mat2vec">mat2vec</a></h2>
+<p><b>Convert columns of matrix to vectors</b></p>
+<pre>  [X(:,1),X(:,2),...] = mat2vec(X)
+ 
+  (Additional output vectors assigned as empty)
+</pre>
+<h2><a href="#Top-matlogupdate" name="matlogupdate">matlogupdate</a></h2>
+<p><b>Automatically download updates to Matlog files</b></p>
+<pre>  nfilesrepl = matlogupdate()
+  nfilesrepl = number of files updated (command line prompt suppressed if
+               this output argument is requested)
+ 
+  Note: Do not need to run this if connected to the NCSU network.
+        If off-campus, can add MATLOGUPDATE to your "startup.m" file.
+        Uses Matlog function GETFILE to copy files.
+ 
+  (Files that need updating are determined by checking their modification
+   dates to see if they are earlier than the dates of the same files in the 
+   current Matlog directory at NCSU (http://www.ise.ncsu.edu/kay/matlog/
+   matlogdir.mat). Looks for the file "matlogupdate.m" to determine the 
+   path to the Matlog directory on the local computer.)
+</pre>
+<h2><a href="#Top-maxpayld" name="maxpayld">maxpayld</a></h2>
+<p><b>Determine maximum payload</b></p>
+<pre>   qmax = maxpayld(s,tr)
+        = maxpayld(sh,tr)
+      s = vector of shipment density (lb/ft^3)
+     sh = structure array with field:
+         .s = shipment density (lb/ft^3)
+     tr = structure with fields:
+         .Kwt = weight capacity of trailer (tons)
+              = Inf, default
+         .Kcu = cube capacity of trailer (ft^3)
+              = Inf, default
+   qmax = maximum payload (tons)
+</pre>
+<h2><a href="#Top-mcnf2lp" name="mcnf2lp">mcnf2lp</a></h2>
+<p><b>Convert minimum cost network flow to LP model</b></p>
+<pre>  lp = mcnf2lp(IJCUL,SCUL)
+  IJCUL = [i j c u l],  arc data
+   SCUL = [s nc nu nl], node data
+      i = n-element vector of arc tails nodes, where n = number of arcs
+      j = n-element vector of arc head nodes
+      c = n-element vector of arc costs
+      u = n-element vector of arc upper bounds
+        = [Inf], default
+      l = n-element vector of arc lower bounds
+        = [0], default
+      s = m-element vector of net node supply, where m = number of nodes
+             s(i) > 0 => node i is supply node        (outflow > inflow)
+             s(i) = 0 => node i is transshipment node (outflow = inflow)
+             s(i) < 0 => node i is demand node        (outflow < inflow)
+     nc = m-element vector of node costs
+     nu = m-element vector of upper bounds on total node flow
+        = [Inf], default
+     nl = m-element vector of lower bounds on total node flow
+        = [-Inf], default
+     lp = {c,Alt,blt,Aeq,beq,lb,ub}
+      c = vector of variable costs
+    Alt = inequality constraint matrix = [], for MCNF
+    blt = inequality RHS vector = [], for MCNF
+    Aeq = equality constraint matrix
+    beq = equality RHS vector
+     lb = lower bound vector
+     ub = upper bound vector
+ 
+ Example:
+  IJCUL = [
+    1   2   4  10   1
+    1   3   2   5   0
+    2   4   0 Inf   0
+    2   5   0 Inf   0
+    5   2   0 Inf   0
+    3   5   0 Inf   0
+    4   6   0 Inf   1
+    5   6   0 Inf   0];
+  SCUL = [
+   10   4 Inf   0
+    0   2   5   2
+    0   3   4   2
+   -2   2 Inf   0
+    2   3 Inf   0
+   -4   1 Inf   0];
+  lp = mcnf2lp(IJCUL,SCUL);
+  [x,TClp] = lplog(lp{:}); TClp        % Use LPLOG to solve LP
+  % TClp =                             % LP TC does not include demand 
+  %     54                             % node costs
+  [f,TC,nf] = lp2mcnf(x,IJCUL,SCUL)  % Convert to arc & node flows
+  % f =
+  %      2  2  3  0  1  2  1  3
+  % TC =
+  %     62
+  % nf =
+  %      4  3  2  3  4  4
+</pre>
+<h2><a href="#Top-mdisp" name="mdisp">mdisp</a></h2>
+<p><b>Matrix display</b></p>
+<pre>      str = mdisp(X,row,col,rowtitle,fracdig,allfrac,isnosep,colsp)
+        X = m x n array of real numbers
+      row = m-element cell array of row heading strings
+          = m-element numeric array of row numbers
+          = numbers 1 to m, default
+      col = n-element cell array of column heading strings
+          = n-element numeric array of column numbers
+          = numbers 1 to n, default
+ rowtitle = scalar or string title for row headings
+          = name of first input argument, default
+  fracdig = digits for fractional portion of number
+          = 2, default
+  allfrac = digits for fractional portion of all fractional columns
+          = 4, default
+  isnosep = output to "str" without horizontal and vertical separators
+            (to allow pasting into Excel as fixed-width text)
+          = true, default
+    colsp = spaces between columns
+          = 2, defualt
+      str = output as a string
+ 
+  Note: NaN's displayed as blank spaces (can use to control formating).
+        Adds comma separators to numbers in array.
+ 
+  Examples:
+  X = rand(5,4);
+  mdisp(X)
+  mdisp(X < .5)
+  mdisp(X * 10000)
+  mdisp(fliplr(X),{'R1','row 2','R 3','RowFour','Row 5'},size(X,2):-1:1)
+</pre>
+<h2><a href="#Top-Milp" name="Milp">Milp</a></h2>
+<p><b>Mixed-integer linear programming model</b></p>
+<pre>  This class stores MILP models and provides methods to create the models
+  and format solutions for output.
+  Milp Properties:
+     Model        MILP model (same structure as Cplex model).
+  Milp Methods:
+     Milp         Constructor for Milp objects.
+     addobj       Add variable cost arrays to objective function.
+     addcstr      Add constraint to model.
+     addlb        Add lower bounds for each variable array.
+     addub        Add upper bounds for each variable array.
+     addctype     Specify type of each variable array.
+     namesolution Convert solution to named field arrays.
+     dispmodel    Display matrix view of model.
+     lp2milp      Convert LP model to MILP model.
+     milp2lp      Convert MILP model to LINPROG inputs.
+     milp2ilp     Convert MILP model to INTLINPROG inputs.
+     milp2gb      Convert MILP model to Gurobi input structure.
+ 
+  Example 1: Illustrate Milp syntax
+ 
+  c = [1:4], C = reshape(5:10,2,3)
+  mp = Milp('Example');
+  mp.addobj('min',c,C)
+ 
+  mp.addcstr(0,1,'=',100)
+  mp.addcstr(c,-C,'>=',0)
+  mp.addcstr(c,'>=',C)
+  mp.addcstr([c; 2*c],repmat(C(:)',2,1),'<=',[400 500])
+  mp.addcstr({3},{2,2},'<=',600)
+  mp.addcstr({2,{3}},{3*3,{2,2}},'<=',700)
+  mp.addcstr({[2 3],{[3 4]}},{4,{2,':'}},'=',800)
+  mp.addcstr(0,{C(:,[2 3]),{':',[2 3]}},'>=',900)
+ 
+  mp.addlb(-10,0)
+  mp.addub(10,Inf)
+  mp.addctype('B','C')
+  mp.dispmodel
+ 
+  % c =  1     2     3     4
+  % C =
+  %      5     7     9
+  %      6     8    10
+  %
+  % Example:  lhs  B   B   B   B   C   C   C   C   C   C  rhs
+  % -------:-------------------------------------------------
+  %     Min:        1   2   3   4   5   6   7   8   9  10
+  %       1:  100   0   0   0   0   1   1   1   1   1   1 100
+  %       2:    0   1   2   3   4  -5  -6  -7  -8  -9 -10 Inf
+  %       3:    0   1   2   3   4  -5  -6  -7  -8  -9 -10 Inf
+  %       4: -Inf   1   2   3   4   5   6   7   8   9  10 400
+  %       5: -Inf   2   4   6   8   5   6   7   8   9  10 500
+  %       6: -Inf   0   0   1   0   0   0   0   1   0   0 600
+  %       7: -Inf   0   0   2   0   0   0   0   9   0   0 700
+  %       8:  800   0   0   2   3   0   4   0   4   0   4 800
+  %       9:  900   0   0   0   0   0   0   7   8   9  10 Inf
+  %      lb:      -10 -10 -10 -10   0   0   0   0   0   0
+  %      ub:       10  10  10  10 Inf Inf Inf Inf Inf Inf
+ 
+  Example 2: UFL (Example 8.8 in Francis, Fac Layout and Loc, 2nd ed.)
+  k = [8     8    10     8     9     8];
+  C = [0     3     7    10     6     4
+       3     0     4     7     6     7
+       7     4     0     3     6     8
+      10     7     3     0     7     8
+       6     6     6     7     0     2
+       4     7     8     8     2     0];
+  mp = Milp('UFL');
+  mp.addobj('min',k,C)
+  [n m] = size(C);
+  for j = 1:m
+     mp.addcstr(0,{':',j},'=',1)
+  end
+  for i = 1:n
+     mp.addcstr({m,{i}},'>=',{i,':'})  % Weak formulation
+  end
+  mp.addub(Inf,1)
+  mp.addctype('B','C')
+  [x,TC,nevals,XFlg] = milplog(mp); TC,nevals,XFlg
+  x = mp.namesolution(x), xC = x.C
+  TC = k*x.k' + sum(sum(C.*xC))
+
+    Documentation for Milp
+       doc Milp
+
+</pre>
+<h2><a href="#Top-milplog" name="milplog">milplog</a></h2>
+<p><b>Matlog mixed-integer linear programming solver</b></p>
+<pre>  [x,TC,nevals,XFlg] = milplog(mp,opt)
+       mp = model object returned by MILP
+  Options:
+      opt = options structure, with fields:
+          .Display  =-1, no warning messages
+                    = 0, initial LP message (default)
+                    = 1, show steps of B&B evalutation
+                    = 2, also show TolFun changes
+          .Martin   = 0, don't use Martin cuts
+                    = 1, use Martin cuts if possible (default)
+          .SOS      = Special Ordered Sets of type one (SOS1)
+                    = 0, don't use (default)
+                    = 1, use if possible (and don't use Martin cuts)
+          .RCthresh = reduced cost threshold percent of obj for Martin cuts
+                    = 0.05 (default)
+          .TolInt   = integer tolerance for ISINT
+                    = [1e-8], default
+          .ExTolFun = opt.LPopt.TolFun expansion factor for LINPROG feas.
+                    = 10 (default)
+          .LPopt    = option structure for LINPROG, with MILP default:
+                    .Display = 'none'
+          = 'Field1',value1,'Field2',value2, ..., where multiple input
+            arguments or single cell array can be used instead of the full
+            options structure to change only selected fields
+      opt = MILPLOG('defaults'), get defaults values for option structure
+   nevals = number of LP evaluations
+     XFlg = 2, initial LP solution feasible
+          = 1, solution found
+          =-1, no feasible integer solution found
+          =-2, initial LINPROG exitflag <= 0
+ 
+  Example (Example 8.8 in Francis, Fac Layout and Loc, 2nd ed.):
+  k = [8     8    10     8     9     8];
+  C = [0     3     7    10     6     4
+       3     0     4     7     6     7
+       7     4     0     3     6     8
+      10     7     3     0     7     8
+       6     6     6     7     0     2
+       4     7     8     8     2     0];
+  mp = Milp('UFL');
+  mp.addobj('min',k,C)
+  [n m] = size(C);
+  for j = 1:m
+     mp.addcstr(0,{':',j},'=',1)
+  end
+  for i = 1:n
+     mp.addcstr({m,{i}},'>=',{i,':'})  % Weak formulation
+  end
+  mp.addub(Inf,1)
+  mp.addctype('B','C')
+  [x,TC,nevals,XFlg] = milplog(mp); TC,nevals,XFlg
+  x = mp.namesolution(x), xC = x.C
+  TC = k*x.k' + sum(sum(C.*xC))
+</pre>
+<h2><a href="#Top-mincharge" name="mincharge">mincharge</a></h2>
+<p><b>Minimum transport charge for TL, LTL, or multistop route</b></p>
+<pre>      MC = mincharge(d,ppiTL)            % TL
+         = mincharge(d,[],ppiLTL)        % LTL
+         = mincharge(d,ppiTL,rte,sh)     % Multistop route
+ [MC,AC] = mincharge(d,ppiTL,rte,sh,idx) % (output allocated charge)
+       d = shipment distance (mi)
+   ppiTL = TL Producer Price Index = 102.7, default (2004 value)
+  ppiLTL = LTL Producer Price Index = 104.2, default (2004 value)
+     rte = route vector
+      sh = structure array with fields:
+          .b = beginning location of shipment
+          .e = ending location of shipment
+     idx = shipment index vector
+         = rte2idx(rte), default
+      MC = Minimum charge
+         = (ppiTL/102.7) * 45, for TL and d > 0
+         = (ppiLTL/104.2) * (45 + (d^(28/19))/1625), for LTL and d > 0
+         = nLU * mincharge(d,ppiTL)/2, for Multistop, where nLU is no. L 
+           and U at different locations and half MC for each L and U
+         = 0, for d = 0
+      AC = allocated minimum charge for multistop route, where the
+           allocation is based on dividing mincharge(d,tr)/2) by the number
+           of consecutive L/U at same location
+ 
+  LTL MC not valid for sh.d > 3432
+</pre>
+<h2><a href="#Top-mincostinsert" name="mincostinsert">mincostinsert</a></h2>
+<p><b>Min cost insertion of route i into route j</b></p>
+<pre> [rte,TC,TCij] = mincostinsert(rtei,rtej,rteTC_h,sh,doNaN)
+     rtei = route i vector
+     rtej = route j vector
+  rteTC_h = handle to route total cost function, rteTC_h(rte)
+       sh = structure array with fields:
+           .b = beginning location of shipment
+           .e = ending location of shipment
+    doNaN = return NaN for rte if cost increase
+          = false, default
+      rte = combined route vector
+          = NaN if cost increase
+       TC = total cost of combined route
+     TCij = original total cost of routes i and j
+</pre>
+<h2><a href="#Top-minisumloc" name="minisumloc">minisumloc</a></h2>
+<p><b>Continuous minisum facility location</b></p>
+<pre>  [X,TC,XFlg,X0] = minisumloc(P,W,p,V,X0,opt)
+      Determines locations X that minimizes TC = SUMCOST(X,P,W,p,V).
+      Uses best solution from gradient-based and Nelder-Mead searches.
+      P = m x d matrix of m d-dimensional points
+      W = n x m matrix of X-P weights
+      p = distance parameter for DISTS in SUMCOST
+      V = n x n matrix of X-X weights for multifacility problem
+          (all elements of V used)
+        = [] (default), solve n single-facility problems
+     X0 = n x d matrix of starting points
+        = RANDX(P,n) (default)
+    opt = options structure, with fields:
+        .SearchTech = search techniques to use 
+                    = 1 => only FMINUNC (gradient-based search)
+                    = 2 => only FMINSEARCH (Nelder-Mead direct search)
+                    = 3 => best of both (default)
+        .MajorityChk = check for majority single-facility solution
+                       (i.e., X = P(FIND(W >= SUM(W)),:))
+                     = 1, do check (default)
+                     = 0, do not check
+        .e = epsilon parameter for DISTS passed through SUMCOST
+           = 1e-4 (default)
+        .IterPlot = plot each X evaluated by SUMCOST
+                    (use 'delete(findobj('Tag','iterplot'))' to erase)
+                  = h, handle of axes for plotting
+                  = [] (defualt), no plotting
+        .NormLonLat = normalize lon-lat (i.e., X = NORMLONLAT(X))
+                    = 1, normalize (default)
+                    = 0, do not normalize
+        .Uopt = option structure for FMINUNC, with MINISUMLOC defaults:
+              .Display = 'off',.GradObj = 'on',.LargeScale = 'off',
+              .LineSearchType = 'cubicpoly'
+        .Sopt = option structure for FMINSEARCH, with MINISUMLOC defaults:
+              .Display = 'off',.TolFun = 1e-6,.TolX = 1e-6
+        = 'Field1',value1,'Field2',value2, ..., where multiple input
+          arguments or single cell array can be used instead of the full
+          options structure to change only selected fields
+    opt = MINISUMLOC('defaults'), to get defaults values for option struct.
+   XFlg = 3 => majority solution found
+        = 2 => best solution found using FMINSEARCH
+        = 1 => best solution found using FMINUNC
+        = 0 => maximum number of iterations reached, if best solution found
+               using FMINSEARCH; or maximum number of function evaluations
+               reached, if best solution found using FMINUNC
+        = -1 => did not converge to a solution, if only FMINUNC used
+        = -2 => all 0 row in W matrix (returns X(i,:) = X0(i,:); TC(i) = 0)
+ 
+  Examples: 
+  P = [1 1;2 0;2 3], w = [4 3 5]        % Single-facility location
+  [X,TC,XFlg,X0] = minisumloc(P,w,2)    %  X = 1.2790    1.1717
+ 
+  W = [4 3 5;2 3 0], V = [0 1;0 0],     % Multifacility location
+  [X,TC,XFlg,X0] = minisumloc(P,W,2,V)  %  X = 1.3197    1.1093
+                                        %      2.0000    0.0000
+ 
+  V = [],                               % Two single-facility locations
+  [X,TC,XFlg,X0] = minisumloc(P,W,2)    %  X = 1.2790    1.1717
+                                        %      2.0000         0
+</pre>
+<h2><a href="#Top-minspan" name="minspan">minspan</a></h2>
+<p><b>Minimum weight spanning tree using Kruskal algorithm</b></p>
+<pre> [t,nk] = minspan(IJC)
+    IJC = n x 3 matrix arc list [i j c] of arc heads, tails, and costs
+      t = n-element vector, where 
+          t(i) = 1, if IJC(i,:) arc in spanning tree
+          t(i) = k, if IJC(i,:) arc in component k of forest
+     nk = number of components
+</pre>
+<h2><a href="#Top-minTLC" name="minTLC">minTLC</a></h2>
+<p><b>Minimum total logistics cost comparing TL and LTL</b></p>
+<pre>  [TLC,q,isLTL] = minTLC(sh,tr,ppiLTL)       % minimum of TL and LTL  
+                = minTLC(sh,tr)              % only TL
+                = minTLC(sh,[],ppiLTL)       % only LTL
+                = minTLC(sh,tr,ppiLTL,D)     % use D to determine dist
+                = minTLC(sh,tr,[],D,rte)     % min TLC for route(s)
+                                             % (only TL considered)
+     sh = structure array with fields:
+         .f = annual demand (tons/yr)
+         .s = shipment density (lb/ft^3)
+         .a = inventory 0-D fraction
+         .v = unit shipment value ($/ton)
+         .h = inventory carrying rate (1/yr)
+        = required field if D not provided
+         .d = shipment distance (mi)
+        = required fields if D provided
+         .b = beginning location of shipment
+         .e = ending location of shipment
+        = optional fields to use to treat single shipment routes as
+          independent shipments
+         .TLC1  = minimum TLC for shipment ($/yr)
+         .q1    = optimal weight (tons)
+         .isLTL = true if LTL minimizes TLC for shipment
+     tr = structure with fields:
+         .r   = transport rate ($/mi)
+         .Kwt = weight capacity of trailer (tons) = Inf, default
+         .Kcu = cube capacity of trailer (ft^3) = Inf, default
+         .ppiTL = TL Producer Price Index = 102.7 * (tr.r/2), default where
+                  the ratio of tr.r to 2 is used as a PPI approximation 
+                  since $2 per mile is average tr.r for 2004
+                  and 102.7 is the average TL PPI for 2004
+ ppiLTL = LTL Producer Price Index = 104.2, default, average 2004 LTL PPI
+      D = matrix of inter-location distances
+    rte = route vector of shipments (if specified, sh.TLC1,q1,isLTL,c1 are
+          used for single shipment routes)
+        = m-element cell array of m route vectors
+    TLC = minimum total logistics cost ($/yr)
+        = min TLC(i) for sh(i), if rte not provided
+        = min TLC for shipments in route, if rte provided
+        = m-element vector, min TLC(i) for rte{i}
+      q = optimal single shipment weight (tons)
+        = q(i) for sh(i), if rte not provided
+        = q(i) for sh(i) in route, if single rte provided
+        = cell array, where q{i}(j) weight for sh(j) in rte{i}
+  isLTL = logical vector, true if LTL minimizes TLC for shipment
+</pre>
+<h2><a href="#Top-mor" name="mor">mor</a></h2>
+<p><b>Multiple OR with each element of real or cellstr vector</b></p>
+<pre>  [is,Xidx] = mor(x,Y)
+     x = real or cellstr vector
+     Y = real or cellstr array
+    is = logical array of matches
+  Xidx = index of elements of x with no match in Y, where error is thrown
+         if Xidx not returned
+       = [], if at least one match in Y
+ 
+  Returns: is = x(1) == Y | x(2) == Y | ...,           for real x
+           is = strcmp(x{1},Y) | strcmp(x{2},Y) | ..., for cellstr x
+ 
+  Example: 3-digit ZIP codes with population in continental U.S.
+  z = uszip3(~mor({'AK','HI','PR'},uszip3('ST')) & uszip3('Pop') > 0);
+</pre>
+<h2><a href="#Top-nccity" name="nccity">nccity</a></h2>
+<p><b>North Carolina cities with populations of at least 10,000 data</b></p>
+<pre>       s = nccity          Output all variables as structure 's'
+ [x1,x2] = nccity          Output only first 1, 2, etc., variables
+       s = nccity('x',...) Output only variables 'x', ... as struct. 's'
+ [x,...] = nccity('x',...) Output variables 'x', ... as variables
+         = nccity(...,is)  Output subset 'x(is)' using SUBSETSTUCT(s,is)
+                           where 'is' is vector of elements to extract
+ 
+  Loads data file "nccity.mat" that contain the following variables:
+    Name = m-element cell array of m city name strings
+      XY = m x 2 matrix of city lon-lat (in decimal deg)
+     Pop = m-element vector of total population estimates (2010)
+ 
+  Example: Extract lon-lat of Raleigh
+  xyRal = nccity('XY',strcmp('Raleigh',nccity('Name')))
+ 
+  % xyRal =  -78.6414   35.8302
+ 
+  (Subset of USCITY)
+ 
+  Sources:
+  [1] http://www.census.gov/geo/www/gazetteer/gazetteer2010.html
+      (file: .../gazetteer/files/Gaz_places_national.txt)
+  [2] http://www.census.gov/geo/www/2010census/zcta_rel/zcta_rel.html
+      (file: .../zcta_rel/zcta_place_rel_10.txt)
+ 
+  File [1] contains data for all incorporated places and census designated
+  places (CDPs) in the 50 states, the District of Columbia and Puerto Rico
+  as of the January 1, 2010. File [2] used for Pop field, and
+  File [1] for all other fields.
+</pre>
+<h2><a href="#Top-normlonlat" name="normlonlat">normlonlat</a></h2>
+<p><b>Convert longitude and latitude to normal form</b></p>
+<pre>     XY = normlonlat(XY)
+     XY = n x 2 matrix of longitude-latitude pairs (in decimal degrees)
+ 
+  Normal form: -180 < X <= 180 and -90 <= Y <= 90
+</pre>
+<h2><a href="#Top-num2cellstr" name="num2cellstr">num2cellstr</a></h2>
+<p><b>Create cell array of strings from numerical vector</b></p>
+<pre>  c = num2cellstr(v)
+      v = n-element numerical vector
+      c = n-element cell array of strings
+ 
+  Wrapper for cellstr(strjust(num2str(v(:)),'left'))
+</pre>
+<h2><a href="#Top-optstructchk" name="optstructchk">optstructchk</a></h2>
+<p><b>Validate 'opt' structure</b></p>
+<pre>     opt = optstructchk(optdef,varargin)
+  optdef = default opt structure
+         = MFUN('defaults'), to get default for function MFUN
+   optin = input opt cell from varargin
+     opt = structure, if valid
+         = string, if error
+ 
+  Note: Option values are not vailidated, just its structure
+  Used in MINISUMLOC and MCNF
+</pre>
+<h2><a href="#Top-padmat2cell" name="padmat2cell">padmat2cell</a></h2>
+<p><b>Convert rows of NaN-padded matrix to cell array</b></p>
+<pre>      C = padmat2cell(M)
+</pre>
+<h2><a href="#Top-pairwisesavings" name="pairwisesavings">pairwisesavings</a></h2>
+<p><b>Calculate pairwise savings</b></p>
+<pre>  [IJS,S,TCij,Rij] = pairwisesavings(rteTC_h,sh,TC1,doNegSav)
+  rteTC_h = handle to route total cost function, rteTC_h(rte)
+       sh = structure array with fields:
+           .b = beginning location of shipment
+           .e = ending location of shipment
+      TC1 = (optional) user-supplied independent shipment total cost
+          = rteTC_h([i i]) for shipment i, default
+   doZero = set negative savings values to zero
+          = true, default
+      IJS = savings list in nonincreasing order, where for row IJS(i,j,s)
+            s is savings associated with adding shipments i and j to route
+          = [], default, savings
+        S = savings matrix
+     TCij = pairwise total cost matrix
+      Rij = pairwise route cell array
+</pre>
+<h2><a href="#Top-pauseplot" name="pauseplot">pauseplot</a></h2>
+<p><b>Drawnow and then pause after plotting</b></p>
+<pre>     pauseplot(pt),         drawnow and pause for 'pt' seconds (if current
+                            figure UserData is empty)
+     pauseplot,             drawnow and pause using 'pt' from current
+                            figure's UserData (set 'pt' to 0 if empty)
+     pauseplot('set'),      prompt user to input 'pt' into UserData
+                            without drawnow and pause
+     pauseplot('set',pt),   input 'pt' into UserData without drawnow and
+                            pause
+     pt = pauseplot('get'), get 'pt' from UserData without drawnow & pause
+     pt = pause time (in seconds)
+        = Inf, to pause until any key is pressed
+     pt = [], returned if input canceled or invalid 'pt' value in UserData
+ 
+  Calls DRAWNOW followed by PAUSE(pt)
+</pre>
+<h2><a href="#Top-plotshmt" name="plotshmt">plotshmt</a></h2>
+<p><b>Plot shipments</b></p>
+<pre>  h = plotshmt(sh,XY,rte,tr,doproj,maxlab)
+     sh = structure array with fields:
+         .b     = beginning location of shipment
+         .e     = ending location of shipment
+         .isLTL = (optional) true if LTL used for independent shipment
+     XY = 2-column matrix of location lon-lat (in decimal deg)
+    rte = (optional) route vector
+        = m-element cell array of m route vectors
+     tr = (optional) structure with fields:
+         .b = beginning location of truck = sh(rte(1)).b, default
+         .e = ending location of truck = sh(rte(end)).e, default
+ doproj = (optional) do projection using MAKEMAP
+        = true, default
+ maxlab = maximum characters on each L/U side of arc label
+        = 6, default
+      h = [hTL hLTL hRte] = handles
+</pre>
+<h2><a href="#Top-pmedian" name="pmedian">pmedian</a></h2>
+<p><b>Hybrid algorithm for p-median location</b></p>
+<pre>  [y,TC,X] = pmedian(p,C)
+           = pmedian(p,C,dodisp),  display intermediate results
+      p = scalar number of NFs to locate
+      C = n x m variable cost matrix,
+          where C(i,j) is the cost of serving EF j from NF i
+ dodisp = true, default
+      y = p-element NF site index vector
+     TC = total cost
+        = sum(sum(C(X)))
+      X = n x m logical matrix, where X(i,j) = 1 if EF j allocated to NF i
+ 
+  Algorithm: Report the minimum of UFLADD(0,C,[],p) followed by 
+  UFLXCHG(O,C,yADD) and UFLDROP(0,C,[],p) followed by UFLXCHG(O,C,yDROP),
+  where yADD and yDROP are the p-element NF site index vector returned by
+  UFLADD and UFLDROP for a fixed number of NFs
+ 
+  Example (Example 8.8 in Francis, Fac Layout and Loc, 2nd ed.):
+  p = 2
+  C = [0     3     7    10     6     4
+       3     0     4     7     6     7
+       7     4     0     3     6     8
+      10     7     3     0     7     8
+       6     6     6     7     0     2
+       4     7     8     8     2     0]
+  [y,TC,X] = pmedian(p,C);       y,TC,full(X)
+</pre>
+<h2><a href="#Top-pplot" name="pplot">pplot</a></h2>
+<p><b>Projection plot</b></p>
+<pre>         h = pplot('proj',...) % Current and subsequent plots w/ projection
+           = pplot(XY)         % Plot lines and points
+           = pplot(XY,LineSpec)       
+           = pplot(XY,LineSpec,'PropName',PropValue,...)
+           = pplot(XY,Labels,'PropName',PropValue,...) % Label points XY
+           = pplot(XY,'NumNode',...)                   % Number nodes
+           = pplot(IJ,XY,...)  % Plot graph
+           = pplot(IJ,Labels,XY,...)                   % Label arcs IJ
+           = pplot(loc,XY,...) % Plot loc seq
+           = pplot(loc,Labels,XY,...)                  % Label loc seq 'loc'
+           = pplot([IJ | loc],XY,Labels,...)           % Best-fit labels
+           = pplot(border,...) % Border offset percentage for XLim and YLim
+           = pplot('proj')     % Create new figure & axes with projection
+           = pplot             % Create without projection
+    'proj' = initialize current axes so that current and subsequent plots 
+             are projected using PROJ; if axes not initialized, then PPLOT 
+             plots data  unprojected (axes initialized by setting Tag 
+             property to 'proj')
+        XY = m x 2 matrix of m 2-D points, which, if projected, should be
+             longitude-latitude pairs (in decimal degrees)
+        IJ = n-row matrix arc list [i j] of arc heads and tails
+       loc = cell array of loc seq vectors, loc = {[loc1],[loc2],...}
+             (label arcs of single-seq and centroids of multiple loc seqs)
+  LineSpec = character string to display line object (see PLOT for options)
+    Labels = cell array of strings
+           = num2cell(1:m), if numbering XY
+           = num2cell(IJD(:,3)), if labeling arc costs in n x 3 matrix IJD
+           = cellstr(chararray), if using rows of character array as labels
+  PropName = any line or text object property name
+ PropValue = corresponding line object property value
+             (note: a structure or cell arrays can also be used for 
+             property name-value pairs (see SET for details))
+    border = nonnegative scalar offset percentage for point/arc border, 
+             where offset is percentage of max X,Y extent (only increases 
+             XLim,YLim to MaxXYLim, which can be set as the field of a 
+             structure stored in the "UserData" of the current axes (see 
+             MAKEMAP))
+           = 0 (default, with projection), no offset
+           = 0.2 (default, no projection), 20% offset
+         h = handle of line object created, or, if labels, vector of text
+             object handles created, or, if PPLOT('proj'), handle of axes
+ 
+  Examples:
+  XY = [2 2; 3 1; 4 3; 1 4];                  % Points
+  pplot(XY,'r.')
+  pplot(XY,num2cell(1:4))
+ 
+  % Names of North Carolina cities
+  [Name,XY] = nccity;
+  makemap(XY)
+  pplot(XY,'r.')
+  pplot(XY,Name)
+ 
+  IJ = [1 2; 1 3; 1 4];                       % Arc List
+  h1 = pplot(IJ,XY,'g-');
+  IJlab = {'(1,2)','(1,3)','(1,4)'};
+  h2 = pplot(IJ,IJlab,XY);
+  delete([h1; h2])
+ 
+  loc = {[1 4 3 2 1]};                        % Loc Seq Vector
+  h3 = pplot(loc,XY,'g-');
+  loclab = {'(1,4)','(4,3)','(3,2)','(2,1)'};
+  h4 = pplot(loc,loclab,XY);
+  set(h3,'color','b')
+ 
+  If current figure does not exist, then new figure created with 
+  DOUBLEBUFFER ON and MATLOGMENU called. If current axes does not exist, 
+  then new axes created with HOLD ON, AXIS EQUAL, and BOX ON.
+ 
+  If IJ or loc not specified for labeling points, then the Delaunay
+  triangulation of the points are used to fit the labels. Edges greater
+  than two times the shortest edge incident on each point are not used.
+</pre>
+<h2><a href="#Top-pred2path" name="pred2path">pred2path</a></h2>
+<p><b>Convert predecessor indices to shortest paths from 's' to 't'</b></p>
+<pre>    loc = pred2path(P,s,t)
+      P = |s| x n matrix of predecessor indices (from DIJK)
+      s = FROM node indices
+        = [] (default), paths from all nodes
+      t = TO node indices
+        = [] (default), paths to all nodes
+    loc = |s| x |t| cell array of paths (or loc seqs) from 's' to 't', where
+          loc{i,j} = path from s(i) to t(j)
+                   = [], if no path exists from s(i) to t(j)
+ 
+  (Used with output of DIJK)
+</pre>
+<h2><a href="#Top-proj" name="proj">proj</a></h2>
+<p><b>Mercator projection</b></p>
+<pre>     XY = proj(XY)
+      y = proj(y)
+     XY = two-column matrix of longitude-latitude pairs (in decimal deg.)
+      y = column vector of latitudes (in decimal degrees)
+ 
+  (Only latitudes are modified in the Mercator projection, longitudes are
+   unmodified and are not required.)
+ 
+  (Based on Eric Weisstein's Mathworld website 
+   "http://mathworld.wolfram.com/MapProjection.html)
+</pre>
+<h2><a href="#Top-projtick" name="projtick">projtick</a></h2>
+<p><b>Project tick marks on projected axes</b></p>
+<pre>    out = projtick(h)
+      h = axes handle
+        = current axes, default
+    out = 1, ticks projected, if axes created using PPLOT('proj')
+        = 0, otherwise
+</pre>
+<h2><a href="#Top-randreorder" name="randreorder">randreorder</a></h2>
+<p><b>Random re-ordering of an array</b></p>
+<pre>      X = randreorder(X,r)
+      X = array
+      r = scalar between 0 and 1
+ 
+  Initially, X = X(1:n,:); for i = 1:n, if rand < r, then
+  X(i,:) placed at the end of X.
+</pre>
+<h2><a href="#Top-randX" name="randX">randX</a></h2>
+<p><b>Random generation of n points X that are within P's boundaries</b></p>
+<pre>      X = randX(P,n)
+  Generates n x d matrix X of n random d-dimensional NF locations, where
+  each dimension is within the min and max EF locations of P (if m = 1, 
+  then each X(i,:) = P).
+      P = m x d matrix of m d-dimensional EF locations
+      n = number of NF locations to generate
+        = 1, default
+ 
+  Example: Two X points within x = 0..2 and y = 0..3
+  P = [0 0;2 0;2 3]
+  X = randX(P,2)
+</pre>
+<h2><a href="#Top-rateLTL" name="rateLTL">rateLTL</a></h2>
+<p><b>Determine estimated LTL rate</b></p>
+<pre>  rLTL = rateLTL(q,s,d,ppi)
+     q = weight of shipment (tons)
+     s = density of shipment (lb/ft^3)
+     d = distance of shipment (mi)
+   ppi = LTL Producer Price Index
+       = 104.2, default, 2004 LTL PPI value
+  rLTL = rate ($/ton-mi)
+ 
+  Note: Any q < 150/2000 is set equal to 150/2000, and any d < 37 is set
+  equal to 37. Inf returned for q > 5, d > 3354, and 2000*q/s > 650
+ 
+  Based on LTL estimate in M.G. Kay and D.P. Warsing, "Modeling truck rates
+  using publicly available empirical data," Int. J. Logistics Res. Appl.,
+  12(3):165–193, 2009.
+</pre>
+<h2><a href="#Top-rte2idx" name="rte2idx">rte2idx</a></h2>
+<p><b>Convert route to shipment index vector</b></p>
+<pre>  idx = rte2idx(rte)
+    rte = route vector
+        = m-element cell array of m route vectors
+    idx = shipment index vector, such that idx = rte(isorigin(rte))
+        = m-element cell array of m shipment index vectors
+        
+  Example:
+  rte = [23   15   6   23   27   17   24   27   15   17   6   24];
+  idx = rte2idx(rte)    % idx = 23   15   6   27   17   24
+</pre>
+<h2><a href="#Top-rte2ldmx" name="rte2ldmx">rte2ldmx</a></h2>
+<p><b>Convert route vector to load-mix cell array</b></p>
+<pre>  ldmx = rte2ldmx(rte)
+   rte = route vector
+  ldmx = cell array of load-mix vectors
+ 
+  Example:
+   rte = [1   2   1   3   3   2];
+  ldmx = rte2ldmx(rte); ldmx{:}      % ans = 1   2
+                                     % ans = 2   3
+</pre>
+<h2><a href="#Top-rte2loc" name="rte2loc">rte2loc</a></h2>
+<p><b>Convert route to location vector</b></p>
+<pre>  loc = rte2loc(rte,sh)
+      = rte2loc(rte,sh,tr) % Include beginning/ending truck locations
+    rte = route vector
+        = m-element cell array of m route vectors
+     sh = structure array with fields:
+         .b = beginning location of shipment
+         .e = ending location of shipment
+     tr = (optional) structure with fields:
+         .b = beginning location of truck
+            = sh(rte(1)).b, default
+         .e = ending location of truck
+            = sh(rte(end)).e, default
+    loc = location vector
+        = m-element cell array of m location vectors
+        = NaN, degenerate location vector, which occurs if bloc = eloc and
+          truck returns to eloc before end of route (=> > one route)
+ 
+  Example:
+  rte = [1   2  -2  -1];
+   sh = vect2struct('b',[1 2],'e',[3 4]);
+  loc = rte2loc(rte,sh)               % loc = 1   2   4   3
+</pre>
+<h2><a href="#Top-rtenorm" name="rtenorm">rtenorm</a></h2>
+<p><b>Normalize route vector</b></p>
+<pre>   nrte = rtenorm(rte)
+        = rtenorm(rte,idx)  % If specifying index order
+    rte = route vector
+    idx = shipment index vector
+        = rte2idx(rte), default
+   nrte = normalized route vector such that its indices range from 1 to n =
+          length(rte(rte>0)) for shipments idx(1) to n
+ 
+  Example 1:
+  rte = [100   22   33   22   45   500   33   66   500   100   45   66];
+  idx = rte2idx(rte)  % idx = 100  22  33  45  500  66
+  rtenorm(rte)        % ans = 1   2   3   2   4   5   3   6   5   1   4   6
+  Example 2:
+  idx = [33   45   500   66   22   100];
+  rtenorm(rte,idx)    % ans = 6   5   1   5   2   3   1   4   3   6   2   4
+</pre>
+<h2><a href="#Top-rtesegid" name="rtesegid">rtesegid</a></h2>
+<p><b>RTESEGID Identify shipments in each segment of route</b></p>
+<pre>      L = rtesegid(rte)
+    rte = normalized route vector
+      L = m x (2*m) logical shipment-leg matrix, where m = number of 
+          shipments in route and L(i,j) = true indicates that shipment i 
+          is in segment j
+</pre>
+<h2><a href="#Top-rtesegsum" name="rtesegsum">rtesegsum</a></h2>
+<p><b>RTESEGSUM Cumulative sum over each segment of route</b></p>
+<pre>   yseg = rtesegsum(rte,xsh)
+    rte = route vector
+    xsh = vector of values for each shipment in route
+   yseg = cumulative sum of "xsh" over each segment of "rte"
+</pre>
+<h2><a href="#Top-rteTC" name="rteTC">rteTC</a></h2>
+<p><b>Total cost of route</b></p>
+<pre>  [TC,Xflg,out] = rteTC(rte,sh,C)
+                = rteTC(rte,sh,C,tr)
+     rte = route vector
+         = m-element cell array of m route vectors
+      sh = structure array with fields:
+          .b = beginning location of shipment
+          .e = ending location of shipment
+         = include to check capacity feasibility of route:
+          .q = shipment weight (tons)
+          .s = shipment density (lb/ft^3)
+         = include to add shipment-related loading/unloading timespan to
+           route time/cost (location-related time should be added to C):
+          .tL = loading timespan = 0, default
+          .tU = unloading timespan = 0, default
+         = include to check time window feasibility of route:
+          .tbmin = earliest begin time = -Inf, default
+          .tbmax = latest begin time = Inf, default
+          .temin = earliest end time = -Inf, default
+          .temax = latest end time = Inf, default
+       C = n x n matrix of costs between n locations
+      tr = (optional) structure with fields:
+          .b = beginning location of truck = loc(1), default
+          .e = ending location of truck = loc(end), default
+         = include to check capacity feasibility of route:
+          .Kwt = weight capacity of trailer (tons) = Inf, default
+          .Kcu = cube capacity of trailer (ft^3) = Inf, default
+         = include to check max TC feasibility of route:
+          .maxTC = maximum route TC
+         = include to check time window feasibility of truck:
+          .tbmin = earliest begin time = -Inf, default
+          .tbmax = latest begin time = Inf, default
+          .temin = earliest end time = -Inf, default
+          .temax = latest end time = Inf, default
+   TC(i) = total cost of route i = sum of C and, if specified, tL and tU
+         = Inf if route i is infeasible
+ XFlg(i) = exitflag for route i
+         =  1, if route is feasible
+         = -1, if degenerate location vector for route (see RTE2LOC)
+         = -2, if infeasible due to excess weight
+         = -3, if infeasible due to excess cube
+         = -4, if infeasible due to exceeding max TC (TC(i) > tr.maxTC)
+         = -5, if infeasible due to time window violation
+     out = m-element struct array of outputs
+  out(i) = output structure with fields:
+         .Rte     = route, with 0 at begin/end if truck locations provided
+         .Loc     = location sequence
+         .Cost    = cost (drive timespan) from location j-1 to j,
+                    Cost(j) = C(j-1,j) and Cost(1) = 0
+         .Arrive  = time of arrival
+         .Wait    = wait timespan if arrival prior to beginning of window
+         .TWmin   = beginning of time window (earliest time)
+         .Start   = time loading/unloading started (starting time for
+                    route is Start(1))
+         .LU      = loading/unloading timespan
+         .Depart  = time of departure (finishing time is Depart(end))
+         .TWmax   = end of time window (latest time)
+         .Total   = total timespan from departing loc j-1 to depart. loc j
+                    (= drive + wait + loading/unloading timespan)
+ 
+  Note, costs C(i,i) ignored for same-location portions of route
+ 
+  Example 1:
+  rte = [1  2  2  1];
+   sh = struct('b',{1,2},'e',{3,4});
+    C = triu(magic(4),1);  C = C + C'
+                                      %  C =  0   2   3  13
+                                      %       2   0  10   8
+                                      %       3  10   0  12
+                                      %      13   8  12   0
+   TC = rteTC(rte,sh,C)
+                                      % TC = 22
+  Example 2: Time Windows
+   sh = vec2struct('b',[2:4],'e',1,'tbmin',[8 12 15],'tbmax',[11 14 18]);
+   tr = struct('b',1,'e',1,'tbmin',6,'tbmax',18,'temin',18,'temax',24);
+    C = [0 1 0 0; 0 0 2 0; 0 0 0 1; 1 0 0 0];
+  rte = [1:3 (1:3)];
+  [TC,Xflg,out] = rteTC(rte,sh,C,tr)
+                              % TC = 8
+                              % Xflg = 1
+                              % out =  Rte:  [0  1  2  3  1  2  3  0]
+                              %        Loc:  [1  2  3  4  1  1  1  1]
+                              %       Cost:  [0  1  2  1  1  0  0  0]
+                              %     Arrive:  [0 11 13 14 16 18 18 18]
+                              %       Wait:  [0  0  0  1  2  0  0  0]
+                              %      TWmin:  [6  8 12 15 18 18 18 18]
+                              %      Start: [10 11 13 15 18 18 18 18]
+                              %         LU:  [0  0  0  0  0  0  0  0]
+                              %     Depart: [10 11 13 15 18 18 18 18]
+                              %      TWmax: [18 11 14 18 24 24 24 24]
+                              %      Total:  [0  1  2  2  3  0  0  0]
+</pre>
+<h2><a href="#Top-savings" name="savings">savings</a></h2>
+<p><b>Savings procedure for route construction</b></p>
+<pre> [rte,TC] = savings(rteTC_h,sh,IJS,dodisp)
+          = savings(rteTC_h,sh,IJS,prte_h)
+  rteTC_h = handle to route total cost function, rteTC_h(rte)
+      sh  = structure array with fields:
+           .b = beginning location of shipment
+           .e = ending location of shipment
+      IJS = 3-column savings list
+          = pairwisesavings(rteTC_h)
+   dodisp = display intermediate results = false, default
+   prte_h = handle to route plotting function, prte_h(rte)
+            (dodisp = true when handle input)
+      rte = route vector
+          = m-element cell array of m route vectors
+    TC(i) = total cost of route i
+</pre>
+<h2><a href="#Top-sdisp" name="sdisp">sdisp</a></h2>
+<p><b>Display structure vector with all scalar field values</b></p>
+<pre>      sdisp(s)
+  M = sdisp(s)  % Return matrix of values
+    = sdisp(s,dotranspose) % Transpose array, where by default = true if
+                           % number of shipments is less than three times
+                           % the number of fields
+    = sdisp(s,[],rowtitle,fracdig,allfrac,isnosep)  % Pass inputs to MDISP
+  s = structure array
+ 
+  Note: If field 'idx' in structure, then idx values used as row headings
+ 
+  Example:
+  s = vec2struct('a',[1 2],'b',[3 4]);
+  sdisp(s)  % s:  a  b
+            % -:------
+            % 1:  1  3
+            % 2:  2  4
+</pre>
+<h2><a href="#Top-sdpi" name="sdpi">sdpi</a></h2>
+<p><b>Steepest Descent Pairwise Interchange Heuristic for QAP</b></p>
+<pre>  [TC,a] = sdpi(W,D,a0,C,XY)
+       m = number of machines and sites
+       W = m x m machine-machine weight matrix
+       D = m x m site-site distance matrix
+      a0 = m-element initial assignment vector (optional)
+         = [], generate random initial assignment using RANDPERM(m)
+         = if 'a0' is scalar, then perform 'a0' different runs and report
+           best solution found
+       C = m x m machine-site fixed cost matrix (optional), where
+           C(i,j) is the fixed cost of assigning Machine i to Site j
+      XY = m x 2 matrix of 2-D site locations to generate plots (optional)
+</pre>
+<h2><a href="#Top-sfcpos" name="sfcpos">sfcpos</a></h2>
+<p><b>Compute position of points along a 2-D spacefilling curve</b></p>
+<pre>  theta = sfcpos(X,Y,k)
+    X,Y = single point in the unit square, or
+        = multiple 2-D points that will be scaled to the unit square
+          (single points must be in the unit square and are not scaled)
+      k = (optional) number of binary digits of X and Y to take into 
+          account when computing theta to 2k binary digits (= 8, default)
+ 
+  (Based on algorithm in J.J. Bartholdi and L.K. Platzman, Management Sci.,
+   34(3):291-305, 1988)
+</pre>
+<h2><a href="#Top-sh2rte" name="sh2rte">sh2rte</a></h2>
+<p><b>Create routes for shipments not in existing routes</b></p>
+<pre>  [rte,idx1,TC] = sh2rte(idx,rte,rteTC_h)
+         = sh2rte(sh,rte,rteTC_h)
+     idx = index vector of shipments
+      sh = structure array of shipments
+           (used just to create idx = 1:length(sh))
+     rte = (optional) existing routes = [], default
+         = m-element cell array of m route vectors
+ rteTC_h = (optional) handle to route total cost function used to display
+           results to command window if shipments added
+    idx1 = index vector of single-shipment routes created
+      TC = route total cost (only provided if rteTC_h input)
+</pre>
+<h2><a href="#Top-struct2scalar" name="struct2scalar">struct2scalar</a></h2>
+<p><b>Remove non-scalar values from structure vector</b></p>
+<pre>  s = struct2scalar(s)
+  Removes all fields from stucture that are not real or logical scalars
+</pre>
+<h2><a href="#Top-sub" name="sub">sub</a></h2>
+<p><b>SUB Create subarray</b></p>
+<pre>  sub(x,is)         % Output as 'ans'
+  sub(x1,x2,...,is) % Output same name subarray in base workspace
+  [sx1,...] = sub(x1,...,is) % Output subarrays
+  sx = sub(x,'# < .5') % Match # to x and evaluate result
+     = sub(x,'#(:,1)') % Extract first column of x
+  is = logical array used to create subarrays
+</pre>
+<h2><a href="#Top-subgraph" name="subgraph">subgraph</a></h2>
+<p><b>Create subgraph from graph</b></p>
+<pre>  [sXY,sIJC,sisXY,sisIJC] = subgraph(XY,isXY,IJC,isIJC)
+                  psisIJC = subgraph(XY,isXY,IJC)        % Partial arcs
+     XY = m x 2 matrix of node coordinates
+   isXY = m-element logical vector of node subgraph elements
+    IJC = n-row matrix arc list
+  isIJC = n-element logical vector of arc subgraph elements
+    sXY = nodes of subgraph
+   sIJC = arcs of subgraph (with endpoints renumbered to correspond to sXY)
+  sisXY = m-element logical vector of node subgraph elements
+          (returns index vector if isXY is an index vector)
+ sisIJC = n-element logical vector of arc subgraph elements
+          (returns index vector if isIJC is an index vector)
+ pisIJC = logical vector of partial arc elements, if isIJC empty
+          ("partial arcs" are arcs with only one node in XY)
+ 
+  Examples:
+  % 7-node graph
+  XY = [0  0
+        1  1
+        1 -1
+        2  0
+        3  1
+        3 -1
+        4  0]
+  IJC = [1 -2 12
+         1 -3 13
+         2 -4 24
+         2 -5 25
+         3 -4 34
+         3 -6 36
+         4 -5 45
+         4 -6 46
+         5 -7 57
+         6 -7 67]
+  isXY = logical([0 1 1 1 1 1 0])'         % Nodes 2 through 6
+  isIJC = logical([1 1 0 1 0 1 0 0 1 1])'  % Exterior arcs not connected to
+                                           % node 4
+  [sXY,sIJC,sisXY,sisIJC] = subgraph(XY,isXY,IJC,isIJC)
+  %     sXY =  1  1   
+  %            1 -1                   
+  %            3  1
+  %            3 -1
+  %    sIJC =  1 -3 25
+  %            2 -4 36
+  %  sisXY' =  0  1  1  0  1  1  0
+  % sisIJC' =  0  0  0  1  0  1  0  0  0  0
+ 
+  pisIJC = subgraph(XY,isXY,IJC)           
+  % pisIJC' =  1  1  0  0  0  0  0  0  1  1   % Partial arcs
+ 
+  % North Carolina (FIPS code 37) Interstate highways (Type 'I')
+  [XY,IJD,isXY,isIJD]=subgraph(usrdnode('XY'),usrdnode('NodeFIPS')==37,...
+     usrdlink('IJD'),usrdlink('Type')=='I');
+  s = usrdlink(isIJD);  % Link data structure
+  makemap(XY)
+  pplot(IJD,XY,'r-')
+
+    Other functions named subgraph
+
+       digraph/subgraph    graph/subgraph
+</pre>
+<h2><a href="#Top-subsetstruct" name="subsetstruct">subsetstruct</a></h2>
+<p><b>Extract subset of each field of a structure</b></p>
+<pre>     s2 = subsetstruct(s1,is)
+     s1 = full structure
+     is = n-element logical vector of field elements to extract, where n is
+          size of dimension to use for extraction (max of 2 dimensions, and
+          extracts first dimension if size of both dim are same--use 
+          function twice in succession in this case)
+        = if index vector, converted to n-element logical vector assuming
+          maximum dimension of first field as size n
+          (use logical vector if this is not the case)
+     s2 = sub structure
+</pre>
+<h2><a href="#Top-sumcost" name="sumcost">sumcost</a></h2>
+<p><b>Determine total cost TC = W*DISTS(X,P,p) + V*DISTS(X,X,p)</b></p>
+<pre>  [TC,dF] = sumcost(X,P,W,p,V,e,h)
+        X = n x d matrix of n d-dimensional points
+        P = m x d matrix of m d-dimensional points
+        W = n x m matrix of X-P weights
+          = m-element vector of weights applied to each X(i,:), if V == []
+          = ones(1,m) (default), if V == []
+        p = distance parameter for DISTS
+        V = n x n matrix of X-X weights (all elements of V used in TC)
+          = [] (default)
+        e = epsilon parameter for DISTS
+        h = handle of axes to plot each X (see opt IterPlot in MINISUMLOC)
+       TC = scalar, if W is matrix
+          = n x 1 vector, if W is vector
+       dF = n x d gradient matrix
+ 
+  Examples: 
+  x = [1 1], P = [0 0;2 0;2 3], w = [1 2 1]
+  TC = sumcost(x,P,w,1)     % TC = 9
+  X = [1 1;2 1]
+  TC = sumcost(X,P,w,2)     % TC = 9
+                                   7
+  W = [0 2 1;3 2 0], V = [0 1;0 0]
+  TC = sumcost(X,P,W,1,V)   % TC = 19
+</pre>
+<h2><a href="#Top-thin" name="thin">thin</a></h2>
+<p><b>Thin degree-two nodes from graph</b></p>
+<pre>  [tIJC,idxIJC] = thin(IJC)
+    IJC = n-row matrix arc list of original graph
+   tIJC = tn-row matrix arc list of thinned graph
+ idxIJC = tn-element cell array, where idxIJC{i} is an index array of arcs 
+          in IJC that comprise arc [tIJC(i,1) tIJC(i,2)]
+ 
+  Note: Any directed arcs in IJC are converted to undirected arcs.
+        Returns empty tIJC if all of the nodes are thinned.
+ 
+  Examples:
+  % 9-node graph
+  XY = [3 5; 2 4; 5 4; 4 3; 0 4; 0 2; 2 2; 4 2; 3 1];
+  IJC = [1 -2 12; 1 -3 13; 2 -4 24; 3 -4 34; 2 -5 25; 4 -5 45; 2 -6 26;
+         5 -7 57; 6 -7 67; 4 -8 48; 5 -8 58; 7 -9 79; 8 -9 89]
+  [tIJC,idxIJC] = thin(IJC);
+  tIJC, idxIJC{:}
+  pplot
+  pplot(tIJC,XY,'y-','LineWidth',4)
+  pplot(XY,'b.')
+  pplot(IJC,XY,'b-')
+  pplot(XY,'NumNode')
+  [tXY,stIJC] = subgraph(XY,[],tIJC)          % Determine thinned XY and 
+                                              % re-number nodes in tIJC
+  pplot(tXY,'NumNode','MarkerEdgeColor','r')  % Re-label nodes in plot
+ 
+  % Thin North Carolina Interstate highways
+  [XY,IJD]=subgraph(usrdnode('XY'),usrdnode('NodeFIPS')==37,...
+       usrdlink('IJD'),usrdlink('Type')=='I');
+  [tIJD,idxIJD] = thin(IJD);
+  makemap(XY)
+  pplot(tIJD,XY,'y-','LineWidth',3)
+  pplot(IJD,XY,'r-')
+  [tXY,stIJD] = subgraph(XY,[],tIJD)  % Determine thinned XY and 
+                                      % re-number nodes in tIJD
+</pre>
+<h2><a href="#Top-totlogcost" name="totlogcost">totlogcost</a></h2>
+<p><b>Calculate total logistics cost</b></p>
+<pre>  [TLC,TC,IC] = totlogcost(q,c,sh)
+      q = single shipment weight (tons)
+      c = transport charge ($ per shipment)
+     sh = structure array with required fields:
+         .f = annual demand (tons/yr)
+         .a = inventory 0-D fraction
+         .v = shipment value ($/ton)
+         .h = annual holding cost fraction (1/yr)
+    TLC = minimum total logistics cost ($/yr) = TC + IC
+     TC = transport cost ($/yr) = c*f/q
+     IC = cycle inventory cost ($/yr) = q*a*v*h
+</pre>
+<h2><a href="#Top-trans" name="trans">trans</a></h2>
+<p><b>Transportation and assignment problems</b></p>
+<pre> [F,TC] = trans(C,s,d), transportation problem
+        = trans(C),     assignment problem
+      C = m x n matrix of costs
+      s = m-element vector of supplies
+        = [1], default
+      d = n-element vector of demands
+        = [1], default
+      F = m x n matrix of flows
+     TC = total cost
+ 
+  Example:
+  C = [8 6 10 9; 9 12 13 7;14 9 16 5];
+  dem = [45 20 30 30];
+  sup = [55 50 40];
+  [F,TC] = trans(C,sup,dem)
+  % F =
+  %      5    20    30     0
+  %     40     0     0     0
+  %      0     0     0    30
+  % TC =
+  %    970
+ 
+  Note: LINPROG is used as the LP solver
+</pre>
+<h2><a href="#Top-transcharge" name="transcharge">transcharge</a></h2>
+<p><b>Transport charge for TL and LTL</b></p>
+<pre>  [c,isLTL,cTL,cLTL] = transcharge(q,sh,tr,ppiLTL)  % min of TL and LTL
+                     = transcharge(q,sh,tr)         % only TL
+                     = transcharge(q,sh,[],ppiLTL)  % only LTL
+      q = single shipment weight (tons)
+     sh = structure array with required fields:
+         .s = shipment density (lb/ft^3)
+         .d = shipment distance (mi)
+     tr = structure with fields:
+         .r     = transport rate ($/mi)
+         .Kwt   = weight capacity of trailer (tons) = Inf, default
+         .Kcu   = cube capacity of trailer (ft^3) = Inf, default
+         .ppiTL = TL Producer Price Index = 102.7 * (tr.r/2), default where
+                  the ratio of tr.r to 2 is used as a PPI approximation 
+                  since $2 per mile is average tr.r for 2004
+                  and 102.7 is the average TL PPI for 2004
+ ppiLTL = LTL Producer Price Index = 104.2, default, average 2004 LTL PPI
+      c = transport charge ($ per shipment)
+        = min(max(cTL,MCtl), max(cLTL,MCltl))
+        = 0, if q = 0
+  isLTL = logical vector, true if LTL minimizes charge for shipment
+    cTL = TL transport charge ($)
+   cLTL = LTL transport charge ($)
+ 
+  Note: The use of ppiTL can be confusing. Using tr.r = $2/mi and expecting
+  it to increase 2*tr.ppiTL/102.7 if tr.ppiTL = 110.9 is input will not
+  work. If you are using a ppi adjusted $2/mi rate, then you should use
+  tr.r = 2* ppiTL/102.7 and then can either not specify tr.ppiTL or use
+  tr.ppiTL = ppiTL. The reason for this is that sometimes a non-53-foot
+  truck is used and tr.r might be $1/mi but ppiTL can still be used to
+  estimate the general truck inflation.
+</pre>
+<h2><a href="#Top-tri2adj" name="tri2adj">tri2adj</a></h2>
+<p><b>Triangle indices to adjacency matrix representation</b></p>
+<pre>      A = tri2adj(T)
+      T = n x 3 matrix, where each row defines indices for one of n 
+          triangles
+      A = (sparse) m x m adjacency matrix, m is the maximum index value
+ 
+  Converts set of triangles defined by X and Y vector indices into A. 
+  Useful for ploting results from DELAUNAY triangulation using GPLOT.
+ 
+  See also CONVHULL and DSEARCH
+</pre>
+<h2><a href="#Top-tri2list" name="tri2list">tri2list</a></h2>
+<p><b>Convert triangle indices to arc list representation</b></p>
+<pre>     IJ = tri2list(T)
+      T = n x 3 matrix, where each row defines indices for one of n 
+          triangles
+     IJ = 2-column arc list
+ 
+  Converts set of triangles defined by X and Y vector indices into IJ. 
+  Useful for ploting results from DELAUNAY triangulation using PPLOT.
+ 
+  See also CONVHULL and DSEARCH
+</pre>
+<h2><a href="#Top-trineighbors" name="trineighbors">trineighbors</a></h2>
+<p><b>Find neighbors of a triangle</b></p>
+<pre>      N = trineighbors(t,T)
+      t = m-element vector of triangle indices
+      T = n x 3 matrix of node indices, where each row defines node indices
+          for one of n triangles (the result from a DELAUNAY triangulation)
+      N = m x 3 matrix of triangle indices, where each row N(i,:) defines
+          indices of the neighboring triangles of triangle T(i,:) and
+          N(i,j) = NaN, if edge [T(i,j) T(i,j+1)] not shared with any other
+          triangle (e.g., if it is part of the convex hull)
+</pre>
+<h2><a href="#Top-tsp2opt" name="tsp2opt">tsp2opt</a></h2>
+<p><b>2-optimal exchange procedure for TSP loc seq improvement</b></p>
+<pre> [loc,TC] = tsp2opt(loc,C,cap,twin,locfeas,h)
+     loc = vector of single-seq vertices, where loc(1) = loc(end)
+           (loc seq can be infeasible)
+         = m-element cell array of m loc seqs
+       C = n x n matrix of costs between n vertices
+     cap = {q,Q} = cell array of capacity arguments, where
+               q = n-element vector of vertex demands, with depot q(1) = 0
+               Q = maximum loc seq load
+    twin = {ld,TW} = cell array of time window arguments
+              ld = 1, n, or (n+1)-element vector of load/unload timespans
+              TW = n or (n+1) x 2 matrix of time windows
+                 = (n+1)-element cell array, if multiple windows
+ locfeas = {'locfeasfun',P1,P2,...} = cell array specifying user-defined
+           function to test the feasibility of a single loc seq
+      h = (optional) handle to vertex plot, e.g., h = PPLOT(XY,'.');
+          use 'Set Pause Time' on figure's Matlog menu to pause plot
+      TC = m-element vector of loc seq costs
+ 
+  See LOCTC for information about the input parameters
+ 
+  Note: Also checks reverse of loc seq for improvement in addition to two-
+        edge exchanges
+ 
+  Example:
+  vrpnc1
+  C = dists(XY,XY,2);
+  h = pplot(XY,'r.');
+  rand('state',100)
+  loc = [1 randperm(size(XY,1)-1)+1 1];
+  [loc,TC] = tsp2opt(loc,C,[],[],[],h);
+  pplot({loc},XY,num2cellstr(1:size(XY,1)))
+</pre>
+<h2><a href="#Top-tspchinsert" name="tspchinsert">tspchinsert</a></h2>
+<p><b>Convex hull insertion algorithm for TSP loc seq construction</b></p>
+<pre>    loc = tspchinsert(XY,h)
+     XY = n x 2 matrix of vertex cooridinates
+      h = (optional) handle to vertex plot, e.g., h = PPLOT(XY,'.');
+          use 'Set Pause Time' on figure's Matlog menu to pause plot
+    loc = (n + 1)-vector of vertices
+ 
+  (a.k.a. the Vacuum Bag Algorithm)
+ 
+  Example:
+  vrpnc1
+  h = pplot(XY,'r.');
+  pplot(XY,num2cell(1:size(XY,1)))
+  loc = tspchinsert(XY,h);
+  TD = locTC(loc,dists(XY,XY,2))
+</pre>
+<h2><a href="#Top-tspnneighbor" name="tspnneighbor">tspnneighbor</a></h2>
+<p><b>Nearest neighbor algorithm for TSP loc seq construction</b></p>
+<pre>  [loc,TC,bestvtx] = tspnneighbor(C,initvtx,h)
+        C = n x n matrix of costs between n vertices
+  initvtx = [] (default) determine NN loc seq for all vertices and report 
+            best
+          = initial vertex (or vertices) of loc seq
+        h = (optional) handle to vertex plot, e.g., h = PPLOT(XY,'.');
+            use 'Set Pause Time' on figure's Matlog menu to pause plot
+      loc = (n + 1)-vector of vertices, best loc seq if initvtx = []
+       TC = total cost of loc seq, including C(n,1)
+  bestvtx = vertex corresponding to minimum TC found
+ 
+  Examples:
+  vrpnc1
+  C = dists(XY,XY,2);
+  h = pplot(XY,'r.');
+  pplot(XY,num2cell(1:size(XY,1)))
+  [loc,TC] = tspnneighbor(C,1,h);          TC            % Initial Vertex 1
+  [loc,TC,bestvtx] = tspnneighbor(C,[],h); TC, bestvtx   % All vertices
+</pre>
+<h2><a href="#Top-tspspfillcur" name="tspspfillcur">tspspfillcur</a></h2>
+<p><b>Spacefilling curve algorithm for TSP loc seq construction</b></p>
+<pre>    loc = tspspfillcur(XY,k)
+     XY = n x 2 matrix of vertex cooridinates
+      k = (optional) no. of binary digits to use in SFCPOS (= 8, default)
+    loc = (n + 1)-vector of vertices
+ 
+  (Based on algorithm in J.J. Bartholdi and L.K. Platzman, Management Sci.,
+   34(3):291-305, 1988)
+ 
+  Example:
+  vrpnc1
+  loc = tspspfillcur(XY);
+  TD = locTC(loc,dists(XY,XY,2))
+  h = pplot(XY,'r.');
+  pplot(XY,num2cell(1:size(XY,1)))
+  pplot({loc},XY,'g')
+</pre>
+<h2><a href="#Top-twoopt" name="twoopt">twoopt</a></h2>
+<p><b>2-optimal exchange procedure for route improvement</b></p>
+<pre> [rte,TC] = twoopt(rtein,rteTC_h,dodisp)
+          = twoopt(rtein,rteTC_h,prte_h)
+      rte = route vector
+          = m-element cell array of m route vectors
+  rteTC_h = handle to route total cost function, rteTC_h(rte)
+   dodisp = display intermediate results = false, default
+   prte_h = handle to route plotting function, prte_h(rte)
+            (dodisp = true when handle input)
+    TC(i) = total cost of route i
+</pre>
+<h2><a href="#Top-ufl" name="ufl">ufl</a></h2>
+<p><b>Hybrid algorithm for uncapacitated facility location</b></p>
+<pre>  [y,TC,X] = ufl(k,C),
+           = ufl(k,C,dodisp),  display intermediate results
+      k = n-element fixed cost vector, where k(i) is cost of NF at Site i
+          (if scalar, then same fixed cost)
+      C = n x m variable cost matrix,
+          where C(i,j) is the cost of serving EF j from NF i
+ dodisp = true, default
+      y = NF site index vector
+     TC = total cost
+        = sum(k(y)) + sum(sum(C(X)))
+      X = n x m logical matrix, where X(i,j) = 1 if EF j allocated to NF i
+ 
+  Example (Example 8.8 in Francis, Fac Layout and Loc, 2nd ed.):
+  k = [8     8    10     8     9     8]
+  C = [0     3     7    10     6     4
+       3     0     4     7     6     7
+       7     4     0     3     6     8
+      10     7     3     0     7     8
+       6     6     6     7     0     2
+       4     7     8     8     2     0]
+  [y,TC,X] = ufl(k,C);       y,TC,full(X)
+ 
+  Based on Fig. 7.6 in M.S. Daskin, Network abd Discrete Location, 1995
+</pre>
+<h2><a href="#Top-ufladd" name="ufladd">ufladd</a></h2>
+<p><b>Add construction procedure for uncapacitated facility location</b></p>
+<pre>  [y,TC,X] = ufladd(k,C)
+           = ufladd(k,C,y),   add to NFs at sites in y
+           = ufladd(k,C,y,p), add exactly p NFs
+      k = n-element fixed cost vector, where k(i) is cost of NF at Site i
+          (if scalar, then same fixed cost)
+      C = n x m variable cost matrix,
+          where C(i,j) is the cost of serving EF j from NF i
+      y = NF site index vector
+      p = fixed number of NFs to locate
+     TC = total cost
+        = sum(k(y)) + sum(sum(C(X)))
+      X = n x m logical matrix, where X(i,j) = 1 if EF j allocated to NF i
+ 
+  Example (Example 8.8 in Francis, Fac Layout and Loc, 2nd ed.):
+  k = [8     8    10     8     9     8]
+  C = [0     3     7    10     6     4
+       3     0     4     7     6     7
+       7     4     0     3     6     8
+      10     7     3     0     7     8
+       6     6     6     7     0     2
+       4     7     8     8     2     0]
+  [y,TC,X] = ufladd(k,C);       y,TC,full(X)
+  [y,TC,X] = ufladd(k,C,4:5); y,TC,full(X)  % Add to NFs at sites 4 and 5
+ 
+  Based on Fig. 7.2 in M.S. Daskin, Network abd Discrete Location, 1995
+</pre>
+<h2><a href="#Top-ufldrop" name="ufldrop">ufldrop</a></h2>
+<p><b>Drop construction procedure for uncapacitated facility location</b></p>
+<pre>  [y,TC,X] = ufldrop(k,C)
+           = ufldrop(k,C,y),    drop only from sites in y
+           = ufldrop(k,C,y,p), drop to exactly p NFs
+      k = n-element fixed cost vector, where k(i) is cost of NF at Site i
+          (if scalar, then same fixed cost)
+      C = n x m variable cost matrix,
+          where C(i,j) is the cost of serving EF j from NF i
+      p = fixed number of NFs to locate
+      y = NF site index vector
+     TC = total cost
+        = sum(k(y)) + sum(sum(C(X)))
+      X = n x m logical matrix, where X(i,j) = 1 if EF j allocated to NF i
+ 
+  Example (Example 8.8 in Francis, Fac Layout and Loc, 2nd ed.):
+  k = [8     8    10     8     9     8]
+  C = [0     3     7    10     6     4
+       3     0     4     7     6     7
+       7     4     0     3     6     8
+      10     7     3     0     7     8
+       6     6     6     7     0     2
+       4     7     8     8     2     0]
+  [y,TC,X] = ufldrop(k,C);       y,TC,full(X)
+  [y,TC,X] = ufldrop(k,C,3:6); y,TC,full(X)  % Drop only from sites 3 to 6
+ 
+  Based on Fig. 7.3 in M.S. Daskin, Network abd Discrete Location, 1995
+</pre>
+<h2><a href="#Top-uflxchg" name="uflxchg">uflxchg</a></h2>
+<p><b>Exchange best improvement procedure for uncap</b></p>
+<pre>facility location.
+  [y,TC,X] = uflxchg(k,C,y)
+      k = n-element fixed cost vector, where k(i) is cost of NF at Site i
+          (if scalar, then same fixed cost)
+      C = n x m variable cost matrix,
+          where C(i,j) is the cost of serving EF j from NF i
+      y = NF site index vector
+     TC = total cost
+        = sum(k(y)) + sum(sum(C(X)))
+      X = n x m logical matrix, where X(i,j) = 1 if EF j allocated to NF i
+ 
+  Example (Example 8.8 in Francis, Fac Layout and Loc, 2nd ed.):
+  k = [8     8    10     8     9     8]
+  C = [0     3     7    10     6     4
+       3     0     4     7     6     7
+       7     4     0     3     6     8
+      10     7     3     0     7     8
+       6     6     6     7     0     2
+       4     7     8     8     2     0]
+  [y,TC,X] = ufladd(k,C);     y,TC,full(X)
+  [y,TC,X] = uflxchg(k,C,y);  y,TC,full(X)
+ 
+  Based on Fig. 7.5 in M.S. Daskin, Network and Discrete Location, 1995
+</pre>
+<h2><a href="#Top-uscenblkgrp" name="uscenblkgrp">uscenblkgrp</a></h2>
+<p><b>US census block group data</b></p>
+<pre>       s = uscenblkgrp          Output all variables as structure 's'
+ [x1,x2] = uscenblkgrp          Output only first 1, 2, etc., variables
+       s = uscenblkgrp('x',...) Output only variables 'x', ... as str. 's'
+ [x,...] = uscenblkgrp('x',...) Output variables 'x', ... as variables
+         = uscenblkgrp(...,is)  Output subset x(is) using SUBSETSTUCT(s,is)
+                                where 'is' is vector of elements to extract
+ 
+  Loads data file "uscenblkgrp.mat" that contain the following variables:
+          ST = m-element cell array of m 2-char state abbreviations
+          XY = m x 2 matrix of block-group pop center lon-lat (in dec deg)
+         Pop = m-element vector of total population estimates (2010)
+    LandArea = m-element vector of land area (square miles)
+   WaterArea = m-element vector of water area (square miles)
+      SCfips = m-element vector of state and 3-digit county FIPS codes
+ TractBlkGrp = m-element vector of tract and 1-digit block-group codes,
+               where the block-group code is the leftmost digit of the
+               4-digit block codes of the blocks that comprise the group
+ 
+  Example: Plot all census tracts in Raleigh-Durham-Cary, NC
+  %        Combined Statistical Area
+  [SCfips,Name,str] = uscounty('SCfips','Name','CSAtitle',...
+     mor({'raleigh'},uscounty('CSAtitle')));
+  str = [str{1} ' CSA'];
+  mdisp(SCfips',Name,{'SCfips'},str)
+  x = uscenblkgrp(mor(SCfips,uscenblkgrp('SCfips')));
+  makemap(x.XY), pplot(x.XY,'r.'), title(str)
+  %  
+  % Raleigh-Durham-Cary, NC CSA:  SCfips
+  % ---------------------------:--------
+  %                     Chatham:  37,037
+  %                      Durham:  37,063
+  %                    Franklin:  37,069
+  %                   Granville:  37,077
+  %                    Johnston:  37,101
+  %                      Orange:  37,135
+  %                      Person:  37,145
+  %                       Vance:  37,181
+  %                        Wake:  37,183
+ 
+  Sources:
+  [1] http://www.census.gov/geo/www/2010census/centerpop2010/blkgrp/bgcenters.html
+      (file: .../blkgrp/CenPop2010_Mean_BG.txt)
+  [2] http://www.census.gov/geo/www/2010census/rel_blk_layout.html
+      (all files in: ...2010census/t00t10.html)
+ 
+   Block-group data derived from US Census Bureau's 2010 Census Centers of
+   Population by Census Block Group data (file [1]) and Census 2000
+   Tabulation Block to 2010 Census Tabulation Block data (files in [2]).
+   File [1] used for ST, XY, Pop, SCfips, and TractBlkGrp, where ST is
+   converted to alpha from numeric FIPS codes using FIPSNUM2ALPHA. Files in
+   [2] used for LandArea and WaterArea.
+</pre>
+<h2><a href="#Top-uscity" name="uscity">uscity</a></h2>
+<p><b>US cities data</b></p>
+<pre>       s = uscity             Output all variables as structure 's'
+ [x1,x2] = uscity             Output only first 1, 2, etc., variables
+       s = uscity('x',...)    Output only variables 'x', ... as struct. 's'
+ [x,...] = uscity('x',...)    Output variables 'x', ... as variables
+         = uscity(...,is)     Output subset 'x(is)' using SUBSETSTUCT(s,is)
+                              where 'is' is vector of elements to extract
+ 
+  Loads data file "uscity.mat" that contain the following variables:
+       Name = m-element cell array of m city name strings
+         ST = m-element cell array of m 2-char state abbreviations
+         XY = m x 2 matrix of city lon-lat (in decimal deg)
+        Pop = m-element vector of total population estimates (2010)
+      House = m-element vector of total housing units (2010)
+   LandArea = m-element vector of land area (square miles)
+  WaterArea = m-element vector of water area (square miles)
+  StatePlaceFIPS = m-element vector of state and place FIPS codes
+  PlaceType = m-element cell array of m place type strings
+ 
+  Example 1: Extract name of all cities in North Carolina
+  NCcity = uscity('Name',strcmp('NC',uscity('ST')))
+ 
+  %  NCcity = 'Aberdeen'
+  %            ...
+  %           'Zebulon'
+ 
+  Example 2: Find Find the lon-lat of Gainesville, FL and Raleigh, NC
+  XY = uscity('XY',mand({'Gainesville','Raleigh'},uscity('Name'),...
+                        {'FL','NC'},uscity('ST')))
+  % XY =
+  %   -82.3459   29.6788
+  %   -78.6414   35.8302%
+ 
+  Sources:
+  [1] http://www.census.gov/geo/www/gazetteer/gazetteer2010.html
+      (file: .../gazetteer/files/Gaz_places_national.txt)
+  [2] http://www.census.gov/geo/www/2010census/zcta_rel/zcta_rel.html
+      (file: .../zcta_rel/zcta_place_rel_10.txt)
+ 
+  File [1] contains data for all incorporated places and census designated
+  places (CDPs) in the 50 states, the District of Columbia and Puerto Rico
+  as of the January 1, 2010. File [2] used for Pop and House fields, and
+  File [1] for all other fields.
+</pre>
+<h2><a href="#Top-uscity10k" name="uscity10k">uscity10k</a></h2>
+<p><b>US cities with populations of at least 10,000 data</b></p>
+<pre>       s = uscity10k          Output all variables as structure 's'
+ [x1,x2] = uscity10k          Output only first 1, 2, etc., variables
+       s = uscity10k('x',...) Output only variables 'x', ... as struct. 's'
+ [x,...] = uscity10k('x',...) Output variables 'x', ... as variables
+         = uscity10k(...,is)  Output subset 'x(is)' using SUBSETSTUCT(s,is)
+                              where 'is' is vector of elements to extract
+ 
+  Loads data file "uscity10k.mat" that contain the following variables:
+    Name = m-element cell array of m city name strings
+      ST = m-element cell array of m 2-char state abbreviations
+      XY = m x 2 matrix of city lon-lat (in decimal deg)
+     Pop = m-element vector of total population estimates (2010)
+ 
+  Example: Extract name of all cities in North Carolina with populations
+           greater than 10,000
+  NCcity = uscity10k('Name',strcmp('NC',uscity10k('ST')))
+ 
+  %  NCcity = 'Albemarle'
+  %            ...
+  %           'Winston-Salem'
+                           
+  (Subset of USCITY)
+ 
+  Sources:
+  [1] http://www.census.gov/geo/www/gazetteer/gazetteer2010.html
+      (file: .../gazetteer/files/Gaz_places_national.txt)
+  [2] http://www.census.gov/geo/www/2010census/zcta_rel/zcta_rel.html
+      (file: .../zcta_rel/zcta_place_rel_10.txt)
+ 
+  File [1] contains data for all incorporated places and census designated
+  places (CDPs) in the 50 states, the District of Columbia and Puerto Rico
+  as of the January 1, 2010. File [2] used for Pop field, and
+  File [1] for all other fields.
+</pre>
+<h2><a href="#Top-uscity50k" name="uscity50k">uscity50k</a></h2>
+<p><b>US cities with populations of at least 50,000 data</b></p>
+<pre>       s = uscity50k          Output all variables as structure 's'
+ [x1,x2] = uscity50k          Output only first 1, 2, etc., variables
+       s = uscity50k('x',...) Output only variables 'x', ... as struct. 's'
+ [x,...] = uscity50k('x',...) Output variables 'x', ... as variables
+         = uscity50k(...,is)  Output subset 'x(is)' using SUBSETSTUCT(s,is)
+                              where 'is' is vector of elements to extract
+ 
+  Loads data file "uscity50k.mat" that contain the following variables:
+    Name = m-element cell array of m city name strings
+      ST = m-element cell array of m 2-char state abbreviations
+      XY = m x 2 matrix of city lon-lat (in decimal deg)
+     Pop = m-element vector of total population estimates (2010)
+ 
+  Example: Extract name of all cities in North Carolina with populations
+           greater than 50,000
+  NCcity = uscity50k('Name',strcmp('NC',uscity50k('ST')))
+ 
+  %  NCcity = 'Asheville'
+  %            ...
+  %           'Winston-Salem'
+ 
+  (Subset of USCITY)
+ 
+  Sources:
+  [1] http://www.census.gov/geo/www/gazetteer/gazetteer2010.html
+      (file: .../gazetteer/files/Gaz_places_national.txt)
+  [2] http://www.census.gov/geo/www/2010census/zcta_rel/zcta_rel.html
+      (file: .../zcta_rel/zcta_place_rel_10.txt)
+ 
+  File [1] contains data for all incorporated places and census designated
+  places (CDPs) in the 50 states, the District of Columbia and Puerto Rico
+  as of the January 1, 2010. File [2] used for Pop field, and
+  File [1] for all other fields.
+</pre>
+<h2><a href="#Top-uscounty" name="uscounty">uscounty</a></h2>
+<p><b>US county data</b></p>
+<pre>       s = uscounty          Output all variables as structure 's'
+ [x1,x2] = uscounty          Output only first 1, 2, etc., variables
+       s = uscounty('x',...) Output only variables 'x', ... as str. 's'
+ [x,...] = uscounty('x',...) Output variables 'x', ... as variables
+         = uscounty(...,is)  Output subset x(is) using SUBSETSTUCT(s,is)
+                                where 'is' is vector of elements to extract
+ 
+  Loads data file "uscounty.mat" that contain the following variables:
+         SCfips = m-element vector of state and 3-digit county FIPS codes
+           Name = m-element cell array of county names
+             ST = m-element cell array of m 2-char state abbreviations
+             XY = m x 2 matrix of county pop center lon-lat (in dec deg)
+            Pop = m-element vector of total population estimates (2010)
+       LandArea = m-element vector of land area (square miles)
+      WaterArea = m-element vector of water area (square miles)
+       CBSAcode = m-element vector of CBSA Code
+   MetroDivCode = m-element vector of Metropolitan Division Code
+        CSAcode = m-element vector of CSA Code
+      CBSAtitle = m-element cell array of CBSA Title
+  Metro_MicroSA = m-element cell array of Metropolitan/Micropolitan 
+                  Statistical Area
+  MetroDivTitle = m-element cell array of Metropolitan Division Title
+       CSAtitle = m-element cell array of CSA Title
+  Central_Outly = m-element cell array of Central/Outlying County
+ 
+  Example: Plot all counties in California
+  CA = uscounty(mor('CA',uscounty('ST')))
+  % CA = 
+  %        SCfips: [1x58 double]
+  %          Name: {1x58 cell}
+  %            ST: {1x58 cell}
+  %            XY: [58x2 double]
+  %           Pop: [1x58 double]
+  %      LandArea: [1x58 double]
+  %     WaterArea: [1x58 double]
+  %      CBSAcode: [1x58 double]
+  %  MetroDivCode: [1x58 double]
+  %       CSAcode: [1x58 double]
+  %     CBSAtitle: {1x58 cell}
+  % Metro_MicroSA: {1x58 cell}
+  % MetroDivTitle: {1x58 cell}
+  %      CSAtitle: {1x58 cell}
+  % Central_Outly: {1x58 cell}
+  makemap(CA.XY)
+  pplot(CA.XY,'r.')
+  pplot(CA.XY,CA.Name)
+ 
+  XY, Pop, LandArea, and WaterArea for each county derived from US census
+  block group data in USCENBLKGRP. County Name, ST, and SCfips from 
+  http://www2.census.gov/geo/docs/reference/codes/files/national_county.txt
+ 
+  CBSAs, Metropolitan Divisions, and CSAs data from https://www.census.gov/
+  geographies/reference-files/time-series/demo/metro-micro/delineation-
+  files.html and https:https://www2.census.gov/programs-surveys/metro-
+  micro/geographies/reference-files/2020/delineation-files/list1_2020.xls
+</pre>
+<h2><a href="#Top-usrdlink" name="usrdlink">usrdlink</a></h2>
+<p><b>US highway network links data</b></p>
+<pre>       s = usrdlink           Output all variables as structure 's'
+ [x1,x2] = usrdlink           Output only first 1, 2, etc., variables
+       s = usrdlink('x',...)  Output only variables 'x', ... as struct 's'
+ [x,...] = usrdlink('x',...)  Output variables 'x', ... as variables
+         = usrdlink(...,is)   Output subset 'x(is)' using SUBSETSTUCT(s,is)
+                              where 'is' is vector of elements to extract
+ 
+  Based on Oak Ridge National Highway Network, which contains approximately
+  500,000 miles of roadway in US, Canada, and Mexico, including virtually
+  all rural arterials and urban principal arterials in the US. It includes 
+  a large attribute set relevant to routing. Version used (hp80) last 
+  updated Jan 2008.
+ 
+  Loads data file "usrdlink.mat" that contain the following variables:
+               IJD = n x 3 matrix arc list [i j c] of link heads, tails, 
+                     and distances (in miles)
+          LinkFIPS = n-element vector of link state FIPS code, where no
+                     individual link crosses a state boundary (see USRDNODE
+                     for FIPS codes)
+              Type = n-element char vector, where
+                       I - Interstate
+                       U - US route
+                       S - State route
+                       T - Secondary state route
+                       J - Interstate related route (business route, ramps)
+                       C - County route number or name
+                       L - Local road name
+                       P - Parkway
+                       R - Inventory route number (not normally posted)
+                       V - Federal reservation road Used in national parks 
+                           and forests, and Indian and military reservation
+                     "-" - (dash) Continuation of local road name from
+                           previous
+           LinkTag = n x 5 char array of route numbers, with qualifiers
+                      N, S, E, W - Directional qualifiers used to
+                           distinguish
+                           between distinct mainline routes, not to 
+                           indicate direction of travel on divided highways
+                           or couplets
+                      A  - Alternate
+                      BR - Business route or business loop
+                      BY - Bypass
+                      SP - Spur
+                      LP - Loop
+                      RM - Ramp
+                      FR - Frontage road
+                      PR - Proposed
+                      T  - Temporary
+                      TR - Truck route
+                      Y  - Wye
+           Heading = n-element char vector of travel directions N, S, E,
+                     or W
+             Urban = n-element char vector of flags indicating subjective
+                     judgement about degree of urban congestion, where
+                       U - Urban
+                       V - Urban bypasses (usually circumferential routes)
+                       S - Small urban or towns
+                       T - Partially urban; that is, part of the link is
+                           subject to congestion effects limiting speed
+                           (links having 0.5 miles subject to urban speed
+                           reduction)
+                       X - In urban area, but attributes and topology
+                           unchecked
+            Median = n-element char vector, where
+                       M - Divided highway (with median)
+                       C - Undivided (ie, "centerline")
+                       F - Ferry
+    Access_control = n-element char vector, where
+                       U - Uncontrolled access
+                       G - Partial control access (some at-grade
+                           intersections)
+                       I - Fully controlled access (all intersections are
+                           grade separated interchanges)
+                       F - Ferry
+      Number_lanes = n-element vector, usually either 2 or 4, representing
+                     all multilane roads (reported as 0 for ferries)
+  Traffic_restrict = n-element char vector, where (in order of priority)
+                       Z - No vehicles (generally a passenger ferry)
+                       P - Closed to public use
+                       C - Commercial traffic prohibited
+                       H - Hazardous materials prohibited
+                       T - Large trucks prohibited
+                       Q - Occasionally closed to public
+                       L - Local commercial traffic only
+                       W - Normally closed in winter
+              Toll = n-element char vector, where
+                       T - Toll road
+                       B - Link contains a toll bridge (or tunnel)
+                       F - Free passage (roads not flagged can be assumed
+                           toll free, but ferries are uncertain unless
+                           marked)
+       Truck_route = n-element char vector, where
+                       A - State designated route for STAA-dimensioned 
+                           vehicles (the "Staggers act" National Network)
+                       B - Federally designated National Network routes for
+                           large commercial vehicles (subset of State
+                           routes)
+                       C - While nominally Federally designated route, may 
+                           be construction-related restrictions for long
+                           period
+         Major_hwy = n-element vector, integer represents 4-digit bit field
+                       1 - Major highways subsystem        
+                       2 - Major highways exclusion     
+                       3 - 16-ft route flag (not in public version)
+                       4 - Tunnel flag                   
+          Pavement = n-element char vector, where
+                       P - Paved
+                       Q - Secondary paved (through traffic discouraged)
+                       G - Gravel, or otherwise below paved quality
+                       D - Dirt or unimproved
+                       F - Ferry
+       Admin_class = n-element char vector, where
+                       I - Federal-Aid Interstate
+                       P - Federal-Aid Primary
+                       S - Federal-Aid Secondary
+                       U - Federal-Aid Urban
+                       T - Combination of "S" and "U"
+                       N - Not on a Federal-Aid system
+                       F - Direct Federal system
+                       J - Ramps, connecting roadways, collector/
+                           distributors administratively related to the
+                           Interstate system, but not part of Interstate
+                           mainline mileage
+                       Q - Auxiliary roadways related to non-Interstate
+                           primary routes
+    Function_class = n x 2 char array of functional class identifier, where
+                             Rural                       Urban             
+                      01 - Interstate             11 - Interstate
+                      02 - Principal arterial     12 - Other expressway
+                                                  13 - 
+                                                  14 - Principal arterial
+                      05 - Major arterial         15 -                    
+                      06 - Minor arterial         16 - Minor arterial
+                      07 - Major collector        17 - Collector
+                      08 - Minor collector                          
+                      09 - Local                  19 - Local
+                              Combination         
+                      _1 -  01 & 11
+                      _2 -  02 & 12
+                      _3 -  02 & 14  
+                      _4 -  06 & 12   05 & 14
+                      _5 -  06 & 14
+                      _6 -  06 & 16   07 & 14
+                      _7 -  07 & 16   07 & 17
+  Future_fun_class = n-element char vector containing trailing digit of a 
+                     state proposed re- classification of the roadway
+   Special_systems = n-element vector, where
+                       2 - ILS Roadways part of FHWA/HEP Illustrative Syst.
+                       3 - Trans-America Corridor
+                       4 - NHS High Priority Corridor
+            Status = n-element char vector of 
+                       O - Open to traffic
+                       U - Under construction
+                       P - Proposed
+                       X - Speculative
+ 
+  See USRDNODE for the nodes in the network
+  
+  (Above description adapted from the more detailed description available  
+   at http://cta.ed.ornl.gov/transnet/nhndescr.html)
+ 
+  Derived from Source: Oak Ridge National Highway Network
+  http://cta.ed.ornl.gov/transnet/Highways.html
+</pre>
+<h2><a href="#Top-usrdnode" name="usrdnode">usrdnode</a></h2>
+<p><b>US highway network nodes data</b></p>
+<pre>       s = usrdnode           Output all variables as structure 's'
+ [x1,x2] = usrdnode           Output only first 1, 2, etc., variables
+       s = usrdnode('x',...)  Output only variables 'x', ... as struct. 's'
+ [x,...] = usrdnode('x',...)  Output variables 'x', ... as variables
+         = usrdnode(...,is)   Output subset 'x(is)' using SUBSETSTUCT(s,is)
+                              where 'is' is vector of elements to extract
+ 
+  Based on Oak Ridge National Highway Network, which contains approximately
+  500,000 miles of roadway in US, Canada, and Mexico, including virtually
+  all rural arterials and urban principal arterials in the US. It includes 
+  a large attribute set relevant to routing. Version used (hp80) last 
+  updated Jan 2008.
+ 
+  Loads data file "usrdnode.mat" that contain the following variables:
+                XY = m x 2 matrix of node lon-lat (in decimal deg)
+          NodeFIPS = m-element vector of node state FIPS codes, where nodes
+                     on state and international boundaries are 0, and 
+               1 AL Alabama       22 LA Louisiana      40 OK Oklahoma
+               2 AK Alaska        23 ME Maine          41 OR Oregon
+               4 AZ Arizona       24 MD Maryland       42 PA Pennsylvania
+               5 AR Arkansas      25 MA Massachusetts  44 RI Rhode Island
+               6 CA California    26 MI Michigan       45 SC South Carolina
+               8 CO Colorado      27 MN Minnesota      46 SD South Dakota
+               9 CT Connecticut   28 MS Mississippi    47 TN Tennessee
+              10 DE Delaware      29 MO Missouri       48 TX Texas
+              11 DC Dist Columbia 30 MT Montana        49 UT Utah
+              12 FL Florida       31 NE Nebraska       50 VT Vermont
+              13 GA Georgia       32 NV Nevada         51 VA Virginia
+              15 HI Hawaii        33 NH New Hampshire  53 WA Washington
+              16 ID Idaho         34 NJ New Jersey     54 WV West Virginia
+              17 IL Illinois      35 NM New Mexico     55 WI Wisconsin
+              18 IN Indiana       36 NY New York       56 WY Wyoming
+              19 IA Iowa          37 NC North Carolina 72 PR Puerto Rico
+              20 KS Kansas        38 ND North Dakota   88    Canada
+              21 KY Kentucky      39 OH Ohio           91    Mexico
+ 
+   NodePostal_abbr = m x 2 char array of m node 2-char state abbreviations
+                     (DO NOT USE: Not complete; use NodeFIPS instead)
+           NodeTag = m-element cell array of node names
+ 
+  See USRDLINK for the links in the network
+  
+  (Above description adapted from the more detailed description available 
+   at http://cta.ed.ornl.gov/transnet/nhndescr.html)
+ 
+  Derived from Source: Oak Ridge National Highway Network
+  http://cta.ed.ornl.gov/transnet/Highways.html
+ 
+  FIPS Code Source: Federal Information Processing, Standards
+                    Publication 5-2, May 28, 1987
+</pre>
+<h2><a href="#Top-uszip3" name="uszip3">uszip3</a></h2>
+<p><b>US 3-digit ZIP code data</b></p>
+<pre>       s = uszip3             Output all variables as structure 's'
+ [x1,x2] = uszip3             Output only first 1, 2, etc., variables
+       s = uszip3('x',...)    Output only variables 'x', ... as struct. 's'
+ [x,...] = uszip3('x',...)    Output variables 'x', ... as variables
+         = uszip3(...,is)     Output subset 'x(is)' using SUBSETSTUCT(s,is)
+                              where 'is' is vector of elements to extract
+ 
+  Loads data file "uszip3.mat" that contain the following variables:
+      Code3 = m-element vector of m 3-digit ZIP (ZCTA) codes
+         XY = m x 2 matrix of population centroid lon-lat (in decimal deg)
+         ST = m-element cell array of m 2-char state abbreviations
+        Pop = m-element vector of total population estimates (2000)
+      House = m-element vector of total housing units (2000)
+   LandArea = m-element vector of land area (square miles)
+  WaterArea = m-element vector of water area (square miles)
+ 
+  Example 1: Extract all 3-digit ZIP codes in North Carolina
+  NCzip = uszip3('Code3',strcmp('NC',uszip3('ST')))
+ 
+  %  NCzip = 270
+  %          ...
+  %          289
+ 
+  Example 2: 3-digit ZIP codes with population in continental U.S.
+  z = uszip3(~mor({'AK','HI','PR'},uszip3('ST')) & uszip3('Pop') > 0);
+  makemap(z.XY)
+  pplot(z.XY,'g.')
+ 
+  Derivation:
+  3-digit ZIP codes derived from 5-digit codes (see USZIP5) by using the 
+  centroid of the 5-digit code regions weighed by their population and, 
+  when the 5-digit are in multiple states, the median state as the state.
+  The population, housing, and land and water areas are the sum of the
+  5-digit values. If all 5-digit codes have zero populations, then each
+  code given equal weight in calculating 3-digit lon-lat.
+ 
+  See also USZIP5
+</pre>
+<h2><a href="#Top-uszip5" name="uszip5">uszip5</a></h2>
+<p><b>US 5-digit ZIP code data</b></p>
+<pre>       s = uszip5             Output all variables as structure 's'
+ [x1,x2] = uszip5             Output only first 1, 2, etc., variables
+       s = uszip5('x',...)    Output only variables 'x', ... as struct. 's'
+ [x,...] = uszip5('x',...)    Output variables 'x', ... as variables
+         = uszip5(...,is)     Output subset 'x(is)' using SUBSETSTUCT(s,is)
+                              where 'is' is vector of elements to extract
+ 
+  Loads data file "uszip5.mat" that contain the following variables:
+      Code5 = m-element vector of m 5-digit ZIP (ZCTA) codes
+         XY = m x 2 matrix of lon-lat (in decimal deg)
+         ST = m-element cell array of m 2-char state abbreviations
+        Pop = m-element vector of total population estimates (2010)
+      House = m-element vector of total housing units (2010)
+   LandArea = m-element vector of land area (square miles)
+  WaterArea = m-element vector of water area (square miles)
+ 
+  Example 1: Extract all ZIP codes in North Carolina
+  NCzip = uszip5('Code5',strcmp('NC',uszip5('ST')))
+  %  NCzip = 27006
+  %           ...
+  %          28909
+ 
+  Example 2: Find the lon-lat of ZIP codes 27606 and 32606
+  XY = uszip5('XY',mand([27606 32606],uszip5('Code5')))
+  % XY =
+  %   -78.7155   35.7423
+  %   -82.4441   29.6820
+ 
+  Example 3: 5-digit ZIP codes with population in continental U.S.
+  z = uszip5(~mor({'AK','HI','PR'},uszip5('ST')) & uszip5('Pop') > 0);
+  makemap(z.XY)
+  pplot(z.XY,'g.')
+ 
+  Example 4: U.S. 2010 resident population represents the total number of
+  % people in the 50 states and the District of Columbia.
+  USpop = sum(uszip5('Pop',~strcmp('PR',uszip5('ST'))))
+ 
+  %  USpop = 308739931
+ 
+  Sources: 
+  [1] http://www.census.gov/geo/www/gazetteer/gazetteer2010.html
+      (file: .../gazetteer/files/Gaz_zcta_national.txt)
+  [2] http://www.census.gov/geo/www/2010census/zcta_rel/zcta_rel.html
+      (file: .../zcta_rel/zcta_county_rel_10.txt)
+  [3] http://federalgovernmentzipcodes.us (file:
+      ...//federalgovernmentzipcodes.us/free-zipcode-database-Primary.csv)
+ 
+  ZIP codes derived from the US Census Bureau's ZIP Code Tabulation Areas
+  (ZCTAs) files [1] and [2].  These contain data for all 5 digit ZCTAs in
+  the 50 states, District of Columbia and Puerto Rico as of Census 2010.
+  File [1] used for Code5, XY, LandArea, and WaterArea. File [2] used for
+  ST, Pop, and House, where ST is converted to alpha from numeric FIPS
+  codes using FIPSNUM2ALPHA. Field isCUS excludes AK, HI, and PR.
+ 
+  Additional ZIP code data taken from [3]. This data includes P.O. Box and
+  Military ZIP codes not in the ZCTA files (these codes do not have
+  population data associated with them.
+ 
+  See also USZIP3
+</pre>
+<h2><a href="#Top-varnames" name="varnames">varnames</a></h2>
+<p><b>Convert input to cell arrays of variable names and values</b></p>
+<pre>  [name,val] = varnames(varargin)
+   name = cell array of variable names
+    var = cell array of vector values
+        = single vector, if all scalar values
+
+    Other functions named varnames
+
+       modelpack/varnames
+</pre>
+<h2><a href="#Top-vdisp" name="vdisp">vdisp</a></h2>
+<p><b>Display vectors</b></p>
+<pre>  vdisp(str,doTotal,doAvg)
+     str = string of vector names or expressions that evaluate to a vector
+ doTotal = display column total
+         = false, default
+   doAvg = display column average
+         = false, default
+ 
+  Note: Comma's in str used to delimit vectors or expressions.
+ 
+ Example:
+  a = ones(2,1);
+  vdisp('a,2*a')
+</pre>
+<h2><a href="#Top-vec2struct" name="vec2struct">vec2struct</a></h2>
+<p><b>Add each element in vector to field in structure array</b></p>
+<pre>  s = vec2struct(s,fn,vec)
+    = vec2struct(s,fn1,vec1,fn2,vec2,...)  % Add field-vector pairs
+    = vec2struct(fn,vec)                   % Create new structure
+    s = structure array
+   fn = fieldname
+  vec = vector
+ 
+  Example:
+  s = vec2struct('a',[1 2],'b',[3 4]); sdisp(s)  % s:  a  b
+                                                 % -:------
+                                                 % 1:  1  3
+                                                 % 2:  2  4
+</pre>
+<h2><a href="#Top-vrpcrossover" name="vrpcrossover">vrpcrossover</a></h2>
+<p><b>Crossover procedure for VRP improvement</b></p>
+<pre>  [loc,TC] = vrpcrossover(loc,C,cap,twin,locfeas,h)
+  Portions of two different loc seqs are simultaneousely exchanged; e.g.,
+  portion [m+1:end] from loc seq i is exchanged with portion [n+1:end] from
+  loc seq j:    loc{i} = [loc{i}(1:m) loc{j}(n+1:end)]
+              loc{j} = [loc{j}(1:n) loc{i}(m+1:end)]
+     loc = m-element cell array of m loc seqs (can be infeasible)
+       C = n x n matrix of costs between n vertices
+     cap = {q,Q} = cell array of capacity arguments, where
+               q = n-element vector of vertex demands, with depot q(1) = 0
+               Q = maximum loc seq load
+    twin = {ld,TW} = cell array of time window arguments
+              ld = 1, n, or (n+1)-element vector of load/unload timespans
+              TW = n or (n+1) x 2 matrix of time windows
+                 = (n+1)-element cell array, if multiple windows
+ locfeas = {'locfeasfun',P1,P2,...} = cell array specifying user-defined
+           function to test the feasibility of a single loc seq
+       h = (optional) handle to vertex plot, e.g., h = PPLOT(XY,'.');
+           use 'Set Pause Time' on figure's Matlog menu to pause plot
+      TC = m-element vector of loc seq costs
+ 
+  See LOCTC for information about the input parameters
+ 
+  Example:
+  vrpnc1  % Loads XY, q, Q, ld, and maxTC
+  C = dists(XY,XY,2);
+  h = pplot(XY,'r.');
+  pplot(XY,num2cellstr(1:size(XY,1)))
+  [loc,TC] = vrpinsert(C,{q,Q},{ld},{'maxTCfeas',maxTC},[]);
+  [loc,TC] = vrpcrossover(loc,C,{q,Q},{ld},{'maxTCfeas',maxTC},h);
+</pre>
+<h2><a href="#Top-vrpexchange" name="vrpexchange">vrpexchange</a></h2>
+<p><b>Two-vertex exchange procedure for VRP improvement</b></p>
+<pre>  [loc,TC] = vrpexchange(loc,C,cap,twin,locfeas,h)
+  Two vertices from different loc seqs are simultaneousely exchanged; e.g.,
+  vertex m from loc seq i is exchanged with vertex n from loc seq j:
+              loc{i} = [loc{i}(1:m-1) loc{i}(n) loc{i}(m+1:end)]
+              loc{j} = [loc{j}(1:n-1) loc{i}(m) loc{j}(n+1:end)]
+     loc = m-element cell array of m loc seqs (can be infeasible)
+       C = n x n matrix of costs between n vertices
+     cap = {q,Q} = cell array of capacity arguments, where
+               q = n-element vector of vertex demands, with depot q(1) = 0
+               Q = maximum loc seq load
+    twin = {ld,TW} = cell array of time window arguments
+              ld = 1, n, or (n+1)-element vector of load/unload timespans
+              TW = n or (n+1) x 2 matrix of time windows
+                 = (n+1)-element cell array, if multiple windows
+ locfeas = {'locfeasfun',P1,P2,...} = cell array specifying user-defined
+           function to test the feasibility of a single loc seq
+       h = (optional) handle to vertex plot, e.g., h = PPLOT(XY,'.');
+           use 'Set Pause Time' on figure's Matlog menu to pause plot
+      TC = m-element vector of loc seq costs
+ 
+  See LOCTC for information about the input parameters
+ 
+  Example:
+  vrpnc1  % Loads XY, q, Q, ld, and maxTC
+  C = dists(XY,XY,2);
+  h = pplot(XY,'r.');
+  pplot(XY,num2cellstr(1:size(XY,1)))
+  [loc,TC] = vrpinsert(C,{q,Q},{ld},{'maxTCfeas',maxTC},[]);
+  [loc,TC] = vrpexchange(loc,C,{q,Q},{ld},{'maxTCfeas',maxTC},h);
+</pre>
+<h2><a href="#Top-vrpinsert" name="vrpinsert">vrpinsert</a></h2>
+<p><b>Insertion algorithm for VRP loc seq construction</b></p>
+<pre>  [loc,TC] = vrpinsert(C,cap,twin,locfeas,idxs,h)
+  [idxs,s] = vrpinsert(C,'seeds')                          % Output default
+       C = n x n matrix of costs between n vertices
+     cap = {q,Q} = cell array of capacity arguments, where
+               q = n-element vector of vertex demands, with depot q(1) = 0
+               Q = maximum loc seq load
+    twin = {ld,TW} = cell array of time window arguments
+              ld = 1, n, or (n+1)-element vector of load/unload timespans
+              TW = n or (n+1) x 2 matrix of time windows
+                 = (n+1)-element cell array, if multiple windows
+ locfeas = {'locfeasfun',P1,P2,...} = cell array specifying user-defined
+           function to test the feasibility of a single loc seq
+    idxs = n-element of seed indices used to start new loc seqs
+         = (default) indices of vertices furthest from the depot:
+              idxs = fliplr(argsort(max(C(1,1:end),C(1:end,1)')));
+       h = (optional) handle to vertex plot, e.g., h = PPLOT(XY,'.');
+           use 'Set Pause Time' on figure's Matlog menu to pause plot
+       s = distance from depot, where s(i) = max(C(1,s(i)),C(s(i),1))
+     loc = m-element cell array of m loc seqs
+         = (n + 1)-vector of vertices, if single loc seq
+      TC = m-element vector of loc seq costs
+ 
+  See LOCTC for information about the input parameters
+ 
+  Example:
+  vrpnc1  % Loads XY, q, Q, ld, and maxTC
+  C = dists(XY,XY,2);
+  h = pplot(XY,'r.');
+  pplot(XY,num2cellstr(1:size(XY,1)))
+  [loc,TC] = vrpinsert(C,{q,Q},{ld},{'maxTCfeas',maxTC},[],h);
+</pre>
+<h2><a href="#Top-vrpnc1" name="vrpnc1">vrpnc1</a></h2>
+<p><b>Christofiles' VRP problem 1 data</b></p>
+<pre> Run vrpnc1 to load into workspace:
+     XY = vertex cooridinates
+      q = vertex demands, with depot q(1) = 0
+      Q = maximum loc seq load
+     ld = load/unload timespans
+  maxTC = maximum total loc seq cost
+ 
+  Best known solution: TC = 524.6, 5 loc seqs
+ 
+  TSP: same XY and q data as instance Eil51 in TSPLIB, where TC* = 426
+ 
+  Source: http://people.brunel.ac.uk/~mastjjb/jeb/orlib/vrpinfo.html
+     Ref: N. Christofides et al., "The vehicle routing problem," in
+          N. Chrsitofides et al., Eds., Comb. Opt., Wiley, 1979.
+</pre>
+<h2><a href="#Top-vrpsavings" name="vrpsavings">vrpsavings</a></h2>
+<p><b>Clark-Wright savings algorithm for VRP loc seq construction</b></p>
+<pre>  [loc,TC] = vrpsavings(C,cap,twin,locfeas,Sij,h)
+   [Sij,s] = vrpsavings(C,'savings')                       % Output default
+       C = n x n matrix of costs between n vertices
+     cap = {q,Q} = cell array of capacity arguments, where
+               q = n-element vector of vertex demands, with depot q(1) = 0
+               Q = maximum loc seq load
+    twin = {ld,TW} = cell array of time window arguments
+              ld = 1, n, or (n+1)-element vector of load/unload timespans
+              TW = n or (n+1) x 2 matrix of time windows
+                 = (n+1)-element cell array, if multiple windows
+ locfeas = {'locfeasfun',P1,P2,...} = cell array specifying user-defined
+           function to test the feasibility of a single loc seq
+     Sij = 2-column matrix of savings indices [i j]
+         = (default) indices corresponding to savings S(i,j) in
+           non-increasing order, where
+              S(i,j) = C(i,1) + C(1,j) - C(i,j), for i,j = 2:n, i ~= j
+       h = (optional) handle to vertex plot, e.g., h = PPLOT(XY,'.');
+           use 'Set Pause Time' on figure's Matlog menu to pause plot
+     loc = m-element cell array of m loc seqs
+      TC = m-element vector of loc seq costs
+       s = vector of savings S(i,j) corresponding to Sij
+ 
+  See LOCTC for information about the input parameters
+ 
+  (Based on G. Clark and J.W. Wright, Oper. Res., 12, 1964, as described in
+   R.C. Larson and A.R. Odoni, Urban Operations Res., Prentice-Hall, 1981.)
+ 
+  Example:
+  vrpnc1  % Loads XY, q, Q, ld, and maxTC
+  C = dists(XY,XY,2);
+  h = pplot(XY,'r.');
+  pplot(XY,num2cellstr(1:size(XY,1)))
+  [loc,TC] = vrpsavings(C,{q,Q},{ld},{'maxTCfeas',maxTC},[],h);
+</pre>
+<h2><a href="#Top-vrpsolrc101" name="vrpsolrc101">vrpsolrc101</a></h2>
+<p><b>Soloman's VRP with Time Windows problem RC101 data</b></p>
+<pre> Run vrpsolrc101 to load into workspace:
+     XY = vertex cooridinates
+      q = vertex demands, with depot q(1) = 0
+      Q = maximum loc seq load
+     ld = load/unload timespans
+     TW = time windows
+ 
+  Best known solution: TC = 1,696.94 (excluding "ld"), 14 loc seqs
+ 
+  Source: http://web.cba.neu.edu/~msolomon/rc101.htm
+     Ref: M.M. Soloman, "Algorithms for the vehicle routing and scheduling
+          problems with time window constraints," in Oper. Res. 35, 1987.
+</pre>
+<h2><a href="#Top-vrpsweep" name="vrpsweep">vrpsweep</a></h2>
+<p><b>Gillett-Miller sweep algorithm for VRP loc seq construction</b></p>
+<pre>  [loc,TC,bestvtx] = vrpsweep(XY,C,cap,twin,locfeas,h)
+      XY = n x 2 matrix of vertex cooridinates
+       C = n x n matrix of costs between n vertices
+         = dists(XY,XY,2), default
+     cap = {q,Q} = cell array of capacity arguments, where
+               q = n-element vector of vertex demands, with depot q(1) = 0
+               Q = maximum loc seq load
+    twin = {ld,TW} = cell array of time window arguments
+              ld = 1, n, or (n+1)-element vector of load/unload timespans
+              TW = n or (n+1) x 2 matrix of time windows
+                 = (n+1)-element cell array, if multiple windows
+ locfeas = {'locfeasfun',P1,P2,...} = cell array specifying user-defined
+           function to test the feasibility of a single loc seq
+       h = (optional) handle to vertex plot, e.g., h = PPLOT(XY,'.');
+           use 'Set Pause Time' on figure's Matlog menu to pause plot
+     loc = m-element cell array of m loc seqs
+      TC = m-element vector of loc seq costs
+ bestvtx = vertex corresponding to minimum TC found (pos => CW; neg => CCW)
+ 
+  See LOCTC for information about the input parameters
+ 
+  (Adapted from on B.E. Gillett and L.R. Miller, Oper. Res., 22, 1974.)
+ 
+  Example:
+  vrpnc1  % Loads XY, q, Q, ld, and maxTC
+  h = pplot(XY,'r.');
+  pplot(XY,num2cellstr(1:size(XY,1)))
+  [loc,TC,bvtx] = vrpsweep(XY,[],{q,Q},{ld},{'maxTCfeas',maxTC},h);
+</pre>
+<h2><a href="#Top-vrptwout" name="vrptwout">vrptwout</a></h2>
+<p><b>Generate output VRP with time windows</b></p>
+<pre>  [Bars,Labels,s] = vrptwout(out)
+    [Bars,Labels] = vrptwout(out)  % Display "s" in command window
+    out = output structure from LOCTC
+    Bars, Labels = inputs for GANTT chart of loc seqs
+      s = output as string with tabs between values so that it can be
+          directly pasted into a spreadsheet (also copied to clipboard)
+ 
+  Example:
+  XY = nccity('XY');
+  XY = XY(dists(XY(1,:),XY,'mi')/35 < 2, :);  % Within 2 hours at 35 mph
+  n = size(XY,1);
+  T = dists(XY,XY,'mi')/35;
+  q = [0 10*ones(1,n-1)];
+  Q = 100;
+  ld = 12/60;
+  rand('state',5538)
+  B = floor(rand(n-1,1)*10)+7;
+  TW = [B B+floor(rand(n-1,1)*4)+1];
+  TW = [-inf inf;TW;-inf inf];
+  loc = vrpsavings(T,{q,Q},{ld,TW});
+  makemap(XY)
+  pplot(XY,'r.')
+  pplot(XY,num2cell(1:n))
+  pplot(loc,XY,'m')
+  [TC,XFlg,out] = locTC(loc,T,{q,Q},{ld,TW});
+  [Bars,Labels] = vrptwout(out);
+  figure
+  gantt(Bars)
+  gantt(Bars,Labels)
+</pre>
+<h2><a href="#Top-wtbinselect" name="wtbinselect">wtbinselect</a></h2>
+<p><b>Weighted binary selection</b></p>
+<pre>     is = wtbinselect(w,p)
+      w = n-element vector of weights
+      p = scalar probability of selection
+     is = n-element logical vector of selected elements of w
+ 
+  If all weights are the same, than probability that w(i) = 1 is "p";
+  otherwise, probability is p * w(i)/mean(w):
+ 
+     is = rand(1,length(w)) < p * w/mean(w)
+ 
+  Example 1:
+  p = 0.4
+  w = [1 2 4 1]
+  rand('state',123)           %  Only needed to duplicate this example
+  is = wtbinselect(w,p)       %  is = 1  1  1  0
+  is = wtbinselect(w,p)       %  is = 0  0  1  0
+  is = wtbinselect(w,p)       %  is = 1  0  1  1
+ 
+  Example 2: Repeat 100 times to compare experimental results
+             to expected p * w/mean(w) and p values
+  for i=1:100, is(i,:) = wtbinselect(w,p); end
+  mean(is)                    %  ans = 0.2000  0.4000  0.8300  0.2100
+  p * w/mean(w)               %  ans = 0.2000  0.4000  0.8000  0.2000
+                              %  41% of the elements of w are selected
+  mean(sum(is,2))/length(w)   %  ans = 0.4100
+  p                           %    p = 0.4000
+</pre>
+<h2><a href="#Top-wtrand" name="wtrand">wtrand</a></h2>
+<p><b>Weighted random number</b></p>
+<pre>      r = wtrand(w0,w1,m,n)
+        = wtrand(w0,w1,[m n])
+     w0 = scalar nonnegative weight at 0
+     w1 = scalar nonnegative weight at 1
+      r = m x n matrix of pseuto-random values between 0 and 1
+ 
+  Calculates the inverse of the power-function distribution, which is a
+  special case of the beta with parameter b = 1:
+ 
+     r = rand(m,n) .^ (w0/w1);
+ 
+  The mean of r is equal to the centroid of w0 and w1: w1/(w0 + w1).
+  Numbers are uniformly distriuted when w0 = w1.
+  Works for more than a 2-D matrix: r = wtrand(w0,w1,m,n,p,...)
+ 
+  Example:
+  w0 = 1; w1 = 2;
+  r = wtrand(w0,w1,1,1000);
+  numeric_mean = mean(r)
+  analytic_mean = w1/(w0 + w1)
+ 
+  (The help of Jim Wilson in formulating the procedure used to implement
+   this function is much appreciated.)
+</pre>
+<h2><a href="#Top-wtrandperm" name="wtrandperm">wtrandperm</a></h2>
+<p><b>Weighted random permutation</b></p>
+<pre>    idx = wtrandperm(w,n)
+      w = p-element vector of weights
+      n = length of output value (faster to use n if only first n elements
+          of idx are needed and n < length of w)
+        = length of w, default
+    idx = n-element permutation vector, where the probability that
+          idx(1) == i is w(i)/sum(w)
+ 
+  See also RANDPERM and WTROUSELECT
+</pre>
+<h2><a href="#Top-wtrouselect" name="wtrouselect">wtrouselect</a></h2>
+<p><b>Weighted roulette selection</b></p>
+<pre>    Idx = wtrouselect(w,m,n)
+      w = p-element vector of weights
+    Idx = m x n matrix of random indices between 1 and p, where the
+          probability of selection for each index is proportional to its
+          weight; e.g., w = ones(1,p) => 1/p probability of selection
+ 
+  Example:
+  w = [0.5 0.25 0.25]         %  Half 1's, quarter 2's, and quarter 3's
+  rng(141)           %  Only needed to duplicate this example
+  Idx = wtrouselect(w,1,12)   %  Idx =  3  2  1  1  2  1  1  2  3  1  1  2
+</pre>
+<h2><a href="#Top-xls2struct" name="xls2struct">xls2struct</a></h2>
+<p><b>XLS2STRUCT Convert Excel database to structure array</b></p>
+<pre>  s = xls2struct(FILE,SHEET)
+   FILE = spreadsheet file
+  SHEET = worksheet name
+      s = m-element structure array with n fields, corresponding to (m+1)
+          rows and n columns in SHEET, where the first row are the column
+          headings that are converted to structure field names
+ 
+  Converts XLSREAD(FILE,SHEET) numeric and text arrays to a structure
+  array. Worksheet should be in a database format, where each column
+  contains all numeric data or all text strings, and each row represents a
+  record. Each text string converted to cell in structure.
+</pre>

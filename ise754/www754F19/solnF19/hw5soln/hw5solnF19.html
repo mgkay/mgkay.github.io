@@ -1,0 +1,620 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <!--
+This HTML was auto-generated from MATLAB code.To make changes, update the MATLAB code and republish this document.
+      -->
+    <title>HW 5 Solution - ISE 754 Fall 2019</title>
+    <meta name="generator" content="MATLAB 9.6">
+    <link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
+    <meta name="DC.date" content="2019-10-09">
+    <meta name="DC.source" content="hw5solnF19.m">
+    <style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style>
+  </head>
+  <body>
+    <div class="content">
+      <h1>HW 5 Solution - ISE 754 Fall 2019</h1>
+      <!--introduction--><!--/introduction-->
+      <h2>Contents</h2>
+      <div>
+        <ul>
+          <li><a href="#1">Question 1</a></li>
+          <li><a href="#5">Question 2</a></li>
+          <li><a href="#12">Question 3</a></li>
+          <li><a href="#16">Question 4</a></li>
+        </ul>
+      </div>
+      <h2 id="1">Question 1</h2>
+      <h2 id="2">Create Data</h2>
+      <pre class="codeinput">k = 30;
+C = [0 92 30 46; 92  0 40 94; 30 40 0 18; 46 94 18 0];
+mdisp(C)
+</pre>
+      <pre class="codeoutput"> 
+C:   1   2   3   4
+-:----------------
+1:   0  92  30  46
+2:  92   0  40  94
+3:  30  40   0  18
+4:  46  94  18   0
+</pre>
+      <h2 id="3">(b) Solve using UFLADD heuristic</h2>
+      <pre class="codeinput">[y,TC,X] = ufladd(k,C);
+y,TC,mdisp(X)
+</pre>
+      <pre class="codeoutput">y =
+     2     3
+TC =
+   108
+ 
+X:  1  2  3  4
+-:------------
+1:  0  0  0  0
+2:  0  1  0  0
+3:  1  0  1  1
+4:  0  0  0  0
+</pre>
+      <h2 id="4">(c) Formulate as MILP and solve</h2>
+      <pre class="codeinput">clear <span class="string">mp</span>
+mp = Milp(<span class="string">'UFL'</span>)
+[n m] = size(C);
+kn = iff(isscalar(k),repmat(k,1,n),k(:)');
+mp.addobj(<span class="string">'min'</span>,kn,C)
+<span class="keyword">for</span> j = 1:m
+   mp.addcstr(0,{<span class="string">':'</span>,j},<span class="string">'='</span>,1)
+<span class="keyword">end</span>
+<span class="keyword">for</span> i = 1:n
+   mp.addcstr({m,{i}},<span class="string">'&gt;='</span>,{i,<span class="string">':'</span>})
+<span class="keyword">end</span>
+mp.addub(1,1)
+mp.addctype(<span class="string">'B'</span>,<span class="string">'C'</span>)
+mp.dispmodel
+ilp = mp.milp2ilp;
+[x,TC,exitflag,output] = intlinprog(ilp{:});
+x = mp.namesolution(x);
+y = find(x.kn), TC, mdisp(x.C)
+</pre>
+      <pre class="codeoutput">mp = 
+  Milp with properties:
+
+    Model: [1×1 struct]
+ 
+UFL: lhs  B  B  B  B   C    C  C  C  C   C    C  C  C  C   C    C  C  C  C   C   rhs
+---:--------------------------------------------------------------------------------
+Min:     30 30 30 30  0.00 92 30 46 92  0.00 40 94 30 40  0.00 18 46 94 18  0.00    
+  1:  1   0  0  0  0  1.00  1  1  1  0  0.00  0  0  0  0  0.00  0  0  0  0  0.00   1
+  2:  1   0  0  0  0  0.00  0  0  0  1  1.00  1  1  0  0  0.00  0  0  0  0  0.00   1
+  3:  1   0  0  0  0  0.00  0  0  0  0  0.00  0  0  1  1  1.00  1  0  0  0  0.00   1
+  4:  1   0  0  0  0  0.00  0  0  0  0  0.00  0  0  0  0  0.00  0  1  1  1  1.00   1
+  5:  0   4  0  0  0 -1.00  0  0  0 -1  0.00  0  0 -1  0  0.00  0 -1  0  0  0.00 Inf
+  6:  0   0  4  0  0  0.00 -1  0  0  0 -1.00  0  0  0 -1  0.00  0  0 -1  0  0.00 Inf
+  7:  0   0  0  4  0  0.00  0 -1  0  0  0.00 -1  0  0  0 -1.00  0  0  0 -1  0.00 Inf
+  8:  0   0  0  0  4  0.00  0  0 -1  0  0.00  0 -1  0  0  0.00 -1  0  0  0 -1.00 Inf
+ lb:      0  0  0  0  0.00  0  0  0  0  0.00  0  0  0  0  0.00  0  0  0  0  0.00    
+ ub:      1  1  1  1  1.00  1  1  1  1  1.00  1  1  1  1  1.00  1  1  1  1  1.00    
+LP:                Optimal objective value is 30.000000.                                            
+
+Heuristics:        Found 1 solution using rounding.                                                 
+                   Upper bound is 120.000000.                                                       
+                   Relative gap is 9.92%.                                                          
+
+Cut Generation:    Applied 6 implication cuts.                                                      
+                   Lower bound is 108.000000.                                                       
+                   Relative gap is 0.00%.                                                          
+
+
+Optimal solution found.
+
+Intlinprog stopped at the root node because the objective value is within a gap
+tolerance of the optimal value, options.AbsoluteGapTolerance = 0 (the default
+value). The intcon variables are integer within tolerance,
+options.IntegerTolerance = 1e-05 (the default value).
+
+y =
+     1     2     4
+TC =
+  108.0000
+ 
+ :  1  2  3  4
+-:------------
+1:  1  0  0  0
+2:  0  1  0  0
+3:  0  0  0  0
+4:  0  0  1  1
+</pre>
+      <h2 id="5">Question 2</h2>
+      <h2 id="6">Read Data</h2>
+      <pre class="codeinput">fn = <span class="string">'HW5data.xlsx'</span>;
+inC = table2struct(readtable(fn,<span class="string">'Sheet'</span>,<span class="string">'Customers'</span>));
+inP = table2struct(readtable(fn,<span class="string">'Sheet'</span>,<span class="string">'Plants'</span>));
+</pre>
+      <h2 id="7">Geolocate</h2>
+      <pre class="codeinput">city2lonlat = @(city,st) <span class="keyword">...</span>
+   uscity(<span class="string">'XY'</span>,mand(city,uscity(<span class="string">'Name'</span>),st,uscity(<span
+class="string">'ST'</span>)));
+<span class="keyword">for</span> i = 1:length(inP)
+   XYP(i,:) = city2lonlat(inP(i).City,inP(i).State);
+<span class="keyword">end</span>
+XYC = uszip5(<span class="string">'XY'</span>,mand([inC.Zip],uszip5(<span class="string">'Code5'</span>)));
+</pre>
+      <h2 id="8">Calc (Plant + Customer) to Customer Transport Costs</h2>
+      <pre class="codeinput">length([inC.Zip]) == length(unique([inC.Zip]))  <span
+class="comment">% all customers in diff Zip</span>
+D = dists(XYP,XYC,<span class="string">'mi'</span>);                        <span
+class="comment">% =&gt; no area adj needed</span>
+f = [inC.Demand];
+F = sparse(argmin(D,1),1:length(inC),f);  <span class="comment">% allocate customers to plants</span>
+r = sum([inP.DistCost])/sum(sum(F.*D))    <span class="comment">% nominal network-wide $/ton-mi</span>
+D = dists([XYP; XYC],XYC,<span class="string">'mi'</span>);           <span class="comment">% can ignore circuity</span>
+C = r*(f(:)'.*D);
+</pre>
+      <pre class="codeoutput">ans =
+  logical
+   1
+r =
+    0.1812
+</pre>
+      <h2 id="9">Est Fixed Cost</h2>
+      <pre class="codeinput">x = sum(F,2);
+y = [inP.ProdCost]';
+yest = @(x,p) p(1) + p(2)*x;
+fh = @(p) sum((y - yest(x,p)).^2);
+ab = fminsearch(fh,[0 1])
+k = ab(1), c_prod = ab(2)
+plot(x,y,<span class="string">'r.'</span>)
+hold <span class="string">on</span>, fplot(@(x) yest(x,ab),[0 max(x)],<span class="string">'k-'</span>), hold <span
+class="string">off</span>
+</pre>
+      <pre class="codeoutput">ab =
+   1.0e+06 *
+    1.5473    0.0001
+k =
+   1.5473e+06
+c_prod =
+   54.2893
+</pre><img src="hw5solnF19_01.png" alt="" hspace="5" vspace="5">
+      <h2 id="10">Current TLC</h2>
+      <pre class="codeinput">yorig = 1:length(inP)
+nNForig = length(yorig)
+distCost_orig = sum([inP.DistCost])
+fixedCost_orig = k * length(inP)
+TLCorig = fixedCost_orig + distCost_orig
+</pre>
+      <pre class="codeoutput">yorig =
+     1     2     3     4     5     6     7     8     9    10    11    12
+nNForig =
+    12
+distCost_orig =
+    15474204
+fixedCost_orig =
+   1.8568e+07
+TLCorig =
+   3.4042e+07
+</pre>
+      <h2 id="11">New TLC</h2>
+      <pre class="codeinput">[ynew,TLCnew,X] = ufl(k,C); ynew, TLCnew
+nNFnew = length(ynew)
+</pre>
+      <pre class="codeoutput">  Add: 30364130.242262
+ Xchg: 30161453.077928
+  Add: 30161453.077928
+ Drop: 30161453.077928
+Final: 30161453.077928
+ynew =
+    11    41    93   108   130   132   190   236
+TLCnew =
+   3.0161e+07
+nNFnew =
+     8
+</pre>
+      <h2 id="12">Question 3</h2>
+      <h2 id="13">Create set covering model</h2>
+      <pre class="codeinput">clear <span class="string">all</span>, close <span
+class="string">all</span>
+s = nccity;   <span class="comment">% Includes cities &gt;= 10K pop.</span>
+d = uszip5(strcmp(<span class="string">'NC'</span>,uszip5(<span class="string">'ST'</span>)) &amp; uszip5(<span
+class="string">'Pop'</span>) &gt; 0);
+<span class="comment">% d = uscenblkgrp(strcmp('NC',uscenblkgrp('ST')) &amp; uscenblkgrp('Pop') &gt; 0);</span>
+D = dists(d.XY,s.XY,<span class="string">'mi'</span>);
+D = D + sqrt(d.LandArea/pi); <span class="comment">% Add center to edge distance of demand region</span>
+rmax = 50;
+c = ones(1,size(D,2));
+A = false(size(D));
+A(D &lt; rmax) = true;
+is0 = ~any(A,2);
+A(is0,:) = [];
+fprintf(<span class="string">'Total pop %d; pop not covered %d; pct covered %f%%\n'</span>,<span
+class="keyword">...</span>
+   sum(d.Pop),sum(d.Pop(is0)),<span class="keyword">...</span>
+   100*(sum(d.Pop) - sum(d.Pop(is0)))/sum(d.Pop))
+mp = Milp(<span class="string">'Set Cover'</span>);
+mp.addobj(<span class="string">'min'</span>,c)
+mp.addcstr(A,<span class="string">'&gt;='</span>,1)
+mp.addctype(<span class="string">'B'</span>)
+spy(A)
+</pre>
+      <pre class="codeoutput">Total pop 9535477; pop not covered 107104; pct covered 98.876784%
+</pre><img src="hw5solnF19_02.png" alt="" hspace="5" vspace="5">
+      <h2 id="14">Use INTLINPROG</h2>
+      <pre class="codeinput">ilp = mp.milp2ilp
+x = intlinprog(ilp{:});
+nNF = sum(x)
+</pre>
+      <pre class="codeoutput">ilp =
+  1×8 cell array
+  Columns 1 through 4
+    {84×1 double}    {1×84 double}    {778×84 double}    {778×1 double}
+  Columns 5 through 8
+    {0×84 double}    {0×1 double}    {84×1 double}    {84×1 double}
+LP:                Optimal objective value is 15.000000.                                            
+
+
+Optimal solution found.
+
+Intlinprog stopped at the root node because the objective value is within a gap
+tolerance of the optimal value, options.AbsoluteGapTolerance = 0 (the default
+value). The intcon variables are integer within tolerance,
+options.IntegerTolerance = 1e-05 (the default value).
+
+nNF =
+    15
+</pre>
+      <h2 id="15">Plot solution</h2>
+      <pre class="codeinput">idx = find(x);
+makemap(d.XY)
+pplot(d.XY(~is0,:),<span class="string">'r.'</span>)
+pplot(d.XY(is0,:),<span class="string">'c.'</span>)
+pplot(s.XY(idx,:),<span class="string">'go'</span>)
+pplot(s.XY(idx,:),s.Name(idx))
+</pre><img src="hw5solnF19_03.png" alt="" hspace="5" vspace="5">
+      <h2 id="16">Question 4</h2>
+      <h2 id="17">EXAMPLE 4: UFL with n,m = 104</h2>
+      <pre class="codeinput">clear <span class="string">all</span>
+x = uszip5(mor({<span class="string">'NC'</span>},uszip5(<span class="string">'ST'</span>)) &amp; uszip5(<span
+class="string">'Pop'</span>) &gt; 30000);
+P = x.XY;
+a = x.LandArea;
+dafh = @(XY1,a1,XY2,a2) max(1.2*dists(XY1,XY2,<span class="string">'mi'</span>),<span
+class="keyword">...</span>
+   0.675*max(sqrt(a1(:)),sqrt(a2(:)')));
+Da = dafh(P,a,P,a);  <span class="comment">% Area-adjusted distances</span>
+f = x.Pop';                 <span class="comment">% person</span>
+r = 1/10000;                <span class="comment">% $/person-mi</span>
+C = r*Da.*f;                <span class="comment">% $</span>
+k = 500;  <span class="comment">% repmat(500,1,size(C,1));</span>
+</pre>
+      <h2 id="18">Demand and Capacity</h2>
+      <p>Population for each EF already specified as 'f'</p>
+      <pre class="codeinput">K = 4e5  <span class="comment">% Maximum total population at NF</span>
+</pre>
+      <pre class="codeoutput">K =
+      400000
+</pre>
+      <h2 id="19">Create MILP model of CFL</h2>
+      <pre class="codeinput">clear <span class="string">mp</span>
+mp = Milp(<span class="string">'CFL'</span>)
+mp.Model;
+[n m] = size(C)
+kn = iff(isscalar(k),repmat(k,1,n),k(:)');  <span class="comment">% expand if k is constant value</span>
+mp.addobj(<span class="string">'min'</span>,kn,C)  <span class="comment">% min sum_i(ki*yi) + sum_i(sum_j(cij*xij))</span>
+<span class="keyword">for</span> j = 1:m
+   mp.addcstr(0,{<span class="string">':'</span>,j},<span class="string">'='</span>,1)   <span
+class="comment">% sum_i(xij) = 1</span>
+<span class="keyword">end</span>
+<span class="keyword">for</span> i = 1:n
+   mp.addcstr({K,{i}},<span class="string">'&gt;='</span>,{f,{i,<span class="string">':'</span>}})  <span
+class="comment">% m*yi &gt;= sum_j(xij)  (weak form.)</span>
+<span class="keyword">end</span>
+mp.addub(1,1)
+mp.addctype(<span class="string">'B'</span>,<span class="string">'C'</span>)         <span
+class="comment">% only k are integer (binary)</span>
+mp.Model
+</pre>
+      <pre class="codeoutput">mp = 
+  Milp with properties:
+
+    Model: [1×1 struct]
+n =
+   104
+m =
+   104
+ans = 
+  struct with fields:
+
+     name: 'CFL'
+    sense: 'minimize'
+      obj: [1×10920 double]
+       lb: [1×10920 double]
+       ub: [1×10920 double]
+    ctype: 'BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC…'
+        A: [208×10920 double]
+      lhs: [208×1 double]
+      rhs: [208×1 double]
+</pre>
+      <h2 id="20">Solve using Gurobi</h2>
+      <pre class="codeinput">clear <span class="string">model</span> <span class="string">params</span>
+model = mp.milp2gb;
+params.outputflag = 1;
+result = gurobi(model,params);
+x = result.x;
+x = mp.namesolution(x);
+</pre>
+      <pre class="codeoutput">Optimize a model with 208 rows, 10920 columns and 21736 nonzeros
+Variable types: 10816 continuous, 104 integer (104 binary)
+Coefficient statistics:
+  Matrix range     [1e+00, 4e+05]
+  Objective range  [7e+00, 2e+03]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 1e+00]
+Found heuristic solution: objective 80402.136568
+Presolve time: 0.03s
+Presolved: 208 rows, 10920 columns, 21736 nonzeros
+Variable types: 10816 continuous, 104 integer (104 binary)
+
+Root relaxation: objective 7.546385e+03, 214 iterations, 0.02 seconds
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+     0     0 7546.38534    0  101 80402.1366 7546.38534  90.6%     -    0s
+H    0     0                    52712.826590 7546.38534  85.7%     -    0s
+H    0     0                    47710.831214 7546.38534  84.2%     -    0s
+     0     0 9522.07380    0   73 47710.8312 9522.07380  80.0%     -    0s
+H    0     0                    40688.515046 9522.07380  76.6%     -    0s
+H    0     0                    25222.585854 9522.07380  62.2%     -    0s
+H    0     0                    24082.529036 9522.07380  60.5%     -    0s
+H    0     0                    16885.013229 9522.07380  43.6%     -    0s
+     0     0 10929.5576    0   64 16885.0132 10929.5576  35.3%     -    0s
+     0     0 10940.4299    0   64 16885.0132 10940.4299  35.2%     -    0s
+     0     0 10942.5319    0   64 16885.0132 10942.5319  35.2%     -    0s
+     0     0 11776.3457    0   64 16885.0132 11776.3457  30.3%     -    0s
+H    0     0                    16402.075053 11776.3457  28.2%     -    0s
+H    0     0                    15911.728301 11776.3457  26.0%     -    0s
+H    0     0                    15449.092068 11776.3457  23.8%     -    0s
+H    0     0                    15181.086659 11776.3457  22.4%     -    0s
+H    0     0                    14752.437273 11776.3457  20.2%     -    0s
+H    0     0                    14464.129873 11776.3457  18.6%     -    0s
+     0     0 11778.1252    0   64 14464.1299 11778.1252  18.6%     -    0s
+     0     0 12487.8524    0   51 14464.1299 12487.8524  13.7%     -    0s
+     0     0 12503.5819    0   52 14464.1299 12503.5819  13.6%     -    0s
+     0     0 12503.7465    0   51 14464.1299 12503.7465  13.6%     -    0s
+     0     0 12701.6016    0   42 14464.1299 12701.6016  12.2%     -    0s
+     0     0 12710.7485    0   43 14464.1299 12710.7485  12.1%     -    0s
+     0     0 12762.6128    0   32 14464.1299 12762.6128  11.8%     -    0s
+H    0     0                    13901.215637 12762.6128  8.19%     -    0s
+     0     0 12781.0687    0   29 13901.2156 12781.0687  8.06%     -    0s
+     0     0 12781.5891    0   26 13901.2156 12781.5891  8.05%     -    0s
+     0     0 12813.7562    0   38 13901.2156 12813.7562  7.82%     -    0s
+     0     0 12813.7562    0   38 13901.2156 12813.7562  7.82%     -    0s
+H    0     0                    13144.500745 12813.7562  2.52%     -    0s
+H    0     0                    13120.568293 12813.7562  2.34%     -    0s
+     0     2 12813.7562    0   38 13120.5683 12813.7562  2.34%     -    0s
+H   31    18                    12899.541723 12826.4235  0.57%  15.8    0s
+*  190    71              45    12880.443548 12838.0739  0.33%  13.4    1s
+
+Cutting planes:
+  Implied bound: 521
+
+Explored 482 nodes (8246 simplex iterations) in 1.45 seconds
+Thread count was 8 (of 8 available processors)
+
+Solution count 10: 12880.4 12899.5 13120.6 ... 15911.7
+
+Optimal solution found (tolerance 1.00e-04)
+Best objective 1.288044354803e+04, best bound 1.288044354803e+04, gap 0.0000%
+</pre>
+      <h2 id="21">CFL solution</h2>
+      <pre class="codeinput">TCcfl = result.objval
+idxNFcfl = find(round(x.kn))  <span class="comment">% Round in case y &gt; 0 &amp; y &lt; eps</span>
+nNFcfl = sum(x.kn)
+pop = round(sum(f.*x.C,2));
+mdisp(pop(idxNFcfl),idxNFcfl,[],<span class="string">'Site'</span>)
+</pre>
+      <pre class="codeoutput">TCcfl =
+   1.2880e+04
+idxNFcfl =
+     6    20    34    42    47    50    71    76    78    82    91   100
+nNFcfl =
+    12
+ 
+Site:     1   
+----:---------
+   6:  400,000
+  20:  400,000
+  34:  400,000
+  42:  362,695
+  47:  378,386
+  50:  256,657
+  71:  400,000
+  76:  400,000
+  78:  400,000
+  82:  337,098
+  91:  226,842
+ 100:  305,169
+</pre>
+      <h2 id="22">(Fractional xij)</h2>
+      <pre class="codeinput">xijfrac = nnz(x.C &gt; eps &amp; x.C &lt; 1-eps)
+xijint = nnz(x.C &gt; 1-eps)
+xijfrac + xijint
+m  <span class="comment">% No. EF</span>
+</pre>
+      <pre class="codeoutput">xijfrac =
+    12
+xijint =
+    97
+ans =
+   109
+m =
+   104
+</pre>
+      <h2 id="23">Compare CFL to UFL solution</h2>
+      <h2 id="24">Copy UFL solution from script results</h2>
+      <pre class="codeinput">TCufl = 1.2102e+04
+idxNFufl = [6    18    39    50    66    82    91   100]
+nNFufl = 8
+vdisp(<span class="string">'nNFcfl,nNFufl'</span>)
+100*TCcfl/TCufl
+</pre>
+      <pre class="codeoutput">TCufl =
+       12102
+idxNFufl =
+     6    18    39    50    66    82    91   100
+nNFufl =
+     8
+ 
+ :  nNFcfl  nNFufl
+-:----------------
+1:    12       8  
+ans =
+  106.4324
+</pre>
+      <p class="footer"><br>
+        <a href="https://www.mathworks.com/products/matlab/">Published with
+          MATLAB® R2019a</a></p>
+    </div>
+    <!--
+##### SOURCE BEGIN #####%% HW 5 Solution - ISE 754 Fall 2019
+%% Question 1
+%% Create Datak = 30;
+C = [0 92 30 46; 92  0 40 94; 30 40 0 18; 46 94 18 0];mdisp(C)
+%% (b) Solve using UFLADD heuristic[y,TC,X] = ufladd(k,C);
+y,TC,mdisp(X)%% (c) Formulate as MILP and solve
+clear mpmp = Milp('UFL')
+[n m] = size(C);kn = iff(isscalar(k),repmat(k,1,n),k(:)');
+mp.addobj('min',kn,C)for j = 1:m
+   mp.addcstr(0,{':',j},'=',1)end
+for i = 1:n   mp.addcstr({m,{i}},'>=',{i,':'})
+endmp.addub(1,1)
+mp.addctype('B','C')mp.dispmodel
+ilp = mp.milp2ilp;[x,TC,exitflag,output] = intlinprog(ilp{:});
+x = mp.namesolution(x);y = find(x.kn), TC, mdisp(x.C)
+%% Question 2
+%% Read Datafn = 'HW5data.xlsx';
+inC = table2struct(readtable(fn,'Sheet','Customers'));inP = table2struct(readtable(fn,'Sheet','Plants'));
+%% Geolocatecity2lonlat = @(city,st) ...
+   uscity('XY',mand(city,uscity('Name'),st,uscity('ST')));for i = 1:length(inP)
+   XYP(i,:) = city2lonlat(inP(i).City,inP(i).State);end
+XYC = uszip5('XY',mand([inC.Zip],uszip5('Code5')));%% Calc (Plant + Customer) to Customer Transport Costs
+length([inC.Zip]) == length(unique([inC.Zip]))  % all customers in diff ZipD = dists(XYP,XYC,'mi');                        % => no area adj needed
+f = [inC.Demand];F = sparse(argmin(D,1),1:length(inC),f);  % allocate customers to plants 
+r = sum([inP.DistCost])/sum(sum(F.*D))    % nominal network-wide $/ton-miD = dists([XYP; XYC],XYC,'mi');           % can ignore circuity
+C = r*(f(:)'.*D);%% Est Fixed Cost
+x = sum(F,2);y = [inP.ProdCost]';
+yest = @(x,p) p(1) + p(2)*x;fh = @(p) sum((y - yest(x,p)).^2);
+ab = fminsearch(fh,[0 1])k = ab(1), c_prod = ab(2)
+plot(x,y,'r.')hold on, fplot(@(x) yest(x,ab),[0 max(x)],'k-'), hold off
+%% Current TLCyorig = 1:length(inP)
+nNForig = length(yorig)distCost_orig = sum([inP.DistCost])
+fixedCost_orig = k * length(inP)TLCorig = fixedCost_orig + distCost_orig
+%% New TLC[ynew,TLCnew,X] = ufl(k,C); ynew, TLCnew
+nNFnew = length(ynew)
+%% Question 3%% Create set covering model
+clear all, close alls = nccity;   % Includes cities >= 10K pop.
+d = uszip5(strcmp('NC',uszip5('ST')) & uszip5('Pop') > 0);% d = uscenblkgrp(strcmp('NC',uscenblkgrp('ST')) & uscenblkgrp('Pop') > 0);
+D = dists(d.XY,s.XY,'mi');D = D + sqrt(d.LandArea/pi); % Add center to edge distance of demand region
+rmax = 50;c = ones(1,size(D,2));
+A = false(size(D));A(D < rmax) = true;
+is0 = ~any(A,2);A(is0,:) = [];
+fprintf('Total pop %d; pop not covered %d; pct covered %f%%\n',...   sum(d.Pop),sum(d.Pop(is0)),...
+   100*(sum(d.Pop) - sum(d.Pop(is0)))/sum(d.Pop))mp = Milp('Set Cover');
+mp.addobj('min',c)mp.addcstr(A,'>=',1)
+mp.addctype('B')spy(A)
+%% Use INTLINPROGilp = mp.milp2ilp
+x = intlinprog(ilp{:});nNF = sum(x)
+%% Plot solutionidx = find(x);
+makemap(d.XY)pplot(d.XY(~is0,:),'r.')
+pplot(d.XY(is0,:),'c.')pplot(s.XY(idx,:),'go')
+pplot(s.XY(idx,:),s.Name(idx))
+%% Question 4%% EXAMPLE 4: UFL with n,m = 104
+clear allx = uszip5(mor({'NC'},uszip5('ST')) & uszip5('Pop') > 30000);
+P = x.XY;a = x.LandArea;
+dafh = @(XY1,a1,XY2,a2) max(1.2*dists(XY1,XY2,'mi'),...   0.675*max(sqrt(a1(:)),sqrt(a2(:)')));
+Da = dafh(P,a,P,a);  % Area-adjusted distancesf = x.Pop';                 % person
+r = 1/10000;                % $/person-miC = r*Da.*f;                % $
+k = 500;  % repmat(500,1,size(C,1));%% Demand and Capacity
+% Population for each EF already specified as 'f'K = 4e5  % Maximum total population at NF
+%% Create MILP model of CFLclear mp
+mp = Milp('CFL')mp.Model;
+[n m] = size(C)kn = iff(isscalar(k),repmat(k,1,n),k(:)');  % expand if k is constant value
+mp.addobj('min',kn,C)  % min sum_i(ki*yi) + sum_i(sum_j(cij*xij))for j = 1:m
+   mp.addcstr(0,{':',j},'=',1)   % sum_i(xij) = 1end
+for i = 1:n   mp.addcstr({K,{i}},'>=',{f,{i,':'}})  % m*yi >= sum_j(xij)  (weak form.)
+endmp.addub(1,1)
+mp.addctype('B','C')         % only k are integer (binary)mp.Model
+%% Solve using Gurobiclear model params
+model = mp.milp2gb;params.outputflag = 1;
+result = gurobi(model,params);x = result.x;
+x = mp.namesolution(x);%% CFL solution
+TCcfl = result.objvalidxNFcfl = find(round(x.kn))  % Round in case y > 0 & y < eps
+nNFcfl = sum(x.kn)pop = round(sum(f.*x.C,2));
+mdisp(pop(idxNFcfl),idxNFcfl,[],'Site')%% (Fractional xij)
+xijfrac = nnz(x.C > eps & x.C < 1-eps)xijint = nnz(x.C > 1-eps)
+xijfrac + xijintm  % No. EF
+%% Compare CFL to UFL solution%%% Copy UFL solution from script results
+TCufl = 1.2102e+04idxNFufl = [6    18    39    50    66    82    91   100]
+nNFufl = 8vdisp('nNFcfl,nNFufl')
+100*TCcfl/TCufl
+##### SOURCE END #####-->
+  </body>
+</html>

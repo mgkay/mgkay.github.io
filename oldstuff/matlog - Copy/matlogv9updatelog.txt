@@ -1,0 +1,5 @@
+Matlog Update Log
+
+13-Jan-2006  Matlog version 9 installed
+24-Jan-2006  Modified file Contents.m
+24-Jan-2006  Modified file uszip3.m

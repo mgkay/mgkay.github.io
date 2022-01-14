@@ -1,0 +1,1182 @@
+dn: cn=Dr. Jose A. Ventura,mail=jav1@psu.edu
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: Jose
+sn: Ventura
+cn: Dr. Jose A. Ventura
+mail: jav1@psu.edu
+modifytimestamp: 0Z
+telephoneNumber: (814) 865-3841
+facsimileTelephoneNumber: (814) 863-4745
+postalAddress: Industrial & Manufacturing  Eng., 207 Hammond Building
+mozillaPostalAddress2: Penn State University
+l: University Park
+st: PA
+postalCode: 16802
+c: United States of America
+
+dn: cn=Cecil Bozarth,mail=BOZARTH@COMFS1.COM.NCSU.EDU
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: Cecil
+sn: Bozarth
+cn: Cecil Bozarth
+mail: BOZARTH@COMFS1.COM.NCSU.EDU
+modifytimestamp: 0Z
+
+dn: cn=Stephen D. Roberts,mail=roberts@eos.ncsu.edu
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: Stephen
+sn: Roberts
+cn: Stephen D. Roberts
+mail: roberts@eos.ncsu.edu
+modifytimestamp: 0Z
+
+dn: cn=Lauren Breitweiser Goodridge,mail=lbgoodri@unity.ncsu.edu
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: Lauren
+sn: Goodridge
+cn: Lauren Breitweiser Goodridge
+mail: lbgoodri@unity.ncsu.edu
+modifytimestamp: 0Z
+
+dn: cn=Henry L W Nuttle,mail=nuttle@eos.ncsu.edu
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: Henry
+sn: Nuttle
+cn: Henry L W Nuttle
+mail: nuttle@eos.ncsu.edu
+modifytimestamp: 0Z
+
+dn: cn=James R. Wilson,mail=jwilson@eos.ncsu.edu
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: James
+sn: Wilson
+cn: James R. Wilson
+mail: jwilson@eos.ncsu.edu
+modifytimestamp: 0Z
+
+dn: cn=Sunderesh S. Heragu,mail=herags@rpi.edu
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: Sunderesh
+sn: Heragu
+cn: Sunderesh S. Heragu
+mail: herags@rpi.edu
+modifytimestamp: 0Z
+
+dn: cn=Jason Colby Low,mail=jclow@unity.ncsu.edu
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: Jason
+sn: Low
+cn: Jason Colby Low
+mail: jclow@unity.ncsu.edu
+modifytimestamp: 0Z
+
+dn: cn=Mark White,mail=Mark_White@ncsu.edu
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: Mark
+sn: White
+cn: Mark White
+mail: Mark_White@ncsu.edu
+modifytimestamp: 0Z
+telephoneNumber: (919) 515-7349
+homePostalAddress: 819 Summerwinds Dr.
+mozillaHomeLocalityName: Cary
+mozillaHomeState: NC
+mozillaHomePostalCode: 27511
+mozillaHomeCountryName: United States of America
+postalAddress: 819 Summerwinds Dr.
+l: Cary
+st: NC
+postalCode: 27511
+c: United States of America
+
+dn: cn=Jeff Joines,mail=jeffjoines@ncsu.edu
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: Jeff
+sn: Joines
+cn: Jeff Joines
+mail: jeffjoines@ncsu.edu
+modifytimestamp: 0Z
+telephoneNumber: (919) 513-4188
+l: Room 3317
+st: Textiles
+c: United States of America
+
+dn: cn=Thom Hodgson,mail=hodgson@eos.ncsu.edu
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: Thom
+sn: Hodgson
+cn: Thom Hodgson
+mail: hodgson@eos.ncsu.edu
+modifytimestamp: 0Z
+
+dn: cn=Nancy Evans,mail=Nancy_Evans@root.imse.ncsu.edu
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: Nancy
+sn: Evans
+cn: Nancy Evans
+mail: Nancy_Evans@root.imse.ncsu.edu
+modifytimestamp: 0Z
+telephoneNumber: (919) 515-3808
+postalAddress: IMSEI
+mozillaPostalAddress2: Box 7915, 2332 Broughton
+l: NCSU
+st: Campus
+c: United States of America
+
+dn: cn=Richard Lindeke,mail=rlindek1@d.umn.edu
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: Richard
+sn: Lindeke
+cn: Richard Lindeke
+mail: rlindek1@d.umn.edu
+modifytimestamp: 0Z
+
+dn: cn=Russell Meller,mail=rmeller@vt.edu
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: Russell
+sn: Meller
+cn: Russell Meller
+mail: rmeller@vt.edu
+modifytimestamp: 0Z
+
+dn: cn=Clarence Smith,mail=csmith@eos.ncsu.edu
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: Clarence
+sn: Smith
+cn: Clarence Smith
+mail: csmith@eos.ncsu.edu
+modifytimestamp: 0Z
+
+dn: cn=Russ King,mail=king@eos.ncsu.edu
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: Russ
+sn: King
+cn: Russ King
+mail: king@eos.ncsu.edu
+modifytimestamp: 0Z
+telephoneNumber: (919) 515-5186
+
+dn: cn=Tom Culbreth,mail=culbreth@eos.ncsu.edu
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: Tom
+sn: Culbreth
+cn: Tom Culbreth
+mail: culbreth@eos.ncsu.edu
+modifytimestamp: 0Z
+telephoneNumber: (919) 515-3335
+
+dn: cn=Gary Mirka,mail=mirka@eos.ncsu.edu
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: Gary
+sn: Mirka
+cn: Gary Mirka
+mail: mirka@eos.ncsu.edu
+modifytimestamp: 0Z
+
+dn: cn=Denis Cormier,mail=cormier@eos.ncsu.edu
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: Denis
+sn: Cormier
+cn: Denis Cormier
+mail: cormier@eos.ncsu.edu
+modifytimestamp: 0Z
+
+dn: cn=Joe Davis,mail=joe_davis@ncsu.edu
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: Joe
+sn: Davis
+cn: Joe Davis
+mail: joe_davis@ncsu.edu
+modifytimestamp: 0Z
+
+dn: cn=Brett A. Peters,mail=bpeters@tamu.edu
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: Brett
+sn: Peters
+cn: Brett A. Peters
+mail: bpeters@tamu.edu
+modifytimestamp: 0Z
+
+dn: cn=College-Industry Council for Material Handling Education,mail=CICMHE-L@lists.psu.edu
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: College-Industry
+sn: Education
+cn: College-Industry Council for Material Handling Education
+mail: CICMHE-L@lists.psu.edu
+modifytimestamp: 0Z
+
+dn: cn=Dr. Yuan-Shin Lee,mail=yslee@eos.ncsu.edu
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: Yuan-Shin
+sn: Lee
+cn: Dr. Yuan-Shin Lee
+mail: yslee@eos.ncsu.edu
+modifytimestamp: 0Z
+
+dn: cn=Ezat T. Sanii,mail=sanii@eos.ncsu.edu
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: Ezat
+sn: Sanii
+cn: Ezat T. Sanii
+mail: sanii@eos.ncsu.edu
+modifytimestamp: 0Z
+
+dn: cn=Richard H Bernhard,mail=bernhar@eos.ncsu.edu
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: Richard
+sn: Bernhard
+cn: Richard H Bernhard
+mail: bernhar@eos.ncsu.edu
+modifytimestamp: 0Z
+
+dn: cn=K. H. Loken-Kim,mail=kyungho@flab.fujitsu.co.jp
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: K.
+sn: Loken-Kim
+cn: K. H. Loken-Kim
+mail: kyungho@flab.fujitsu.co.jp
+modifytimestamp: 0Z
+telephoneNumber: +81 (78) 934-8250
+facsimileTelephoneNumber: +81 (78) 934-3312
+postalAddress: Personal Systems Laboratories, Fujitsu Laboratories Ltd.
+mozillaPostalAddress2: 64, Nishiwaki, Ohkubo-cho
+l: Akashi 674
+c: Japan
+title: Senior Researcher
+
+dn: cn=Ren C. Luo,mail=luo@ia.ee.ccu.edu.tw
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: Ren
+sn: Luo
+cn: Ren C. Luo
+mail: luo@ia.ee.ccu.edu.tw
+modifytimestamp: 0Z
+telephoneNumber: +886 (5) 272-0980
+facsimileTelephoneNumber: +886 (5) 272-0729
+postalAddress: College of Engineering, National Chung Cheng University
+mozillaPostalAddress2: 160, San Hsing, Min-Hsiung
+l: Chia-Yi
+c: Taiwan
+
+dn: cn=Ken Currie,mail=kcurrie@tntech.edu
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: Ken
+sn: Currie
+cn: Ken Currie
+mail: kcurrie@tntech.edu
+modifytimestamp: 0Z
+telephoneNumber: (931) 372-3847
+o: Tenn. Tech.
+
+dn: cn=Tim Gurganus,mail=tsgurgan@eos.ncsu.edu
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: Tim
+sn: Gurganus
+cn: Tim Gurganus
+mail: tsgurgan@eos.ncsu.edu
+modifytimestamp: 0Z
+
+dn: cn=Steven Klein,mail=Steven_Klein@smtp-lrs.osc.state.ny.us
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: Steven
+sn: Klein
+cn: Steven Klein
+mail: Steven_Klein@smtp-lrs.osc.state.ny.us
+mozillaSecondEmail: SKlein@osc.state.ny.us
+modifytimestamp: 0Z
+
+dn: cn=Salah E Elmaghraby,mail=elmaghra@eos.ncsu.edu
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: Salah
+sn: Elmaghraby
+cn: Salah E Elmaghraby
+mail: elmaghra@eos.ncsu.edu
+modifytimestamp: 0Z
+
+dn: cn=Steven G. Goodridge,mail=sggoodri@mindspring.com
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: Steven
+sn: Goodridge
+cn: Steven G. Goodridge
+mail: sggoodri@mindspring.com
+mozillaSecondEmail: sgg@mclean.sparta.com
+modifytimestamp: 0Z
+
+dn: cn=Mike Ogle,mail=MOgle@mhia.org
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: Mike
+sn: Ogle
+cn: Mike Ogle
+mail: MOgle@mhia.org
+modifytimestamp: 0Z
+
+dn: cn=Jaime Trevino,mail=Jaime.Trevino@ustra101.mail.abb.com
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: Jaime
+sn: Trevino
+cn: Jaime Trevino
+mail: Jaime.Trevino@ustra101.mail.abb.com
+modifytimestamp: 0Z
+telephoneNumber: (919) 856-3851
+
+dn: cn=Dick Ward,mail=dward@mhia.org
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: Dick
+sn: Ward
+cn: Dick Ward
+mail: dward@mhia.org
+mozillaSecondEmail: rward@carolina.rr.com
+modifytimestamp: 0Z
+
+dn: cn=John S. Usher,mail=usher@LOUISVILLE.EDU
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: John
+sn: Usher
+cn: John S. Usher
+mail: usher@LOUISVILLE.EDU
+modifytimestamp: 0Z
+
+dn: cn=Nancy E. Joyner-Kay,mail=joynerkay@yahoo.com
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: Nancy
+sn: Joyner-Kay
+cn: Nancy E. Joyner-Kay
+mail: joynerkay@yahoo.com
+modifytimestamp: 0Z
+
+dn: cn=Douglas L Ramers,mail=dlramers@uncc.edu
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: Douglas
+sn: Ramers
+cn: Douglas L Ramers
+mail: dlramers@uncc.edu
+mozillaSecondEmail: dlramers@earthlink.net
+modifytimestamp: 0Z
+telephoneNumber: (704) 547-4191
+homePhone: (704) 454-7368
+
+dn: cn=Duane Tyler,mail=dtyler@PACCAR.com
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: Duane
+sn: Tyler
+cn: Duane Tyler
+mail: dtyler@PACCAR.com
+modifytimestamp: 0Z
+
+dn: cn=Michael G. Kay,mail=kay@ncsu.edu
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: Michael
+sn: Kay
+cn: Michael G. Kay
+mail: kay@ncsu.edu
+mozillaSecondEmail: kay@eos.ncsu.edu
+modifytimestamp: 0Z
+
+dn: cn=Kenneth B Beitler,mail=Kenneth.Beitler@axa-financial.com
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: Kenneth
+sn: Beitler
+cn: Kenneth B Beitler
+mail: Kenneth.Beitler@axa-financial.com
+mozillaSecondEmail: kenb23@idt.net
+modifytimestamp: 0Z
+
+dn: cn=Xiuli Chao,mail=xchao@unity.ncsu.edu
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: Xiuli
+sn: Chao
+cn: Xiuli Chao
+mail: xchao@unity.ncsu.edu
+modifytimestamp: 0Z
+
+dn: cn=M. K. Ramasubramanian,mail=rammk@eos.ncsu.edu
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: M.
+sn: Ramasubramanian
+cn: M. K. Ramasubramanian
+mail: rammk@eos.ncsu.edu
+modifytimestamp: 0Z
+mobile: (919) 244-3663
+postalAddress: MAE
+l: Ofice: 2229
+st: BR
+c: United States of America
+
+dn: cn=Fen Wu,mail=Fwu@eos.ncsu.edu
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: Fen
+sn: Wu
+cn: Fen Wu
+mail: Fwu@eos.ncsu.edu
+modifytimestamp: 0Z
+telephoneNumber: (919) 515-5268
+l: MAE
+c: United States of America
+
+dn: cn=IE754-001,mail=IE754-001@wolfware.ncsu.edu
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: IE754-001
+cn: IE754-001
+mail: IE754-001@wolfware.ncsu.edu
+modifytimestamp: 0Z
+
+dn: cn=IE453-001,mail=IE453-001@wolfware.ncsu.edu
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: IE453-001
+cn: IE453-001
+mail: IE453-001@wolfware.ncsu.edu
+modifytimestamp: 0Z
+
+dn: cn=Don Taylor,mail=don.taylor@louisville.edu
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: Don
+sn: Taylor
+cn: Don Taylor
+mail: don.taylor@louisville.edu
+modifytimestamp: 0Z
+
+dn: cn=Billy Beaudoin,mail=wrbeaudo@unity.ncsu.edu
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: Billy
+sn: Beaudoin
+cn: Billy Beaudoin
+mail: wrbeaudo@unity.ncsu.edu
+modifytimestamp: 0Z
+
+dn: cn=Wade Howell,mail=howell@eos.ncsu.edu
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: Wade
+sn: Howell
+cn: Wade Howell
+mail: howell@eos.ncsu.edu
+modifytimestamp: 0Z
+
+dn: cn=Melissa Carroll,mail=melissa@longistics.com
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: Melissa
+sn: Carroll
+cn: Melissa Carroll
+mail: melissa@longistics.com
+modifytimestamp: 0Z
+
+dn: cn=Kathy Mayberry,mail=kathy_mayberry@ncsu.edu
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: Kathy
+sn: Mayberry
+cn: Kathy Mayberry
+mail: kathy_mayberry@ncsu.edu
+modifytimestamp: 0Z
+
+dn: cn=Duncan McFarlane,mail=dcm@eng.cam.ac.uk
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: Duncan
+sn: McFarlane
+cn: Duncan McFarlane
+mail: dcm@eng.cam.ac.uk
+modifytimestamp: 0Z
+
+dn: cn=David Sinreich,mail=sinreich@ie.technion.ac.il
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: David
+sn: Sinreich
+cn: David Sinreich
+mail: sinreich@ie.technion.ac.il
+modifytimestamp: 0Z
+
+dn: cn=George Joyner,mail=gjoyner1@tampabay.rr.com
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: George
+sn: Joyner
+cn: George Joyner
+mail: gjoyner1@tampabay.rr.com
+modifytimestamp: 0Z
+
+dn: cn=Ann Joyner,mail=annmariejoyner@yahoo.com
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: Ann
+sn: Joyner
+cn: Ann Joyner
+mail: annmariejoyner@yahoo.com
+modifytimestamp: 0Z
+
+dn: cn=Ashish Jain,mail=ash_jai@lycos.com
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: Ashish
+sn: Jain
+cn: Ashish Jain
+mail: ash_jai@lycos.com
+modifytimestamp: 0Z
+
+dn: cn=Ajith Kumar Parlikad,mail=aknp2@cam.ac.uk
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: Ajith
+sn: Parlikad
+cn: Ajith Kumar Parlikad
+mail: aknp2@cam.ac.uk
+modifytimestamp: 0Z
+
+dn: cn=Joyner, Tom,mail=Tom.Joyner@smith-nephew.com
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: Tom
+sn: Joyner
+cn: Joyner, Tom
+mail: Tom.Joyner@smith-nephew.com
+modifytimestamp: 0Z
+
+dn: cn=IE818A-001,mail=ie818a-001@wolfware.ncsu.edu
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: IE818A-001
+cn: IE818A-001
+mail: ie818a-001@wolfware.ncsu.edu
+modifytimestamp: 0Z
+
+dn: cn=Horst J. Roos,mail=roos@ift.uni-stuttgart.de
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: Horst
+sn: Roos
+cn: Horst J. Roos
+mail: roos@ift.uni-stuttgart.de
+modifytimestamp: 0Z
+postalAddress: Horst J. Roos, Professor and Deputy Director of the, Institute of Mechanical Handling and Logistics, Head of Dept. "Logistics & Storage Technology", University of Stuttgart, Holzgartenstrasse 15, D - 70174 STUTTGART
+mozillaPostalAddress2: Tel.:  * 49 711 121 3792
+l: Fax :  * 49 711
+st: 121
+c: Germany
+workurl: http://www.uni-stuttgart.de/ift/lager.htm
+
+dn: cn=Ravindra K. Ahuja,mail=ahuja@ufl.edu
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: Ravindra
+sn: Ahuja
+cn: Ravindra K. Ahuja
+mail: ahuja@ufl.edu
+modifytimestamp: 0Z
+
+dn: cn=Rob Handfield,mail=handfieldr@comfs1.com.ncsu.edu
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: Rob
+sn: Handfield
+cn: Rob Handfield
+mail: handfieldr@comfs1.com.ncsu.edu
+modifytimestamp: 0Z
+
+dn: cn=Bill Scott,mail=scott@eos.ncsu.edu
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: Bill
+sn: Scott
+cn: Bill Scott
+mail: scott@eos.ncsu.edu
+modifytimestamp: 0Z
+
+dn: cn=Jeffrey Godwin,mail=jgodwin4@nc.rr.com
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: Jeffrey
+sn: Godwin
+cn: Jeffrey Godwin
+mail: jgodwin4@nc.rr.com
+modifytimestamp: 0Z
+
+dn: cn=John Joyner,mail=quantum27407@yahoo.com
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: John
+sn: Joyner
+cn: John Joyner
+mail: quantum27407@yahoo.com
+modifytimestamp: 0Z
+
+dn: cn=Gary Palin,mail=gdpalin@ncsu.edu
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: Gary
+sn: Palin
+cn: Gary Palin
+mail: gdpalin@ncsu.edu
+modifytimestamp: 0Z
+
+dn: cn=Ho, Chin-Ling,mail=cho2@ncsu.edu
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: Chin-Ling
+sn: Ho
+cn: Ho, Chin-Ling
+mail: cho2@ncsu.edu
+modifytimestamp: 0Z
+l: PLN
+st: student
+c: United States of America
+
+dn: cn=Gene Cheek,mail=gene3251@buncombe.main.nc.us
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: Gene
+sn: Cheek
+cn: Gene Cheek
+mail: gene3251@buncombe.main.nc.us
+modifytimestamp: 0Z
+
+dn: cn=Barbara Walls,mail=bwalls@ncsu.edu
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: Barbara
+sn: Walls
+cn: Barbara Walls
+mail: bwalls@ncsu.edu
+mozilla_AimScreenName: OR
+modifytimestamp: 0Z
+telephoneNumber: 5-2350
+
+dn: cn=Debbie Allgood,mail=debbie_allgood@ncsu.edu
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+cn: Debbie Allgood
+mail: debbie_allgood@ncsu.edu
+modifytimestamp: 0Z
+
+dn: cn=Donghwan Seo,mail=dseo@ncsu.edu
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+cn: Donghwan Seo
+mail: dseo@ncsu.edu
+mozilla_AimScreenName: PLN
+modifytimestamp: 0Z
+
+dn: cn=Robert Handfield,mail=robert_handfield@ncsu.edu
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: Robert
+sn: Handfield
+cn: Robert Handfield
+mail: robert_handfield@ncsu.edu
+modifytimestamp: 0Z
+
+dn: cn=Amy Parent,mail=teach4fun1y@hotmail.co
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: Amy
+sn: Parent
+cn: Amy Parent
+mail: teach4fun1y@hotmail.co
+modifytimestamp: 0Z
+
+dn: cn=Jose A. Ventura,mail=JAVIE@engr.psu.edu
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: Jose A.
+sn: Ventura
+cn: Jose A. Ventura
+mail: JAVIE@engr.psu.edu
+modifytimestamp: 0Z
+
+dn: cn=Aaron Peeler,mail=fapeeler@engr.ncsu.edu
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: Aaron
+sn: Peeler
+cn: Aaron Peeler
+mail: fapeeler@engr.ncsu.edu
+modifytimestamp: 0Z
+
+dn: cn=Jason Young,mail=jason.young@ncsu.edu
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: Jason
+sn: Young
+cn: Jason Young
+mail: jason.young@ncsu.edu
+modifytimestamp: 0Z
+
+dn: mail=fapeeler@ncsu.edu
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+mail: fapeeler@ncsu.edu
+modifytimestamp: 0Z
+
+dn: cn=Sandy Mitofsky,mail=smitofs@gw.fis.ncsu.edu
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: Sandy
+sn: Mitofsky
+cn: Sandy Mitofsky
+mail: smitofs@gw.fis.ncsu.edu
+modifytimestamp: 0Z
+
+dn: cn=avi dey,mail=tein@starpower.net
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: avi
+sn: dey
+cn: avi dey
+mail: tein@starpower.net
+modifytimestamp: 0Z
+
+dn: mail=KMccorm241@aol.com
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+mail: KMccorm241@aol.com
+mozilla_AimScreenName: KMccorm241
+modifytimestamp: 0Z
+
+dn: cn=Robbie Little,mail=robbie_little@ncsu.edu
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: Robbie
+sn: Little
+cn: Robbie Little
+mail: robbie_little@ncsu.edu
+modifytimestamp: 0Z
+
+dn: cn=Ya-Lan Chang,mail=ychang3@ncsu.edu
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: Ya-Lan
+sn: Chang
+cn: Ya-Lan Chang
+mail: ychang3@ncsu.edu
+modifytimestamp: 0Z
+
+dn: mail=Jennifer_Blackhurst@ncsu.edu
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+mail: Jennifer_Blackhurst@ncsu.edu
+modifytimestamp: 0Z
+
+dn: cn=Robert E. Young,mail=young@ncsu.edu
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: Robert E.
+sn: Young
+cn: Robert E. Young
+mail: young@ncsu.edu
+modifytimestamp: 0Z
+
+dn: cn=Tyler, Duane D,mail=Duane.Tyler@Nav-International.com
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: Tyler, Duane
+sn: D
+cn: Tyler, Duane D
+mail: Duane.Tyler@Nav-International.com
+modifytimestamp: 0Z
+
+dn: cn=Jonathan Hughes,mail=jtlh2@eng.cam.ac.uk
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: Jonathan
+sn: Hughes
+cn: Jonathan Hughes
+mail: jtlh2@eng.cam.ac.uk
+modifytimestamp: 0Z
+
+dn: mail=Ashish.Jain@pmusa.com
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+mail: Ashish.Jain@pmusa.com
+modifytimestamp: 0Z
+
+dn: cn=Orion Pozo,mail=Orion_Pozo@ncsu.edu
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: Orion
+sn: Pozo
+cn: Orion Pozo
+mail: Orion_Pozo@ncsu.edu
+modifytimestamp: 0Z
+
+dn: cn=Lisa Nobles,mail=lgnobles@ncsu.edu
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: Lisa
+sn: Nobles
+cn: Lisa Nobles
+mail: lgnobles@ncsu.edu
+modifytimestamp: 0Z
+
+dn: cn=Michael Bucci,mail=mbucci@nc.rr.com
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: Michael
+sn: Bucci
+cn: Michael Bucci
+mail: mbucci@nc.rr.com
+modifytimestamp: 0Z
+
+dn: cn=Tina Chen,mail=tychen@ncsu.edu
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: Tina
+sn: Chen
+cn: Tina Chen
+mail: tychen@ncsu.edu
+modifytimestamp: 0Z
+
+dn: cn=Cecilia Chen,mail=cchen2@ncsu.edu
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: Cecilia
+sn: Chen
+cn: Cecilia Chen
+mail: cchen2@ncsu.edu
+modifytimestamp: 0Z
+
+dn: mail=geunes@ise.ufl.edu
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+mail: geunes@ise.ufl.edu
+modifytimestamp: 0Z
+
+dn: cn=Georgia-Ann Klutke,mail=klutke@tamu.edu
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+objectclass: mozillaAbPersonObsolete
+givenName: Georgia-Ann
+sn: Klutke
+cn: Georgia-Ann Klutke
+mail: klutke@tamu.edu
+modifytimestamp: 0Z
+

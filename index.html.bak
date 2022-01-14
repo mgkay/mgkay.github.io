@@ -1,81 +1,10 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <meta http-equiv="content-type" content="text/html; charset=utf-8">
-    <title>OR 501: Introduction to Operations Research</title>
-    <meta name="author" content="Michael G. Kay">
-    <meta name="description" content="Spring 2021">
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <title>Michael G Kay</title>
   </head>
-  <body>
-    <h2>OR/ISE 501: Introduction to Operations Research</h2>
-    <h3>Introduction</h3>
-    <ul>
-      <li><a href="1-Intro/1-Intro-1.html">1: Course Overview, Modeling, and
-          Installing Julia</a> </li>
-      <li><a href="1-Intro/1-Intro-2.html">2: Basic Concepts in Julia</a> </li>
-      <li><a href="1-Intro/1-Intro-3.html">3: Monte Carlo Methods</a></li>
-      <li><a href="1-Intro/HW1-Julia.html">HW 1: Julia<br>
-        </a></li>
-    </ul>
-    <h3>Nonlinear Optimization</h3>
-    <ul>
-      <li><a href="2-NL_Opt/2-NL_Opt-1.html">1: Univariate Optimization</a> </li>
-      <li><a href="2-NL_Opt/2-NL_Opt-2.html">2: </a><a href="2-NL_Opt/2-NL_Opt-3.html">Multivariate
-          Optimization</a> </li>
-      <li><a href="2-NL_Opt/2-NL_Opt-3.html">3: </a><a href="2-NL_Opt/2-NL_Opt-2.html">Operations
-          Analysi</a><a href="2-NL_Opt/2-NL_Opt-3.html">s</a> </li>
-      <li><a href="2-NL_Opt/HW2-NL_Opt.html">HW 2: Nonlinear Optimization</a> </li>
-    </ul>
-    <h3>Linear Programming</h3>
-    <ul>
-      <li><a href="3_LP/3-LP-1.html">1: Constrained Optimization</a> </li>
-      <li><a href="3_LP/3-LP-2.html">2: Modeling and Sensitivity Analysis</a> </li>
-      <li><a href="3_LP/3-LP-3.html">3: Larger-Scale LP Models</a> </li>
-      <li><a href="3_LP/HW3-LP.html">HW 3: LP</a> </li>
-    </ul>
-    <h3>Network Models</h3>
-    <ul>
-      <li><a href="4_Net_Mod/4-Net_Mod-1.html">1: Linear Assignment and
-          Transportation Problems </a></li>
-      <li><a href="4_Net_Mod/4-Net_Mod-2.html">2: Shortest Paths and CPM </a></li>
-      <li><a href="4_Net_Mod/4-Net_Mod-3.html">3: Minimum Cost Network Flows </a></li>
-      <li><a href="4_Net_Mod/HW4-Net_Mod.html">HW 4: Network Modeling </a> </li>
-    </ul>
-    <h3>Mixed-Integer Programming</h3>
-    <ul>
-      <li><a href="5-MIP/5-MIP-1.html">1: Solvers and Branch-and-Bound</a> </li>
-      <li><a href="5-MIP/5-MIP-2.html">2: Modeling Constructs for Internal
-          Decisions</a> </li>
-      <li><a href="5-MIP/5-MIP-3.html">3: Set Covering, Bin Packing, and Graph
-          Coloring Problems</a> </li>
-      <li><a href="5-MIP/5-MIP-4.html">4: </a><a href="5-MIP/5-MIP-4.html">Production-Inventory
-          Planning</a> </li>
-      <li><a href="5-MIP/HW5-MIP.html">HW 5: Mixed-Integer Programming</a> </li>
-    </ul>
-    <h3>Combinatorial Optimization</h3>
-    <ul>
-      <li><a href="6-Comb_Opt/6-Comb_Opt-1.html">1: Brute-Force Optimization</a></li>
-      <li><a href="6-Comb_Opt/6-Comb_Opt-2.html">2: </a><a href="6-Comb_Opt/6-Comb_Opt-3.html">Construction
-          and Improvement Heuristics</a></li>
-      <li><a href="6-Comb_Opt/6-Comb_Opt-3.html">3: Scheduling Problems <br>
-        </a></li>
-      <li><a href="6-Comb_Opt/HW6-Comb_Opt.html">HW 6: Combinatorial
-          Optimization</a></li>
-    </ul>
-    <h3>Machine Learning</h3>
-    <ul>
-      <li><a href="7-ML/7-ML-1.html">1: Data Wrangling</a> </li>
-      <li><a href="7-ML/7-ML-2.html">2: Regression</a>&nbsp; </li>
-      <li><a href="7-ML/7-ML-3.html">3: Classification - Decision Trees</a> </li>
-      <li><a href="7-ML/HW7-ML.html">HW 7: Machine Learning</a></li>
-    </ul>
-    <p><a href="Study%20Guide%20for%20the%20Final%20Exam-F21.pdf">Study Guide
-        for the Final Exam</a> (<a href="OR501F21-Review.pdf">soln</a>)</p>
-    <h3> </h3>
-    <h3> </h3>
-    <p><a href="https://www.ise.ncsu.edu/people/kay/">Michael G. Kay</a>, NC
-      State University, Fall 2021 </p>
-    <p><br>
-    </p>
+  <body> Link to Michael G. Kay's homepage: <a href="http://go.ncsu.edu/kay">http://go.ncsu.edu/kay</a>
+    <br>
   </body>
 </html>

@@ -1,0 +1,673 @@
+<!--This file created 4:28 PM  8/9/97 by Claris Home Page version 2.0-->
+<HTML>
+<HEAD>
+   <TITLE>Sound Localization</TITLE>
+   <META NAME=GENERATOR CONTENT="Claris Home Page 2.0">
+   <X-SAS-WINDOW TOP=79 BOTTOM=459 LEFT=12 RIGHT=643>
+</HEAD>
+<BODY BGCOLOR="#FFFFFF">
+
+<H2>3 Sound Localization</H2>
+
+<P>Rather than detecting what has been spoken, the work in this
+dissertation concerns the detection of where the sound originated
+from. The use of multiple, spatially distributed microphones allows
+the localization of sound sources by detecting differences between
+the signals received at each microphone. Before discussing
+computational techniques for localizing sound, it is appropriate to
+study how the highly effective spatial hearing systems in the animal
+kingdom work. Sound localization in humans and animals provides an
+existence proof of the capabilities of binaural systems, and research
+on the subject offers insight into which principles may be useful to
+incorporate in a machine implementation.</P>
+
+<P>&nbsp;</P>
+
+<H3>3.1 Spatial Hearing in Humans and Animals</H3>
+
+<P>Spatial hearing experiments conducted on humans have been used by
+researchers working in areas spanning medicine, neurobiology, and
+psychology. Overviews of perception experiments and resulting
+theories of human sound localization are presented by Blauert [94]
+and Yost and Dye [95]. The fundamental principles behind sound
+localization behavior research involve the relationship between the
+physics of a sound arriving at the eardrum and the geometry of the
+head. The shape of the head, the spacing between the ears, and the
+structure of the pinna create a spectral transformation of incoming
+sounds that depends on the direction of origin.</P>
+
+<P>&nbsp;</P>
+
+<H4>3.1.1 Interaural Intensity Difference and Interaural Time
+Difference</H4>
+
+<P>The most basic principles used to localize the azimuth of a sound
+source in the horizontal plane involve the inter-aural intensity
+difference (IID) and the inter-aural time differences (ITD) between
+the signals received at each ear. The IID is caused mostly by the
+shading effect of the head, while the ITD is caused by the difference
+in distance the sound must travel to reach each ear. Researchers
+conducting sound localization experiments often generate tones of
+varying intensity and phase in each ear to test a subject's
+perception of equivalent sound localization. With no time delay
+between the ears, differences in intensity typically cause the
+sensation of the sound being located inside the head, but closer to
+one ear or the other. Time delay, when added, provides a stronger
+directional cue, and the sound is perceived to be external to the
+body at some angle. Tones at low frequencies (less than 2 kHz) have
+wavelengths longer than the distance between the ears, and are
+relatively easy to localize. Pure tones at higher frequencies,
+however, present ambiguity in the determination of correct time
+delay, which may be a greater than the signal period, and are much
+harder to localize. Fortunately, pure tones are fairly uncommon in
+nature, and high-frequency noises are usually complex and random
+enough to allow unambiguous interaural delay estimation.</P>
+
+<P>&nbsp;</P>
+
+<H4>3.1.2 Head-Related Transfer Function</H4>
+
+<P>Estimation of elevation and distinction between sounds originating
+in front of and behind the listener requires more sophisticated
+processing than IID and ITD. The shape of the pinna and head effect
+received sounds in a manner dependent on arrival angle and frequency.
+A model of this process is referred to in the literature as the Head
+Related Transfer Function (HRTF) and is frequently used in virtual
+reality and other headphone applications where generated sounds are
+artificially processed to provide realistic spatial sensations to the
+inner ears [96]. The theory behind this model is that the brain
+analyzes the received sound and determines, from the qualities of the
+signal and learned understanding of the body's HRTF, what direction
+the sound must have come from.</P>
+
+<P>&nbsp;</P>
+
+<H4>3.1.3 Precedence Effect</H4>
+
+<P>Echoes and reverberation caused by the environment pose difficulty
+for sound localization. Often the combined effects of multiple
+reflective sound paths can be as loud as or even louder than the
+sound traveling a direct path from the source. In humans, however,
+direct-path sounds that arrive before their corresponding echoes are
+weighted more heavily in the localization process, a phenomenon
+termed the "Precedence Effect," "Haas Effect," or "Law of the First
+Wavefront" [97].</P>
+
+<P>&nbsp;</P>
+
+<H4>3.1.4 Sound Localization in the Barn Owl</H4>
+
+<P>As a nocturnal hunter, the barn owl has a highly developed sense
+of hearing and sound localization. It has been studied extensively by
+neurobiologists to determine the mechanisms by which sound is
+processed in its brain. Knudsen and Konishi [4] describe experiments
+where the accuracy of the owl's sound localization capabilities was
+tested under a variey of conditions. The owl in the experiment used
+both interaural spectrum and interaural onset time for localization
+in azimuth, with better accuracy resulting when onsets were available
+as compared to continuous sounds. Localization accuracy in elevation
+was found to depend heavily on ear shape and feather placement to
+filter the sound, as opposed to timing information. Carr [98]
+describes how the detection of interaural time differences is
+performed by the meeting of nerve signals from each ear at the
+nucleus laminarus. Nerve axons carrying signals that originated in
+each ear enter the nucleus laminarus from opposite sides. Since the
+distance that an action potential travels is a function of time, the
+position in the nucleus laminarus at which action potentials from
+opposing sides meet is a function of interaural sound delay. This
+interaural delay corresponds to localization in azimuth. Postsynaptic
+coincidence detecting neurons are thought to detect the meeting of
+action potentials in order to form a map of auditory space, and relay
+this information to other parts of the brain.</P>
+
+<P>Knudsen, du Lac, and Esterly [3] and Knudsen and Brainard [2]
+describe how the processes of the nucleus laminarus and other
+structures create computational maps of space, and how these spatial
+representations converge with one another at the optic tectum. There,
+visual and acoustic maps combine to create an integrated perception
+of the world, and computation of motor signals for appropriate
+interception movement originates. Thus the function of sound
+localization in the brain appears not to merely choose the direction
+of the loudest sound, but to create a map of sound sensations in
+space which may be related to other sensing modalities. This idea
+affected the choice of sound localization and sensor fusion
+techniques used for this dissertation project, as will be described
+later.&nbsp;</P>
+
+<P>&nbsp;</P>
+
+<H3>3.2 Techniques for Calculation of Inter-Aural Time Delay</H3>
+
+<P>Interaural intensity differences play a significant role in sound
+localization in animals due to filtering effects of the head and
+outer ears, especially for determining elevation. However, for two
+microphones mounted near one another in open air, these effects are
+minimal, and are ignored here. This dissertation project involves
+localization in azimuth only, based entirely on interaural time
+difference. Two assumptions are necessary for this to work properly:
+(1) The speaker is always assumed to be on the "front" side of the
+microphone pair, limiting the localization to a range of 180 degrees;
+and (2) the speaker's location is assumed to exist approximately
+within a plane parallel with the floor and level with the
+microphones. This approximation is forgiving enough to allow for
+differences in height and for both standing and sitting positions,
+but does not allow the speaker to hover over or duck below the array.
+Also implicit in this configuration is the assumption that two
+speakers will not be positioned one above the other when viewed from
+the microphone array's perspective. By adding more microphones, these
+restrictions may be removed for greater dimensionality (and
+reliability) in sound localization, but for this dissertation only
+the stereo case is explored since most computers have only two sound
+inputs.</P>
+
+<P><B><A HREF="fig5.jpg">Figure 5: Sound Localization
+Geometry</A></B></P>
+
+<P>Figure 5 shows the geometry used for calculating sound direction
+based on interaural delay. Calculation of the ITD between two
+microphones specifies a hyperbolic locus of points upon which the
+corresponding sound source may reside. For target distances (DL and
+DR) much greater than the microphone spacing DM, the target bearing
+angle may be approximated as</P>
+
+<P><IMG SRC="eq3_1.jpg" WIDTH=137 HEIGHT=59 X-SAS-UseImageWidth
+X-SAS-UseImageHeight ALIGN=bottom></P>
+
+<P>Rewriting the difference in target distance in terms of the
+interaural time delay, one obtains</P>
+
+<P><IMG SRC="eq3_2.jpg" WIDTH=145 HEIGHT=66 X-SAS-UseImageWidth
+X-SAS-UseImageHeight ALIGN=bottom>(1)</P>
+
+<P>where Vsound for a comfortable indoor environment is approximately
+344 m/s.</P>
+
+<P>Several types of ITD features may be extracted from a microphone
+pair. Three techniques of particular interest are outlined below.
+</P>
+
+<P>&nbsp;</P>
+
+<H4>3.2.1 Cross-Correlation</H4>
+
+<P>The windowed cross-correlation<FONT SIZE="+1"> r</FONT><FONT
+SIZE="-2">lr</FONT>(d) of digitally sampled sound signals l(n) and
+r(n) is defined as</P>
+
+<P><IMG SRC="eq3_3.jpg" WIDTH=163 HEIGHT=49 X-SAS-UseImageWidth
+X-SAS-UseImageHeight ALIGN=bottom>(2)</P>
+
+<P>where N1 and N2 define a window in time to which the correlation
+is applied. The value of d which maximizes rlr(d) is chosen as the
+interaural delay, in samples. Cross-correlation provides excellent
+time delay estimation for noisy sounds such as fricative consonants.
+For voiced consonants, vowel sounds, and other periodic waveforms,
+however, cross-correlation can present ambiguous peaks at intervals
+of the fundamental frequency. It also provides unpredictable results
+when multiple sound sources are present. Finally, sound reflections
+and reverberation often found in indoor environments may corrupt the
+delay estimation.</P>
+
+<P>Analyses of the cross-correlation method of time delay estimation
+are provided by Weinstein and Weiss [99], Wuu and Pearson [100],
+Knapp and Carter [101], and Chan, Hattin, and Plant [102]. Sound
+localization systems implemented with correlation-based delay
+estimation are demonstrated by Bub, Hunke, and Waibel [51], Silverman
+and Kirtman [45], and Takahashi and Yamasaki [52]. These
+implementations use arrays of redundant microphones: fifteen in [51],
+eight in [45], and six in [52]. This allows accurate localization in
+multiple dimensions, and the redundancy of measurements compensates
+for localization ambiguity and noise sensitivity problems that can
+affect the cross-correlation method. For the case of just two
+microphones, Wasson [49] successfully adapts the phase correlation
+work of Knapp and Carter [101] for sound localization.</P>
+
+<P>&nbsp;</P>
+
+<H4>3.2.2 Inter-Aural Phase Delay</H4>
+
+<P>By taking the Fourier transform of each microphone signal, the
+relative phase at each frequency may be compared between the signals.
+Dividing this phase delay by its corresponding frequency gives the
+time delay. Phase delay is computed from the discrete Fourier
+transform of the left and right speech signals, L(k) and R(k),
+respectively, as described by BrandStein, Adcock, and Silverman [44].
+The cross-spectrum GLR(k) is given by</P>
+
+<P><IMG SRC="eq3_4.jpg" WIDTH=133 HEIGHT=29 X-SAS-UseImageWidth
+X-SAS-UseImageHeight ALIGN=bottom></P>
+
+<P>where * is the complex conjugate operation. The sample (time
+domain) delay at a particular frequency <IMG SRC="eq3_6.jpg" WIDTH=22
+HEIGHT=18 X-SAS-UseImageWidth X-SAS-UseImageHeight ALIGN=bottom> may
+be calculated as</P>
+
+<P><IMG SRC="eq3_5.jpg" WIDTH=149 HEIGHT=23 X-SAS-UseImageWidth
+X-SAS-UseImageHeight ALIGN=bottom></P>
+
+<P>Note that for wavelengths shorter than the microphone spacing, the
+phase delay will have an ambiguity corresponding to integer multiples
+of 2pi. The localization system must either reject short wavelengths,
+or use phase unwrapping to determine all the potential delays and
+accumulate these in a histogram. Another problem with using raw phase
+data is that background noise frequencies with little power will have
+as much weight in the delay estimation as the frequencies emitted by
+the desired target. In order to weigh the delay estimate in favor of
+stronger signals, one may increment the delay histogram by the power
+of the cross-spectrum |GLR(k)|, rather than one, for each frequency
+analyzed.</P>
+
+<P>The pairing between frequencies and delay estimates allows
+rejection of those frequencies known to present noise interference
+problems. Phase delay calculation works well for reverberant sounds
+such as voiced consonants and vowels, but not as well for the noisier
+fricatives. Also, reflected sound tends to shift the phase of the
+received signal, corrupting the delay calculation. A speech
+localization system implemented using phase delay techniques is
+described by BrandStein, Adcock, and Silverman [44].</P>
+
+<P>&nbsp;</P>
+
+<H4>3.2.3 Onset, or Envelope, Delay</H4>
+
+<P>Since human speech is punctuated with frequent pauses and volume
+changes, the envelope of sound presents a non-ambiguous feature for
+the measurement of inter-aural delay. Sound that travels directly
+from the source arrives at the microphones before its corresponding
+echoes. As a result, the time difference between sound onsets is
+highly immune to errors introduced by reverberation effects.
+Rejection of echoes makes onset detection an extremely attractive
+technique for sound localization. Huang et al. [50] have successfully
+implemented a sound localization system using onset delays measured
+between the outputs of a filter bank for each of three microphones.
+</P>
+
+<P>&nbsp;</P>
+
+<H4>3.2.4 Systems Combining Multiple Methods</H4>
+
+<P>Sound localization systems that combine multiple sound cues are
+described by Martin [46] and Irie [47]. Martin [46] incorporates
+inter-aural intensity, phase, and envelope differences from the
+stereo outputs of a 24-channel filter bank and a
+Head-Related-Transfer-Function model to localize sounds in azimuth
+and elevation as part of a computer simulation. However, no mention
+is made of echoes and other real-world noise sources being included
+in the simulation. Irie [47] incorporates phase delay, envelope
+delay, and intensity differences from two microphones using a neural
+network to distinguish sounds as coming from one of three directions:
+"left," "center," or "right."</P>
+
+<P>&nbsp;</P>
+
+<H3>3.3 An Onset Signal Correlation Algorithm</H3>
+
+<P>Inspired by the success of onset techniques in the literature, and
+the potential to improve echo immunity over cross-correlation and
+phase based localization systems, a new type of onset detection and
+delay estimator was developed. In indoor environments where echoes
+may occur, Inter-aural Time Delay (ITD) measurements made at signal
+onsets provide reliable results because echoes have not yet arrived.
+Since human hearing is most sensitive at sound onsets, it is likely
+that humans weigh onsets heavily when determining sound direction
+[103]. It is therefore desirable to investigate a way to increase a
+system's sensitivity during signal onsets when calculating ITD.</P>
+
+<P>The algorithm described here creates a multi-valued onset signal
+for each microphone input, in contrast to the Boolean onset events
+detected by other methods. Boolean onset detection schemes use a
+volume level threshold (as used by Haung, Ohnishi, and Sugie [50]),
+maximum value detector (as used by Irie [47]), or other localized
+peak-sorting heuristic (as demonstrated by Martin [46]) to choose an
+onset event from an input sample window. Such heuristics may require
+careful tuning, e.g. threshold adjustment, and may be unreliable.
+Choosing a Boolean onset event from a sample window does not
+incorporate the strength of the onset into the delay estimation, and
+many such techniques do not allow for multiple onsets within the
+sample window. The following onset signal algorithm, however, was
+designed so that it would not have to discard such useful
+information, and would not require any threshold adjustment or other
+heuristics.</P>
+
+<P>&nbsp;</P>
+
+<H4>3.3.1 The Algorithm</H4>
+
+<P>The onset signal is generated as follows. Each microphone signal
+is recorded by the computer's sound card as a discrete sequence of
+samples. We will call these two signals l(n) and r(n), where n
+indicates the sample in discrete time. First, envelope signals
+ENVL(n) and ENVR(n) are generated by a peak rectifier process to
+determine the shape of the signal magnitude at each input:</P>
+
+<P>ENVL(n) = max {&szlig;&#183;ENVL(n-1), |l(n)| }</P>
+
+<P>ENVR(n) = max {&szlig;&#183;ENVR(n-1), |r(n)| }&nbsp;</P>
+
+<P>where &szlig; is the envelope decay coefficient (0 &lt; b &lt;
+1.0). The value of &szlig; will be discussed later. The envelope
+signal rises in amplitude quickly to respond to sudden increases in
+volume, but decays slowly, masking echoes that may follow. It will
+reach zero only after a period of silence is sustained.</P>
+
+<P>Next, the onset signals ONSETL(n) and ONSETR(n) are created by
+extracting the rising slopes of the envelopes:</P>
+
+<P>ONSETL(n) = max {0.0, ENVL(n) ( ENVL(n-1)}</P>
+
+<P>ONSETR(n) = max {0.0, ENVR(n) ( ENVR(n-1)}</P>
+
+<P>Lastly, the onset signals may be cross-correlated using Equation
+(2) to determine the delay between them. Figure 6 illustrates the
+generation of an onset signal.</P>
+
+<P><B><A HREF="fig6.jpg">Figure 6: Onset Signal Generation</A></B>
+</P>
+
+<P>&nbsp;</P>
+
+<H4>3.3.2 Selection of Envelope Decay Coefficient</H4>
+
+<P>Echoes, which do not follow a direct path to the microphone,
+arrive later than the original sound and are lower in volume because
+of the increased distance they must travel. If b is chosen such that
+the envelope decay rate is slower than the drop in echo volume as a
+result of longer travel time, then the envelope signal will not
+respond to echoes. Figure 7 illustrates the direct path (d1) and an
+indirect path (d2) that a sound may travel to the microphone. The
+ratio of squared distances d12/d22 determines the percentage drop in
+echo power due to the longer reflected path. Figure 8 illustrates the
+drop in comparative echo intensity versus direct sound as a function
+of time delay after arrival of the direct sound. Note that the longer
+the direct path (d1) is, the slower the relative echo magnitude drops
+off.</P>
+
+<P><B><A HREF="fig7.jpg">Figure 7: Direct and Echo Path
+Lengths&nbsp;</A></B></P>
+
+<P><B><A HREF="fig8.jpg">Figure 8: Echo/Direct Sound Volume Ratio
+Decay Rates</A></B></P>
+
+<P>The choice of the value &szlig; is made such that the envelope
+decay is more gradual than the drop in echo magnitude. For a target
+distance of up to 6 meters and a sampling rate of 44.1 kHz, a &szlig;
+value of 0.9995 was found to reliably suppress sounds traveling
+indirect paths. The envelope decay rate for this value is also
+illustrated in Figure 8. Note that acoustic-absorption materials used
+in most indoor spaces further reduce echo volumes and extend the
+performance range. However, the reinforcement of multiple echoes
+arriving along multiple paths of the same length has not been
+compensated for. Such an environment prone to reverberation poses
+difficulty for any sound localizer, including human beings.</P>
+
+<P>&nbsp;</P>
+
+<H4>3.3.3 Effects of Onset Processing on a Speech Signal</H4>
+
+<P>The onset signal generation algorithm is performed on the sound
+signal before cross-correlation. Figure 9 shows a stereo sampling of
+the word "testing." The sound was recorded at 44.1 kHz at 16 bits per
+sample using two electret microphones spaced 30 cm apart. Figure 10
+shows the results of the envelope operation, and Figure 11 shows the
+extracted onset signal.</P>
+
+<P><B><A HREF="fig9.jpg">Figure 9: Stereo Sampling of the Word
+"Testing"</A></B></P>
+
+<P><B><A HREF="fig10.jpg">Figure 10: Envelope Signals from
+"Testing"&nbsp;</A></B></P>
+
+<P><B><A HREF="fig11.jpg">Figure 11: Onset Signals from
+"Testing"</A></B></P>
+
+<P><B><A HREF="fig12.jpg">Figure 12: Cross-Correlation of Onset
+Signals and Original Signals</A></B></P>
+
+<P>Figure 12 shows the results of performing cross-correlation on the
+left and right onset signals as compared to the results of using the
+original sampled sound signals. The peak of both cross-correlations
+occurs at an interaural delay of 11 samples. If we assume the speed
+of sound to be 344 m/s given the conditions in the room, a sampling
+period of 1/44100, and a microphone spacing of 0.3 m, Equation (1)
+may be used to calculate the angle to the speaker as
+sin(1(344(11/44100)/0.30) = 16.6 degrees.</P>
+
+<P>Note that the onset correlation peak is considerably steeper and
+narrower than the raw signal cross-correlation peak. The latter also
+features a ringing pattern due to periodic components in the voice
+signal. Reverberations that make up much of human speech mean that
+samples of speech are not statistically independent over time, that
+is, speech is not an independent, identically distributed (iid)
+random process. This causes spreading and ringing of the speech
+sample's autocorrelation function, and likewise the cross-correlation
+between two microphone signals. The onset signal, which is designed
+to suppress reverberations and respond more to sudden changes in the
+speech, like fricative consonants, exhibits less statistical
+dependency between samples and thus has a correlation plot that is
+shaped more like an impulse. The steepness of this onset correlation
+function is useful when fusing acoustic and visual data, as described
+in Chapter 5, since it provides better separation of targets from
+each other and the background. Figure 13 shows the
+frequency-dependent gain of the onset signal generation process when
+applied to sinusoids. Note the high attentuation of low-frequency
+signals. High-frequency signals tend to be attenuated less due to the
+first-derivative operation performed on the envelope signal when
+generating the onset signal. This allows sounds like fricatives,
+which include significant high-frequency components, to be passed
+while low-frequency tones (and 60-Hz noise) are attenuated.</P>
+
+<P><B><A HREF="fig13.jpg">Figure 13: Gain of the Onset Generation
+Process</A></B></P>
+
+<P>&nbsp;</P>
+
+<H3>3.4 Experimental Results</H3>
+
+<P>The performance of the onset correlation sound localization
+algorithm was tested both in simulations and in a real
+videoconferencing room on the NC State campus. The simulations
+included echoes based on models of sound reflection, and showed
+performance similar to the actual room. Onset correlation was found
+to perform slightly better than raw signal correlation in the
+presence of echoes. The sharper peak response of the onset
+correlation output also helped it to separate multiple peaks from
+multiple sound sources.</P>
+
+<P>&nbsp;</P>
+
+<H4>3.4.1 Simulation</H4>
+
+<P>The seven-by-five meter videoconferencing room selected for
+acoustics experiments was modeled in simulation to predict the
+performance of the real system. In the simulation, two microphones
+were located at one end of the room, with sound being emitted from
+one of twenty different possible sound origin (speaker) locations.
+The room geometry and sound origin locations are shown in Figure 14.
+The coordinate system origin was placed at the center of the room for
+convenience in calculating echo paths.</P>
+
+<P><B><A HREF="fig14.jpg">&nbsp;Figure 14: Room Layout with Speaker
+and Microphone Locations</A></B></P>
+
+<P>Both the magnitude and direction of sound echoes are important
+features to simulate when modeling an environment for sound
+localization. Like light, sound waves bounce off of planar surfaces
+and can follow multiple paths to the receiver. The strength of the
+sound traveling along a given path decreases with distance as well as
+the number of surfaces that reflect it, so only a finite number of
+reflections needs to be modeled to obtain a reasonable approximation.
+One way to visualize a single sound reflection is to imagine the wall
+as a large mirror, which would give the illusion of a mirror-image
+room next to the first one. The perceived distance and direction of
+the echo source would correspond to the image of the sound source in
+the mirrored room. This analogy lends itself to the task of
+calculating echo paths, by simulating mirrored rooms on all sides of
+the real room. Additional mirrored rooms may be added surrounding the
+first ones, flipping the room layout every time a wall is crossed,
+for as many reflections as are desired in the simulation. Figure 15
+shows how reflected sound paths appear to originate from the location
+of the sound source (location 16) in mirrored versions of the room.
+For the simulation described here, five layers of "reflection" rooms
+in every direction were added: five deep on the left, right, front,
+back, above, and below, putting the original room in the center of a
+11 x 11 x 11 neighborhood of simulated rooms. For a single sound
+location in the center of the room, a total of 1331 simulated sound
+sources arrive at the microphone, only one of which is the
+direct-path sound.</P>
+
+<P><B><A HREF="fig15.jpg">Figure 15: Mirrored-Room Method of Echo
+Imaging</A></B></P>
+
+<P><B><A HREF="fig16.jpg">Figure 16: FIR Convolution Operator for
+Left Microphone, Speaker Location 20, 50% Wall Absorption</A></B>
+</P>
+
+<P>The delay of each echo component is determined from the distance
+to the phantom location. Its intensity is calculated from the product
+of the reflectance coefficients of each surface along its path and
+the square of the distance. The echo components and direct path for a
+particular sound location are modeled together as a transfer function
+for the room. This results in an FIR convolution operator, as shown
+in Figure 16, which is applied to the pure sound sample to simulate
+the sound as it would be recorded by the microphone. This FIR filter
+is different for every combination of source position and microphone
+position. Note that the first term in the filter is always equal to
+one. This represents the direct-path sound, which is followed later
+by echoes. Echo magnitudes are normalized with respect to the
+direct-path sound in this simulation. The simulation assumes
+omnidirectional sound output from the source and omnidirectional
+sensitivity at the receiver.</P>
+
+<P>The plot in Figure 16 depicts the effects for walls and ceiling
+materials which absorb 50% of the sound pressure level of waves
+striking them. Real-world building materials vary in absorption, so
+nine different absorption values (0.1, 0.2, 0.3, ..., 0.9) were
+simulated. The words "Testing one, two, three" were recorded from a
+microphone at 44 kHz, 16 bits/sample and used for the source sound.
+Figure 17 shows the results of performing the onset correlation
+algorithm on the resulting sounds for speaker positions 5 through 8,
+with 50% absorption used for the walls, ceiling, and floor. Figure 18
+shows the raw cross-correlation results for the same data. Plots from
+simulations of all the absorption coefficients and all 20 positions
+are provided in Appendix A. Significant localization errors did not
+occur for either localization method until wall absorption was
+lowered to 0.1, and this only occurred for the furthest row of
+speaker locations (17 through 20).</P>
+
+<P><B><A HREF="fig17.jpg">Figure 17: Onset Correlation for
+Time-Domain Echo Simulation, Locations 5-8, 50% Absorption</A></B>
+</P>
+
+<P><B><A HREF="fig18.jpg">Figure 18: Raw Cross-Correlation for
+Speaker Locations 5-8, 50% Absorption</A></B></P>
+
+<P>In real life, building materials do not reflect all frequencies
+uniformly as was assumed in the previously described simulation. The
+frequency-dependent absorption characteristics of typical ceiling and
+carpeting materials are shown in Figure 19, as adapted from data
+given by Everest [104]. To simulate these effects on the echo
+signals, a frequency-domain simulation was necessary. The original
+sound was multiplied by a Hanning window and the Fourier transform
+was taken. The frequency-domain transfer function of the room was
+constructed by summing up the individual frequency components from
+each echo path. The reflectance value for each reflecting surface was
+multiplied by the others along the path on a per-frequency basis, and
+the phase values were calculated from the time delay. The resulting
+room transfer function was then multiplied by the Fourier transform
+of the speech signal, and the inverse transform was calculated so the
+time-domain onset correlation algorithm could be applied. The results
+of this simulation for locations 17-20 are shown in Figures 20 and
+21. No significant localization errors were detected for the room
+locations considered in this simulation. Note in Figure 21 how wide
+the raw cross-correlation peak has become, although the maximum value
+is still in the correct place.</P>
+
+<P><B><A HREF="fig19.jpg">Figure 19: Sound Absorption of Carpet
+(Solid) and Ceiling Tile (Dotted) (adapted from [104])</A></B></P>
+
+<P><B><A HREF="fig20.jpg">Figure 20: Onset Correlation for
+Frequency-Domain Simulation, Locations 17-20</A></B></P>
+
+<P><B><A HREF="fig21.jpg">Figure 21: Raw Correlation for Frequency
+Domain Simulation, Locations 17-20</A></B></P>
+
+<P>&nbsp;</P>
+
+<H4>3.4.2 Room Experiments</H4>
+
+<P>The sampled "Testing one-two-three" sound used in the above
+simulation was also used for localization experiments in the real
+videoconferencing room. The speech sample was transferred to cassette
+tape and played through a speaker positioned at each of the twenty
+locations shown in Figure 14. The microphone array was aligned with
+the room coordinates, and the sounds from each location were recorded
+as stereo digital audio (.wav) files on the computer. The onset
+correlation algorithm successfully localized all 20 sound locations,
+while the raw correlation results were incorrect for two of the most
+distant speaker locations. Correlation results for speaker locations
+5-8 are given in Figures 22 and 23; the complete set of plots and
+data are located in Appendix A.</P>
+
+<P><B><A HREF="fig22.jpg">Figure 22: Onset Correlation for Room
+Experiment, Locations 5-8</A></B></P>
+
+<P><B><A HREF="fig23.jpg">Figure 23: Raw Correlation for Room
+Experiment, Locations 5-8&nbsp;</A></B></P>
+
+<P><B><A HREF="fig24.jpg">Figure 24: Localization Errors for Onset
+and Raw Correlation</A></B></P>
+
+<P>&nbsp;</P>
+
+<H4>3.4.3 Performance with Multiple People Speaking</H4>
+
+<P>If speakers are not expected to move very quickly, then sound
+delay histograms may be integrated over longer periods of time to
+increase stability and reject noise. In videoconferencing and other
+social situations, multiple speakers in the room may talk back and
+forth or talk simultaneously. It is therefore important for the sound
+localization system to correctly detect these sound sources as
+separate speaker locations. Figure 25 compares the delay detectors
+for a ten-second recording of two people quickly speaking back and
+forth. The onset correlation algorithm clearly shows two distinct
+peaks corresponding to the speaker locations. The correlation of raw
+inputs, however, blurs together the wide peaks characteristic of this
+method, and the single resulting peak occurs between the speaker
+positions.</P>
+
+<P><B><A HREF="fig25.jpg">Figure 25: Performance for Two
+Speakers</A></B></P>
+
+<P>The peaks in the raw cross-correlation output may be sharpened by
+a technique called spectral whitening, which involves increasing the
+effect of uncorrelated white noise in the signal. Knapp and Carter
+[42] describe a method called the phase transform, or PHAT, for
+weighing frequencies during frequency-domain calculation of the
+cross-correlation. They weigh frequencies by dividing by the
+cross-spectral density magnitude before taking the inverse Fourier
+transform. As explained in [42], this increases the impact of noise
+and sharpens the correlation peak, but at the expense of requiring a
+high signal-to-noise ratio. Wasson [49] uses a modified version of
+PHAT with slightly less whitening, for less sharpening but more noise
+rejection. Both techniques increase the minimum signal-to-noise ratio
+required for proper performance, which can restrict their use for
+processing speech in typical indoor environments. The onset
+correlation technique described in this chapter was found through
+experimentation to perform at least as reliably as non-whitened
+cross-correlation, but it also provides the steep peaks desired for
+improved separation of locations.</P>
+
+<P>This chapter has presented a technique for sound localization
+using interaural delay between a pair of microphones. The output of
+the detector provides sharp peaks capable of distinguishing between
+multiple sound sources, and performs as well as traditional
+cross-correlation methods when tested in a realistic indoor
+environment. This system has been implemented on a consumer-grade
+MwaveTM multimedia sound card, providing continuous real-time sound
+localization updates for camera control and sensor fusion.</P>
+
+<P><A HREF="vision.htm">Next Chapter&nbsp;</A></P>
+
+<P>&nbsp;</P>
+</BODY>
+</HTML>

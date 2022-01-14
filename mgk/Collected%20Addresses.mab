@@ -1,0 +1,28 @@
+// <!-- <mdb:mork:z v="1.4"/> -->
+< <(a=c)> // (f=iso-8859-1)
+  (B8=Custom2)(B9=Custom3)(BA=Custom4)(BB=Notes)(BC=LastModifiedDate)
+  (BD=RecordKey)(BE=AddrCharSet)(BF=LastRecordKey)
+  (C0=ns:addrbk:db:table:kind:pab)(C1=ListName)(C2=ListNickName)
+  (C3=ListDescription)(C4=ListTotalAddresses)(C5=LowercaseListName)
+  (C6=ns:addrbk:db:table:kind:deleted)
+  (80=ns:addrbk:db:row:scope:card:all)
+  (81=ns:addrbk:db:row:scope:list:all)
+  (82=ns:addrbk:db:row:scope:data:all)(83=FirstName)(84=LastName)
+  (85=PhoneticFirstName)(86=PhoneticLastName)(87=DisplayName)
+  (88=NickName)(89=PrimaryEmail)(8A=LowercasePrimaryEmail)
+  (8B=SecondEmail)(8C=DefaultEmail)(8D=CardType)(8E=PreferMailFormat)
+  (8F=PopularityIndex)(90=AllowRemoteContent)(91=WorkPhone)(92=HomePhone)
+  (93=FaxNumber)(94=PagerNumber)(95=CellularNumber)(96=WorkPhoneType)
+  (97=HomePhoneType)(98=FaxNumberType)(99=PagerNumberType)
+  (9A=CellularNumberType)(9B=HomeAddress)(9C=HomeAddress2)(9D=HomeCity)
+  (9E=HomeState)(9F=HomeZipCode)(A0=HomeCountry)(A1=WorkAddress)
+  (A2=WorkAddress2)(A3=WorkCity)(A4=WorkState)(A5=WorkZipCode)
+  (A6=WorkCountry)(A7=JobTitle)(A8=Department)(A9=Company)
+  (AA=_AimScreenName)(AB=AnniversaryYear)(AC=AnniversaryMonth)
+  (AD=AnniversaryDay)(AE=SpouseName)(AF=FamilyName)(B0=DefaultAddress)
+  (B1=Category)(B2=WebPage1)(B3=WebPage2)(B4=BirthYear)(B5=BirthMonth)
+  (B6=BirthDay)(B7=Custom1)>
+
+<(80=0)>
+{1:^80 {(k^C0:c)(s=9)} 
+  [1:^82(^BF=0)]}

@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=windows-1252">
+    <title>ISE 754 Fall 2019 Schedule</title>
+    <style>
+table,th,td
+{
+  border:1px solid black; border-collapse:collapse;
+}
+th, td
+{
+  padding:2px; font-family:sans-serif;
+}
+th
+{
+  font-size: 12px; font-variant: small-caps;
+}
+td
+{
+  font-size: 12px; text-align: left; vertical-align: middle; padding-left:5px; padding-right:5px;
+}
+</style> </head>
+  <body>
+    <table style="width: 100%" border="1">
+      <colgroup> <col width="5%"> <col width="3%"> <col width="5%"> <col width="17%">
+        <col width="35%"> <col width="35%"> </colgroup>
+      <tbody>
+        <tr>
+          <th>Lecture<br>
+          </th>
+          <th>Day<br>
+          </th>
+          <th>Date<br>
+          </th>
+          <th>Topic<br>
+          </th>
+          <th>Assignment<br>
+          </th>
+          <th>Text<br>
+          </th>
+        </tr>
+        <tr>
+          <td style="text-align: center;">1<br>
+          </td>
+          <td style="text-align: center;">W</td>
+          <td style="text-align: center;">8/21</td>
+          <td>Introduction</td>
+          <td><br>
+          </td>
+          <td><a href="Syllabus-F19.pdf">Syllabus </a>(<a href="SlidesF19/ISE754F19-01.pdf">slides</a>)
+            <br>
+          </td>
+        </tr>
+        <tr>
+          <td style="text-align: center;">2<br>
+          </td>
+          <td style="text-align: center;">M</td>
+          <td style="text-align: center;">8/26</td>
+          <td>Matlab</td>
+          <td><a href="HW%201%20-%20Matlab.pdf">HW 1 - Matlab</a> (<a href="solnF19/hw1solnF19.html">soln</a>)<br>
+          </td>
+          <td><a href="http://www4.ncsu.edu/%7Ekay/Basic_Concepts_in_Matlab.pdf">Basic
+              Concepts in Matlab</a> (<a href="SlidesF19/ISE754F19-02.pdf">slides</a>)
+            (<a href="makeIntroMatlab.m">script</a>, <a href="https://www.youtube.com/watch?v=sWg33Pr5IAA&amp;feature=youtu.be&amp;vq=1080">video</a>)&nbsp;
+            </td> </tr>
+        <tr>
+          <td style="text-align: center;">3<br>
+          </td>
+          <td style="text-align: center;">W</td>
+          <td style="text-align: center;">8/28</td>
+          <td>Facility Location</td>
+          <td><br>
+          </td>
+          <td><a href="Facility%20Location.pdf">Facility Location</a> (<a href="SlidesF19/ISE754F19-03.pdf">slides</a>)
+            <br>
+          </td>
+        </tr>
+        <tr>
+          <td style="text-align: center;">4<br>
+          </td>
+          <td style="text-align: center;">W</td>
+          <td style="text-align: center;">9/4</td>
+          <td><br>
+          </td>
+          <td><a href="HW%202%20-%20Single-Facility%20Location.pdf">HW 2 -
+              Single-Facility Location</a> (<a href="solnF19/hw2soln/hw2solnF19.html">soln</a>).
+            HW 1 due. <br>
+          </td>
+          <td>(<a href="SlidesF19/ISE754F19-04.pdf">slides</a>) (<a href="makeFacLoc1.m">script</a>,
+            <a href="https://www.youtube.com/watch?v=J3JilpOiINI&amp;feature=youtu.be&amp;vq=1080">video</a>)
+            (<a href="iff.m">iff.m</a>)<br>
+          </td>
+        </tr>
+        <tr>
+          <td style="text-align: center;">5<br>
+          </td>
+          <td style="text-align: center;">M</td>
+          <td style="text-align: center;">9/9</td>
+          <td style="width: 413px;"><br>
+          </td>
+          <td><br>
+          </td>
+          <td>(<a href="SlidesF19/ISE754F19-05.pdf">slides</a>) (<a href="makeFacLoc2.m">script</a>,
+            <a href="https://www.youtube.com/watch?v=yASmm-80YqI&amp;feature=youtu.be&amp;vq=1080">video</a>)
+            <br>
+          </td>
+        </tr>
+        <tr>
+          <td style="text-align: center;">6<br>
+          </td>
+          <td style="text-align: center;">W</td>
+          <td style="text-align: center;">9/11</td>
+          <td><br>
+          </td>
+          <td><a href="HW%203%20-%20Minisum%20Location.pdf">HW 3 - Minisum
+              Location</a> (<a href="solnF19/hw3soln/hw3solnF19.html">soln</a>).
+            HW 2 due. <br>
+          </td>
+          <td>(<a href="makeFacLoc3.m">script</a>, <a href="https://www.youtube.com/watch?v=waoR-cDmwnY&amp;feature=youtu.be&amp;vq=1080">video</a>)<br>
+          </td>
+        </tr>
+        <tr>
+          <td style="text-align: center;">7<br>
+          </td>
+          <td style="text-align: center;">M</td>
+          <td style="text-align: center;">9/16</td>
+          <td><br>
+          </td>
+          <td><br>
+          </td>
+          <td>(<a href="SlidesF19/ISE754F19-06.pdf">slides</a>) (<a href="makeFacLoc4.m">script</a>,
+            <a href="https://www.youtube.com/watch?v=oPNxJwXuz0g&amp;feature=youtu.be&amp;vq=1080">video</a>)
+            <br>
+          </td>
+        </tr>
+        <tr>
+          <td style="text-align: center;">8<br>
+          </td>
+          <td style="text-align: center;">W</td>
+          <td style="text-align: center;">9/18</td>
+          <td><br>
+          </td>
+          <td><a href="HW%204%20-%20Multifacility%20Location.pdf">HW 4 -
+              Multifacility Location</a> (<a href="solnF19/hw4soln/hw4solnF19.html">soln</a>).
+            HW 3 due. <br>
+          </td>
+          <td>(<a href="SlidesF19/ISE754F19-07.pdf">slides</a>) (<a href="makeFacLoc5.m">script</a>,
+            <a href="https://www.youtube.com/watch?v=CTesI0iuzA0&amp;feature=youtu.be&amp;vq=1080">video</a>)<br>
+          </td>
+        </tr>
+        <tr>
+          <td style="text-align: center;">9<br>
+          </td>
+          <td style="text-align: center;">M</td>
+          <td style="text-align: center;">9/23</td>
+          <td><br>
+          </td>
+          <td><br>
+          </td>
+          <td>(<a href="SlidesF19/ISE754F19-08.pdf">slides</a>) (<a href="makeFacLoc6.m">script</a>,
+            <a href="https://www.youtube.com/watch?v=WJ8d19T3_Ow&amp;feature=youtu.be&amp;vq=1080">video</a>,
+            <a href="PopcoData.xlsx">PopcoData.xlsx</a>)<br>
+          </td>
+        </tr>
+        <tr>
+          <td style="text-align: center;">10<br>
+          </td>
+          <td style="text-align: center;">W</td>
+          <td style="text-align: center;">9/25</td>
+          <td><br>
+          </td>
+          <td><a href="HW%205%20-%20Discrete%20Location.pdf">HW 5 - Discrete
+              Location</a> (<a href="HW5data.xlsx">data</a>), <a href="solnF19/hw5soln/hw5solnF19.html">soln</a>).
+            HW 4 due. <br>
+          </td>
+          <td>(<a href="SlidesF19/ISE754F19-09.pdf">slides</a>) (<a href="makeFacLoc7.m">script</a>,
+            <a href="https://www.youtube.com/watch?v=bu3VciCN9Rk&amp;feature=youtu.be&amp;vq=1080">video</a>)
+            <br>
+          </td>
+        </tr>
+        <tr>
+          <td style="text-align: center;">11<br>
+          </td>
+          <td style="text-align: center;">M</td>
+          <td style="text-align: center;">9/30</td>
+          <td>Freight Transport </td>
+          <td><br>
+          </td>
+          <td><a href="Freight%20Transport.pdf">Freight Transport Notes</a>. <a
+              href="Overview%20of%20Freight%20Transport.pdf">Overview of Freight
+              Transport</a>. <br>
+          </td>
+        </tr>
+        <tr>
+          <td style="text-align: center;">12<br>
+          </td>
+          <td style="text-align: center;">W</td>
+          <td style="text-align: center;">10/2</td>
+          <td><br>
+          </td>
+          <td><br>
+          </td>
+          <td>(<a href="SlidesF19/ISE754F19-10.pdf">slides</a>) (<a href="makeFrghtTrans1.m">script</a>,
+            <a href="https://www.youtube.com/watch?v=1DLMIwWdOf0&amp;feature=youtu.be&amp;vq=1080">video</a>)<br>
+          </td>
+        </tr>
+        <tr>
+          <td style="text-align: center;">13<br>
+          </td>
+          <td style="text-align: center;">M</td>
+          <td style="text-align: center;">10/7</td>
+          <td><br>
+          </td>
+          <td>&nbsp;<br>
+          </td>
+          <td>(<a href="SlidesF19/ISE754F19-11.pdf">slides</a>) (<a href="makeFrghtTrans2.m">script</a>,
+            <a href="https://www.youtube.com/watch?v=YsX8sh8tZ0E&amp;feature=youtu.be&amp;vq=1080">video</a>)<br>
+          </td>
+        </tr>
+        <tr>
+          <td style="text-align: center;">14<br>
+          </td>
+          <td style="text-align: center;">W</td>
+          <td style="text-align: center;">10/9</td>
+          <td><br>
+          </td>
+          <td><a href="HW%206%20-%20Freight%20Transport.pdf">HW 6 - Freight
+              Transport</a> (<a href="HW6data.xlsx">data</a>, <a href="solnF19/hw6soln/hw6solnF19.html">soln</a>).
+            HW 5 due </td>
+          <td>(<a href="SlidesF19/ISE754F19-12.pdf">slides</a>) (<a href="makeFrghtTrans3.m">script</a>,
+            <a href="https://www.youtube.com/watch?v=uUo4iIx_I18&amp;feature=youtu.be&amp;vq=1080">video</a>)<br>
+          </td>
+        </tr>
+        <tr>
+          <td style="text-align: center;">15<br>
+          </td>
+          <td style="text-align: center;">M</td>
+          <td style="text-align: center;">10/14</td>
+          <td>(canceled)<br>
+          </td>
+          <td><br>
+          </td>
+          <td><br>
+          </td>
+        </tr>
+        <tr>
+          <td style="text-align: center;">16<br>
+          </td>
+          <td style="text-align: center;">W</td>
+          <td style="text-align: center;">10/16</td>
+          <td><br>
+          </td>
+          <td>HW 6 due. <br>
+          </td>
+          <td><br>
+          </td>
+        </tr>
+        <tr>
+          <td style="text-align: center;">17<br>
+          </td>
+          <td style="text-align: center;">M</td>
+          <td style="text-align: center;">10/21</td>
+          <td>(canceled)<br>
+          </td>
+          <td><br>
+          </td>
+          <td><br>
+          </td>
+        </tr>
+        <tr>
+          <td style="text-align: center;">18<br>
+          </td>
+          <td style="text-align: center;">W</td>
+          <td style="text-align: center;">10/23</td>
+          <td>Network Models </td>
+          <td>Exam 1 (take home, due 9p Thu Oct 24, <a href="solnF19/exam1F19soln/exam1F19soln.html">soln</a>)
+          </td>
+          <td>(<a href="SlidesF19/ISE754F19-13.pdf">slides</a>) (<a href="makeNetwork1.m">script</a>,
+            <a href="https://www.youtube.com/watch?v=aa6kxF-nEj0&amp;feature=youtu.be&amp;vq=1080">video</a>)
+            <br>
+          </td>
+        </tr>
+        <tr>
+          <td style="text-align: center;">19<br>
+          </td>
+          <td style="text-align: center;">M</td>
+          <td style="text-align: center;">10/28</td>
+          <td><br>
+          </td>
+          <td><br>
+          </td>
+          <td>(<a href="SlidesF19/ISE754F19-14.pdf">slides</a>) (<a href="makeNetwork2.m">script</a>,
+            <a href="https://www.youtube.com/watch?v=Bk9T5adXwdQ&amp;feature=youtu.be&amp;vq=1080">video</a>)<br>
+          </td>
+        </tr>
+        <tr>
+          <td style="text-align: center;">20<br>
+          </td>
+          <td style="text-align: center;">W</td>
+          <td style="text-align: center;">10/30</td>
+          <td><br>
+          </td>
+          <td><a href="HW%207%20-%20Network%20Models.pdf">HW 7 - Network Models</a>
+            (<a href="solnF19/hw7soln/hw7solnF19.html">soln</a>) <br>
+          </td>
+          <td>(<a href="SlidesF19/ISE754F19-15.pdf">slides</a>) (<a href="makeNetwork3.m">script</a>,
+            <a href="https://www.youtube.com/watch?v=-ThMKOf9Hss&amp;feature=youtu.be&amp;vq=1080">video</a>)<br>
+          </td>
+        </tr>
+        <tr>
+          <td style="text-align: center;">21<br>
+          </td>
+          <td style="text-align: center;">M</td>
+          <td style="text-align: center;">11/4</td>
+          <td>Routing </td>
+          <td><br>
+          </td>
+          <td>(<a href="SlidesF19/ISE754F19-16.pdf">slides</a>) (<a href="makeRouting1.m">script</a>,
+            <a href="https://www.youtube.com/watch?v=8ydR9s7Ncrs&amp;feature=youtu.be&amp;vq=1080">video</a>)
+          </td>
+        </tr>
+        <tr>
+          <td style="text-align: center;">22<br>
+          </td>
+          <td style="text-align: center;">W</td>
+          <td style="text-align: center;">11/6</td>
+          <td><br>
+          </td>
+          <td>&nbsp;<br>
+          </td>
+          <td>(<a href="SlidesF19/ISE754F19-17.pdf">slides</a>) (<a href="makeRouting2.m">script</a>,
+            <a href="https://www.youtube.com/watch?v=jHz3jl7QtTM&amp;feature=youtu.be&amp;vq=1080">video</a>)<br>
+          </td>
+        </tr>
+        <tr>
+          <td style="text-align: center;">23<br>
+          </td>
+          <td style="text-align: center;">M</td>
+          <td style="text-align: center;">11/11</td>
+          <td><br>
+          </td>
+          <td>HW 7 due. </td>
+          <td>(<a href="SlidesF19/ISE754F19-18.pdf">slides</a>) (<a href="makeRouting3.m">script</a>,
+            <a href="shmtNC30.mat">shmtNC30.mat</a>, <a href="myrteTC.m">myrteTC.m</a>,
+            <a href="https://www.youtube.com/watch?v=5dSRJqcvUnY&amp;feature=youtu.be&amp;vq=1080">video</a>)<br>
+          </td>
+        </tr>
+        <tr>
+          <td style="text-align: center;">24<br>
+          </td>
+          <td style="text-align: center;">W</td>
+          <td style="text-align: center;">11/13</td>
+          <td><br>
+          </td>
+          <td><a href="HW%208%20-%20Vehicle%20Routing.pdf">HW 8 - Vehicle
+              Routing</a> (<a href="HW8data.xlsx">data</a>, <a href="solnF19/hw8soln/hw8solnF19.html">soln</a>)<br>
+          </td>
+          <td>(<a href="SlidesF19/ISE754F19-19.pdf">slides</a>) (<a href="makeRouting4.m">script</a>,
+            <a href="https://www.youtube.com/watch?v=L_tyUPA3DeI&amp;feature=youtu.be&amp;vq=1080">video</a>)<br>
+          </td>
+        </tr>
+        <tr>
+          <td style="text-align: center;">25<br>
+          </td>
+          <td style="text-align: center;">M</td>
+          <td style="text-align: center;">11/18</td>
+          <td>Warehousing</td>
+          <td><br>
+          </td>
+          <td><a href="https://people.engr.ncsu.edu/kay/Warehousing.pdf">Warehousing
+              </a>(<a href="SlidesF19/ISE754F19-20.pdf">slides</a>) <br>
+          </td>
+        </tr>
+        <tr>
+          <td style="text-align: center;">26<br>
+          </td>
+          <td style="text-align: center;">W</td>
+          <td style="text-align: center;">11/20</td>
+          <td><br>
+          </td>
+          <td>HW 8 due. <br>
+          </td>
+          <td>(<a href="SlidesF19/ISE754F19-21.pdf">slides</a>) <br>
+          </td>
+        </tr>
+        <tr>
+          <td style="text-align: center;">27<br>
+          </td>
+          <td style="text-align: center;">M</td>
+          <td style="text-align: center;">11/25</td>
+          <td><br>
+          </td>
+          <td>Exam 2 (take home, due 9p Tue Nov 26, <a href="Exam2DataF19.xlsx">data</a>,
+            <a href="solnF19/exam2F19soln/exam2F19soln.html"> soln</a>)</td>
+          <td>(<a href="SlidesF19/ISE754F19-22.pdf">slides</a>) <br>
+          </td>
+        </tr>
+        <tr>
+          <td style="text-align: center;">28<br>
+          </td>
+          <td style="text-align: center;">M</td>
+          <td style="text-align: center;">12/2</td>
+          <td><br>
+          </td>
+          <td><a href="HW%209%20-%20PharmaCo%20Case%20Study.pdf">HW 9 - PharmaCo
+              Case Study</a> due 12/15<br>
+          </td>
+          <td>(<a href="SlidesF19/ISE754F19-23.pdf">slides</a>) <br>
+          </td>
+        </tr>
+        <tr>
+          <td style="text-align: center;">29</td>
+          <td style="text-align: center;">W</td>
+          <td style="text-align: center;">12/4</td>
+          <td>Review for Final Exam</td>
+          <td><br>
+          </td>
+          <td><br>
+          </td>
+        </tr>
+        <tr>
+          <td style="text-align: center;"><br>
+          </td>
+          <td style="text-align: center;">F<br>
+          </td>
+          <td style="text-align: center;">12/13</td>
+          <td>Final Exam (in class, <a href="Study%20Guide%20for%20the%20Final%20Exam.pdf">study
+              guide</a>) </td>
+          <td>(8-11 a.m. in DAN 327)&nbsp;</td>
+          <td><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <p style="font-size:12px"> (Note: Schedule can change and any changes will
+      be announced in class)<br>
+    </p>
+  </body>
+</html>

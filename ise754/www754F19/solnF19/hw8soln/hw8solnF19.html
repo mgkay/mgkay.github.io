@@ -1,0 +1,1912 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <!--
+This HTML was auto-generated from MATLAB code.To make changes, update the MATLAB code and republish this document.
+      -->
+    <title>HW 8 Solution - ISE 754 Fall 2019</title>
+    <meta name="generator" content="MATLAB 9.6">
+    <link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
+    <meta name="DC.date" content="2019-11-19">
+    <meta name="DC.source" content="hw8solnF19.m">
+    <style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style>
+  </head>
+  <body>
+    <div class="content">
+      <h1>HW 8 Solution - ISE 754 Fall 2019</h1>
+      <!--introduction--><!--/introduction-->
+      <h2>Contents</h2>
+      <div>
+        <ul>
+          <li><a href="#1">Question 1</a></li>
+          <li><a href="#5">Question 2</a></li>
+          <li><a href="#6">Question 3</a></li>
+          <li><a href="#9">Question 4</a></li>
+          <li><a href="#28">Question 5</a></li>
+          <li><a href="#37">Question 6</a></li>
+        </ul>
+      </div>
+      <h2 id="1">Question 1</h2>
+      <h2 id="3">(a) Hand solution</h2>
+      <pre class="codeoutput">Final_Sequence =
+     1     5     4     2     3     6     1
+TD =
+    12
+ 
+Seq:  1  2  3  4  5  6  7  TD
+---:-------------------------
+  1:  1  5  2  6  4  3  1  22
+  2:  1  2  5  6  4  3  1  34
+  3:  1  6  2  5  4  3  1  22
+  4:  1  4  6  2  5  3  1  40
+  5:  1  5  6  2  4  3  1  28
+  6:  1  5  4  6  2  3  1  20
+  7:  1  4  5  6  2  3  1  41
+  8:  1  6  4  5  2  3  1  34
+  9:  1  2  6  4  5  3  1  41
+ 10:  1  5  6  4  2  3  1  25
+ 11:  1  5  2  6  4  3  1  22
+ 12:  1  5  3  2  6  4  1  25
+ 13:  1  5  4  2  6  3  1  20
+ 14:  1  5  4  3  2  6  1  13
+ 15:  1  4  5  3  2  6  1  39
+ 16:  1  3  4  5  2  6  1  34
+ 17:  1  2  3  4  5  6  1  38
+ 18:  1  5  3  4  2  6  1  24
+ 19:  1  5  2  3  4  6  1  24
+ 20:  1  5  6  2  3  4  1  25
+ 21:  1  5  4  2  3  6  1  12
+ 22:  1  4  5  2  3  6  1  34
+ 23:  1  2  4  5  3  6  1  40
+ 24:  1  3  2  4  5  6  1  39
+ 25:  1  5  2  4  3  6  1  21
+ 26:  1  5  3  2  4  6  1  30
+ 27:  1  5  6  3  2  4  1  31
+ 28:  1  5  4  3  2  6  1  13
+ 29:  1  5  4  6  3  2  1  18
+ 30:  1  5  4  2  6  3  1  20</pre>
+      <p></p>
+      <h2 id="4">(b) Using TSP2OPT</h2>
+      <pre class="codeinput">D = [
+     0     8     6     9     1     5
+     3     0     1     5     4     2
+     9     2     0     3     1     1
+     8     2     1     0    10     6
+     6     7    10     1     0    10
+     6     2     5     2     1     0];
+loc0 = [1     5     2     6     4     3     1];
+[loc,TD] = tsp2opt(loc0,D)
+</pre>
+      <pre class="codeoutput">loc =
+     1     5     4     2     3     6     1
+TD =
+    12
+</pre>
+      <h2 id="5">Question 2</h2>
+      <pre class="codeinput">T = [
+0 2 2 2 1 2
+2 0 3 2 3 3
+2 3 0 3 2 2
+2 2 3 0 3 1
+1 3 2 3 0 3
+2 3 2 1 3 0 ];
+sh = vec2struct(<span class="string">'b'</span>,1,<span class="string">'e'</span>,2:6,<span
+class="keyword">...</span>
+   <span class="string">'temin'</span>,[9 18 9 15 21],<span class="string">'temax'</span>,[12 21 18 18 24]); sdisp(sh)
+tr = struct(<span class="string">'b'</span>,1,<span class="string">'e'</span>,1,<span
+class="string">'tbmin'</span>,6,<span class="string">'temax'</span>,24); sdisp(tr)
+rte = [3 1 4 2 5 3 1 4 2 5];
+[TC,Xflg,out] = rteTC(rte,sh,T,tr)
+</pre>
+      <pre class="codeoutput"> 
+sh:  b  e  temin  temax
+--:--------------------
+ 1:  1  2     9     12 
+ 2:  1  3    18     21 
+ 3:  1  4     9     18 
+ 4:  1  5    15     18 
+ 5:  1  6    21     24 
+ 
+   tr:   1
+-----:----
+    b:   1
+    e:   1
+tbmin:   6
+temax:  24
+TC =
+    15
+Xflg =
+     1
+out = 
+  struct with fields:
+
+       Rte: [0 3 1 4 2 5 3 1 4 2 5 0]
+       Loc: [1 1 1 1 1 1 4 2 5 3 6 1]
+      Cost: [0 0 0 0 0 0 2 2 3 2 2 2]
+    Arrive: [0 8 8 8 8 8 10 12 15 17 20 23]
+      Wait: [0 0 0 0 0 0 0 0 0 1 1 0]
+     TWmin: [6 6 6 6 6 6 9 9 15 18 21 -Inf]
+     Start: [8 8 8 8 8 8 10 12 15 18 21 23]
+        LU: [0 0 0 0 0 0 0 0 0 0 0 0]
+    Depart: [8 8 8 8 8 8 10 12 15 18 21 23]
+     TWmax: [Inf Inf Inf Inf Inf Inf 18 12 18 21 24 24]
+     Total: [0 0 0 0 0 0 2 2 3 3 3 2]
+</pre>
+      <h2 id="6">Question 3</h2>
+      <h2 id="7">(a) Hand solution</h2>
+      <pre class="codeinput">D = [
+     0   180   320   100   180    40
+   180     0   140    80   240   140
+   320   140     0   220   300   280
+   100    80   220     0   240    60
+   180   240   300   240     0   220
+    40   140   280    60   220     0];
+sh = vec2struct(<span class="string">'b'</span>,[6 3 2],<span class="string">'e'</span>,[5 1 4],<span
+class="string">'f'</span>,[200 300 100],<span class="string">'s'</span>,[20 5 10]);
+sh = vec2struct(sh,<span class="string">'v'</span>,[20000 5000 10000],<span class="string">'a'</span>,.5,<span
+class="string">'h'</span>,.3);
+sdisp(sh)
+rte = [2 3 2 1 3 1];
+dagg = rteTC(rte,sh,D)
+ash = aggshmt(sh); sdisp(ash)
+ppiTL = 125;
+tr = struct(<span class="string">'r'</span>,2*(ppiTL/102.7),<span class="string">'Kwt'</span>,25,<span
+class="string">'Kcu'</span>,2750);
+MC = mincharge(dagg,ppiTL,rte,sh)
+qagg = sqrt((ash.f*max(tr.r*dagg,MC))/(ash.a*ash.v*ash.h))
+q = qagg * [sh.f]/ash.f
+L = rte2ldmx(rte), L{:}
+k = 1
+<span class="keyword">for</span> j = 1:length(L)
+   sj = sum([sh(L{j}).f])/sum([sh(L{j}).f]./[sh(L{j}).s])
+   kj = min(tr.Kwt,sj*tr.Kcu/2000)/sum(q(L{j}))
+   k = min(k,kj)
+<span class="keyword">end</span>
+q = k*q
+TLC = ash.f/sum(q)*tr.r*dagg + ash.a*ash.v*ash.h*sum(q); mdisp(TLC)
+</pre>
+      <pre class="codeoutput"> 
+sh:  b  e   f    s     v     a    h 
+--:---------------------------------
+ 1:  6  5  200  20  20,000  0.5  0.3
+ 2:  3  1  300   5   5,000  0.5  0.3
+ 3:  2  4  100  10  10,000  0.5  0.3
+dagg =
+   660
+ 
+ash:      1    
+---:-----------
+  b:       6.00
+  e:       5.00
+  f:     600.00
+  s:       7.50
+  v:  10,833.33
+  a:       0.50
+  h:       0.30
+MC =
+  164.3135
+qagg =
+   24.3560
+q =
+    8.1187   12.1780    4.0593
+L =
+  1×2 cell array
+    {1×2 double}    {1×2 double}
+ans =
+     2     3
+ans =
+     3     1
+k =
+     1
+sj =
+    5.7143
+kj =
+    0.4839
+k =
+    0.4839
+sj =
+    15
+kj =
+    1.6936
+k =
+    0.4839
+q =
+    3.9286    5.8929    1.9643
+ 
+TLC:       1    
+---:------------
+  1:  100,943.41
+</pre>
+      <h2 id="8">(b) Using MINTLC</h2>
+      <pre class="codeinput">[TLC,q] = minTLC(sh,tr,[],D,rte)
+<span class="comment">% Note: returned q in order of shmt in rte, not in shmt 1,2,3 order</span>
+rte
+<span class="comment">% To convert to 1,2,3 order:</span>
+idx = rte2idx(rte)
+argsort(idx)
+q(argsort(idx))
+</pre>
+      <pre class="codeoutput">TLC =
+   1.0094e+05
+q =
+    5.8929
+    1.9643
+    3.9286
+rte =
+     2     3     2     1     3     1
+idx =
+     2     3     1
+ans =
+     3     1     2
+ans =
+    3.9286
+    5.8929
+    1.9643
+</pre>
+      <h2 id="9">Question 4</h2>
+      <h2 id="10">Read data</h2>
+      <pre class="codeinput">close <span class="string">all</span>, clear
+fn = <span class="string">'HW8data.xlsx'</span>;
+inDC = table2struct(readtable(fn,<span class="string">'Sheet'</span>,<span class="string">'Q4-DC'</span>));
+inC = table2struct(readtable(fn,<span class="string">'Sheet'</span>,<span class="string">'Q4-Customers'</span>));
+</pre>
+      <h2 id="11">Read in data</h2>
+      <pre class="codeinput">XY = [[inDC.Lon inDC.Lat]; [inC.Lon]' [inC.Lat]'];
+pkg = [inC.Pkg]';
+TW = [inC.T_W]';
+</pre>
+      <h2 id="12">Get road network</h2>
+      <pre class="codeinput">expansionAroundXY = 0.12;
+[XY2,IJD,isXY,isIJD] = subgraph(usrdnode(<span class="string">'XY'</span>),<span
+class="keyword">...</span>
+   isinrect(usrdnode(<span class="string">'XY'</span>),boundrect(XY,expansionAroundXY)),usrdlink(<span
+class="string">'IJD'</span>));
+</pre>
+      <h2 id="13">Label type of road</h2>
+      <pre class="codeinput">s = usrdlink(isIJD);
+isI = s.Type == <span class="string">'I'</span>;         <span class="comment">% Interstate highways</span>
+isIR = isI &amp; s.Urban == <span class="string">' '</span>; <span class="comment">% Rural Interstate highways</span>
+isIU = isI &amp; ~isIR;          <span class="comment">% Urban Interstate highways</span>
+isR = s.Urban == <span class="string">' '</span> &amp; ~isI; <span class="comment">% Rural non-Interstate roads</span>
+isU = ~isI &amp; ~isR;           <span class="comment">% Urban non-Interstate roads</span>
+</pre>
+      <h2 id="14">Add connector roads from cities to road network</h2>
+      <pre class="codeinput">[IJD11,IJD12,IJD22] = addconnector(XY,XY2,IJD);
+</pre>
+      <h2 id="15">Plot roads and customers</h2>
+      <pre class="codeinput">makemap(XY2,0.03)  <span class="comment">% 3% expansion</span>
+h = [];  <span class="comment">% Keep handle to each plot for legend</span>
+h = [h pplot(IJD(isR,:),XY2,<span class="string">'r-'</span>,<span class="string">'DisplayName'</span>,<span
+class="string">'Rural Roads'</span>)];
+h = [h pplot(IJD(isU,:),XY2,<span class="string">'k-'</span>,<span class="string">'DisplayName'</span>,<span
+class="string">'Urban Roads'</span>)];
+h = [h pplot(IJD(isI,:),XY2,<span class="string">'c-'</span>,<span class="string">'DisplayName'</span>,<span
+class="string">'Interstate Roads'</span>)];
+h = [h pplot(IJD12,[XY; XY2],<span class="string">'b-'</span>,<span class="string">'DisplayName'</span>,<span
+class="string">'Connector Roads'</span>)];
+h = [h pplot(IJD11,[XY; XY],<span class="string">'m-'</span>,<span class="string">'DisplayName'</span>,<span
+class="string">'Connector Roads'</span>)];
+h = [h pplot(XY,<span class="string">'go'</span>,<span class="string">'DisplayName'</span>,<span
+class="string">'Customers'</span>)];
+</pre><img src="hw8solnF19_01.png" alt="" hspace="5" vspace="5">
+      <h2 id="16">Convert road distances to travel times (needs to be after
+        ADDCONNECTOR)</h2>
+      <pre class="codeinput">IJT = IJD;
+IJT(isIR,3) = IJD(isIR,3)/70; IJT(isIU,3) = IJD(isIU,3)/50;
+IJT(isR,3) = IJD(isR,3)/45; IJT(isU,3) = IJD(isU,3)/20;
+IJT22 = IJD22; IJT22(:,3) = IJT(:,3);
+IJT12 = IJD12; IJT12(:,3) = IJD12(:,3)/15;
+IJT11 = IJD11; IJT11(:,3) = IJD11(:,3)/15;  <span class="comment">% Includes residential delivery</span>
+</pre>
+      <h2 id="17">Shortest time routes</h2>
+      <pre class="codeinput">n = size(XY,1);
+[T,P] = dijk(list2adj([IJT12; IJT22]),1:n,1:n);
+</pre>
+      <h2 id="18">Distance of shortest time route</h2>
+      <pre class="codeinput">A = list2adj([IJD12; IJD22]);
+D = zeros(n);
+<span class="keyword">for</span> i = 1:n, <span class="keyword">for</span> j = 1:n, D(i,j) = locTC(pred2path(P,i,j),A); <span
+class="keyword">end</span>, <span class="keyword">end</span>
+</pre>
+      <h2 id="19">Create routing structures</h2>
+      <pre class="codeinput">tr = struct(<span class="string">'b'</span>,1,<span
+class="string">'e'</span>,1,<span class="string">'Kwt'</span>,30,<span class="string">'maxTC'</span>,8);
+temin = repmat(8,n-1,1); temin(TW == <span class="string">'A'</span>) = 12; temin(TW == <span
+class="string">'E'</span>) = 17;
+temax = repmat(12,n-1,1); temax(TW == <span class="string">'A'</span>) = 17; temax(TW == <span
+class="string">'E'</span>) = 21;
+sh = vec2struct(<span class="string">'b'</span>,1,<span class="string">'e'</span>,2:length(T),<span
+class="string">'q'</span>,pkg,<span class="string">'tU'</span>,2/60,<span class="keyword">...</span>
+   <span class="string">'temin'</span>,temin,<span class="string">'temax'</span>,temax);
+</pre>
+      <h2 id="20">Construct &amp; improve routes</h2>
+      <pre class="codeinput">rTCh = @(rte) rteTC(rte,sh,T,tr);
+IJS = pairwisesavings(rTCh,sh);
+[r,Time] = twoopt(savings(rTCh,sh,IJS,true),rTCh,true);
+</pre>
+      <pre class="codeoutput">SAVINGS:
+4.407606: Make Rte 1 using 43 and 175
+5.058468: Add 38 to Rte 1
+5.658400: Add 100 to Rte 1
+9.111620: Make Rte 2 using 51 and 53
+12.562217: Make Rte 3 using 39 and 136
+13.263547: Add 68 to Rte 2
+13.524768: Add 113 to Rte 2
+16.382112: Make Rte 4 using 19 and 102
+19.293893: Make Rte 5 using 13 and 49
+19.853847: Add 148 to Rte 5
+20.081911: Add 64 to Rte 3
+18.667948: Combine Rte 3 to Rte 4
+21.395961: Make Rte 6 using 50 and 131
+21.787232: Add 3 to Rte 4
+22.110686: Add 112 to Rte 6
+22.599270: Add 66 to Rte 6
+22.778701: Add 5 to Rte 6
+23.085929: Add 137 to Rte 5
+24.781099: Add 169 to Rte 2
+28.135044: Make Rte 7 using 124 and 154
+28.357768: Add 160 to Rte 5
+28.578080: Add 176 to Rte 6
+28.649375: Add 69 to Rte 7
+29.424836: Add 163 to Rte 6
+29.836976: Add 156 to Rte 1
+30.518263: Add 74 to Rte 7
+31.307090: Add 139 to Rte 4
+31.617215: Add 126 to Rte 7
+33.923302: Make Rte 8 using 17 and 128
+34.269855: Add 158 to Rte 8
+37.099789: Make Rte 9 using 67 and 166
+37.217418: Add 129 to Rte 1
+37.964250: Add 12 to Rte 9
+38.553982: Add 58 to Rte 5
+41.040249: Make Rte 10 using 60 and 127
+39.587200: Combine Rte 6 to Rte 9
+42.266732: Make Rte 11 using 54 and 101
+44.320854: Make Rte 12 using 22 and 106
+47.811779: Make Rte 13 using 62 and 88
+50.090533: Make Rte 14 using 6 and 87
+50.541308: Add 75 to Rte 11
+50.752411: Add 155 to Rte 11
+53.497982: Make Rte 15 using 10 and 52
+53.965728: Add 95 to Rte 15
+54.637391: Add 150 to Rte 15
+53.300519: Combine Rte 14 to Rte 7
+56.854417: Make Rte 16 using 2 and 162
+57.193555: Add 1 to Rte 12
+59.177951: Make Rte 17 using 11 and 78
+60.358786: Add 122 to Rte 13
+60.645262: Add 149 to Rte 5
+60.980013: Add 121 to Rte 15
+62.915927: Make Rte 18 using 117 and 174
+65.157579: Make Rte 19 using 32 and 71
+64.155136: Combine Rte 11 to Rte 8
+66.420847: Make Rte 20 using 20 and 152
+67.402831: Add 89 to Rte 4
+67.908503: Add 70 to Rte 16
+68.658117: Add 157 to Rte 19
+71.508673: Make Rte 21 using 36 and 116
+73.344380: Add 165 to Rte 21
+74.878668: Add 99 to Rte 18
+76.455236: Add 143 to Rte 13
+77.122015: Add 107 to Rte 7
+76.332328: Combine Rte 10 to Rte 8
+77.015438: Add 59 to Rte 15
+76.163592: Combine Rte 15 to Rte 19
+78.876188: Make Rte 22 using 119 and 153
+79.299419: Add 63 to Rte 12
+80.029124: Add 84 to Rte 16
+80.337684: Add 110 to Rte 12
+81.425019: Add 24 to Rte 17
+81.832575: Add 104 to Rte 17
+83.951129: Make Rte 23 using 90 and 93
+84.429194: Add 25 to Rte 21
+85.100661: Add 114 to Rte 5
+87.302167: Make Rte 24 using 23 and 92
+87.577474: Add 144 to Rte 21
+88.126484: Add 98 to Rte 17
+91.526574: Make Rte 25 using 79 and 164
+92.408411: Add 170 to Rte 17
+94.071901: Make Rte 26 using 16 and 105
+93.943848: Combine Rte 18 to Rte 20
+94.166480: Add 177 to Rte 24
+93.288189: Combine Rte 23 to Rte 16
+93.592246: Add 55 to Rte 26
+93.866255: Add 57 to Rte 26
+96.240187: Make Rte 27 using 8 and 94
+96.501721: Add 37 to Rte 19
+97.727409: Make Rte 28 using 147 and 173
+99.329303: Make Rte 29 using 86 and 141
+100.230350: Add 7 to Rte 21
+103.075828: Make Rte 30 using 14 and 31
+104.997828: Make Rte 31 using 18 and 42
+105.571421: Add 44 to Rte 31
+105.889273: Add 28 to Rte 31
+107.273120: Make Rte 32 using 130 and 134
+107.599477: Add 108 to Rte 12
+107.885962: Add 33 to Rte 7
+108.088492: Add 115 to Rte 29
+107.555851: Combine Rte 29 to Rte 27
+108.115016: Add 178 to Rte 20
+108.495252: Add 161 to Rte 2
+107.798708: Combine Rte 32 to Rte 12
+106.979383: Combine Rte 28 to Rte 27
+108.376202: Make Rte 33 using 77 and 159
+108.824238: Add 26 to Rte 9
+109.041379: Add 81 to Rte 33
+109.593790: Add 35 to Rte 27
+109.783689: Add 47 to Rte 27
+110.123120: Add 29 to Rte 21
+110.504555: Add 48 to Rte 21
+110.961717: Add 140 to Rte 27
+111.250644: Add 151 to Rte 7
+111.492561: Add 142 to Rte 26
+111.730407: Add 27 to Rte 13
+112.019684: Add 133 to Rte 27
+112.205805: Add 172 to Rte 27
+112.616184: Add 9 to Rte 21
+112.040783: Combine Rte 33 to Rte 17
+112.323917: Add 123 to Rte 21
+112.180308: Combine Rte 25 to Rte 26
+112.019572: Combine Rte 22 to Rte 24
+112.797560: Add 46 to Rte 17
+113.176431: Add 96 to Rte 24
+113.412676: Add 65 to Rte 30
+113.482400: Add 73 to Rte 20
+113.762102: Add 145 to Rte 17
+114.173202: Add 168 to Rte 17
+114.580676: Add 91 to Rte 26
+115.536389: Make Rte 34 using 80 and 109
+116.006923: Add 118 to Rte 24
+116.171391: Add 138 to Rte 8
+116.465503: Add 76 to Rte 12
+117.475925: Make Rte 35 using 45 and 97
+117.738394: Add 34 to Rte 24
+117.902570: Add 83 to Rte 24
+118.103540: Add 103 to Rte 35
+118.559468: Add 72 to Rte 12
+118.797662: Add 30 to Rte 30
+119.094216: Add 85 to Rte 35
+119.611826: Add 167 to Rte 26
+119.855952: Add 111 to Rte 26
+120.045349: Add 146 to Rte 35
+120.631013: Make Rte 36 using 120 and 171
+121.529790: Make Rte 37 using 179 and 180
+121.672505: Add 41 to Rte 30
+121.361645: Combine Rte 37 to Rte 34
+121.704565: Add 135 to Rte 20
+122.087541: Add 40 to Rte 30
+122.261213: Add 4 to Rte 34
+122.069812: Combine Rte 35 to Rte 31
+122.139178: Add 56 to Rte 31
+122.215727: Add 21 to Rte 30
+122.352972: Add 15 to Rte 19
+122.536439: Add 61 to Rte 31
+122.657018: Add 125 to Rte 30
+123.039675: Make Rte 38 using 82 and 132
+122.906236: Combine Rte 38 to Rte 34
+
+TWOOPT:
+122.906236: 1: 129 156 100 38 43 175 43 175 38 100 156 129 
+122.787078: 1: 129 156 100 38 43 175 100 38 175 43 156 129 
+122.787078: 1: 129 156 100 38 43 175 129 156 43 175 38 100 
+122.787078: 2: 161 169 113 68 53 51 51 53 68 113 169 161 
+122.610005: 2: 161 169 113 68 53 51 51 53 113 68 169 161 
+122.610005: 2: 161 169 113 68 53 51 51 68 113 53 169 161 
+122.610005: 3: 89 139 3 102 19 64 39 136 136 39 3 64 89 19 102 139 
+122.540274: 3: 89 139 3 102 19 64 39 136 136 39 64 3 89 19 102 139 
+122.540274: 4: 114 149 58 160 137 148 13 49 49 13 148 137 160 58 149 114 
+122.540274: 4: 114 149 58 160 137 148 13 49 137 148 13 49 160 58 149 114 
+122.524348: 4: 114 149 58 160 137 148 13 49 160 49 13 148 137 58 149 114 
+122.434665: 4: 114 149 58 160 137 148 13 49 149 58 137 148 13 49 160 114 
+122.434665: 5: 151 33 107 6 87 126 74 69 124 154 154 74 124 69 126 87 6 107 33 151 
+122.021653: 5: 151 33 107 6 87 126 74 69 124 154 6 87 126 69 124 74 154 107 33 151 
+121.715787: 5: 151 33 107 6 87 126 74 69 124 154 6 87 126 69 124 154 74 107 33 151 
+121.715787: 6: 138 127 60 128 17 158 155 75 54 101 54 128 158 17 155 75 127 60 101 138 
+121.361025: 6: 138 127 60 128 17 158 155 75 54 101 60 127 75 155 17 158 128 54 101 138 
+121.361025: 6: 138 127 60 128 17 158 155 75 54 101 127 60 75 155 17 158 128 54 101 138 
+121.361025: 7: 26 67 166 12 163 176 5 66 112 50 131 50 131 112 66 176 5 163 67 166 12 26 
+121.360708: 7: 26 67 166 12 163 176 5 66 112 131 50 131 50 112 66 176 5 163 67 166 12 26 
+121.302236: 7: 26 67 166 12 163 176 5 66 112 131 50 176 66 112 50 131 5 163 67 166 12 26 
+121.297897: 7: 26 67 166 12 163 176 5 66 112 131 50 176 66 50 112 131 5 163 67 166 12 26 
+121.289207: 7: 26 67 166 12 163 176 5 66 112 131 50 176 66 5 131 112 50 163 67 166 12 26 
+121.279140: 7: 26 67 166 12 163 176 5 66 112 131 50 176 66 112 131 5 50 163 67 166 12 26 
+121.274801: 7: 26 67 166 12 163 176 5 66 112 131 50 176 66 50 5 131 112 163 67 166 12 26 
+121.266111: 7: 26 67 166 12 163 176 5 66 112 131 50 176 66 5 50 131 112 163 67 166 12 26 
+121.258609: 7: 26 67 166 12 163 176 5 66 112 131 50 176 66 5 112 131 50 163 67 166 12 26 
+121.254187: 7: 26 67 166 12 163 176 5 66 112 50 131 112 5 66 176 50 131 163 67 166 12 26 
+121.206103: 7: 26 67 166 12 163 176 5 66 112 50 131 5 112 66 176 50 131 163 67 166 12 26 
+121.142236: 7: 26 67 166 12 163 176 5 66 112 50 131 176 66 112 5 50 131 163 67 166 12 26 
+121.137897: 7: 26 67 166 12 163 176 5 66 112 50 131 176 66 50 5 112 131 163 67 166 12 26 
+121.137897: 8: 72 76 134 130 108 110 63 1 106 22 22 1 106 63 110 108 134 130 76 72 
+121.025798: 8: 72 76 134 130 108 110 63 1 106 22 1 22 106 63 110 108 134 130 76 72 
+121.025798: 9: 27 143 122 62 88 88 62 143 27 122 
+121.025798: 9: 27 143 122 62 88 122 27 143 62 88 
+121.025798: 10: 93 90 84 70 162 2 162 2 70 84 90 93 
+120.996018: 10: 93 90 84 70 2 162 2 162 70 84 90 93 
+120.996018: 11: 168 145 46 77 159 81 170 98 104 24 78 11 78 24 98 145 46 104 11 170 77 159 81 168 
+120.729388: 11: 168 145 46 77 159 81 170 98 104 24 78 11 104 46 145 98 24 78 11 170 77 159 81 168 
+120.400246: 11: 168 145 46 77 159 81 170 98 104 24 78 11 145 46 104 98 24 78 11 170 77 159 81 168 
+120.400246: 12: 15 37 71 32 157 59 121 150 95 52 10 10 150 95 52 157 32 59 121 71 37 15 
+120.288023: 12: 15 37 71 32 157 59 121 150 95 52 10 59 32 157 52 95 150 10 121 71 37 15 
+120.131163: 12: 15 37 71 32 157 59 121 10 150 95 52 157 32 59 10 52 95 150 121 71 37 15 
+120.131163: 13: 135 73 178 20 152 99 117 174 117 178 73 135 152 20 99 174 
+120.037830: 13: 135 73 178 20 152 99 117 174 99 20 152 135 73 178 117 174 
+120.037830: 14: 123 9 48 29 7 144 25 165 36 116 116 25 7 48 9 144 165 36 29 123 
+120.037830: 15: 83 34 118 96 153 119 177 23 92 92 23 118 34 96 153 119 177 83 
+119.662228: 15: 83 34 118 96 153 119 177 23 92 119 153 96 34 118 23 92 177 83 
+119.662228: 16: 111 167 91 79 164 142 57 55 105 16 105 167 164 79 16 57 55 142 91 111 
+119.512966: 16: 111 167 91 79 164 142 57 55 105 16 167 105 164 79 16 57 55 142 91 111 
+119.512966: 16: 111 167 91 79 164 142 57 55 105 16 167 105 164 79 57 16 55 142 91 111 
+119.512966: 17: 172 133 140 47 35 173 147 94 8 115 86 141 141 86 115 47 35 173 147 133 94 8 140 172 
+119.448028: 17: 172 133 140 47 35 173 147 94 8 115 86 141 115 86 141 47 35 173 147 133 94 8 140 172 
+119.448028: 17: 172 133 140 47 35 173 147 94 8 115 141 86 115 141 86 47 35 173 147 133 94 8 140 172 
+119.445823: 17: 172 133 140 47 35 173 147 94 8 115 141 86 35 47 86 141 115 173 147 133 94 8 140 172 
+119.239888: 17: 172 133 140 47 35 173 147 94 8 115 141 86 8 94 133 147 173 115 141 86 47 35 140 172 
+119.239888: 18: 125 21 40 41 30 65 31 14 14 31 65 30 41 21 40 125 
+119.215888: 18: 125 21 40 41 30 65 31 14 41 30 65 31 14 21 40 125 
+119.215888: 18: 125 21 40 41 30 65 31 14 40 21 14 31 65 30 41 125 
+119.171888: 18: 125 21 40 41 30 65 31 14 21 40 14 31 65 30 41 125 
+119.171888: 19: 61 56 42 18 44 28 146 85 103 97 45 97 146 45 103 85 61 56 42 18 44 28 
+119.113277: 19: 61 56 42 18 44 28 146 85 103 97 45 146 97 45 103 85 61 56 42 18 44 28 
+119.032749: 19: 61 56 42 18 44 28 146 85 103 97 45 61 85 103 45 97 146 56 42 18 44 28 
+119.032749: 20: 82 132 4 179 180 80 109 80 109 179 180 4 132 82 
+118.993915: 20: 82 132 4 180 179 109 80 109 80 180 179 4 132 82 
+118.935526: 20: 82 132 4 180 179 109 80 4 179 180 80 109 132 82 
+118.935526: 21: 120 171 171 120 
+
+</pre>
+      <h2 id="21">Add any single-shipment routes</h2>
+      <pre class="codeinput">[r,~,Time] = sh2rte(sh,r,rTCh);
+</pre>
+      <h2 id="22">Plot Routes</h2>
+      <pre class="codeinput">plotshmt(sh,XY,r,tr)
+pplot(XY(1,:),<span class="string">'ks'</span>)
+</pre><img src="hw8solnF19_02.png" alt="" hspace="5" vspace="5">
+      <h2 id="23">Display route output structure</h2>
+      <pre class="codeinput">[TC,Xflg,out] = rTCh(r);
+<span class="keyword">for</span> i = 1:length(out), sdisp(out(i),false,i), <span
+class="keyword">end</span>
+</pre>
+      <pre class="codeoutput"> 
+ 1:  Rte  Loc  Cost  Arrive  Wait  TWmin  Start    LU    Depart  TWmax  Total
+--:--------------------------------------------------------------------------
+ 1:    0    1  0.00    0.00    0    -Inf  16.16  0.0000   16.16   Inf    0.00
+ 2:  129    1  0.00   16.16    0    -Inf  16.16  0.0000   16.16   Inf    0.00
+ 3:  156    1  0.00   16.16    0    -Inf  16.16  0.0000   16.16   Inf    0.00
+ 4:  100    1  0.00   16.16    0    -Inf  16.16  0.0000   16.16   Inf    0.00
+ 5:   38    1  0.00   16.16    0    -Inf  16.16  0.0000   16.16   Inf    0.00
+ 6:   43    1  0.00   16.16    0    -Inf  16.16  0.0000   16.16   Inf    0.00
+ 7:  175    1  0.00   16.16    0    -Inf  16.16  0.0000   16.16   Inf    0.00
+ 8:  129  130  0.84   17.00    0      17  17.00  0.0333   17.03    21    0.87
+ 9:  156  157  0.21   17.25    0      17  17.25  0.0333   17.28    21    0.25
+10:   43   44  0.84   18.13    0      17  18.13  0.0333   18.16    21    0.88
+11:  175  176  0.91   19.07    0      17  19.07  0.0333   19.10    21    0.94
+12:   38   39  0.92   20.02    0      17  20.02  0.0333   20.06    21    0.96
+13:  100  101  0.66   20.72    0      17  20.72  0.0333   20.75    21    0.69
+14:    0    1  1.48   22.23    0    -Inf  22.23  0.0000   22.23   Inf    1.48
+ 
+ 2:  Rte  Loc  Cost  Arrive  Wait  TWmin  Start    LU    Depart  TWmax  Total
+--:--------------------------------------------------------------------------
+ 1:    0    1  0.00    0.00    0    -Inf  14.93  0.0000   14.93   Inf    0.00
+ 2:  161    1  0.00   14.93    0    -Inf  14.93  0.0000   14.93   Inf    0.00
+ 3:  169    1  0.00   14.93    0    -Inf  14.93  0.0000   14.93   Inf    0.00
+ 4:  113    1  0.00   14.93    0    -Inf  14.93  0.0000   14.93   Inf    0.00
+ 5:   68    1  0.00   14.93    0    -Inf  14.93  0.0000   14.93   Inf    0.00
+ 6:   53    1  0.00   14.93    0    -Inf  14.93  0.0000   14.93   Inf    0.00
+ 7:   51    1  0.00   14.93    0    -Inf  14.93  0.0000   14.93   Inf    0.00
+ 8:   51   52  1.43   16.36    0      12  16.36  0.0333   16.39    17    1.47
+ 9:   68   69  0.61   17.00    0      17  17.00  0.0333   17.03    21    0.64
+10:  113  114  0.51   17.54    0      17  17.54  0.0333   17.57    21    0.54
+11:   53   54  0.53   18.10    0      17  18.10  0.0333   18.13    21    0.56
+12:  169  170  1.24   19.37    0      17  19.37  0.0333   19.40    21    1.27
+13:  161  162  1.26   20.66    0      17  20.66  0.0333   20.69    21    1.29
+14:    0    1  0.55   21.24    0    -Inf  21.24  0.0000   21.24   Inf    0.55
+ 
+ 3:  Rte  Loc  Cost  Arrive  Wait  TWmin  Start    LU    Depart  TWmax  Total
+--:--------------------------------------------------------------------------
+ 1:    0    1  0.00    0.00    0    -Inf  14.90  0.0000   14.90   Inf    0.00
+ 2:   89    1  0.00   14.90    0    -Inf  14.90  0.0000   14.90   Inf    0.00
+ 3:  139    1  0.00   14.90    0    -Inf  14.90  0.0000   14.90   Inf    0.00
+ 4:    3    1  0.00   14.90    0    -Inf  14.90  0.0000   14.90   Inf    0.00
+ 5:  102    1  0.00   14.90    0    -Inf  14.90  0.0000   14.90   Inf    0.00
+ 6:   19    1  0.00   14.90    0    -Inf  14.90  0.0000   14.90   Inf    0.00
+ 7:   64    1  0.00   14.90    0    -Inf  14.90  0.0000   14.90   Inf    0.00
+ 8:   39    1  0.00   14.90    0    -Inf  14.90  0.0000   14.90   Inf    0.00
+ 9:  136    1  0.00   14.90    0    -Inf  14.90  0.0000   14.90   Inf    0.00
+10:  136  137  1.48   16.37    0      12  16.37  0.0333   16.41    17    1.51
+11:   39   40  0.59   17.00    0      17  17.00  0.0333   17.03    21    0.63
+12:   64   65  0.48   17.52    0      17  17.52  0.0333   17.55    21    0.52
+13:    3    4  0.33   17.88    0      17  17.88  0.0333   17.91    21    0.36
+14:   89   90  0.73   18.64    0      17  18.64  0.0333   18.67    21    0.76
+15:   19   20  0.95   19.62    0      17  19.62  0.0333   19.66    21    0.98
+16:  102  103  0.44   20.10    0      17  20.10  0.0333   20.13    21    0.48
+17:  139  140  0.73   20.86    0      17  20.86  0.0333   20.90    21    0.76
+18:    0    1  1.21   22.11    0    -Inf  22.11  0.0000   22.11   Inf    1.21
+ 
+ 4:  Rte  Loc   Cost   Arrive  Wait  TWmin  Start    LU    Depart  TWmax   Total
+--:-----------------------------------------------------------------------------
+ 1:    0    1  0.0000    0.00    0    -Inf  16.22  0.0000   16.22   Inf   0.0000
+ 2:  114    1  0.0000   16.22    0    -Inf  16.22  0.0000   16.22   Inf   0.0000
+ 3:  149    1  0.0000   16.22    0    -Inf  16.22  0.0000   16.22   Inf   0.0000
+ 4:   58    1  0.0000   16.22    0    -Inf  16.22  0.0000   16.22   Inf   0.0000
+ 5:  160    1  0.0000   16.22    0    -Inf  16.22  0.0000   16.22   Inf   0.0000
+ 6:  137    1  0.0000   16.22    0    -Inf  16.22  0.0000   16.22   Inf   0.0000
+ 7:  148    1  0.0000   16.22    0    -Inf  16.22  0.0000   16.22   Inf   0.0000
+ 8:   13    1  0.0000   16.22    0    -Inf  16.22  0.0000   16.22   Inf   0.0000
+ 9:   49    1  0.0000   16.22    0    -Inf  16.22  0.0000   16.22   Inf   0.0000
+10:  149  150  0.7800   17.00    0      17  17.00  0.0333   17.03    21   0.8133
+11:   58   59  0.5028   17.54    0      17  17.54  0.0333   17.57    21   0.5361
+12:  137  138  0.5183   18.09    0      17  18.09  0.0333   18.12    21   0.5516
+13:  148  149  0.4794   18.60    0      17  18.60  0.0333   18.63    21   0.5128
+14:   13   14  0.4949   19.13    0      17  19.13  0.0333   19.16    21   0.5283
+15:   49   50  0.4730   19.63    0      17  19.63  0.0333   19.67    21   0.5063
+16:  160  161  0.4249   20.09    0      17  20.09  0.0333   20.13    21   0.4583
+17:  114  115  0.7105   20.84    0      17  20.84  0.0333   20.87    21   0.7438
+18:    0    1  0.7934   21.66    0    -Inf  21.66  0.0000   21.66   Inf   0.7934
+ 
+ 5:  Rte  Loc   Cost   Arrive  Wait  TWmin  Start    LU    Depart  TWmax   Total
+--:-----------------------------------------------------------------------------
+ 1:    0    1  0.0000    0.00    0    -Inf   7.07  0.0000    7.07   Inf   0.0000
+ 2:  151    1  0.0000    7.07    0    -Inf   7.07  0.0000    7.07   Inf   0.0000
+ 3:   33    1  0.0000    7.07    0    -Inf   7.07  0.0000    7.07   Inf   0.0000
+ 4:  107    1  0.0000    7.07    0    -Inf   7.07  0.0000    7.07   Inf   0.0000
+ 5:    6    1  0.0000    7.07    0    -Inf   7.07  0.0000    7.07   Inf   0.0000
+ 6:   87    1  0.0000    7.07    0    -Inf   7.07  0.0000    7.07   Inf   0.0000
+ 7:  126    1  0.0000    7.07    0    -Inf   7.07  0.0000    7.07   Inf   0.0000
+ 8:   74    1  0.0000    7.07    0    -Inf   7.07  0.0000    7.07   Inf   0.0000
+ 9:   69    1  0.0000    7.07    0    -Inf   7.07  0.0000    7.07   Inf   0.0000
+10:  124    1  0.0000    7.07    0    -Inf   7.07  0.0000    7.07   Inf   0.0000
+11:  154    1  0.0000    7.07    0    -Inf   7.07  0.0000    7.07   Inf   0.0000
+12:    6    7  0.9332    8.00    0       8   8.00  0.0333    8.03    12   0.9666
+13:   87   88  0.3936    8.43    0       8   8.43  0.0333    8.46    12   0.4270
+14:  126  127  0.5152    8.98    0       8   8.98  0.0333    9.01    12   0.5485
+15:   69   70  0.1809    9.19    0       8   9.19  0.0333    9.22    12   0.2143
+16:  124  125  0.3193    9.54    0       8   9.54  0.0333    9.58    12   0.3526
+17:  154  155  0.7777   10.35    0       8  10.35  0.0333   10.39    12   0.8111
+18:   74   75  0.6883   11.08    0       8  11.08  0.0333   11.11    12   0.7216
+19:  107  108  0.5456   11.65    0       8  11.65  0.0333   11.69    12   0.5789
+20:   33   34  0.4229   12.11    0      12  12.11  0.0333   12.14    17   0.4562
+21:  151  152  0.3134   12.46    0      12  12.46  0.0333   12.49    17   0.3467
+22:    0    1  0.4584   12.95    0    -Inf  12.95  0.0000   12.95   Inf   0.4584
+ 
+ 6:  Rte  Loc  Cost  Arrive  Wait  TWmin  Start    LU    Depart  TWmax  Total
+--:--------------------------------------------------------------------------
+ 1:    0    1  0.00    0.00    0    -Inf   6.81  0.0000    6.81   Inf    0.00
+ 2:  138    1  0.00    6.81    0    -Inf   6.81  0.0000    6.81   Inf    0.00
+ 3:  127    1  0.00    6.81    0    -Inf   6.81  0.0000    6.81   Inf    0.00
+ 4:   60    1  0.00    6.81    0    -Inf   6.81  0.0000    6.81   Inf    0.00
+ 5:  128    1  0.00    6.81    0    -Inf   6.81  0.0000    6.81   Inf    0.00
+ 6:   17    1  0.00    6.81    0    -Inf   6.81  0.0000    6.81   Inf    0.00
+ 7:  158    1  0.00    6.81    0    -Inf   6.81  0.0000    6.81   Inf    0.00
+ 8:  155    1  0.00    6.81    0    -Inf   6.81  0.0000    6.81   Inf    0.00
+ 9:   75    1  0.00    6.81    0    -Inf   6.81  0.0000    6.81   Inf    0.00
+10:   54    1  0.00    6.81    0    -Inf   6.81  0.0000    6.81   Inf    0.00
+11:  101    1  0.00    6.81    0    -Inf   6.81  0.0000    6.81   Inf    0.00
+12:  127  128  1.19    8.00    0       8   8.00  0.0333    8.03    12    1.22
+13:   60   61  0.45    8.49    0       8   8.49  0.0333    8.52    12    0.49
+14:   75   76  0.59    9.11    0       8   9.11  0.0333    9.14    12    0.62
+15:  155  156  0.26    9.40    0       8   9.40  0.0333    9.43    12    0.29
+16:   17   18  0.51    9.94    0       8   9.94  0.0333    9.97    12    0.54
+17:  158  159  0.26   10.23    0       8  10.23  0.0333   10.27    12    0.29
+18:  128  129  0.34   10.61    0       8  10.61  0.0333   10.64    12    0.38
+19:   54   55  0.81   11.46    0       8  11.46  0.0333   11.49    12    0.85
+20:  101  102  0.56   12.05    0      12  12.05  0.0333   12.08    17    0.59
+21:  138  139  0.92   13.00    0      12  13.00  0.0333   13.03    17    0.95
+22:    0    1  0.28   13.31    0    -Inf  13.31  0.0000   13.31   Inf    0.28
+ 
+ 7:  Rte  Loc  Cost  Arrive  Wait  TWmin  Start    LU    Depart  TWmax  Total
+--:--------------------------------------------------------------------------
+ 1:    0    1  0.00    0.00    0    -Inf   7.15  0.0000    7.15   Inf    0.00
+ 2:   26    1  0.00    7.15    0    -Inf   7.15  0.0000    7.15   Inf    0.00
+ 3:   67    1  0.00    7.15    0    -Inf   7.15  0.0000    7.15   Inf    0.00
+ 4:  166    1  0.00    7.15    0    -Inf   7.15  0.0000    7.15   Inf    0.00
+ 5:   12    1  0.00    7.15    0    -Inf   7.15  0.0000    7.15   Inf    0.00
+ 6:  163    1  0.00    7.15    0    -Inf   7.15  0.0000    7.15   Inf    0.00
+ 7:  176    1  0.00    7.15    0    -Inf   7.15  0.0000    7.15   Inf    0.00
+ 8:    5    1  0.00    7.15    0    -Inf   7.15  0.0000    7.15   Inf    0.00
+ 9:   66    1  0.00    7.15    0    -Inf   7.15  0.0000    7.15   Inf    0.00
+10:  112    1  0.00    7.15    0    -Inf   7.15  0.0000    7.15   Inf    0.00
+11:   50    1  0.00    7.15    0    -Inf   7.15  0.0000    7.15   Inf    0.00
+12:  131    1  0.00    7.15    0    -Inf   7.15  0.0000    7.15   Inf    0.00
+13:  176  177  0.93    8.08    0       8   8.08  0.0333    8.12    12    0.96
+14:   66   67  0.32    8.43    0       8   8.43  0.0333    8.47    12    0.35
+15:   50   51  0.38    8.85    0       8   8.85  0.0333    8.88    12    0.42
+16:    5    6  0.23    9.11    0       8   9.11  0.0333    9.15    12    0.26
+17:  112  113  0.22    9.37    0       8   9.37  0.0333    9.40    12    0.25
+18:  131  132  0.43    9.83    0       8   9.83  0.0333    9.86    12    0.46
+19:  163  164  0.62   10.48    0       8  10.48  0.0333   10.52    12    0.65
+20:   67   68  0.87   11.39    0       8  11.39  0.0333   11.42    12    0.91
+21:  166  167  0.58   12.00    0      12  12.00  0.0333   12.03    17    0.61
+22:   12   13  0.57   12.60    0      12  12.60  0.0333   12.64    17    0.60
+23:   26   27  1.07   13.70    0      12  13.70  0.0333   13.74    17    1.10
+24:    0    1  0.48   14.21    0    -Inf  14.21  0.0000   14.21   Inf    0.48
+ 
+ 8:  Rte  Loc   Cost   Arrive  Wait  TWmin  Start    LU    Depart  TWmax   Total
+--:-----------------------------------------------------------------------------
+ 1:    0    1  0.0000    0.00    0    -Inf  15.61  0.0000   15.61   Inf   0.0000
+ 2:   72    1  0.0000   15.61    0    -Inf  15.61  0.0000   15.61   Inf   0.0000
+ 3:   76    1  0.0000   15.61    0    -Inf  15.61  0.0000   15.61   Inf   0.0000
+ 4:  134    1  0.0000   15.61    0    -Inf  15.61  0.0000   15.61   Inf   0.0000
+ 5:  130    1  0.0000   15.61    0    -Inf  15.61  0.0000   15.61   Inf   0.0000
+ 6:  108    1  0.0000   15.61    0    -Inf  15.61  0.0000   15.61   Inf   0.0000
+ 7:  110    1  0.0000   15.61    0    -Inf  15.61  0.0000   15.61   Inf   0.0000
+ 8:   63    1  0.0000   15.61    0    -Inf  15.61  0.0000   15.61   Inf   0.0000
+ 9:    1    1  0.0000   15.61    0    -Inf  15.61  0.0000   15.61   Inf   0.0000
+10:  106    1  0.0000   15.61    0    -Inf  15.61  0.0000   15.61   Inf   0.0000
+11:   22    1  0.0000   15.61    0    -Inf  15.61  0.0000   15.61   Inf   0.0000
+12:    1    2  0.7658   16.38    0      12  16.38  0.0333   16.41    17   0.7992
+13:   22   23  0.2893   16.70    0      12  16.70  0.0333   16.73    17   0.3226
+14:  106  107  0.2687   17.00    0      17  17.00  0.0333   17.03    21   0.3020
+15:   63   64  0.4956   17.53    0      17  17.53  0.0333   17.56    21   0.5290
+16:  110  111  0.3414   17.90    0      17  17.90  0.0333   17.94    21   0.3748
+17:  108  109  0.4316   18.37    0      17  18.37  0.0333   18.40    21   0.4649
+18:  134  135  0.4009   18.80    0      17  18.80  0.0333   18.84    21   0.4342
+19:  130  131  0.2550   19.09    0      17  19.09  0.0333   19.12    21   0.2883
+20:   76   77  0.4318   19.56    0      17  19.56  0.0333   19.59    21   0.4651
+21:   72   73  0.4583   20.05    0      17  20.05  0.0333   20.08    21   0.4916
+22:    0    1  0.3050   20.39    0    -Inf  20.39  0.0000   20.39   Inf   0.3050
+ 
+ 9:  Rte  Loc  Cost  Arrive  Wait  TWmin  Start    LU    Depart  TWmax  Total
+--:--------------------------------------------------------------------------
+ 1:    0    1  0.00    0.00    0    -Inf  15.85  0.0000   15.85   Inf    0.00
+ 2:   27    1  0.00   15.85    0    -Inf  15.85  0.0000   15.85   Inf    0.00
+ 3:  143    1  0.00   15.85    0    -Inf  15.85  0.0000   15.85   Inf    0.00
+ 4:  122    1  0.00   15.85    0    -Inf  15.85  0.0000   15.85   Inf    0.00
+ 5:   62    1  0.00   15.85    0    -Inf  15.85  0.0000   15.85   Inf    0.00
+ 6:   88    1  0.00   15.85    0    -Inf  15.85  0.0000   15.85   Inf    0.00
+ 7:  122  123  1.15   17.00    0      17  17.00  0.0333   17.03    21    1.18
+ 8:   27   28  0.97   18.00    0      17  18.00  0.0333   18.04    21    1.00
+ 9:  143  144  1.02   19.05    0      17  19.05  0.0333   19.09    21    1.05
+10:   62   63  0.82   19.90    0      17  19.90  0.0333   19.94    21    0.85
+11:   88   89  0.99   20.93    0      17  20.93  0.0333   20.96    21    1.03
+12:    0    1  1.37   22.34    0    -Inf  22.34  0.0000   22.34   Inf    1.37
+ 
+10:  Rte  Loc  Cost  Arrive  Wait  TWmin  Start    LU    Depart  TWmax  Total
+--:--------------------------------------------------------------------------
+ 1:    0    1  0.00    0.00    0    -Inf  15.71  0.0000   15.71   Inf    0.00
+ 2:   93    1  0.00   15.71    0    -Inf  15.71  0.0000   15.71   Inf    0.00
+ 3:   90    1  0.00   15.71    0    -Inf  15.71  0.0000   15.71   Inf    0.00
+ 4:   84    1  0.00   15.71    0    -Inf  15.71  0.0000   15.71   Inf    0.00
+ 5:   70    1  0.00   15.71    0    -Inf  15.71  0.0000   15.71   Inf    0.00
+ 6:    2    1  0.00   15.71    0    -Inf  15.71  0.0000   15.71   Inf    0.00
+ 7:  162    1  0.00   15.71    0    -Inf  15.71  0.0000   15.71   Inf    0.00
+ 8:    2    3  1.29   17.00    0      17  17.00  0.0333   17.03    21    1.33
+ 9:  162  163  1.06   18.10    0      17  18.10  0.0333   18.13    21    1.10
+10:   70   71  0.77   18.89    0      17  18.89  0.0333   18.93    21    0.80
+11:   84   85  0.61   19.54    0      17  19.54  0.0333   19.57    21    0.64
+12:   90   91  0.60   20.17    0      17  20.17  0.0333   20.21    21    0.64
+13:   93   94  0.50   20.70    0      17  20.70  0.0333   20.74    21    0.53
+14:    0    1  0.97   21.71    0    -Inf  21.71  0.0000   21.71   Inf    0.97
+ 
+11:  Rte  Loc   Cost   Arrive  Wait  TWmin  Start    LU    Depart  TWmax   Total
+--:-----------------------------------------------------------------------------
+ 1:    0    1  0.0000    0.00    0    -Inf  13.44  0.0000   13.44   Inf   0.0000
+ 2:  168    1  0.0000   13.44    0    -Inf  13.44  0.0000   13.44   Inf   0.0000
+ 3:  145    1  0.0000   13.44    0    -Inf  13.44  0.0000   13.44   Inf   0.0000
+ 4:   46    1  0.0000   13.44    0    -Inf  13.44  0.0000   13.44   Inf   0.0000
+ 5:   77    1  0.0000   13.44    0    -Inf  13.44  0.0000   13.44   Inf   0.0000
+ 6:  159    1  0.0000   13.44    0    -Inf  13.44  0.0000   13.44   Inf   0.0000
+ 7:   81    1  0.0000   13.44    0    -Inf  13.44  0.0000   13.44   Inf   0.0000
+ 8:  170    1  0.0000   13.44    0    -Inf  13.44  0.0000   13.44   Inf   0.0000
+ 9:   98    1  0.0000   13.44    0    -Inf  13.44  0.0000   13.44   Inf   0.0000
+10:  104    1  0.0000   13.44    0    -Inf  13.44  0.0000   13.44   Inf   0.0000
+11:   24    1  0.0000   13.44    0    -Inf  13.44  0.0000   13.44   Inf   0.0000
+12:   78    1  0.0000   13.44    0    -Inf  13.44  0.0000   13.44   Inf   0.0000
+13:   11    1  0.0000   13.44    0    -Inf  13.44  0.0000   13.44   Inf   0.0000
+14:  145  146  0.3549   13.80    0      12  13.80  0.0333   13.83    17   0.3882
+15:   46   47  0.3209   14.15    0      12  14.15  0.0333   14.18    17   0.3543
+16:  104  105  0.6362   14.82    0      12  14.82  0.0333   14.85    17   0.6696
+17:   98   99  0.5235   15.38    0      12  15.38  0.0333   15.41    17   0.5568
+18:   24   25  0.5943   16.00    0      12  16.00  0.0333   16.04    17   0.6276
+19:   78   79  0.6362   16.67    0      12  16.67  0.0333   16.71    17   0.6695
+20:   11   12  0.2930   17.00    0      17  17.00  0.0333   17.03    21   0.3264
+21:  170  171  0.8744   17.91    0      17  17.91  0.0333   17.94    21   0.9077
+22:   77   78  0.9017   18.84    0      17  18.84  0.0333   18.88    21   0.9350
+23:  159  160  0.3123   19.19    0      17  19.19  0.0333   19.22    21   0.3456
+24:   81   82  0.1629   19.38    0      17  19.38  0.0333   19.42    21   0.1963
+25:  168  169  0.4008   19.82    0      17  19.82  0.0333   19.85    21   0.4341
+26:    0    1  0.4106   20.26    0    -Inf  20.26  0.0000   20.26   Inf   0.4106
+ 
+12:  Rte  Loc   Cost   Arrive  Wait  TWmin  Start    LU    Depart  TWmax   Total
+--:-----------------------------------------------------------------------------
+ 1:    0    1  0.0000    0.00    0    -Inf   7.09  0.0000    7.09   Inf   0.0000
+ 2:   15    1  0.0000    7.09    0    -Inf   7.09  0.0000    7.09   Inf   0.0000
+ 3:   37    1  0.0000    7.09    0    -Inf   7.09  0.0000    7.09   Inf   0.0000
+ 4:   71    1  0.0000    7.09    0    -Inf   7.09  0.0000    7.09   Inf   0.0000
+ 5:   32    1  0.0000    7.09    0    -Inf   7.09  0.0000    7.09   Inf   0.0000
+ 6:  157    1  0.0000    7.09    0    -Inf   7.09  0.0000    7.09   Inf   0.0000
+ 7:   59    1  0.0000    7.09    0    -Inf   7.09  0.0000    7.09   Inf   0.0000
+ 8:  121    1  0.0000    7.09    0    -Inf   7.09  0.0000    7.09   Inf   0.0000
+ 9:   10    1  0.0000    7.09    0    -Inf   7.09  0.0000    7.09   Inf   0.0000
+10:  150    1  0.0000    7.09    0    -Inf   7.09  0.0000    7.09   Inf   0.0000
+11:   95    1  0.0000    7.09    0    -Inf   7.09  0.0000    7.09   Inf   0.0000
+12:   52    1  0.0000    7.09    0    -Inf   7.09  0.0000    7.09   Inf   0.0000
+13:  157  158  0.9111    8.00    0       8   8.00  0.0333    8.03    12   0.9444
+14:   32   33  0.5612    8.59    0       8   8.59  0.0333    8.63    12   0.5945
+15:   59   60  0.5182    9.15    0       8   9.15  0.0333    9.18    12   0.5516
+16:   10   11  0.7739    9.95    0       8   9.95  0.0333    9.99    12   0.8072
+17:   52   53  0.6352   10.62    0       8  10.62  0.0333   10.66    12   0.6685
+18:   95   96  0.4909   11.15    0       8  11.15  0.0333   11.18    12   0.5242
+19:  150  151  0.5364   11.72    0       8  11.72  0.0333   11.75    12   0.5697
+20:  121  122  0.5499   12.30    0      12  12.30  0.0333   12.33    17   0.5832
+21:   71   72  0.6196   12.95    0      12  12.95  0.0333   12.99    17   0.6529
+22:   37   38  0.5847   13.57    0      12  13.57  0.0333   13.60    17   0.6180
+23:   15   16  0.4683   14.07    0      12  14.07  0.0333   14.10    17   0.5016
+24:    0    1  0.1560   14.26    0    -Inf  14.26  0.0000   14.26   Inf   0.1560
+ 
+13:  Rte  Loc  Cost  Arrive  Wait  TWmin  Start    LU    Depart  TWmax  Total
+--:--------------------------------------------------------------------------
+ 1:    0    1  0.00    0.00    0    -Inf   6.72  0.0000    6.72   Inf    0.00
+ 2:  135    1  0.00    6.72    0    -Inf   6.72  0.0000    6.72   Inf    0.00
+ 3:   73    1  0.00    6.72    0    -Inf   6.72  0.0000    6.72   Inf    0.00
+ 4:  178    1  0.00    6.72    0    -Inf   6.72  0.0000    6.72   Inf    0.00
+ 5:   20    1  0.00    6.72    0    -Inf   6.72  0.0000    6.72   Inf    0.00
+ 6:  152    1  0.00    6.72    0    -Inf   6.72  0.0000    6.72   Inf    0.00
+ 7:   99    1  0.00    6.72    0    -Inf   6.72  0.0000    6.72   Inf    0.00
+ 8:  117    1  0.00    6.72    0    -Inf   6.72  0.0000    6.72   Inf    0.00
+ 9:  174    1  0.00    6.72    0    -Inf   6.72  0.0000    6.72   Inf    0.00
+10:   99  100  1.28    8.00    0       8   8.00  0.0333    8.03    12    1.31
+11:   20   21  1.22    9.25    0       8   9.25  0.0333    9.29    12    1.25
+12:  152  153  0.50    9.79    0       8   9.79  0.0333    9.82    12    0.53
+13:  135  136  0.80   10.62    0       8  10.62  0.0333   10.65    12    0.83
+14:   73   74  0.22   10.88    0       8  10.88  0.0333   10.91    12    0.26
+15:  178  179  0.45   11.36    0       8  11.36  0.0333   11.39    12    0.48
+16:  117  118  0.51   11.90    0       8  11.90  0.0333   11.93    12    0.54
+17:  174  175  0.31   12.25    0      12  12.25  0.0333   12.28    17    0.34
+18:    0    1  0.93   13.21    0    -Inf  13.21  0.0000   13.21   Inf    0.93
+ 
+14:  Rte  Loc  Cost  Arrive  Wait  TWmin  Start    LU    Depart  TWmax  Total
+--:--------------------------------------------------------------------------
+ 1:    0    1  0.00    0.00    0    -Inf   6.89  0.0000    6.89   Inf    0.00
+ 2:  123    1  0.00    6.89    0    -Inf   6.89  0.0000    6.89   Inf    0.00
+ 3:    9    1  0.00    6.89    0    -Inf   6.89  0.0000    6.89   Inf    0.00
+ 4:   48    1  0.00    6.89    0    -Inf   6.89  0.0000    6.89   Inf    0.00
+ 5:   29    1  0.00    6.89    0    -Inf   6.89  0.0000    6.89   Inf    0.00
+ 6:    7    1  0.00    6.89    0    -Inf   6.89  0.0000    6.89   Inf    0.00
+ 7:  144    1  0.00    6.89    0    -Inf   6.89  0.0000    6.89   Inf    0.00
+ 8:   25    1  0.00    6.89    0    -Inf   6.89  0.0000    6.89   Inf    0.00
+ 9:  165    1  0.00    6.89    0    -Inf   6.89  0.0000    6.89   Inf    0.00
+10:   36    1  0.00    6.89    0    -Inf   6.89  0.0000    6.89   Inf    0.00
+11:  116    1  0.00    6.89    0    -Inf   6.89  0.0000    6.89   Inf    0.00
+12:  116  117  1.11    8.00    0       8   8.00  0.0333    8.03    12    1.15
+13:   25   26  0.68    8.71    0       8   8.71  0.0333    8.74    12    0.71
+14:    7    8  0.56    9.30    0       8   9.30  0.0333    9.34    12    0.59
+15:   48   49  0.50    9.84    0       8   9.84  0.0333    9.87    12    0.53
+16:    9   10  0.32   10.19    0       8  10.19  0.0333   10.22    12    0.35
+17:  144  145  0.49   10.71    0       8  10.71  0.0333   10.75    12    0.53
+18:  165  166  1.17   11.91    0       8  11.91  0.0333   11.95    12    1.20
+19:   36   37  1.18   13.13    0      12  13.13  0.0333   13.16    17    1.21
+20:   29   30  0.72   13.88    0      12  13.88  0.0333   13.92    17    0.76
+21:  123  124  0.29   14.20    0      12  14.20  0.0333   14.24    17    0.32
+22:    0    1  0.40   14.64    0    -Inf  14.64  0.0000   14.64   Inf    0.40
+ 
+15:  Rte  Loc  Cost  Arrive  Wait  TWmin  Start    LU    Depart  TWmax  Total
+--:--------------------------------------------------------------------------
+ 1:    0    1  0.00    0.00    0    -Inf   7.25  0.0000    7.25   Inf    0.00
+ 2:   83    1  0.00    7.25    0    -Inf   7.25  0.0000    7.25   Inf    0.00
+ 3:   34    1  0.00    7.25    0    -Inf   7.25  0.0000    7.25   Inf    0.00
+ 4:  118    1  0.00    7.25    0    -Inf   7.25  0.0000    7.25   Inf    0.00
+ 5:   96    1  0.00    7.25    0    -Inf   7.25  0.0000    7.25   Inf    0.00
+ 6:  153    1  0.00    7.25    0    -Inf   7.25  0.0000    7.25   Inf    0.00
+ 7:  119    1  0.00    7.25    0    -Inf   7.25  0.0000    7.25   Inf    0.00
+ 8:  177    1  0.00    7.25    0    -Inf   7.25  0.0000    7.25   Inf    0.00
+ 9:   23    1  0.00    7.25    0    -Inf   7.25  0.0000    7.25   Inf    0.00
+10:   92    1  0.00    7.25    0    -Inf   7.25  0.0000    7.25   Inf    0.00
+11:  119  120  0.75    8.00    0       8   8.00  0.0333    8.03    12    0.78
+12:  153  154  0.76    8.79    0       8   8.79  0.0333    8.83    12    0.79
+13:   96   97  1.07    9.90    0       8   9.90  0.0333    9.93    12    1.11
+14:   34   35  0.38   10.32    0       8  10.32  0.0333   10.35    12    0.42
+15:  118  119  0.26   10.61    0       8  10.61  0.0333   10.64    12    0.29
+16:   23   24  0.58   11.22    0       8  11.22  0.0333   11.25    12    0.61
+17:   92   93  0.57   11.82    0       8  11.82  0.0333   11.85    12    0.60
+18:  177  178  0.53   12.38    0      12  12.38  0.0333   12.41    17    0.56
+19:   83   84  0.41   12.83    0      12  12.83  0.0333   12.86    17    0.45
+20:    0    1  0.27   13.13    0    -Inf  13.13  0.0000   13.13   Inf    0.27
+ 
+16:  Rte  Loc  Cost  Arrive  Wait  TWmin  Start    LU    Depart  TWmax  Total
+--:--------------------------------------------------------------------------
+ 1:    0    1  0.00    0.00    0    -Inf  13.95  0.0000   13.95   Inf    0.00
+ 2:  111    1  0.00   13.95    0    -Inf  13.95  0.0000   13.95   Inf    0.00
+ 3:  167    1  0.00   13.95    0    -Inf  13.95  0.0000   13.95   Inf    0.00
+ 4:   91    1  0.00   13.95    0    -Inf  13.95  0.0000   13.95   Inf    0.00
+ 5:   79    1  0.00   13.95    0    -Inf  13.95  0.0000   13.95   Inf    0.00
+ 6:  164    1  0.00   13.95    0    -Inf  13.95  0.0000   13.95   Inf    0.00
+ 7:  142    1  0.00   13.95    0    -Inf  13.95  0.0000   13.95   Inf    0.00
+ 8:   57    1  0.00   13.95    0    -Inf  13.95  0.0000   13.95   Inf    0.00
+ 9:   55    1  0.00   13.95    0    -Inf  13.95  0.0000   13.95   Inf    0.00
+10:  105    1  0.00   13.95    0    -Inf  13.95  0.0000   13.95   Inf    0.00
+11:   16    1  0.00   13.95    0    -Inf  13.95  0.0000   13.95   Inf    0.00
+12:  167  168  0.33   14.28    0      12  14.28  0.0333   14.31    17    0.36
+13:  105  106  0.59   14.91    0      12  14.91  0.0333   14.94    17    0.63
+14:  164  165  0.83   15.77    0      12  15.77  0.0333   15.80    17    0.86
+15:   79   80  1.20   17.00    0      17  17.00  0.0333   17.03    21    1.23
+16:   57   58  1.38   18.41    0      17  18.41  0.0333   18.44    21    1.41
+17:   16   17  0.36   18.80    0      17  18.80  0.0333   18.84    21    0.39
+18:   55   56  0.38   19.21    0      17  19.21  0.0333   19.25    21    0.41
+19:  142  143  0.36   19.60    0      17  19.60  0.0333   19.64    21    0.39
+20:   91   92  0.46   20.09    0      17  20.09  0.0333   20.13    21    0.49
+21:  111  112  0.27   20.39    0      17  20.39  0.0333   20.43    21    0.30
+22:    0    1  0.29   20.71    0    -Inf  20.71  0.0000   20.71   Inf    0.29
+ 
+17:  Rte  Loc   Cost   Arrive  Wait  TWmin  Start    LU    Depart  TWmax   Total
+--:-----------------------------------------------------------------------------
+ 1:    0    1  0.0000    0.00    0    -Inf   7.21  0.0000    7.21   Inf   0.0000
+ 2:  172    1  0.0000    7.21    0    -Inf   7.21  0.0000    7.21   Inf   0.0000
+ 3:  133    1  0.0000    7.21    0    -Inf   7.21  0.0000    7.21   Inf   0.0000
+ 4:  140    1  0.0000    7.21    0    -Inf   7.21  0.0000    7.21   Inf   0.0000
+ 5:   47    1  0.0000    7.21    0    -Inf   7.21  0.0000    7.21   Inf   0.0000
+ 6:   35    1  0.0000    7.21    0    -Inf   7.21  0.0000    7.21   Inf   0.0000
+ 7:  173    1  0.0000    7.21    0    -Inf   7.21  0.0000    7.21   Inf   0.0000
+ 8:  147    1  0.0000    7.21    0    -Inf   7.21  0.0000    7.21   Inf   0.0000
+ 9:   94    1  0.0000    7.21    0    -Inf   7.21  0.0000    7.21   Inf   0.0000
+10:    8    1  0.0000    7.21    0    -Inf   7.21  0.0000    7.21   Inf   0.0000
+11:  115    1  0.0000    7.21    0    -Inf   7.21  0.0000    7.21   Inf   0.0000
+12:  141    1  0.0000    7.21    0    -Inf   7.21  0.0000    7.21   Inf   0.0000
+13:   86    1  0.0000    7.21    0    -Inf   7.21  0.0000    7.21   Inf   0.0000
+14:    8    9  0.7873    8.00    0       8   8.00  0.0333    8.03    12   0.8207
+15:   94   95  0.7150    8.75    0       8   8.75  0.0333    8.78    12   0.7483
+16:  133  134  0.6224    9.40    0       8   9.40  0.0333    9.44    12   0.6558
+17:  147  148  0.2580    9.70    0       8   9.70  0.0333    9.73    12   0.2914
+18:  173  174  0.1559    9.88    0       8   9.88  0.0333    9.92    12   0.1893
+19:  115  116  0.3055   10.22    0       8  10.22  0.0333   10.26    12   0.3388
+20:  141  142  0.3231   10.58    0       8  10.58  0.0333   10.61    12   0.3564
+21:   86   87  0.3450   10.96    0       8  10.96  0.0333   10.99    12   0.3784
+22:   47   48  0.4166   11.41    0       8  11.41  0.0333   11.44    12   0.4499
+23:   35   36  0.2489   11.69    0       8  11.69  0.0333   11.72    12   0.2823
+24:  140  141  0.2810   12.00    0      12  12.00  0.0333   12.04    17   0.3143
+25:  172  173  0.2768   12.31    0      12  12.31  0.0333   12.35    17   0.3101
+26:    0    1  0.3183   12.67    0    -Inf  12.67  0.0000   12.67   Inf   0.3183
+ 
+18:  Rte  Loc   Cost   Arrive  Wait  TWmin  Start    LU    Depart  TWmax  Total
+--:----------------------------------------------------------------------------
+ 1:    0    1  0.0000    0.00    0    -Inf   7.86  0.0000    7.86   Inf    0.00
+ 2:  125    1  0.0000    7.86    0    -Inf   7.86  0.0000    7.86   Inf    0.00
+ 3:   21    1  0.0000    7.86    0    -Inf   7.86  0.0000    7.86   Inf    0.00
+ 4:   40    1  0.0000    7.86    0    -Inf   7.86  0.0000    7.86   Inf    0.00
+ 5:   41    1  0.0000    7.86    0    -Inf   7.86  0.0000    7.86   Inf    0.00
+ 6:   30    1  0.0000    7.86    0    -Inf   7.86  0.0000    7.86   Inf    0.00
+ 7:   65    1  0.0000    7.86    0    -Inf   7.86  0.0000    7.86   Inf    0.00
+ 8:   31    1  0.0000    7.86    0    -Inf   7.86  0.0000    7.86   Inf    0.00
+ 9:   14    1  0.0000    7.86    0    -Inf   7.86  0.0000    7.86   Inf    0.00
+10:   21   22  0.1433    8.00    0       8   8.00  0.0333    8.03    12    0.18
+11:   40   41  0.1844    8.22    0       8   8.22  0.0333    8.25    12    0.22
+12:   14   15  0.9562    9.21    0       8   9.21  0.0333    9.24    12    0.99
+13:   31   32  0.9808   10.22    0       8  10.22  0.0333   10.25    12    1.01
+14:   65   66  0.7015   10.96    0       8  10.96  0.0333   10.99    12    0.73
+15:   30   31  0.2430   11.23    0       8  11.23  0.0333   11.27    12    0.28
+16:   41   42  0.2340   11.50    0       8  11.50  0.0333   11.53    12    0.27
+17:  125  126  0.1255   11.66    0       8  11.66  0.0333   11.69    12    0.16
+18:    0    1  0.1393   11.83    0    -Inf  11.83  0.0000   11.83   Inf    0.14
+ 
+19:  Rte  Loc   Cost   Arrive  Wait  TWmin  Start    LU    Depart  TWmax   Total
+--:-----------------------------------------------------------------------------
+ 1:    0    1  0.0000    0.00    0    -Inf  16.84  0.0000   16.84   Inf   0.0000
+ 2:   61    1  0.0000   16.84    0    -Inf  16.84  0.0000   16.84   Inf   0.0000
+ 3:   56    1  0.0000   16.84    0    -Inf  16.84  0.0000   16.84   Inf   0.0000
+ 4:   42    1  0.0000   16.84    0    -Inf  16.84  0.0000   16.84   Inf   0.0000
+ 5:   18    1  0.0000   16.84    0    -Inf  16.84  0.0000   16.84   Inf   0.0000
+ 6:   44    1  0.0000   16.84    0    -Inf  16.84  0.0000   16.84   Inf   0.0000
+ 7:   28    1  0.0000   16.84    0    -Inf  16.84  0.0000   16.84   Inf   0.0000
+ 8:  146    1  0.0000   16.84    0    -Inf  16.84  0.0000   16.84   Inf   0.0000
+ 9:   85    1  0.0000   16.84    0    -Inf  16.84  0.0000   16.84   Inf   0.0000
+10:  103    1  0.0000   16.84    0    -Inf  16.84  0.0000   16.84   Inf   0.0000
+11:   97    1  0.0000   16.84    0    -Inf  16.84  0.0000   16.84   Inf   0.0000
+12:   45    1  0.0000   16.84    0    -Inf  16.84  0.0000   16.84   Inf   0.0000
+13:   61   62  0.1611   17.00    0      17  17.00  0.0333   17.03    21   0.1944
+14:   85   86  0.2723   17.31    0      17  17.31  0.0333   17.34    21   0.3057
+15:  103  104  0.2161   17.56    0      17  17.56  0.0333   17.59    21   0.2495
+16:   45   46  0.2216   17.81    0      17  17.81  0.0333   17.84    21   0.2549
+17:   97   98  0.2675   18.11    0      17  18.11  0.0333   18.14    21   0.3008
+18:  146  147  0.2105   18.35    0      17  18.35  0.0333   18.39    21   0.2438
+19:   56   57  0.1409   18.53    0      17  18.53  0.0333   18.56    21   0.1742
+20:   42   43  0.5853   19.15    0      17  19.15  0.0333   19.18    21   0.6186
+21:   18   19  0.5214   19.70    0      17  19.70  0.0333   19.74    21   0.5547
+22:   44   45  0.5089   20.24    0      17  20.24  0.0333   20.28    21   0.5422
+23:   28   29  0.4124   20.69    0      17  20.69  0.0333   20.72    21   0.4457
+24:    0    1  0.5485   21.27    0    -Inf  21.27  0.0000   21.27   Inf   0.5485
+ 
+20:  Rte  Loc   Cost   Arrive  Wait  TWmin  Start    LU    Depart  TWmax   Total
+--:-----------------------------------------------------------------------------
+ 1:    0    1  0.0000    0.00    0    -Inf  10.30  0.0000   10.30   Inf   0.0000
+ 2:   82    1  0.0000   10.30    0    -Inf  10.30  0.0000   10.30   Inf   0.0000
+ 3:  132    1  0.0000   10.30    0    -Inf  10.30  0.0000   10.30   Inf   0.0000
+ 4:    4    1  0.0000   10.30    0    -Inf  10.30  0.0000   10.30   Inf   0.0000
+ 5:  180    1  0.0000   10.30    0    -Inf  10.30  0.0000   10.30   Inf   0.0000
+ 6:  179    1  0.0000   10.30    0    -Inf  10.30  0.0000   10.30   Inf   0.0000
+ 7:  109    1  0.0000   10.30    0    -Inf  10.30  0.0000   10.30   Inf   0.0000
+ 8:   80    1  0.0000   10.30    0    -Inf  10.30  0.0000   10.30   Inf   0.0000
+ 9:    4    5  0.1778   10.48    0       8  10.48  0.0333   10.51    12   0.2112
+10:  179  180  0.2861   10.80    0       8  10.80  0.0333   10.83    12   0.3194
+11:  180  181  0.2559   11.09    0       8  11.09  0.0333   11.12    12   0.2892
+12:   80   81  0.2337   11.35    0       8  11.35  0.0333   11.39    12   0.2670
+13:  109  110  0.2228   11.61    0       8  11.61  0.0333   11.64    12   0.2562
+14:  132  133  0.2631   11.90    0       8  11.90  0.0333   11.94    12   0.2964
+15:   82   83  0.0617   12.00    0      12  12.00  0.0333   12.03    17   0.0950
+16:    0    1  0.1349   12.17    0    -Inf  12.17  0.0000   12.17   Inf   0.1349
+ 
+21:  Rte  Loc   Cost   Arrive  Wait  TWmin  Start    LU    Depart  TWmax   Total
+--:-----------------------------------------------------------------------------
+ 1:    0    1  0.0000    0.00    0    -Inf  16.66  0.0000   16.66   Inf   0.0000
+ 2:  120    1  0.0000   16.66    0    -Inf  16.66  0.0000   16.66   Inf   0.0000
+ 3:  171    1  0.0000   16.66    0    -Inf  16.66  0.0000   16.66   Inf   0.0000
+ 4:  171  172  0.2195   16.88    0      12  16.88  0.0333   16.91    17   0.2528
+ 5:  120  121  0.0908   17.00    0      17  17.00  0.0333   17.03    21   0.1241
+ 6:    0    1  0.2087   17.24    0    -Inf  17.24  0.0000   17.24   Inf   0.2087
+</pre>
+      <h2 id="24">Plot cumsum of each route segment</h2>
+      <pre class="codeinput"><span class="keyword">for</span> i = 1:length(r)
+   idx = rte2idx(r{i});
+   segsum = rtesegsum(rtenorm(r{i}),[sh(idx).q]);
+   Maxpkg(i) = max(segsum);
+   subplot(ceil(length(r)/2),2,i)
+   bar(segsum)
+   title([<span class="string">'Route '</span> num2str(i)])
+<span class="keyword">end</span>
+</pre><img src="hw8solnF19_03.png" alt="" hspace="5" vspace="5">
+      <h2 id="25">Route time and delivered/picked-up packages</h2>
+      <pre class="codeinput">vdisp(<span class="string">'Time,Maxpkg'</span>)
+</pre>
+      <pre class="codeoutput"> 
+  :  Time  Maxpkg
+--:--------------
+ 1:  6.07     9  
+ 2:  6.31    17  
+ 3:  7.21    17  
+ 4:  5.44    15  
+ 5:  5.88    19  
+ 6:  6.50    22  
+ 7:  7.06    29  
+ 8:  4.78    30  
+ 9:  6.49    12  
+10:  6.00     9  
+11:  6.82    27  
+12:  7.17    24  
+13:  6.49    17  
+14:  7.76    22  
+15:  5.88    20  
+16:  6.76    25  
+17:  5.45    28  
+18:  3.97    20  
+19:  4.43    20  
+20:  1.87    16  
+21:  0.59     3  
+</pre>
+      <h2 id="26">Display Gantt chart of route time spans</h2>
+      <pre class="codeinput">b = arrayfun(@(x) (x.Start(1)),out); b = b(:);
+e = arrayfun(@(x) (x.Depart(end)),out); e = e(:);
+mdisp([b e])
+figure
+gantt([b e])
+</pre>
+      <pre class="codeoutput"> 
+  :    1      2  
+--:--------------
+ 1:  16.16  22.23
+ 2:  14.93  21.24
+ 3:  14.90  22.11
+ 4:  16.22  21.66
+ 5:   7.07  12.95
+ 6:   6.81  13.31
+ 7:   7.15  14.21
+ 8:  15.61  20.39
+ 9:  15.85  22.34
+10:  15.71  21.71
+11:  13.44  20.26
+12:   7.09  14.26
+13:   6.72  13.21
+14:   6.89  14.64
+15:   7.25  13.13
+16:  13.95  20.71
+17:   7.21  12.67
+18:   7.86  11.83
+19:  16.84  21.27
+20:  10.30  12.17
+21:  16.66  17.24
+</pre><img src="hw8solnF19_04.png" alt="" hspace="5" vspace="5">
+      <h2 id="27">Greedy route combination heuristic (not part of Matlog)</h2>
+      <pre class="codeinput">cmbrte = combinerte(out); cmbrte{:}
+</pre>
+      <pre class="codeoutput">ans =
+    20    11
+ans =
+    18    16
+ans =
+    15     3
+ans =
+    17     2
+ans =
+     7     8
+ans =
+    12    10
+ans =
+     5     9
+ans =
+    14     1
+ans =
+     6     4
+ans =
+    13    21
+ans =
+    19
+</pre>
+      <h2 id="28">Question 5</h2>
+      <h2 id="29">Read data</h2>
+      <pre class="codeinput">close <span class="string">all</span>, clear
+fn = <span class="string">'HW8data.xlsx'</span>;
+in = table2struct(readtable(fn,<span class="string">'Sheet'</span>,<span class="string">'Q5-Data'</span>));
+sdisp(in)
+</pre>
+      <pre class="codeoutput"> 
+in:   orig    dest    cu     wt      ud      uc  
+--:----------------------------------------------
+ 1:  28,217  28,734  0.89    0.40   6,231    1.03
+ 2:  28,333  27,519  0.67    6.80   6,064   37.76
+ 3:  27,407  27,701  0.67    2.29  33,557    2.50
+ 4:  29,170  27,505  3.56   17.37   2,859   37.26
+ 5:  27,350  27,011  1.33   14.12   3,698   42.55
+ 6:  28,104  27,360  2.67   53.74   1,875  130.27
+ 7:  28,670  29,450  2.67    2.55  13,500    8.43
+ 8:  29,488  28,215  3.56    2.84   4,936    9.75
+ 9:  28,562  27,560  1.33   37.64   2,216   37.45
+10:  27,703  29,611  2.67   37.04     301   27.86
+11:  29,926  28,213  1.33    2.25  10,175   25.24
+12:  28,501  27,513  1.33    3.36   1,600    2.15
+13:  29,108  28,079  1.33   13.61   8,512  186.42
+14:  28,546  29,669  3.56    4.40   7,307    3.90
+15:  29,526  28,139  3.56   59.65     144  213.79
+16:  28,304  28,352  3.56   15.22   1,044   58.00
+17:  27,217  29,902  1.33   19.51     516   57.17
+18:  27,260  29,180  1.00   19.33   4,299  133.46
+19:  28,212  29,801  0.67    3.97  10,047  126.16
+20:  27,921  27,834  3.56  129.64   2,225  111.32
+21:  29,118  28,173  2.67   87.71   2,103   88.67
+22:  27,410  29,210  1.33    1.94   2,997    9.03
+23:  28,021  28,105  1.33    4.18     600    6.65
+24:  28,384  27,295  1.00   14.76     364  175.46
+25:  27,028  29,403  0.89    1.39   7,586   14.49
+26:  29,743  27,320  1.00   32.97   2,038   17.15
+27:  27,332  27,263  0.67    6.90   7,172    4.90
+28:  28,277  29,323  0.89    3.81   3,230    9.13
+29:  27,244  29,710  0.67    1.33  22,427    3.03
+30:  29,340  27,707  3.56   23.46   2,549   12.69
+31:  27,607  28,277  1.00    1.85  12,960    7.33
+32:  28,643  28,043  0.67    2.96  10,125    3.41
+33:  29,687  28,311  0.67    7.55   1,140   41.00
+34:  27,401  29,445  1.33   25.46   3,192  231.03
+35:  29,115  27,217  0.67    1.05  14,643    4.76
+36:  29,301  28,326  0.67    6.94   7,093   54.89
+37:  28,510  29,541  1.33   12.10   1,616   84.33
+38:  28,601  28,348  2.67   83.17     468   99.67
+39:  27,542  28,655  0.89   15.61     794  259.02
+40:  28,401  29,620  0.89   11.48   2,316   65.14
+41:  28,056  27,705  1.33    3.62   4,392    2.15
+42:  28,273  28,056  0.89    9.28   5,578    5.75
+43:  28,645  27,609  3.56   11.98   8,594   14.19
+44:  27,025  28,348  1.33    3.95  12,901   11.01
+45:  29,924  27,892  0.67    6.69   3,443    6.63
+46:  29,142  29,445  3.56   46.35     504  525.44
+47:  29,745  28,314  1.00    8.82   3,543  112.77
+48:  29,365  27,028  0.89   17.75   4,743   31.60
+49:  29,642  28,403  1.33    8.34   4,793   72.43
+50:  28,328  28,777  0.89   11.58  12,747   14.14
+51:  29,412  28,748  2.67   15.97   1,483   70.86
+52:  27,587  29,609  2.67   35.79     695  314.93
+53:  27,330  29,115  1.00   15.04   7,977   32.36
+54:  29,696  29,154  0.67    3.03   1,197   34.41
+55:  27,203  29,605  3.56    7.58   8,143   58.57
+56:  28,442  29,570  0.67   22.31   1,389   35.61
+57:  29,464  28,613  0.67    7.48   3,124   16.45
+58:  28,146  28,334  3.56   56.47   1,332  193.68
+59:  28,792  27,332  3.56   41.27     764  100.13
+60:  28,374  28,210  0.67    3.72  30,456    7.19
+61:  27,517  29,406  1.33   30.59   5,837   85.47
+62:  28,792  29,732  1.33    6.39   8,209   11.57
+63:  28,207  29,445  1.33    4.64   9,525   30.37
+64:  29,369  27,609  0.89    6.46   5,356   56.02
+</pre>
+      <h2 id="30">Determine shipment begining and ending location index</h2>
+      <pre class="codeinput">zip = unique([[in.orig]; [in.dest]]);
+b = mand([in.orig],zip);
+e = mand([in.dest],zip);
+</pre>
+      <h2 id="31">Create independent shipments</h2>
+      <pre class="codeinput">z = uszip5(mor(zip,uszip5(<span class="string">'Code5'</span>)));
+D = dists(z.XY,z.XY,<span class="string">'mi'</span>) * 1.2;
+ppiTL = 131.4; <span class="comment">% Jan 2018 (P)</span>
+ppiLTL = 179.4; <span class="comment">% Jan 2018 (P)</span>
+tr = struct(<span class="string">'r'</span>,2*(ppiTL/102.7),<span class="string">'Kwt'</span>,25,<span
+class="string">'Kcu'</span>,2750);
+f = [in.wt].*[in.ud]/2000;
+s = [in.wt]./[in.cu];
+v = 2000*[in.uc]./[in.wt];
+sh = vec2struct(<span class="string">'b'</span>,b,<span class="string">'e'</span>,e,<span
+class="string">'f'</span>,f,<span class="string">'s'</span>,s,<span class="string">'v'</span>,v,<span
+class="string">'a'</span>,.5,<span class="string">'h'</span>,.3);
+sh = vec2struct(sh,<span class="string">'d'</span>,diag(D([sh.b],[sh.e])));
+[TLC1,q1,isLTL] = minTLC(sh,tr,ppiLTL);
+sh = vec2struct(sh,<span class="string">'TLC1'</span>,TLC1,<span class="string">'q1'</span>,q1,<span
+class="string">'n1'</span>,[sh.f]./q1,<span class="keyword">...</span>
+   <span class="string">'cu1'</span>,(2000*q1)./[sh.s],<span class="string">'isLTL'</span>,isLTL);
+sdisp(sh)
+</pre>
+      <pre class="codeoutput"> 
+sh:   b    e      f      s        v       a    h      d       TLC1      q1     n1      cu1    isLTL
+--:------------------------------------------------------------------------------------------------
+ 1:   48   75    1.25   0.45   5,132.04  0.5  0.3  169.55   1,351.80   0.62   2.01  2,750.00    0  
+ 2:   56   21   20.61  10.20  11,107.68  0.5  0.3   73.10   5,069.57   1.52  13.55    298.37    0  
+ 3:   16   27   38.44   3.44   2,182.55  0.5  0.3   65.70   2,908.96   4.44   8.65  2,585.87    0  
+ 4:   84   18   24.84   4.89   4,289.27  0.5  0.3  191.17   5,591.69   4.35   5.72  1,778.66    0  
+ 5:   13    1   26.10  10.59   6,027.81  0.5  0.3   63.97   3,931.07   2.17  12.01    410.60    0  
+ 6:   38   14   50.38  20.15   4,848.33  0.5  0.3   77.31   5,384.55   3.70  13.61    367.42    0  
+ 7:   74   96   17.21   0.96   6,614.36  0.5  0.3  270.37  10,361.08   1.31  13.09  2,750.00    0  
+ 8:   98   47    7.02   0.80   6,856.54  0.5  0.3  193.73   4,294.92   1.10   6.38  2,750.00    0  
+ 9:   68   23   41.70  28.23   1,990.04  0.5  0.3  131.60   4,094.90   6.86   6.08    485.96    0  
+10:   28  104    5.57  13.89   1,504.30  0.5  0.3  263.71   1,842.64   4.08   1.37    587.91    0  
+11:  117   46   11.45   1.69  22,424.59  0.5  0.3  252.52   9,978.39   1.48   7.72  1,757.02    0  
+12:   65   19    2.69   2.52   1,280.75  0.5  0.3   98.31     720.59   1.88   1.43  1,489.55    0  
+13:   79   37   57.92  10.21  27,397.99  0.5  0.3   96.88  15,363.14   1.87  30.99    366.26    0  
+14:   67  107   16.07   1.24   1,773.01  0.5  0.3  344.62   8,783.69   1.70   9.45  2,750.00    0  
+15:   99   40    4.30  16.78   7,167.62  0.5  0.3  240.88   2,849.35   0.42  10.33     49.58    1  
+16:   51   59    7.94   4.28   7,622.55  0.5  0.3   37.96   1,878.55   0.82   9.67    383.87    0  
+17:    5  115    5.03  14.64   5,859.56  0.5  0.3  331.71   3,645.77   0.62   8.13     84.65    1  
+18:    7   85   41.54  19.33  13,811.59  0.5  0.3  151.38  11,547.86   2.79  14.91    288.42    0  
+19:   45  114   19.94   5.95  63,574.29  0.5  0.3  147.59  16,947.92   0.89  22.44    298.54    0  
+20:   33   31  144.22  36.46   1,717.41  0.5  0.3   98.45   6,118.82  11.88  12.14    651.46    0  
+21:   81   42   92.23  32.89   2,021.85  0.5  0.3  112.23   5,668.50   9.35   9.87    568.26    0  
+22:   17   86    2.91   1.46   9,304.48  0.5  0.3  190.27   2,811.74   1.01   2.89  1,383.87    0  
+23:   34   39    1.25   3.14   3,181.82  0.5  0.3   52.29     566.00   0.59   2.11    378.27    0  
+24:   61    9    2.69  14.76  23,780.06  0.5  0.3  127.44   2,169.06   0.12  21.99     16.55    1  
+25:    3   92    5.28   1.56  20,833.93  0.5  0.3  261.65   6,645.18   1.06   4.96  1,358.85    0  
+26:  112   10   33.60  32.97   1,040.29  0.5  0.3  160.27   2,932.71   9.40   3.58    570.01    0  
+27:   12    8   24.73  10.34   1,421.15  0.5  0.3   69.25   1,933.04   4.53   5.45    876.70    0  
+28:   50   88    6.16   4.29   4,788.13  0.5  0.3   74.14   1,832.11   1.28   4.83    594.58    0  
+29:    6  110   14.88   1.99   4,566.35  0.5  0.3  148.35   3,938.70   2.74   5.44  2,750.00    0  
+30:   89   30   29.90   6.60   1,081.81  0.5  0.3  195.38   3,119.93   9.07   3.30  2,750.00    0  
+31:   25   50   11.98   1.85   7,928.18  0.5  0.3  155.01   4,754.79   2.00   5.99  2,162.25    0  
+32:   71   35   14.97   4.44   2,305.77  0.5  0.3  103.38   2,340.95   3.38   4.42  1,525.62    0  
+33:  108   52    4.30  11.32  10,867.69  0.5  0.3  233.68   3,569.14   0.35  12.38     61.38    1  
+34:   15   95   40.63  19.09  18,149.68  0.5  0.3  254.71  16,982.08   3.12  13.03    326.69    0  
+35:   80    5    7.70   1.58   9,047.71  0.5  0.3  246.00   5,130.84   1.89   4.08  2,395.47    0  
+36:   87   54   24.61  10.41  15,817.76  0.5  0.3  195.29  10,804.48   2.28  10.81    437.44    0  
+37:   66  100    9.78   9.08  13,933.32  0.5  0.3  214.49   6,699.18   1.60   6.10    353.06    0  
+38:   69   58   19.46  31.19   2,396.71  0.5  0.3  177.04   3,560.74   4.95   3.93    317.56    0  
+39:   22   73    6.20  17.56  33,188.33  0.5  0.3  242.80   4,893.46   0.16  38.72     18.23    1  
+40:   62  105   13.29  12.91  11,350.61  0.5  0.3  305.72   8,415.08   2.47   5.38    382.77    0  
+41:   36   29    7.95   2.71   1,188.50  0.5  0.3  159.31   1,533.23   3.73   2.13  2,750.00    0  
+42:   49   36   25.89  10.44   1,239.04  0.5  0.3   14.17   1,080.91   2.25  11.52    430.38    0  
+43:   72   26   51.46   3.37   2,369.64  0.5  0.3  195.81   7,213.67   4.63  11.11  2,750.00    0  
+44:    2   58   25.48   2.96   5,574.97  0.5  0.3  140.11   5,527.77   3.31   7.71  2,231.36    0  
+45:  116   32   11.53  10.04   1,980.61  0.5  0.3  369.04   3,596.37   6.05   1.90  1,205.48    0  
+46:   82   95   11.68  13.04  22,673.10  0.5  0.3   54.50   4,707.47   0.69  16.88    106.18    0  
+47:  113   53   15.63   8.82  25,556.94  0.5  0.3  148.28   9,537.38   1.24  12.57    281.91    0  
+48:   90    3   42.09  19.97   3,560.84  0.5  0.3  132.73   5,526.54   5.17   8.14    518.20    0  
+49:  106   63   19.99   6.26  17,363.27  0.5  0.3  323.00  13,120.94   2.52   7.94    805.11    0  
+50:   55   77   73.84  13.03   2,441.11  0.5  0.3  262.57   8,524.20  11.64   6.34  1,786.22    0  
+51:   94   76   11.84   5.99   8,876.81  0.5  0.3  310.28   7,075.43   2.66   4.46    887.57    0  
+52:   24  103   12.44  13.42  17,598.77  0.5  0.3  273.65   9,076.07   0.53  23.61     78.50    1  
+53:   11   80   59.99  15.04   4,303.19  0.5  0.3  202.99   8,969.51   6.95   8.63    923.93    0  
+54:  109   83    1.81   4.54  22,736.13  0.5  0.3  190.91   3,435.24   0.17  10.64     75.02    1  
+55:    4  102   30.85   2.13  15,458.72  0.5  0.3  192.18  11,862.79   2.56  12.06  2,400.51    0  
+56:   64  101   15.50  33.47   3,191.63  0.5  0.3   72.92   2,353.27   2.46   6.31    146.86    0  
+57:   97   70   11.69  11.22   4,396.28  0.5  0.3  259.03   4,520.82   3.43   3.41    610.75    0  
+58:   41   57   37.61  15.88   6,859.29  0.5  0.3  126.49   7,078.38   3.44  10.93    433.15    0  
+59:   78   12   15.76  11.61   4,852.71  0.5  0.3  218.29   5,063.50   3.48   4.53    599.35    0  
+60:   60   44   56.64   5.58   3,866.42  0.5  0.3   94.53   5,637.44   4.86  11.65  1,742.46    0  
+61:   20   93   89.29  22.95   5,587.42  0.5  0.3  251.03  13,866.43   8.27  10.79    721.04    0  
+62:   78  111   26.21   4.79   3,623.21  0.5  0.3   93.65   3,695.51   3.40   7.71  1,419.54    0  
+63:   43   95   22.08   3.48  13,099.83  0.5  0.3  191.12   9,213.19   2.34   9.42  1,348.25    0  
+64:   91   26   17.30   7.27  17,347.14  0.5  0.3  242.68  10,573.44   2.03   8.51    559.25    0  
+</pre>
+      <h2 id="32">Plot independent shipments</h2>
+      <pre class="codeinput">plotshmt(sh,z.XY,[],tr,true)
+</pre><img src="hw8solnF19_05.png" alt="" hspace="5" vspace="5">
+      <h2 id="33">Consolidated shipments</h2>
+      <pre class="codeinput">rTCh = @(rte) minTLC(sh,tr,[],D,rte);
+IJS = pairwisesavings(rTCh,sh,minTLC(sh,tr));
+</pre>
+      <h2 id="34">Construct and improve routes</h2>
+      <pre class="codeinput">[rc,TLCc] = twoopt(savings(rTCh,sh,IJS),rTCh);
+</pre>
+      <h2 id="35">Make shipments not in routes into single-shipment routes</h2>
+      <pre class="codeinput">[rc,idx1,TLCc] = sh2rte(sh,rc,rTCh);
+</pre>
+      <pre class="codeoutput">ADD SINGLE-SHIPMENT ROUTES:
+299421.236331: Added shipments 3 5 6 13 16 20 23 24 27 29 32 43 44 45 46 54
+
+</pre>
+      <h2 id="36">Report results</h2>
+      <pre class="codeinput">plotshmt(sh,z.XY,rc,tr)
+[~,~,out] = rteTC(rc,sh,D,tr);
+<span class="keyword">for</span> i = 1:length(out), sdisp(out(i),false,i), <span
+class="keyword">end</span>
+vdisp(<span class="string">'sum(TLC1),sum(TLCc)'</span>)
+</pre>
+      <pre class="codeoutput"> 
+ 1:  Rte  Loc   Cost
+--:-----------------
+ 1:   53   11   0.00
+ 2:   61   20  30.23
+ 3:   34   15  52.95
+ 4:   18    7  17.69
+ 5:   25    3  39.72
+ 6:    7   74  31.96
+ 7:   63   43  83.06
+ 8:   19   45   5.44
+ 9:   18   85  72.07
+10:   19  114  76.60
+11:   53   80  59.29
+12:   61   93  71.98
+13:   25   92  12.67
+14:   34   95  16.11
+15:   63   95   0.00
+16:    7   96  13.87
+ 
+ 2:  Rte  Loc   Cost 
+--:------------------
+ 1:   62   78    0.00
+ 2:   59   78    0.00
+ 3:   49  106   52.08
+ 4:   33  108   23.76
+ 5:   48   90   10.57
+ 6:   36   87   11.61
+ 7:   64   91    5.70
+ 8:   30   89   30.76
+ 9:   62  111   34.25
+10:   47  113    9.17
+11:   41   36   19.66
+12:   38   69   47.99
+13:   48    3   51.71
+14:   58   41   27.87
+15:   47   53  103.40
+16:   38   58   13.38
+17:   33   52   21.09
+18:   36   54   20.38
+19:   59   12    9.31
+20:   30   30   48.80
+21:   41   29    6.16
+22:   64   26   27.64
+23:   58   57   47.56
+24:   49   63   98.82
+ 
+3:  Rte  Loc   Cost 
+-:------------------
+1:   37   66    0.00
+2:   14   67   40.62
+3:   40   62   60.21
+4:   56   64   43.63
+5:   56  101   72.92
+6:   37  100   51.35
+7:   40  105  184.40
+8:   14  107   37.87
+ 
+4:  Rte  Loc   Cost 
+-:------------------
+1:   11  117    0.00
+2:    8   98   55.59
+3:   21   81   56.70
+4:   21   42  112.23
+5:    8   47   27.36
+6:   11   46    4.38
+ 
+5:  Rte  Loc   Cost 
+-:------------------
+1:   51   94    0.00
+2:   57   97   10.65
+3:   15   99  105.89
+4:    1   48  171.69
+5:   57   70   51.27
+6:   15   40   62.09
+7:   51   76   57.19
+8:    1   75   58.36
+ 
+6:  Rte  Loc   Cost 
+-:------------------
+1:   35   80    0.00
+2:    4   84   43.32
+3:   26  112   90.43
+4:   26   10  160.27
+5:   35    5   22.34
+6:    4   18   68.53
+ 
+7:  Rte  Loc   Cost 
+-:------------------
+1:   17    5    0.00
+2:   22   17   34.92
+3:   22   86  190.27
+4:   17  115  144.77
+ 
+ 8:  Rte  Loc   Cost
+--:-----------------
+ 1:    9   68   0.00
+ 2:   12   65  29.59
+ 3:    2   56  33.73
+ 4:   50   55  32.04
+ 5:   39   22  52.71
+ 6:   52   24  41.08
+ 7:   10   28  17.21
+ 8:   31   25  13.40
+ 9:   12   19   5.67
+10:    9   23   4.98
+11:    2   21   5.52
+12:   55    4  61.06
+13:   31   50  89.29
+14:   28   50   0.00
+15:   39   73  85.46
+16:   50   77  25.10
+17:   28   88  65.37
+18:   52  103  37.11
+19:   10  104   8.28
+20:   55  102   7.28
+ 
+9:  Rte  Loc   Cost
+-:-----------------
+1:   60   60   0.00
+2:   60   44  94.53
+3:   42   49   6.14
+4:   42   36  14.17
+ 
+10:  Rte  Loc   Cost
+--:-----------------
+ 1:   3    16   0.00
+ 2:   3    27  65.70
+ 
+11:  Rte  Loc   Cost
+--:-----------------
+ 1:   5    13   0.00
+ 2:   5     1  63.97
+ 
+12:  Rte  Loc   Cost
+--:-----------------
+ 1:   6    38   0.00
+ 2:   6    14  77.31
+ 
+13:  Rte  Loc   Cost
+--:-----------------
+ 1:   13   79   0.00
+ 2:   13   37  96.88
+ 
+14:  Rte  Loc   Cost
+--:-----------------
+ 1:   16   51   0.00
+ 2:   16   59  37.96
+ 
+15:  Rte  Loc   Cost
+--:-----------------
+ 1:   20   33   0.00
+ 2:   20   31  98.45
+ 
+16:  Rte  Loc   Cost
+--:-----------------
+ 1:   23   34   0.00
+ 2:   23   39  52.29
+ 
+17:  Rte  Loc   Cost 
+--:------------------
+ 1:   24   61    0.00
+ 2:   24    9  127.44
+ 
+18:  Rte  Loc   Cost
+--:-----------------
+ 1:   27   12   0.00
+ 2:   27    8  69.25
+ 
+19:  Rte  Loc   Cost 
+--:------------------
+ 1:   29    6    0.00
+ 2:   29  110  148.35
+ 
+20:  Rte  Loc   Cost 
+--:------------------
+ 1:   32   71    0.00
+ 2:   32   35  103.38
+ 
+21:  Rte  Loc   Cost 
+--:------------------
+ 1:   43   72    0.00
+ 2:   43   26  195.81
+ 
+22:  Rte  Loc   Cost 
+--:------------------
+ 1:   44    2    0.00
+ 2:   44   58  140.11
+ 
+23:  Rte  Loc   Cost 
+--:------------------
+ 1:   45  116    0.00
+ 2:   45   32  369.04
+ 
+24:  Rte  Loc   Cost
+--:-----------------
+ 1:   46   82   0.00
+ 2:   46   95  54.50
+ 
+25:  Rte  Loc   Cost 
+--:------------------
+ 1:   54  109    0.00
+ 2:   54   83  190.91
+ 
+ :   sum(TLC1)   sum(TLCc)
+-:------------------------
+1:  384,222.44  299,421.24
+</pre><img src="hw8solnF19_06.png" alt="" hspace="5" vspace="5">
+      <h2 id="37">Question 6</h2>
+      <h2 id="38">Data</h2>
+      <pre class="codeinput">clear
+load <span class="string">shmtNC30</span>
+tr = struct(<span class="string">'r'</span>,2,<span class="string">'Kwt'</span>,25,<span
+class="string">'Kcu'</span>,2750);
+sh = vec2struct(<span class="string">'b'</span>,b,<span class="string">'e'</span>,e,<span
+class="string">'f'</span>,f,<span class="string">'s'</span>,s,<span class="string">'v'</span>,v,<span
+class="string">'a'</span>,.5,<span class="string">'h'</span>,.3);
+sh = vec2struct(sh,<span class="string">'d'</span>,diag(D([sh.b],[sh.e])));
+idx = [1 3 26 5];
+sh = sh(idx)
+sdisp(sh,1)
+r = tr.r
+C = D * r;
+rTCh = @(rte) rteTC(rte,sh,C);
+n = length(sh)
+</pre>
+      <pre class="codeoutput">sh = 
+  1×4 struct array with fields:
+    b
+    e
+    f
+    s
+    v
+    a
+    h
+    d
+ 
+sh:     1        2        3        4   
+--:------------------------------------
+ b:   15.00     23.00   19.00     17.00
+ e:   42.00     40.00   31.00     32.00
+ f:    2.13      6.27    3.93      6.32
+ s:    1.17     15.23    8.47     13.82
+ v:  683.19  5,843.73  331.87  2,776.55
+ a:    0.50      0.50    0.50      0.50
+ h:    0.30      0.30    0.30      0.30
+ d:   64.97     59.27  127.10    161.07
+r =
+     2
+n =
+     4
+</pre>
+      <h2 id="39">Independent transport charge</h2>
+      <pre class="codeinput">c0 = [sh.d]*r
+</pre>
+      <pre class="codeoutput">c0 =
+  129.9440  118.5307  254.2025  322.1376
+</pre>
+      <h2 id="40">Min incremental charge for all possible routes</h2>
+      <pre class="codeinput">R = perms(1:n)
+C = zeros(size(R));
+<span class="keyword">for</span> i = 1:size(C,1)
+   <span class="keyword">for</span> j = 1:size(C,2)
+      Rj = perms(R(i,1:j));  <span class="comment">% Try all permutations to get optimal</span>
+      TC(j) = Inf;
+      <span class="keyword">for</span> k = 1:size(Rj,1)
+         [~,TCj] = insertimprove(Rj(k,:),rTCh,sh);
+         <span class="keyword">if</span> TCj &lt; TC(j), TC(j) = TCj; <span class="keyword">end</span>
+      <span class="keyword">end</span>
+   <span class="keyword">end</span>
+   C(i,:) = TC;
+   TC = diff([0 TC]);
+   C(i,:) = TC(invperm(R(i,:)));
+<span class="keyword">end</span>
+mdisp(C,sum(R.*repmat(10.^[n-1:-1:0],size(R,1),1),2))
+</pre>
+      <pre class="codeoutput">R =
+     4     3     2     1
+     4     3     1     2
+     4     2     3     1
+     4     2     1     3
+     4     1     3     2
+     4     1     2     3
+     3     4     2     1
+     3     4     1     2
+     3     2     4     1
+     3     2     1     4
+     3     1     4     2
+     3     1     2     4
+     2     4     3     1
+     2     4     1     3
+     2     3     4     1
+     2     3     1     4
+     2     1     4     3
+     2     1     3     4
+     1     4     3     2
+     1     4     2     3
+     1     3     4     2
+     1     3     2     4
+     1     2     4     3
+     1     2     3     4
+ 
+   C:     1       2       3       4  
+----:--------------------------------
+4321:   32.41   17.45   80.47  322.14
+4312:   35.36   14.50   80.47  322.14
+4231:   32.41   73.64   24.28  322.14
+4213:   28.90   73.64   27.79  322.14
+4132:   78.81   14.50   37.01  322.14
+4123:   78.81   23.73   27.79  322.14
+3421:   32.41   17.45  254.20  148.41
+3412:   35.36   14.50  254.20  148.41
+3241:   32.41   26.48  254.20  139.37
+3214:   26.08   26.48  254.20  145.71
+3142:   17.47   14.50  254.20  166.29
+3124:   17.47   35.09  254.20  145.71
+2431:   32.41  118.53   24.28  277.25
+2413:   28.90  118.53   27.79  277.25
+2341:   32.41  118.53  162.15  139.37
+2314:   26.08  118.53  162.15  145.71
+2143:   74.36  118.53   27.79  231.79
+2134:   74.36  118.53  113.87  145.71
+1432:  129.94   14.50   37.01  271.01
+1423:  129.94   23.73   27.79  271.01
+1342:  129.94   14.50  141.73  166.29
+1324:  129.94   35.09  141.73  145.71
+1243:  129.94   62.95   27.79  231.79
+1234:  129.94   62.95  113.87  145.71
+</pre>
+      <h2 id="41">Equal charge allocation</h2>
+      <pre class="codeinput">TCc = min(sum(C,2))
+c_equal = repmat(TCc/n,1,n)
+pct_reduct = round(100*(1 - c_equal./c0))
+</pre>
+      <pre class="codeoutput">TCc =
+  452.4672
+c_equal =
+  113.1168  113.1168  113.1168  113.1168
+pct_reduct =
+    13     5    56    65
+</pre>
+      <h2 id="42">Equal savings allocation</h2>
+      <pre class="codeinput">Sn = sum(c0) - TCc
+c_eq_sav = c0 - Sn/n
+</pre>
+      <pre class="codeoutput">Sn =
+  372.3476
+c_eq_sav =
+   36.8571   25.4438  161.1156  229.0507
+</pre>
+      <h2 id="43">Exact Shapley allocation</h2>
+      <pre class="codeinput">c_Shap_exact = mean(C,1)
+pct_reduct = round(100*(1 - c_Shap_exact./c0))
+</pre>
+      <pre class="codeoutput">c_Shap_exact =
+   62.3369   53.2033  117.1231  219.8039
+pct_reduct =
+    52    55    54    32
+</pre>
+      <h2 id="44">Pairwise approximate Shapely allocation</h2>
+      <pre class="codeinput">[~,S2] = pairwisesavings(rTCh,sh)
+c_Shap_approx = c0 - (Sn/n + sum(S2)/(n-1) - sum(sum(S2))/(n*(n-1)))
+pct_reduct = round(100*(1 - c_Shap_approx./c0))
+</pre>
+      <pre class="codeoutput">S2 =
+         0   55.5828  112.4757   51.1322
+   55.5828         0   92.0509   44.8922
+  112.4757   92.0509         0  173.7326
+   51.1322   44.8922  173.7326         0
+c_Shap_approx =
+   52.1046   49.5796  123.3403  227.4427
+pct_reduct =
+    60    58    51    29
+</pre>
+      <h2 id="45">Comparison</h2>
+      <pre class="codeinput">vdisp(<span class="string">'c0,c_equal,c_eq_sav,c_Shap_exact,c_Shap_approx'</span>)
+</pre>
+      <pre class="codeoutput"> 
+ :    c0    c_equal  c_eq_sav  c_Shap_exact  c_Shap_approx
+-:--------------------------------------------------------
+1:  129.94   113.12    36.86       62.34          52.10   
+2:  118.53   113.12    25.44       53.20          49.58   
+3:  254.20   113.12   161.12      117.12         123.34   
+4:  322.14   113.12   229.05      219.80         227.44   
+</pre>
+      <p class="footer"><br>
+        <a href="https://www.mathworks.com/products/matlab/">Published with
+          MATLAB® R2019a</a></p>
+    </div>
+    <!--
+##### SOURCE BEGIN #####%% HW 8 Solution - ISE 754 Fall 2019
+%% Question 1
+%% Make (cut)n = 6;
+rng(398544)D = ceil(rand(n)*10); D = triu(D,1) + tril(D,-1)
+fhTD = @(x) locTC(x,D);% %% Create table
+% K = perms([2:n]); K = [ones(size(K,1),1) K ones(size(K,1),1)];% for i = 1:size(K,1)
+%    TD(i) = fhTD(K(i,:));% end
+% K = [K TD(:)];% K = sortrows(K,1:7);
+% mdisp(K)% %%
+rng(9739)x0 = [1 randperm(n-1)+1 1]
+fhTD(x0)[Final_Sequence,TD,X] = tsp2optFE(x0,D);
+disp('(a)')Final_Sequence,TD
+col = num2cellstr(1:n+1); col{end+1} = 'TD';mdisp(X,[],col,'Seq')
+% fprintf('Final_Sequence = '),fprintf('%d ',Final_Sequence)% fprintf('\nTD = %d\nOrder in which sequences considered:\n',TD)
+% for i=1:size(Order,1)%    fprintf('%2d:',i),fprintf(' %d',Order(i,:)),fprintf('\n')
+% enddisp('(b)')
+%% (a) Hand solution% Copy from Command into HTML set to fixed width Courier
+%% (b) Using TSP2OPTD = [
+     0     8     6     9     1     5     3     0     1     5     4     2
+     9     2     0     3     1     1     8     2     1     0    10     6
+     6     7    10     1     0    10     6     2     5     2     1     0];
+loc0 = [1     5     2     6     4     3     1];[loc,TD] = tsp2opt(loc0,D)
+%% Question 2
+T = [0 2 2 2 1 2 
+2 0 3 2 3 3 2 3 0 3 2 2 
+2 2 3 0 3 1 1 3 2 3 0 3 
+2 3 2 1 3 0 ];sh = vec2struct('b',1,'e',2:6,...
+   'temin',[9 18 9 15 21],'temax',[12 21 18 18 24]); sdisp(sh)tr = struct('b',1,'e',1,'tbmin',6,'temax',24); sdisp(tr)
+rte = [3 1 4 2 5 3 1 4 2 5];[TC,Xflg,out] = rteTC(rte,sh,T,tr)
+%% Question 3
+%% (a) Hand solutionD = [
+     0   180   320   100   180    40   180     0   140    80   240   140
+   320   140     0   220   300   280   100    80   220     0   240    60
+   180   240   300   240     0   220    40   140   280    60   220     0];
+sh = vec2struct('b',[6 3 2],'e',[5 1 4],'f',[200 300 100],'s',[20 5 10]);sh = vec2struct(sh,'v',[20000 5000 10000],'a',.5,'h',.3);
+sdisp(sh)rte = [2 3 2 1 3 1];
+dagg = rteTC(rte,sh,D)ash = aggshmt(sh); sdisp(ash)
+ppiTL = 125;tr = struct('r',2*(ppiTL/102.7),'Kwt',25,'Kcu',2750);
+MC = mincharge(dagg,ppiTL,rte,sh)qagg = sqrt((ash.f*max(tr.r*dagg,MC))/(ash.a*ash.v*ash.h))
+q = qagg * [sh.f]/ash.fL = rte2ldmx(rte), L{:}
+k = 1for j = 1:length(L)
+   sj = sum([sh(L{j}).f])/sum([sh(L{j}).f]./[sh(L{j}).s])   kj = min(tr.Kwt,sj*tr.Kcu/2000)/sum(q(L{j}))
+   k = min(k,kj)end
+q = k*qTLC = ash.f/sum(q)*tr.r*dagg + ash.a*ash.v*ash.h*sum(q); mdisp(TLC)
+%% (b) Using MINTLC[TLC,q] = minTLC(sh,tr,[],D,rte)
+% Note: returned q in order of shmt in rte, not in shmt 1,2,3 orderrte
+% To convert to 1,2,3 order:idx = rte2idx(rte)
+argsort(idx)q(argsort(idx))
+%% Question 4
+%% Read dataclose all, clear
+fn = 'HW8data.xlsx';inDC = table2struct(readtable(fn,'Sheet','Q4-DC'));
+inC = table2struct(readtable(fn,'Sheet','Q4-Customers'));%% Read in data
+XY = [[inDC.Lon inDC.Lat]; [inC.Lon]' [inC.Lat]'];pkg = [inC.Pkg]';
+TW = [inC.T_W]';%% Get road network
+expansionAroundXY = 0.12;[XY2,IJD,isXY,isIJD] = subgraph(usrdnode('XY'),...
+   isinrect(usrdnode('XY'),boundrect(XY,expansionAroundXY)),usrdlink('IJD'));%% Label type of road
+s = usrdlink(isIJD);isI = s.Type == 'I';         % Interstate highways
+isIR = isI & s.Urban == ' '; % Rural Interstate highwaysisIU = isI & ~isIR;          % Urban Interstate highways
+isR = s.Urban == ' ' & ~isI; % Rural non-Interstate roadsisU = ~isI & ~isR;           % Urban non-Interstate roads
+%% Add connector roads from cities to road network[IJD11,IJD12,IJD22] = addconnector(XY,XY2,IJD);
+%% Plot roads and customersmakemap(XY2,0.03)  % 3% expansion
+h = [];  % Keep handle to each plot for legendh = [h pplot(IJD(isR,:),XY2,'r-','DisplayName','Rural Roads')];
+h = [h pplot(IJD(isU,:),XY2,'k-','DisplayName','Urban Roads')];h = [h pplot(IJD(isI,:),XY2,'c-','DisplayName','Interstate Roads')];
+h = [h pplot(IJD12,[XY; XY2],'b-','DisplayName','Connector Roads')];h = [h pplot(IJD11,[XY; XY],'m-','DisplayName','Connector Roads')];
+h = [h pplot(XY,'go','DisplayName','Customers')];%% Convert road distances to travel times (needs to be after ADDCONNECTOR)
+IJT = IJD;IJT(isIR,3) = IJD(isIR,3)/70; IJT(isIU,3) = IJD(isIU,3)/50;
+IJT(isR,3) = IJD(isR,3)/45; IJT(isU,3) = IJD(isU,3)/20;IJT22 = IJD22; IJT22(:,3) = IJT(:,3);
+IJT12 = IJD12; IJT12(:,3) = IJD12(:,3)/15;  IJT11 = IJD11; IJT11(:,3) = IJD11(:,3)/15;  % Includes residential delivery
+%% Shortest time routesn = size(XY,1);
+[T,P] = dijk(list2adj([IJT12; IJT22]),1:n,1:n);%% Distance of shortest time route
+A = list2adj([IJD12; IJD22]);D = zeros(n);  
+for i = 1:n, for j = 1:n, D(i,j) = locTC(pred2path(P,i,j),A); end, end%% Create routing structures
+tr = struct('b',1,'e',1,'Kwt',30,'maxTC',8);temin = repmat(8,n-1,1); temin(TW == 'A') = 12; temin(TW == 'E') = 17;
+temax = repmat(12,n-1,1); temax(TW == 'A') = 17; temax(TW == 'E') = 21;sh = vec2struct('b',1,'e',2:length(T),'q',pkg,'tU',2/60,...
+   'temin',temin,'temax',temax);%% Construct & improve routes
+rTCh = @(rte) rteTC(rte,sh,T,tr);IJS = pairwisesavings(rTCh,sh);
+[r,Time] = twoopt(savings(rTCh,sh,IJS,true),rTCh,true);%% Add any single-shipment routes
+[r,~,Time] = sh2rte(sh,r,rTCh);%% Plot Routes
+plotshmt(sh,XY,r,tr)pplot(XY(1,:),'ks')
+%% Display route output structure[TC,Xflg,out] = rTCh(r);
+for i = 1:length(out), sdisp(out(i),false,i), end%% Plot cumsum of each route segment
+for i = 1:length(r)   idx = rte2idx(r{i});
+   segsum = rtesegsum(rtenorm(r{i}),[sh(idx).q]);   Maxpkg(i) = max(segsum);
+   subplot(ceil(length(r)/2),2,i)   bar(segsum)
+   title(['Route ' num2str(i)])end
+%% Route time and delivered/picked-up packagesvdisp('Time,Maxpkg')
+%% Display Gantt chart of route time spansb = arrayfun(@(x) (x.Start(1)),out); b = b(:);
+e = arrayfun(@(x) (x.Depart(end)),out); e = e(:);mdisp([b e])
+figuregantt([b e])
+%% Greedy route combination heuristic (not part of Matlog)cmbrte = combinerte(out); cmbrte{:}
+%% Question 5
+%% Read dataclose all, clear
+fn = 'HW8data.xlsx';in = table2struct(readtable(fn,'Sheet','Q5-Data'));
+sdisp(in)%% Determine shipment begining and ending location index
+zip = unique([[in.orig]; [in.dest]]);b = mand([in.orig],zip);
+e = mand([in.dest],zip);%% Create independent shipments
+z = uszip5(mor(zip,uszip5('Code5')));D = dists(z.XY,z.XY,'mi') * 1.2;
+ppiTL = 131.4; % Jan 2018 (P)ppiLTL = 179.4; % Jan 2018 (P)
+tr = struct('r',2*(ppiTL/102.7),'Kwt',25,'Kcu',2750);f = [in.wt].*[in.ud]/2000;
+s = [in.wt]./[in.cu];v = 2000*[in.uc]./[in.wt];
+sh = vec2struct('b',b,'e',e,'f',f,'s',s,'v',v,'a',.5,'h',.3);sh = vec2struct(sh,'d',diag(D([sh.b],[sh.e])));
+[TLC1,q1,isLTL] = minTLC(sh,tr,ppiLTL);sh = vec2struct(sh,'TLC1',TLC1,'q1',q1,'n1',[sh.f]./q1,...
+   'cu1',(2000*q1)./[sh.s],'isLTL',isLTL);sdisp(sh)
+%% Plot independent shipmentsplotshmt(sh,z.XY,[],tr,true)
+%% Consolidated shipmentsrTCh = @(rte) minTLC(sh,tr,[],D,rte);
+IJS = pairwisesavings(rTCh,sh,minTLC(sh,tr));%% Construct and improve routes
+[rc,TLCc] = twoopt(savings(rTCh,sh,IJS),rTCh);%% Make shipments not in routes into single-shipment routes
+[rc,idx1,TLCc] = sh2rte(sh,rc,rTCh);%% Report results
+plotshmt(sh,z.XY,rc,tr)[~,~,out] = rteTC(rc,sh,D,tr);
+for i = 1:length(out), sdisp(out(i),false,i), endvdisp('sum(TLC1),sum(TLCc)')
+%% Question 6
+%% Dataclear
+load shmtNC30tr = struct('r',2,'Kwt',25,'Kcu',2750);
+sh = vec2struct('b',b,'e',e,'f',f,'s',s,'v',v,'a',.5,'h',.3);sh = vec2struct(sh,'d',diag(D([sh.b],[sh.e])));
+idx = [1 3 26 5];sh = sh(idx)
+sdisp(sh,1)r = tr.r
+C = D * r;rTCh = @(rte) rteTC(rte,sh,C);
+n = length(sh)%% Independent transport charge
+c0 = [sh.d]*r%% Min incremental charge for all possible routes 
+R = perms(1:n)C = zeros(size(R));
+for i = 1:size(C,1)   for j = 1:size(C,2)
+      Rj = perms(R(i,1:j));  % Try all permutations to get optimal      TC(j) = Inf;
+      for k = 1:size(Rj,1)         [~,TCj] = insertimprove(Rj(k,:),rTCh,sh);
+         if TCj < TC(j), TC(j) = TCj; end      end
+   end   C(i,:) = TC;
+   TC = diff([0 TC]);   C(i,:) = TC(invperm(R(i,:)));
+endmdisp(C,sum(R.*repmat(10.^[n-1:-1:0],size(R,1),1),2))
+%% Equal charge allocationTCc = min(sum(C,2))
+c_equal = repmat(TCc/n,1,n)pct_reduct = round(100*(1 - c_equal./c0))
+%% Equal savings allocationSn = sum(c0) - TCc
+c_eq_sav = c0 - Sn/n%% Exact Shapley allocation
+c_Shap_exact = mean(C,1)pct_reduct = round(100*(1 - c_Shap_exact./c0))
+%% Pairwise approximate Shapely allocation[~,S2] = pairwisesavings(rTCh,sh)
+c_Shap_approx = c0 - (Sn/n + sum(S2)/(n-1) - sum(sum(S2))/(n*(n-1)))pct_reduct = round(100*(1 - c_Shap_approx./c0))
+%% Comparisonvdisp('c0,c_equal,c_eq_sav,c_Shap_exact,c_Shap_approx')
+##### SOURCE END #####
+--></body>
+</html>

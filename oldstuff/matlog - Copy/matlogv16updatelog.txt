@@ -1,0 +1,14 @@
+Matlog Update Log
+
+03-Jan-2014  Matlog version 16 installed
+
+03-Jan-2014  Modified file Contents.m
+22-Jan-2014  Modified file dists.m
+17-Feb-2014  Modified file mand.m
+17-Feb-2014  Modified file wtrandperm.m
+17-Feb-2014  Modified file aggshmt.m
+24-Apr-2014  Modified file dijk.m
+24-Apr-2014  Modified file insertimprove.m
+24-Apr-2014  Modified file list2adj.m
+26-Jan-2015  Modified file subsetstruct.m
+26-Jan-2015  Modified file vdisp.m

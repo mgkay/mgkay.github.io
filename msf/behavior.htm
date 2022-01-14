@@ -1,0 +1,430 @@
+<!--This file created 9:06 PM  8/3/97 by Claris Home Page version 2.0-->
+<HTML>
+<HEAD>
+   <TITLE>Behavior Fusion</TITLE>
+   <META NAME=GENERATOR CONTENT="Claris Home Page 2.0">
+   <X-SAS-WINDOW TOP=25 BOTTOM=453 LEFT=4 RIGHT=534>
+</HEAD>
+<BODY BGCOLOR="#FFFFFF">
+
+<H2>7 Behavior Fusion</H2>
+
+<P>This project's purpose for acquiring human target locations is
+ultimately to point the pan/tilt/zoom camera at them. The task of
+moving the camera while sensing falls under a growing area of
+research referred to as active vision [121]. Active vision may be
+defined as the automatic modification of camera orientation or image
+processing strategy in response to sensor information. This directs
+the allocation of resources, be they camera pixels or processing
+cycles, to the analysis of a subset of the viewable world. For the
+application described here, camera motion may be used to accomplish
+two goals: (a) to better acquire information about the state of
+targets in the world, and (b) to improve a human user's view of
+activity in the scene as required by the surveillance or
+videoconferencing application. In some cases these goals may be
+coincidental; in others, they may conflict. It is the job of the
+behavioral control system to accomplish these goals and resolve the
+conflicts in a satisfactory way.</P>
+
+<P>&nbsp;</P>
+
+<H3>7.1 Multi-Agent Reactive Control</H3>
+
+<P>Autonomous robots, such as the automatic camera or the mobile
+robot MARGE [80], must react to dynamic events in unstructured
+environments. The challenge of integrating noisy and incomplete
+sensor information into control actions in real-time has led to a
+variety of reactive "behavior-based" control schemes for mobile
+robots. Much of this work was inspired by the layered control system
+and subsumption architecture developed by Brooks [73,74]. Brooks'
+robots utilize multiple task-achieving behaviors which closely couple
+sensors to actuators. Connell [75] used distributed subsumption-based
+behaviors to enable a mobile robot to search through unmapped rooms
+collecting empty soda cans. In recent competitions between autonomous
+robots [81], the winning entries made extensive use of low-level
+reactive perception and control.</P>
+
+<P>Reactive control involves mapping sensor inputs to control signals
+quickly, usually involving little or no intermediate representation.
+Most feedback control systems, such as servomotor controllers,
+involve only one or two inputs. Linear gain parameters are often
+sufficient for determining the actuator output for such simple
+applications. But for more complex reactive systems, the size of the
+input space demands a more sophisticated control algorithm. This task
+can be made more manageable by breaking down the input space for
+analysis by multiple agents, each of which responds to specific types
+of situations, and then integrating the recommendations of these
+agents.</P>
+
+<P>Agents can be designed independently, to exhibit behaviors tuned
+for different objectives. This is an important level of abstraction
+for system integration, and can serve as a guide for the division of
+computation among distributed processors. Multiple behaviors can also
+provide robust behavior and degrade gracefully. The combined effect
+of multiple behaviors is referred to as emergent behavior, and
+ideally will share the characteristics of the individual behaviors.
+Unfortunately, the development and integration of agent
+recommendations usually involves ad hoc algorithms that are
+application-specific. Brooks' subsumption architecture uses finite
+state machines and hierarchical arbitration to select between
+multiple behaviors. This allows fail-safe behaviors like obstacle
+avoidance to subsume goal seeking when necessary. Arkin [76] fuses
+independent behaviors called "schemas" with artificial
+potential-field techniques. In this chapter a modular method for
+developing reactive control behaviors using fuzzy control rules is
+described. Fuzzy control allows smooth generalization between
+multiple modes of operation. The function is typically a continuous
+surface, as opposed to many behavior-switching schemes, and follows
+the philosophy that similar situations result in similar outputs.
+This system allows the integration of many more sensor inputs than do
+previous real-time fuzzy systems, without special hardware.</P>
+
+<P>&nbsp;</P>
+
+<H3>7.2 Fuzzy Control Behaviors</H3>
+
+<P>The success of fuzzy control is owed in large part to the
+technology's ability to convert qualitative linguistic descriptions
+into nonlinear mathematical functions. Bridging the gap between human
+expert knowledge and the world of digital systems has led to its use
+in many consumer products. Most of these fuzzy control
+implementations, however, feature a single layer of inferencing
+between only a handful of inputs and outputs. This may lead one to
+suspect that fuzzy control is only useful in simple systems such as
+these. On the contrary, this chapter presents a multi-layered fuzzy
+control network for reactive control of an autonomous robot. Given
+the complexity of the system, linguistic rules provide an essential
+tool for implementing the robot's control, for which no mathematical
+model needs to be developed.</P>
+
+<P>A fuzzy control function may be defined by using fuzzy sets as
+adjectives in a qualitative rule base. The effect of each rule
+inference is then proportional to the degree of truth of the fuzzy
+sets associated with it. When programming a fuzzy system with fuzzy
+rules, the system designer provides his or her own qualitative
+understanding of the problem.</P>
+
+<P>&nbsp;</P>
+
+<H4>7.2.1 Evaluation of Fuzzy Rules</H4>
+
+<P>A fuzzy rule performs an inference with a certainty, or weight,
+dependent on the set operations in its antecedent. A fuzzy rule for a
+servo controller may take a form such as: "If error is SMALL and
+error is ZERO then output is SMALL" This rule assigns the value of
+SMALL to the variable output with a weight determined by the
+intersection (minimum value of two membership function evaluations)
+of the sets describing error and error. The application of multiple
+fuzzy rules results in multiple output recommendations. In many fuzzy
+expert systems, antecedent weights are intersected with the output
+sets to describe the control output as a fuzzy variable. The output
+value has its own membership function, which is useful if it is to be
+used by other rules in a chain of fuzzy inferences. For control
+applications, however, defuzzification is necessary to obtain a
+singleton value that can be passed on to actuators. This is popularly
+achieved by taking the centroid the output membership function.
+Unfortunately, the manipulation of fuzzy sets and calculation of the
+membership centroid is computationally expensive compared to ordinary
+linear control algorithms. Real-time systems that define outputs as
+fuzzy sets in this manner often rely on special hardware to perform
+rule evaluations [77].</P>
+
+<P>For most control applications, outputs do not need to take the
+form of fuzzy numbers. A much faster method can be used to evaluate
+rules by calculating the centroid from singleton recommendations. If
+each rule i prescribes an output value of oi with an antecedent
+certainty of wi, then the output of a controller with N rules is
+calculated as</P>
+
+<P>&nbsp;<IMG SRC="eq7_1.jpg" WIDTH=195 HEIGHT=101
+X-SAS-UseImageWidth X-SAS-UseImageHeight ALIGN=bottom></P>
+
+<P><B><A HREF="fig56.jpg">Figure 56: Example Membership
+Functions</A></B></P>
+
+<P>To compare these two techniques, consider a very simple mapping
+with one input and one output. Figure 56 defines the sets to be used
+in this example. The first function in this example uses two rules
+with fuzzy output sets:</P>
+
+<P>&nbsp;</P>
+
+<BLOCKQUOTE><P>Function A:</P>
+
+<P>1. If input is ZERO then output is ZERO.</P>
+
+<P>2. If input is SMALL then output is SMALL.</P></BLOCKQUOTE>
+
+<P>&nbsp;</P>
+
+<P>Suppose one wishes to calculate the output value of Function A for
+an input of value of 70. The first rule will have a weight of 0.3 and
+the second will have a weight of 0.7. Figure 57 shows the result of
+the weighting operations on the respective fuzzy output sets. The
+output of Function A is the centroid of the two shaded regions, which
+is calculated to be 64.</P>
+
+<P><B><A HREF="fig57.jpg">&nbsp;Figure 57: Centroid for Fuzzy
+Output</A></B></P>
+
+<P>Now consider the same function with output recommendations defined
+as singleton values instead:</P>
+
+<P>&nbsp;</P>
+
+<BLOCKQUOTE><P>Function B:</P>
+
+<P>1. If input is ZERO then output is 0.0.</P>
+
+<P>2. If input is SMALL then output is 100.0.</P></BLOCKQUOTE>
+
+<P>&nbsp;</P>
+
+<P><B><A HREF="fig58.jpg">Figure 58: Centroid for Singleton
+Output</A></B></P>
+
+<P>&nbsp;For Function B, the crisp centroid is much easier to
+calculate, as illustrated in Figure 58. For an input value of 70, its
+output is ((0.3)(0.0) + (0.7)(100.0))/(0.3 + 0.7) = 70. The singleton
+centroid scheme of Function B allows fuzzy rules to perform real-time
+control functions on ordinary processor hardware. This method of rule
+evaluation was used for the mobile robot MARGE as well as the camera
+control system described here.</P>
+
+<P><B><A HREF="fig59.jpg">Figure 59: Rule Components</A></B></P>
+
+<P><B><A HREF="fig60.jpg">Figure 60: Combination of Rules</A></B>
+</P>
+
+<P>Figure 59 shows the block diagram of a fuzzy rule for the system.
+A rule performs a sum-of-products (intersection before union)
+operation on the fuzzy set comparisons in its antecedent using
+max-min or arithmetic sum and product operations. The resultant
+weight is assigned to the source value for the centroid calculation.
+Note that the source may be a fixed value, as is the case with most
+fuzzy control systems, or it may be a value passed from another
+operation. This allows a set of rules to act as a fuzzy multiplexer,
+by blending recommendations from other agents according to
+qualitative terms. Figure 60 shows the configuration of multiple
+rules for the evaluation of a fuzzy node. Notice that black
+arrowheads denote set inputs, while gray arrowheads denote sources
+for output recommendations.</P>
+
+<P>&nbsp;</P>
+
+<H4>7.2.2 When Centroid Defuzzification Fails</H4>
+
+<P>&nbsp;Centroid defuzzification works well for simple control
+systems that involve outputs with convex membership functions, e.g.,
+servo controllers. It allows the system to compromise among multiple
+objectives, as shown in Figure 61. However, when the control system
+must choose between two exclusive output values, and a
+weighted-average compromise is unacceptable, centroid defuzzification
+will produce an undesirable control output. Figure 62 illustrates
+this problem faced by a mobile robot and a camera controller. For the
+mobile robot, the fuzzy control rules for steering recommend steering
+left or right as acceptable outputs, but not straight. For the camera
+controller, Figure 63(a) shows the output of the steer controller
+using fuzzy output sets, and Figure 63(b) shows the same for outputs
+defined with singleton values. Note that in either case, centroid
+defuzzification results in no net steering effect. The robot will
+therefore either crash into the object, or, if it is able to stop in
+time, may remain stuck in front of the object in a state of what
+could be termed "symmetric indecision."</P>
+
+<P><B><A HREF="fig61.jpg">Figure 61: Acceptable Compromises</A></B>
+</P>
+
+<P><B><A HREF="fig62.jpg">Figure 62: Mutually Exclusive
+Options</A></B></P>
+
+<P><B><A HREF="fig63.jpg">Figure 63: Unacceptable Centroids</A></B>
+</P>
+
+<P>There are a few different ways for a system to handle the
+erroneous centroid problem:</P>
+
+<UL>
+   <LI>Use a maximum-output defuzzifier rather than a centroid. This
+   option results in less smooth control than does the centroid, but
+   will be less susceptible to ties.
+   
+   <LI>Preserve the fuzziness of the output set and forward it to
+   other control behaviors for constraints-based fusion, which may
+   eliminate one or more of the options.
+   
+   <LI>Segregate rules with mutually-exclusive output recommendations
+   into separate controllers and choose between them using a
+   winner-take-all heuristic.
+   
+   <LI>Allow the control system to fail safely and congnizantly, and
+   recover from the failure.
+</UL>
+
+<P>&nbsp;Human beings who suddenly meet one another at a doorway or
+hallway often find themselves in a symmetric indecision dilemma. It
+is not always easy to quickly choose one of two equally attractive
+paths, and so people often hesitate during the decision process. When
+reactive decision making breaks down, slower high-level processing
+may be required. Thus cognizant failure may be an acceptable option
+if it can be permitted safely, and recovered from by other processes.
+</P>
+
+<P>&nbsp;</P>
+
+<H4>7.2.3 Effects of a Large Input Space</H4>
+
+<P>Most fuzzy control applications involve only a small number of
+inputs. This allows them to perform the entire inferencing mapping in
+one step. All of the fuzzy rules typically look at the same inputs
+and affect the same output. Suppose we wish to design a controller
+for a system with N inputs, and each input i is to be described by Mi
+fuzzy sets. A different rule may be written for every intersection of
+set descriptions that describes the N inputs. This exhaustive method
+yields a rule set of the following size:</P>
+
+<P>&nbsp;<IMG SRC="eq7_2.jpg" WIDTH=129 HEIGHT=47 X-SAS-UseImageWidth
+X-SAS-UseImageHeight ALIGN=bottom></P>
+
+<P>&nbsp;Unfortunately, the number of fuzzy set evaluations in a rule
+base increases exponentially as more inputs are added to the
+controller. This results an impractical computational load for
+systems with high input dimensionality. It also makes it difficult
+for the programmer to manually define rules that span the input
+space. In order to keep the rule base manageable, other autonomous
+robot implementations have reduced the input space by throwing away
+what might otherwise be useful sensor data or by first matching it to
+a symbolic world model and extracting state variables.</P>
+
+<P>Rather than reducing the input space by non-fuzzy means, a system
+was developed to process a larger data space with multiple fuzzy
+agents. Consider a symmetric N-dimensional input space where each
+input dimension is to be spanned by the same number of fuzzy sets, M.
+If the fuzzy inference mapping is done in one step, the number of set
+evaluations that must be performed is N(M^N). If the input space
+dimensionality is broken down for processing by local agents, fewer
+set evaluations must be performed. Suppose one employs M^n local
+agents, where each will be assigned the same N - n inputs. These
+agents then may be fused by a fuzzy multiplexer that uses the n
+remaining inputs. The multiplexer will perform nM^n set evaluations,
+while each agent performs (N - n)(M^(N-n)). The total number set
+evaluations for this scheme is then N(M^N) n( M^N - M^n ) &lt;
+N(M^N). A large input space can be broken down in several steps for
+considerable savings in computation. Figure 64 shows a 3-dimensional
+input space processed by local experts and fused by a multiplexer.
+Note that there is no restriction to using agents of uniform size or
+architecture; rather, the flexibility of using specialized agents of
+different types is an important part of this scheme. Each of the
+local agents, for instance, may be composed of additional agents in a
+hierarchical network.</P>
+
+<P><B><A HREF="fig64.jpg">Figure 64: Fusion of Local Agents by a
+Fuzzy Multiplexer</A></B></P>
+
+<P>&nbsp;Fuzzy agents can also pre-process data for other nodes to
+use as inputs rather than sources. This allows the input space to be
+transformed into another form that may be more useful for agents to
+react to. In most control applications, raw sensor data is not
+directly mapped to actuators without transforming it first, for
+purposes such as filtering or to calculate error signals and
+derivative terms. This reduces the computation required for some
+applications and makes the system easier to specify manually for by
+providing a higher level of abstraction than the direct input space.
+This system can be easily configured to accomplish such
+pre-processing functions with fuzzy rules.</P>
+
+<P>&nbsp;</P>
+
+<H3>7.3 Arbitration Mechanisms</H3>
+
+<P>In any multi-agent behavior-based control system, multiple
+behaviors eventually must be fused to result in the robot's motor
+control. Many different schemes have been used for this in the
+literature, such as hierarchical switching and weighted averaging.
+The approach used in the control scheme for MARGE and the robot
+camera combines these techniques by using the flexibility of fuzzy
+rules to perform the fusion operation. Fusion rules may use sensor
+data, motivational state, or the values of the behavior outputs
+themselves to determine the appropriate weight for each behavior. The
+following are a few possible ways to blend or arbitrate between
+recommendations from multiple sources.</P>
+
+<P>&nbsp;</P>
+
+<UL>
+   <LI><I>Summation:</I> A control signal recommendation for a goal
+   seeking behavior might be simply added to the obstacle avoidance
+   behavior. This method is the same type of superposition used in
+   potential field techniques. In a PID controller, the proportional,
+   integral, and derivative terms are summed. One must be cautious,
+   however, as to what the worst-case combinations of values can be.
+   If two behaviors each recommend a maximum value, their combined
+   effect may be dangerous. Also, the recommendation of each behavior
+   must be compatible with the others throughout the input space.
+</UL>
+
+<P>&nbsp;</P>
+
+<UL>
+   <LI><I>Weighted Averaging:</I> To maintain a limit on the output
+   magnitude, a compromise between agent recommendations can be
+   reached using a weighted average. This technique is used by Arkin
+   [76] for combining reactive schemas. In our fuzzy inference
+   engine, the centroid operation performed on a set of rules does
+   exactly this. The programmer defines the weight of a fuzzy rule by
+   the specifying the set operations in each antecedent. In a single
+   control node, one could think of each rule as being an agent, and
+   the centroid operation as a way of reaching agreement.
+</UL>
+
+<P>&nbsp;</P>
+
+<UL>
+   <LI><I>Fuzzy Multiplexing:</I> As described earlier, our
+   architecture allows fuzzy rules to recommend values from other
+   nodes. This allows those separate behaviors to be combined at
+   another level according to qualitative rules. Fuzzy multiplexing
+   is a smart version of weighted averaging because the weights for
+   each behavior can change depending on the context of the
+   situation. A component behavior needs not yield an appropriate
+   signal at every point of the input space; its effective weight may
+   be decreased toward zero in such situations using the fusion
+   rules.
+</UL>
+
+<P>&nbsp;</P>
+
+<UL>
+   <LI><I>Hierarchical or Supervisory Switching:</I> The subsumption
+   architecture developed by Brooks [73, 74] allows behaviors to shut
+   off or subsume the outputs of other behaviors with a switching
+   operation. Sometimes, an ordered sequence of behaviors is
+   necessary to perform a task. To turn these behaviors on and off,
+   one or more supervisory agents must keep track of the activity.
+   This may be implemented as a finite state machine. The output of a
+   state machine can excite or inhibit the activities of agents
+   within the control environment by using fuzzy multiplexers. Note
+   that a Boolean multiplexer is easy to implement with a fuzzy one
+   simply by making the slope of the membership function vertical.
+</UL>
+
+<P>&nbsp;</P>
+
+<P>Fuzzy behaviors provide a convenient abstraction for the
+development of sensor-based control systems for unstructured
+environments. A large input space can be mapped to actuation by
+dividing the problem into simpler domains and developing individual
+agents that compete and cooperate to perform the task. Fuzzy control
+rules make the job of defining a control surface easier by providing
+a linguistic interface to the programmer. This system was
+demonstrated successfully on MARGE at the 1993 AAAI robotics
+competition, and was also applied to camera control as described in
+the <A HREF="generic.htm">following chapters</A>.</P>
+
+<P>&nbsp;</P>
+
+<P>&nbsp;</P>
+
+<P>&nbsp;</P>
+</BODY>
+</HTML>
