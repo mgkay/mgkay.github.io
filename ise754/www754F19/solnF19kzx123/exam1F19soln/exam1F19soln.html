@@ -1,0 +1,312 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <!--
+This HTML was auto-generated from MATLAB code.To make changes, update the MATLAB code and republish this document.
+      -->
+    <title>Exam 1 Solution - ISE 754 Fall 2019</title>
+    <meta name="generator" content="MATLAB 9.6">
+    <link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
+    <meta name="DC.date" content="2019-10-28">
+    <meta name="DC.source" content="exam1F19soln.m">
+    <style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style>
+  </head>
+  <body>
+    <div class="content">
+      <h1>Exam 1 Solution - ISE 754 Fall 2019</h1>
+      <!--introduction--><!--/introduction-->
+      <h2>Contents</h2>
+      <div>
+        <ul>
+          <li><a href="#1">Problem 1</a></li>
+          <li><a href="#7">Problem 2</a></li>
+        </ul>
+      </div>
+      <h2 id="1">Problem 1</h2>
+      <h2 id="2">Determine Store Locations and Weights</h2>
+      <pre class="codeinput">city2lonlat = @(city,st) <span class="keyword">...</span>
+   uscity(<span class="string">'XY'</span>,mand(city,uscity(<span class="string">'Name'</span>),st,uscity(<span
+class="string">'ST'</span>)));
+DC0 = city2lonlat(<span class="string">'Schenectady'</span>,<span class="string">'NY'</span>);
+z = uszip5(~mor({<span class="string">'AK'</span>,<span class="string">'HI'</span>,<span
+class="string">'PR'</span>},uszip5(<span class="string">'ST'</span>)) &amp; uszip5(<span
+class="string">'Pop'</span>) &gt; 20000);
+z = subsetstruct(z,dists(DC0,z.XY,<span class="string">'mi'</span>)*1.2 &lt; 200);
+P = z.XY;
+f = z.Pop';
+</pre>
+      <h2 id="3">Determine Transport Rate (in $/person-mi)</h2>
+      <pre class="codeinput"><span class="comment">%TD0 = sum(f.*dists(DC0,P,'mi'))</span>
+TC0 = 7.6e7
+rnom = TC0/sum(f.*dists(DC0,P,<span class="string">'mi'</span>))
+w = rnom*f;
+d = dists(DC0,P,<span class="string">'mi'</span>);
+fprintf(<span class="string">'Current annual TC = $%e\n'</span>,TC0)
+</pre>
+      <pre class="codeoutput">TC0 =
+    76000000
+rnom =
+    0.0255
+Current annual TC = $7.600000e+07
+</pre>
+      <h2 id="4">Option 1: Keep current DC and add one new DC</h2>
+      <pre class="codeinput">loc_h = @(W,X0) [DC0; minisumloc(P,W(2,:),<span class="string">'mi'</span>,[],X0(2,:))];
+nruns = 5; TC = Inf; rng(324234)
+<span class="keyword">for</span> i=1:nruns
+   [DCi,TCi,Wi] = ala([DC0; randX(P,1)],w,P,<span class="string">'mi'</span>,loc_h);
+   <span class="keyword">if</span> TCi &lt; TC, TC = TCi; DC = DCi; W = Wi; <span
+class="keyword">end</span>
+<span class="keyword">end</span>
+TC1 = full(sum(sum(W.*dists(DC,P,<span class="string">'mi'</span>))))
+fprintf(<span class="string">'Annual reduction in TC = $%e\n'</span>,TC0 - TC1)
+[~,~,~,str] = lonlat2city(DCi(2,:));
+fprintf(<span class="string">'  when additional DC %s\n\n'</span>,str)
+</pre>
+      <pre class="codeoutput">TC1 =
+   2.8082e+07
+Annual reduction in TC = $4.791838e+07
+  when additional DC X is 5.94 mi E of Hoboken, NJ
+
+</pre>
+      <h2 id="5">Option 2: Close current and add one new DC</h2>
+      <pre class="codeinput">DC = minisumloc(P,w,<span class="string">'mi'</span>)
+TC2 = sum(w.*dists(DC,P,<span class="string">'mi'</span>))
+fprintf(<span class="string">'Annual reduction in TC = $%e\n'</span>,TC0 - TC2)
+[~,~,~,str] = lonlat2city(DC);
+fprintf(<span class="string">'  when close current and add new DC %s\n\n'</span>,str)
+</pre>
+      <pre class="codeoutput">DC =
+  -73.8576   40.8383
+TC2 =
+   3.5166e+07
+Annual reduction in TC = $4.083419e+07
+  when close current and add new DC DC is 5.37 mi S of Mount Vernon, NY
+
+</pre>
+      <h2 id="6">Option 3: Close current and add two new DCs</h2>
+      <pre class="codeinput">nruns = 5; TC = Inf; rng(34634)
+<span class="keyword">for</span> i=1:nruns
+   [DCi,TCi,Wi] = ala(randX(P,2),w,P,<span class="string">'mi'</span>);
+   <span class="keyword">if</span> TCi &lt; TC, TC = TCi; DC = DCi; W = Wi; <span
+class="keyword">end</span>
+<span class="keyword">end</span>
+TC3 = full(sum(sum(W.*dists(DC,P,<span class="string">'mi'</span>))))
+fprintf(<span class="string">'Annual reduction in TC = $%e\n'</span>,TC0 - TC3)
+[~,~,~,str] = lonlat2city(DCi(1,:));
+fprintf(<span class="string">'  when close current and add first new DC %s\n'</span>,str)
+[~,~,~,str] = lonlat2city(DCi(2,:));
+fprintf(<span class="string">'  and add second new DC %s\n\n'</span>,str)
+</pre>
+      <pre class="codeoutput">TC3 =
+   1.7892e+07
+Annual reduction in TC = $5.810847e+07
+  when close current and add first new DC X is 5.22 mi E of Union City, NJ
+  and add second new DC X is 5.13 mi SW of Waltham, MA
+
+</pre>
+      <h2 id="7">Problem 2</h2>
+      <h2 id="8">Define function handles</h2>
+      <pre class="codeinput">dafh = @(XY1,a1,XY2,a2) max(1.2*dists(XY1,XY2,<span
+class="string">'mi'</span>),<span class="keyword">...</span>
+   0.675*max(sqrt(a1(:)),sqrt(a2(:)')));
+city2lonlat = @(city,st) <span class="keyword">...</span>
+   uscity(<span class="string">'XY'</span>,mand(city,uscity(<span class="string">'Name'</span>),st,uscity(<span
+class="string">'ST'</span>)));
+</pre>
+      <h2 id="9">Estimate NF fixed cost</h2>
+      <pre class="codeinput">s.ud = [16921  52038  56925  46896  68739]';
+s.TPC = [383062  837070  679383  441136  487275]';
+x = s.ud;
+yest = @(x,p) p(1) + p(2)*x;
+fh = @(p) sum((s.TPC - yest(x,p)).^2);
+ab = fminsearch(fh,[0 1])
+k = ab(1), cp = ab(2)
+</pre>
+      <pre class="codeoutput">ab =
+   1.0e+05 *
+    3.6179    0.0000
+k =
+   3.6179e+05
+cp =
+    4.2190
+</pre>
+      <h2 id="10">Geolocate existing hubs</h2>
+      <pre class="codeinput">s.Name = {<span class="string">'Buffalo'</span>,<span
+class="string">'Pittsburgh'</span>,<span class="string">'Columbus'</span>,<span
+class="string">'Cleveland'</span>,<span class="string">'Detroit'</span>};
+s.ST = {<span class="string">'NY'</span>,<span class="string">'PA'</span>,<span
+class="string">'OH'</span>,<span class="string">'OH'</span>,<span class="string">'MI'</span>};
+P = city2lonlat(s.Name,s.ST);
+</pre>
+      <h2 id="11">Create</h2>
+      <pre class="codeinput">[CXY,pop,a] = uszip3(<span class="string">'XY'</span>,<span
+class="string">'Pop'</span>,<span class="string">'LandArea'</span>,~mor({<span class="string">'AK'</span>,<span
+class="string">'HI'</span>,<span class="string">'PR'</span>},<span class="keyword">...</span>
+   uszip3(<span class="string">'ST'</span>)));
+PXY = [P; CXY];  <span class="comment">% NF sites  = existing hubs + agg demand points</span>
+pa = [zeros(size(P,1),1); a];  <span class="comment">% 0 area for existing sites</span>
+D = dafh(PXY,pa,CXY,a);  <span class="comment">% Area adj distances since agg demand pts</span>
+sh = vec2struct(<span class="string">'d'</span>,D(:),<span class="string">'s'</span>,32.16);  <span
+class="comment">% Avg Class 60 density</span>
+ppiLTL = 187.6; <span class="comment">% Sep 2019 (P)</span>
+uwt = 400;
+K = reshape(transcharge(repmat(uwt/2000,size(sh)),sh,[],ppiLTL),size(D));
+rdem = 1/100;
+UD = (rdem)*repmat(pop(:)',size(D,1),1);
+C = UD.*K;
+</pre>
+      <h2 id="12">Determine hub locations</h2>
+      <pre class="codeinput">y0 = 1:size(P,1);  <span class="comment">% Keep existing hubs</span>
+[y,TC,X] = ufladd(k,C,y0);
+vdisp(<span class="string">'k,length(y),TC'</span>)
+</pre>
+      <pre class="codeoutput"> 
+ :       k      length(y)        TC      
+-:---------------------------------------
+1:  361,790.39      53     301,454,371.00
+</pre>
+      <h2 id="13">Check to determine if any existing hub exceeds capacity</h2>
+      <pre class="codeinput">ud = full(round(sum(UD(y,:).*X(y,:),2)));  <span class="comment">% Hub demand</span>
+newcapacityratio = [s.ud]./ud(1:size(P,1))  <span class="comment">% Existing hubs</span>
+newcapacityratio &lt; 2  <span class="comment">% Assume LB capacity = 2 x historical demand</span>
+</pre>
+      <pre class="codeoutput">newcapacityratio =
+    0.4002
+    1.0064
+    1.0567
+    1.0000
+    0.8575
+ans =
+  5×1 logical array
+   1
+   1
+   1
+   1
+   1
+</pre>
+      <h2 id="14">Plot results</h2>
+      <pre class="codeinput">makemap(PXY)
+h1 = pplot(CXY,<span class="string">'r.'</span>,<span class="string">'DisplayName'</span>,<span
+class="string">'Aggregate Demand Points'</span>);
+h2 = pplot(PXY(y,:),<span class="string">'ko'</span>,<span class="string">'DisplayName'</span>,<span
+class="string">'Hubs'</span>);
+legend([h1; h2])
+title(<span class="string">'Problem 2'</span>)
+</pre><img src="exam1F19soln_01.png" alt="" hspace="5" vspace="5">
+      <p class="footer"><br>
+        <a href="https://www.mathworks.com/products/matlab/">Published with
+          MATLAB® R2019a</a></p>
+    </div>
+    <!--
+##### SOURCE BEGIN #####%% Exam 1 Solution - ISE 754 Fall 2019
+%% Problem 1
+%% Determine Store Locations and Weightscity2lonlat = @(city,st) ...
+   uscity('XY',mand(city,uscity('Name'),st,uscity('ST')));DC0 = city2lonlat('Schenectady','NY');
+z = uszip5(~mor({'AK','HI','PR'},uszip5('ST')) & uszip5('Pop') > 20000);z = subsetstruct(z,dists(DC0,z.XY,'mi')*1.2 < 200);
+P = z.XY;f = z.Pop';
+%% Determine Transport Rate (in $/person-mi)%TD0 = sum(f.*dists(DC0,P,'mi'))
+TC0 = 7.6e7rnom = TC0/sum(f.*dists(DC0,P,'mi'))
+w = rnom*f;d = dists(DC0,P,'mi');
+fprintf('Current annual TC = $%e\n',TC0)%% Option 1: Keep current DC and add one new DC
+loc_h = @(W,X0) [DC0; minisumloc(P,W(2,:),'mi',[],X0(2,:))];nruns = 5; TC = Inf; rng(324234)
+for i=1:nruns   [DCi,TCi,Wi] = ala([DC0; randX(P,1)],w,P,'mi',loc_h);
+   if TCi < TC, TC = TCi; DC = DCi; W = Wi; endend
+TC1 = full(sum(sum(W.*dists(DC,P,'mi'))))fprintf('Annual reduction in TC = $%e\n',TC0 - TC1)
+[~,~,~,str] = lonlat2city(DCi(2,:));fprintf('  when additional DC %s\n\n',str)
+%% Option 2: Close current and add one new DCDC = minisumloc(P,w,'mi')
+TC2 = sum(w.*dists(DC,P,'mi'))fprintf('Annual reduction in TC = $%e\n',TC0 - TC2)
+[~,~,~,str] = lonlat2city(DC);fprintf('  when close current and add new DC %s\n\n',str)
+%% Option 3: Close current and add two new DCsnruns = 5; TC = Inf; rng(34634)
+for i=1:nruns   [DCi,TCi,Wi] = ala(randX(P,2),w,P,'mi');
+   if TCi < TC, TC = TCi; DC = DCi; W = Wi; endend
+TC3 = full(sum(sum(W.*dists(DC,P,'mi'))))fprintf('Annual reduction in TC = $%e\n',TC0 - TC3)
+[~,~,~,str] = lonlat2city(DCi(1,:));fprintf('  when close current and add first new DC %s\n',str)
+[~,~,~,str] = lonlat2city(DCi(2,:));fprintf('  and add second new DC %s\n\n',str)
+%% Problem 2
+%% Define function handlesdafh = @(XY1,a1,XY2,a2) max(1.2*dists(XY1,XY2,'mi'),...
+   0.675*max(sqrt(a1(:)),sqrt(a2(:)')));city2lonlat = @(city,st) ...
+   uscity('XY',mand(city,uscity('Name'),st,uscity('ST')));%% Estimate NF fixed cost
+s.ud = [16921  52038  56925  46896  68739]';s.TPC = [383062  837070  679383  441136  487275]';
+x = s.ud;yest = @(x,p) p(1) + p(2)*x;
+fh = @(p) sum((s.TPC - yest(x,p)).^2);ab = fminsearch(fh,[0 1])
+k = ab(1), cp = ab(2)%% Geolocate existing hubs
+s.Name = {'Buffalo','Pittsburgh','Columbus','Cleveland','Detroit'};s.ST = {'NY','PA','OH','OH','MI'};
+P = city2lonlat(s.Name,s.ST);%% Create 
+[CXY,pop,a] = uszip3('XY','Pop','LandArea',~mor({'AK','HI','PR'},...   uszip3('ST')));
+PXY = [P; CXY];  % NF sites  = existing hubs + agg demand pointspa = [zeros(size(P,1),1); a];  % 0 area for existing sites
+D = dafh(PXY,pa,CXY,a);  % Area adj distances since agg demand ptssh = vec2struct('d',D(:),'s',32.16);  % Avg Class 60 density
+ppiLTL = 187.6; % Sep 2019 (P)uwt = 400;
+K = reshape(transcharge(repmat(uwt/2000,size(sh)),sh,[],ppiLTL),size(D));rdem = 1/100;
+UD = (rdem)*repmat(pop(:)',size(D,1),1);C = UD.*K;
+%% Determine hub locationsy0 = 1:size(P,1);  % Keep existing hubs
+[y,TC,X] = ufladd(k,C,y0); vdisp('k,length(y),TC')
+%% Check to determine if any existing hub exceeds capacityud = full(round(sum(UD(y,:).*X(y,:),2)));  % Hub demand
+newcapacityratio = [s.ud]./ud(1:size(P,1))  % Existing hubsnewcapacityratio < 2  % Assume LB capacity = 2 x historical demand
+%% Plot resultsmakemap(PXY)
+h1 = pplot(CXY,'r.','DisplayName','Aggregate Demand Points');h2 = pplot(PXY(y,:),'ko','DisplayName','Hubs');
+legend([h1; h2])title('Problem 2')
+
+##### SOURCE END #####-->
+  </body>
+</html>
