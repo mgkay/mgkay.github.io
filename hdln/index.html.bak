@@ -329,13 +329,14 @@ h1{font-size:138.5%;}h2{font-size:123.1%;}h3{font-size:108%;}h1,h2,h3{margin:1em
               May 20–21, 2016.</p>
           </li>
           <li style="text-align: left;">
-            <p>Kay, Michael G., "<a href="https://search.proquest.com/docview/1810527252">A
+            <p>Kay, Michael G., "<a href="A%20new%20day%20for%20home%20delivery%20-%20ISE%20Magazine.pdf">A
                 new day for home delivery</a>," <em>ISE ; Industrial and
                 Systems Engineering at Work</em>, 48(8):31–36, 2016.</p>
           </li>
           <li style="text-align: left;">
-            <p>Kay, Michael G., "Smart city logistics and home delivery,” <em>MHI
-                Solutions</em>, 6(1):63–64, 2018.</p>
+            <p>Kay, Michael G., "<a href="Smart%20city%20logistics%20and%20home%20delivery%20-%20MHI%20Solutions.pdf">Smart
+                city logistics and home delivery</a>,” <em>MHI Solutions</em>,
+              6(1):63–64, 2018.</p>
           </li>
           <li style="text-align: left;">
             <p>Shrikrishna, Bhagyalakshmi V., Kulkarni, Bharat, and Kay, Michael
@@ -363,11 +364,23 @@ h1{font-size:138.5%;}h2{font-size:123.1%;}h3{font-size:108%;}h1,h2,h3{margin:1em
               Supply Chain Resource Cooperative, NC State University, July 7,
               2020.</p>
           </li>
-          <li style="text-align: left;"><!--[if gte mso 9]><xml>
- <o:OfficeDocumentSettings>  <o:RelyOnVML/>  <o:AllowPNG/> </o:OfficeDocumentSettings>
-</xml><![endif]-->Kay, Michael G., "<a href="PLN%20for%20Home%20Delivery%20-%20Raleigh%20Eng%20Club.pdf">Public
-              logistics networks for home delivery</a>,” presentation to the
-            Raleigh Engineers Club, Mar. 21, 2022. </li>
+          <li style="text-align: left;">
+            <p>Kay, Michael G., "<a href="PLN%20for%20Home%20Delivery%20-%20Raleigh%20Eng%20Club.pdf">Public
+                logistics networks for home delivery</a>,” presentation to the
+              Raleigh Engineers Club, Mar. 21, 2022.</p>
+          </li>
+          <li style="text-align: left;">
+            <p>Yalvac, Ekin. <a href="https://repository.lib.ncsu.edu/bitstream/handle/1840.20/41102/etd.pdf"><span
+                  style="color: #0000ee;">Design of a Home Delivery Logistics
+                  Network</span></a>. Doctoral Dissertation, Dept. of Industrial
+              and Syst. Eng., North Carolina State Univ., Raleigh, NC, 2015.
+              This dissertation research developed the control system needed to
+              operate the DCs in the proposed home delivery logistic network. In
+              this work, the containers were assumed to be unit size, and the
+              results showed that containers could be moved with minimal delay
+              even when up to 95% of the modules in the DC were occupied with
+              containers.</p>
+          </li>
         </ol>
         <ol>
         </ol>
