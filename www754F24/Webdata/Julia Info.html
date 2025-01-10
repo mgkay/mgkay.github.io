@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Julia Info</title>
+  </head>
+  <body>
+    <h2>Installing and Using Julia</h2>
+    <h4>Installing Julia</h4>
+    <p>The latest release of Julia (1.10.4) can be downloaded at <a href="https://julialang.org/downloads/"
+        target="_new" rel="noopener">https://julialang.org/downloads/</a>. Julia
+      is available for Windows, macOS, and Linux. Windows will be used for the
+      demonstrations in class, but Mac and Linux should work with no
+      complications for all class assignments (see <a href="https://julialang.org/downloads/platform/"
+        target="_new" rel="noopener">https://julialang.org/downloads/platform/</a>
+      for detailed download instructions for each platform). Using the 64-bit
+      (installer) for Windows, download and run the executable file <code>julia-1.10.4-win64.exe</code>
+      and accept all of the defaults (note: if an earlier version of Julia is on
+      your computer, easiest to first uninstall the earlier version).</p>
+    <p>After starting Julia using the desktop icon, the Julia window will open.
+      Type <code>]</code> at the command prompt to switch to package manager
+      mode and then <code>add IJulia</code> (note: it can take quite a while to
+      add and load a package) and then <code>build IJulia</code>. When
+      finished, use the <code>Backspace</code> key to return to the Julia
+      command prompt. Type <code>using IJulia</code>, then <code>jupyterlab()</code>,
+      and then <code>y</code> to install Jupyter via Conda (note: if you have
+      Anaconda installed on your computer, Jupyter should already be installed,
+      and this step is unnecessary). JupyterLab will launch in your default
+      browser. (Note: if you had a previous version of Julia installed on your
+      computer, you should update all of your previously installed packages by
+      typing <code>up</code> in the package manager.)</p>
+    <p>Using the <em>File Browser</em> on the left of the JupyterLab window,
+      select/create a new folder where you can save the notebooks that will be
+      used for this class (e.g., select <em>Documents</em> and then create and
+      then select a new folder <code>ISE754</code>). In the <em>Launcher</em>
+      tab of the browser window, select the <em>Julia 1.10.4</em>&nbsp;icon
+      under <em>Notebook,</em> and a new notebook named <code>Untitled.ipynb</code>
+      will be created. At the prompt in the first cell, type <code>"Hello
+        world"</code> and then <code>Cntl+Enter</code> to print it below in a
+      new output cell. After saving your notebook, the easiest way to close and
+      exit JupyterLab and Julia is to close their windows.</p>
+    <p>To open the notebook later, start Julia and at the command prompt and
+      type <code>using IJulia</code>, then <code>jupyterlab()</code>, and the
+      notebook will open in your browser. To create a new notebook, under the <em>File</em>
+      menu in JupyterLab, select <em>New</em> and then <em>Notebook,</em> and
+      then in the <em>Select Kernel</em> pop-up window, select <em>Julia
+        1.10.4</em>.</p>
+    <h4>Using Julia</h4>
+    <p>After launching Julia, execute <code>using IJulia</code> followed by <code>jupyterlab()</code>
+      at the command prompt to launch Jupyter in your default browser. Julia has
+      an extensive set of built-in functions and additional packages related to
+      more specialized topics. It can be used in two different ways: as a
+      traditional programming environment and as an interactive calculator.</p>
+    <p>In calculator mode (running Julia either in Jupyter or at the command
+      prompt), the built-in and package functions provide a convenient means of
+      performing one-off calculations and graphical plotting. In programming
+      mode, running Julia in an IDE like Visual Studio Code (VS Code) with Julia
+      extensions provides a programming environment (editor, debugger, and
+      profiler), enabling users to write their own functions and scripts.</p>
+    <h4>Loading Packages</h4>
+    <p>Julia has a variety of third-party open-source packages that will be used
+      to provide additional functionality. The first time they are used in a
+      notebook, the command <code>using "PackageName"</code> loads the package.</p>
+    <p>If any package has not yet been added to Julia on your computer, the
+      package manager in Julia should first be used to download it. (If you are
+      already running Julia and JupyterLab on your computer, you can start
+      another Julia instance to get a command prompt.) Type <code>]</code> at
+      the command prompt to switch to package manager mode and then <code>add
+        "PackageName"</code> (note: it can take quite a while to add and to load
+      some packages). When finished, use the <code>Backspace</code> key to
+      return to the Julia command prompt.</p>
+    <p>To search for packages: <a href="https://juliapackages.com/packages" target="_new"
+        rel="noopener">https://juliapackages.com/packages</a></p>
+    <h4>References</h4>
+    <div class="box py-3 generalbox center clearfix">
+      <div class="no-overflow">
+        <ol>
+          <li>Robert Hildebrand, Editor,&nbsp;<a href="https://github.com/open-optimization/open-optimization-or-book/files/5745381/MathematicalProgrammingandOperationsResearch.pdf">Mathematical
+              Programming and Operations Research: Modeling, Algorithms, and
+              Complexity with Examples in Python and Julia</a><em>,</em>&nbsp;2020
+            (part of the&nbsp;<a href="https://github.com/open-optimization">Open
+              Optimization</a>&nbsp;project).</li>
+          <li>Changhyun Kwon,&nbsp;<a href="https://www.softcover.io/read/7b8eb7d0/juliabook2"><em>Julia
+                Programming for Operations Research</em>, 2nd Edition</a>, 2019.
+          </li>
+          <li>Allen Downey and Ben Lauwens,&nbsp;<a href="https://benlauwens.github.io/ThinkJulia.jl/latest/book.html"><em>Think
+                Julia: How to Think Like a Computer Scientist</em></a>, 2018 (is
+            a good book-level intro to Julia, most introductory materials for
+            Julia are videos).</li>
+          <li><em><a href="https://juliadocs.github.io/Julia-Cheat-Sheet/">The
+                Fast Track to Julia</a></em>, best cheat sheet for Julia 1.0</li>
+          <li><a href="https://juliadatascience.io/"><em>Julia Data Science</em></a>,
+            open source book on how to do data science using Julia</li>
+          <li><a href="https://datascience-book.gitlab.io/book.html">Introduction
+              to Datascience: Learn Julia Programming, Math &amp; Datascience
+              from Scratch</a>, Karthikeyan A K, open source book that teaches
+            the basics of Julia needed for data science applications (new
+            material is added to the book on an ongoing basis).</li>
+        </ol>
+      </div>
+    </div>
+  </body>
+</html>

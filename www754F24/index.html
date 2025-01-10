@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <title>ISE 754: Logistics Engineering</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            color: #1a365d;
+            text-align: center;
+            padding: 20px 0;
+            margin-bottom: 30px;
+            border-bottom: 3px solid #2c3e50;
+            font-size: 2.5em;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+        h2 {
+            color: #2c3e50;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        ol {
+            line-height: 1.6;
+        }
+        ul {
+            line-height: 1.6;
+            list-style-type: disc;
+        }
+        a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+  </head>
+  <body>
+    <h1>ISE 754: Logistics Engineering</h1>
+    <h2>1. Introduction</h2>
+    <ol>
+      <li><a href="1.%20Introduction/ISE754F24-1.1.pdf">Modeling, Guesstimation,
+          and Fermi Problems</a> (<a href="1.%20Introduction/1-Intro-1.ipynb">script</a>,
+        <a href="1.%20Introduction/1-Intro-1.html">html</a>)</li>
+      <li><a href="1.%20Introduction/ISE754F24-1.2.pdf">Basic Concepts in Julia</a>
+        (<a href="1.%20Introduction/1-Intro-2.ipynb">script</a>, <a href="1.%20Introduction/1-Intro-2.html">html</a>)</li>
+      <ul>
+        <li><a href="1.%20Introduction/HW1.html">HW 1 - Julia</a> </li>
+      </ul>
+    </ol>
+    <h2>2. Location</h2>
+    <ol>
+      <li><a href="2.%20Location/ISE754F24-2.1.pdf">Types of Location Problems</a>
+        (<a href="2.%20Location/2-Loc-1.ipynb">script</a>, <a href="2.%20Location/2-Loc-1.html">html</a>,
+        <a href="2.%20Location/Facility%20Location.pdf">Facility Location Notes</a>)</li>
+      <li><a href="2.%20Location/ISE754F24-2.2.pdf">Single-Facility Location</a>
+        (<a href="2.%20Location/2-Loc-2.ipynb">script</a>, <a href="2.%20Location/2-Loc-2.html">html</a>)</li>
+      <ul>
+        <li><a href="2.%20Location/HW2.html">HW 2 - Single-Facility Location</a>
+        </li>
+      </ul>
+      <li><a href="2.%20Location/ISE754F24-2.3.pdf">Geocoding and Great-Circle
+          Distances</a> (<a href="2.%20Location/2-Loc-3.ipynb">script</a>, <a href="2.%20Location/2-Loc-3.html">html</a>)</li>
+      <li><a href="2.%20Location/ISE754F24-2.4.pdf">Allocation and ALA</a> (<a href="2.%20Location/2-Loc-4.ipynb">script</a>,
+        <a href="2.%20Location/2-Loc-4.html">html</a>, <a href="2.%20Location/Facility%20Location-Allocation.pdf">ALA
+          Notes</a>) </li>
+      <ul>
+        <li><a href="2.%20Location/HW3.html">HW 3 - Minisum Location&nbsp;</a> </li>
+      </ul>
+      <li><a href="2.%20Location/ISE754F24-2.5.pdf">UFL Heuristics</a> (<a href="2.%20Location/2-Loc-5.ipynb">script</a>,
+        <a href="2.%20Location/2-Loc-5.html">html</a>, <a href="2.%20Location/ufl_heuristics.jl">ufl_heuristics.jl</a>)</li>
+      <li><a href="2.%20Location/ISE754F24-2.6.pdf">Aggregate Demand</a> (<a href="2.%20Location/2-Loc-6.ipynb">script</a>,
+        <a href="2.%20Location/2-Loc-6.html">html</a>, <a href="https://data.census.gov/table">US
+          Census Tables</a> (<a href="2.%20Location/ACSDT5Y2022.B19301-Data.csv">data.csv</a>))</li>
+      <ul>
+        <li><span style="color: #3498db;"><a href="2.%20Location/HW4.html">HW 4
+              - ALA and UFLADD&nbsp;</a> </span></li>
+      </ul>
+      <li><a href="2.%20Location/ISE754F24-2.7.pdf">Logistics Network Design</a>
+        (<a href="2.%20Location/2-Loc-7.ipynb">script</a>, <a href="2.%20Location/2-Loc-7.html">html</a>,
+        <a href="2.%20Location/PopcoData.csv">PopcoData.csv</a>)</li>
+      <li><a href="2.%20Location/ISE754F24-2.8.pdf">Discrete Location and MILP</a>
+        (<a href="2.%20Location/2-Loc-8.ipynb">script</a>, <a href="2.%20Location/2-Loc-8.html">html</a>,
+        <a href="2.%20Location/PopcoCmatrix.csv">PopcoCmatrix.csv</a>)</li>
+      <ul>
+        <li><a href="2.%20Location/HW5.html">HW 5 - Discrete Location</a> (<a href="2.%20Location/HW5data-plant.csv">plant.csv</a>,
+          <a href="2.%20Location/HW5data-cust.csv">cust.csv</a>)</li>
+      </ul>
+    </ol>
+    <h2>3. Transport</h2>
+    <ol>
+      <li><a href="3.%20Transport/ISE754F24-3.1.pdf">Overview of Freight
+          Transport</a> (<a href="3.%20Transport/3-Trans-1.ipynb">script</a>, <a
+          href="3.%20Transport/3-Trans-1.html">html</a>, <a href="3.%20Transport/Freight%20Transport.pdf">Freight
+          Transport Notes</a>, <a href="3.%20Transport/Freight%20Transport_.wav">podcast</a>)</li>
+      <li><a href="3.%20Transport/ISE754F24-3.2.pdf">One-Time Truck Shipments</a>
+        (<a href="3.%20Transport/3-Trans-2.ipynb">script</a>, <a href="3.%20Transport/3-Trans-2.html">html</a>)</li>
+      <li><a href="3.%20Transport/ISE754F24-3.3.pdf">Periodic Truck Shipments</a>
+        (<a href="3.%20Transport/3-Trans-3.ipynb">script</a>, <a href="3.%20Transport/3-Trans-3.html">html</a>)</li>
+      <li><a href="3.%20Transport/ISE754F24-3.4.pdf">Transshipment</a> (<a href="3.%20Transport/3-Trans-4.ipynb">script</a>,
+        <a href="3.%20Transport/3-Trans-4.html">html</a>)</li>
+      <a href="3.%20Transport/HW6.html"> </a>
+      <ul>
+        <a href="3.%20Transport/HW6.html"> </a>
+        <li><a href="3.%20Transport/HW6.html"> HW 6 - Freight Transport</a> (<a
+            href="3.%20Transport/HW6data-cust.csv">cust.csv</a>, <a href="3.%20Transport/HW6data-dem.csv">dem.csv</a>,
+          <a href="3.%20Transport/HW6data-sup.csv">sup.csv</a>)</li>
+      </ul>
+    </ol>
+    <h2>4. Networks</h2>
+    <ol>
+      <li><a href="4.%20Networks/ISE754F24-4.1.pdf">Assignment and
+          Transportation Problems</a> (<a href="4.%20Networks/4-Net-1.ipynb">script</a>,
+        <a href="4.%20Networks/4-Net-1.html">html</a>)</li>
+      <li><a href="4.%20Networks/ISE754F24-4.2.pdf">Shortest Paths and Road
+          Networks</a> (<a href="4.%20Networks/4-Net-2.ipynb">script</a>, <a href="4.%20Networks/4-Net-2.html">html</a>,
+        <a href="4.%20Networks/nhs_links.csv">nhs_links.csv</a>, <a href="4.%20Networks/nhs_nodes.csv">nhs_nodes.csv</a>,
+        <a href="4.%20Networks/roadnetfun.jl">roadnetfun.jl</a>)</li>
+      <li><a href="4.%20Networks/ISE754F24-4.3.pdf">Production-Inventory
+          Planning: Single Product</a> (<a href="4.%20Networks/4-Net-3.ipynb">script</a>,
+        <a href="4.%20Networks/4-Net-3.html">html</a>)</li>
+      <li><a href="4.%20Networks/ISE754F24-4.4.pdf">Production-Inventory
+          Planning: Multiple Products</a> (<a href="4.%20Networks/4-Net-4.ipynb">script</a>,
+        <a href="4.%20Networks/4-Net-4.html">html</a>)</li>
+      <ul>
+        <li> <a href="4.%20Networks/HW7.html">HW 7 - Networks</a> (<a href="4.%20Networks/HW7data-prod_cost.csv">prod_cost.csv</a>,
+          <a href="4.%20Networks/HW7data-demand.csv">demand.csv</a>, <a href="4.%20Networks/HW7data-demand_2.csv">demand_2.csv</a>)</li>
+      </ul>
+    </ol>
+    <h2>5. Routing</h2>
+    <ol>
+      <li><a href="5.%20Routing/ISE754F24-5.1.pdf">Traveling Salesman Problem</a>
+        (<a href="5.%20Routing/5-Rte-1.ipynb">script</a>, <a href="5.%20Routing/5-Rte-1.html">html</a>)</li>
+      <li><a href="5.%20Routing/ISE754F24-5.2.pdf">Route-based Construction
+          Procedures</a> (<a href="5.%20Routing/5-Rte-2.ipynb">script</a>, <a href="5.%20Routing/5-Rte-2.html">html</a>,
+        <a href="5.%20Routing/rtefun.jl">rtefun.jl</a>)</li>
+      <li><a href="5.%20Routing/ISE754F24-5.3.pdf">Vehicle Routing</a> (<a href="5.%20Routing/5-Rte-3.ipynb">script</a>,
+        <a href="5.%20Routing/5-Rte-3.html">html</a>, <a href="5.%20Routing/shmtNC30-sh.csv">shmtNC30-sh.csv</a>,
+        <a href="5.%20Routing/shmtNC30-xy.csv">shmtNC30-xy.csv</a>)</li>
+      <ul>
+        <li> <a href="file:///C:/Users/kay/Documents/G_Drive/My%20Drive/ISE754/5.%20Routing/HW8.html">HW
+            8 - Routing</a> (<a href="5.%20Routing/HW8data.csv">data.csv</a>)</li>
+      </ul>
+    </ol>
+    <h2>6. Inventory</h2>
+    <ol>
+      <li><a href="6.%20Inventory/ISE754F24-6.1.pdf">Working, Economic, and
+          One-Time Safety Stock</a> (<a href="6.%20Inventory/6-Inv-1.ipynb">script</a>,
+        <a href="6.%20Inventory/6-Inv-1.html">html</a>)</li>
+      <li><a href="6.%20Inventory/ISE754F24-6.2.pdf">Periodic Safety Stock</a> (<a
+          href="6.%20Inventory/6-Inv-2.ipynb">script</a>, <a href="6.%20Inventory/6-Inv-2.html">html</a>)</li>
+      <li><a href="6.%20Inventory/ISE754F24-6.3.pdf">Multi-Echelon Inventory
+          Systems</a> (<a href="6.%20Inventory/6-Inv-3.ipynb">script</a>, <a href="6.%20Inventory/6-Inv-3.html">html</a>)</li>
+      <ul>
+        <li> <a href="6.%20Inventory/HW9.html">HW 9 -Inventory</a> (<a href="6.%20Inventory/HW9data.csv">data.csv</a>)</li>
+      </ul>
+    </ol>
+    <h2>References</h2>
+    <ul>
+      <li><a href="Webdata/Resource_Materials.html">Resource Materials</a> </li>
+      <li><a href="Webdata/Julia%20Info.html">Installing and Using Julia</a></li>
+      <li><a href="Webdata/ISE754F24-All_Slides.pdf">All Slides PDF</a></li>
+      <li><a href="Webdata/Study%20Guide%20for%20the%20Final%20Exam.pdf">Study
+          Guide for the Final Exam</a></li>
+      <li><a href="Webdata/Schedule%20ISE754%20F24.pdf">Course Schedule</a></li>
+      <li><a href="https://chatgpt.com/g/g-B6epLPYOh-ise754-gpt">ISE 754 GPT</a></li>
+      <li><a href="https://github.com/mgkay/Logjam">Logjam, Julia package for
+          logistics engineering</a> (<a href="https://mgkay.github.io/Logjam/">docs</a>)</li>
+    </ul>
+    <p><a href="https://www.ise.ncsu.edu/people/kay/">Michael G. Kay</a>, NC
+      State University, Fall 2024</p>
+  </body>
+</html>
