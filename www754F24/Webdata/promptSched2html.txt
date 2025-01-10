@@ -1,0 +1,5 @@
+Use attached file Schedule ISE754 F24.csv to create an index.html file with only with the Secion and Topic info in it. Each numbered section should be a different heading level 2 and each topic should be a numbered list. 
+Make each topic text a hyperlink to a file in, for example, 2. Location/ISE754F24-2.1.pdf, 2. Location/ISE754F24-2.2.pdf for the first two topics in the Location section. 
+Add the following to the end of each item " (script, html)", where each "script" is a hyperlink to a ipynb file following the format 2. Location/2-Loc-1.ipynb, 2. Location/2-Loc-2.ipynb for the first two topics in the Location section, and  each "html" is a hyperlink to a html file following the format 2. Location/2-Loc-1.html, 2. Location/2-Loc-2.html for the first two topics in the Location section.
+Use Intro, Loc, Trans, Net, Rte, Inv, respectively, to abbreviate each section in the file names.
+Skip all unnumbered topics.

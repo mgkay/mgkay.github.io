@@ -1,0 +1,30 @@
+Lecture, ,Date,Section,Topic,Assignment
+1,19,"AUG, MON",1. Introduction,"1. Modeling, Guesstimation, and Fermi Problems",
+2,21,"AUG, WED",,2. Basic Concepts in Julia,HW 1
+3,26,"AUG, MON",2. Location,1. Types of Location Problems,
+4,28,"AUG, WED",,2. Single-Facility Location,HW 2
+5,4,"SEP, WED",,3. Geocoding and Great-Circle Distances,
+6,9,"SEP, MON",,4. Allocation and ALA,HW 3
+7,11,"SEP, WED",,5. UFL Heuristics,
+8,16,"SEP, MON",,6. Aggregate Demand,HW 4
+9,18,"SEP, WED",,7. Logistics Network Design,
+10,23,"SEP, MON",,8. Discrete Location and MILP,HW 5
+11,25,"SEP, WED",3. Transport,1. Overview of Freight Transport,
+12,30,"SEP, MON",,2. One-Time Truck Shipments ,
+13,2,"OCT, WED",,3. Periodic Truck Shipments,
+14,7,"OCT, MON",,4. Transshipment,HW 6
+15,9,"OCT, WED",4. Networks,1. Assignment and Transportation Problems,
+16,16,"OCT, WED",,Review for Exam 1,Exam 1
+17,21,"OCT, MON",,2. Shortest Paths and Road Networks,
+18,23,"OCT, WED",,3. Production-Inventory Planning: Single Product,
+19,28,"OCT, MON",,4. Production-Inventory Planning: Multiple Products,HW 7
+20,30,"OCT, WED",5. Routing,1. Traveling Salesman Problem,
+21,4,"NOV, MON",,2. Route-based Construction Procedures,
+22,6,"NOV, WED",,3. Vehicle Routing,HW 8
+23,11,"NOV, MON",6. Inventory,"1. Working, Economic, and One-Time Safety Stock",
+24,13,"NOV, WED",,Review for Exam 2,Exam 2
+25,18,"NOV, MON",,2. Periodic Safety Stock,
+26,20,"NOV, WED",,3. Multi-Echelon Inventory Systems,HW 9
+27,25,"NOV, MON",,(Safety Lecture),
+28,2,"DEC, MON",,Review for Final Exam,
+,11,"DEC, WED","Final Exam, 8:30 – 11:00am 136 MRC",,
