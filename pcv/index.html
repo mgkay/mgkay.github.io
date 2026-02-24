@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PCV: Plan-Construct-Verify</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1><span>PCV</span>: Plan-Construct-Verify</h1>
+  <p class="subtitle">Structured planning discipline for Claude Code projects</p>
+  <p class="affiliation">NC State &middot; ISE</p>
+  <nav>
+    <a href="index.html" class="active">Home</a>
+    <a href="guide.html">Workflow Guide</a>
+  </nav>
+</header>
+
+<main>
+
+<!-- What is PCV -->
+<h2>What is PCV?</h2>
+
+<p>PCV is a <strong>skill for Claude Code</strong> that adds structured planning discipline
+to complex projects. It separates <em>deciding what to build</em> from
+<em>building it</em>, ensuring you make key decisions explicitly before any code is written,
+any document is drafted, or any design is rendered.</p>
+
+<p>Without PCV, Claude Code makes dozens of implicit decisions — which packages to use,
+how components connect, what interfaces look like, how errors are handled. Many are
+reasonable in isolation but don&rsquo;t match what you intended. You discover this after the
+work is done, leading to costly rework or starting over.</p>
+
+<p>PCV surfaces those decisions during a structured planning phase, records your choices
+in an auditable trail, then executes the approved plan precisely.</p>
+
+<div class="phases">
+  <div class="phase-box">Plan<small>Clarify &amp; decide</small></div>
+  <div class="phase-arrow">&#x2192;</div>
+  <div class="phase-box">Construct<small>Build per plan</small></div>
+  <div class="phase-arrow">&#x2192;</div>
+  <div class="phase-box">Verify<small>Check &amp; confirm</small></div>
+</div>
+
+<!-- When to Use -->
+<h2>When to Use PCV</h2>
+
+<div class="cols">
+  <div class="col">
+    <h4>Good fit</h4>
+    <ul>
+      <li>Multi-component software projects</li>
+      <li>Projects with visual interfaces (GUIs, dashboards)</li>
+      <li>Documents with domain-specific requirements</li>
+      <li>Mathematical formulations and analytical models</li>
+      <li>Anything where getting the design wrong means starting over</li>
+    </ul>
+  </div>
+  <div class="col">
+    <h4>Probably overkill</h4>
+    <ul>
+      <li>Quick scripts or one-off utilities</li>
+      <li>Simple bug fixes</li>
+      <li>Tasks you can describe in a single sentence</li>
+      <li>Exploratory work where the goal is still unclear</li>
+    </ul>
+  </div>
+</div>
+
+<!-- Prerequisites -->
+<h2>Prerequisites</h2>
+
+<p><strong>Claude Code</strong> must be installed and working on your machine.
+PCV is a Claude Code skill — it runs inside Claude Code, not separately.
+If you don&rsquo;t have Claude Code yet, install it first:
+<a href="https://docs.anthropic.com/en/docs/claude-code/overview">Claude Code documentation</a>.</p>
+
+<!-- Installation -->
+<h2>Installation</h2>
+
+<ol class="steps">
+  <li>
+    <strong>Download the bootstrap file.</strong><br>
+    Save <a href="bootstrap.md" download>bootstrap.md</a> to any convenient location
+    on your machine.
+  </li>
+  <li>
+    <strong>Give it to Claude Code.</strong><br>
+    Start a Claude Code session and say:<br>
+    <code>Read [path-to-bootstrap.md] and follow the installation instructions inside it.</code>
+  </li>
+  <li>
+    <strong>Confirm the installation.</strong><br>
+    Claude Code will install six files and report success. You&rsquo;re ready to go.
+  </li>
+</ol>
+
+<div class="callout">
+  <p><strong>Updating.</strong> To update PCV later, download a fresh <code>bootstrap.md</code>
+  and repeat the steps above. The installer checks the installed version and only
+  overwrites if the new version is higher.</p>
+</div>
+
+<!-- Quick Start -->
+<h2>Quick Start</h2>
+
+<ol class="steps">
+  <li>
+    <strong>Create a project directory</strong> and <code>cd</code> into it in your terminal.
+  </li>
+  <li>
+    <strong>Start Claude Code</strong> in that directory.
+  </li>
+  <li>
+    <strong>Type <code>/pcv</code></strong> — PCV scaffolds a <code>charge.md</code> file
+    and a permissions file. It then asks you to fill in the charge.
+  </li>
+  <li>
+    <strong>Fill in <code>charge.md</code></strong> with your project description —
+    what you&rsquo;re building, technology constraints, success criteria.
+  </li>
+  <li>
+    <strong>Run <code>/pcv</code> again.</strong> PCV reads your charge and begins the
+    planning phase: asking clarification questions (one at a time), running an adversarial
+    review, and presenting plans for your approval.
+  </li>
+  <li>
+    <strong>Approve the plans.</strong> PCV builds per the approved plan, then verifies
+    the result against your success criteria.
+  </li>
+</ol>
+
+<p>For a detailed walkthrough of each phase, what to expect at every stage, the four
+deliverable patterns PCV supports, and troubleshooting tips, see the
+<a href="guide.html">Workflow Guide</a>.</p>
+
+<!-- Four Patterns (brief) -->
+<h2>Four Deliverable Patterns</h2>
+
+<p>PCV adapts its planning, construction, and verification to the type of deliverable:</p>
+
+<table>
+  <thead>
+    <tr><th>#</th><th>Pattern</th><th>Example</th><th>Verification</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>1</td><td>Code</td><td>Applications, packages, data pipelines</td><td>Automated tests, compilation, runtime</td></tr>
+    <tr><td>2</td><td>Prose</td><td>SOPs, reports, documentation</td><td>Structural review, completeness</td></tr>
+    <tr><td>3</td><td>Mathematical</td><td>LP/MIP formulations, analytical models</td><td>Correctness, constraint satisfaction</td></tr>
+    <tr><td>4</td><td>Design &amp; Render</td><td>Dashboards, HTML displays, visualizations</td><td>Visual comparison to wireframe</td></tr>
+  </tbody>
+</table>
+
+</main>
+
+<footer>
+  <p>PCV v3.2 &middot; M. G. Kay &middot; NC State ISE<br>
+  <a href="guide.html">Workflow Guide</a></p>
+</footer>
+
+</div>
+</body>
+</html>

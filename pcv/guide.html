@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PCV Workflow Guide</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1><span>PCV</span> Workflow Guide</h1>
+  <p class="subtitle">Detailed reference for the Plan-Construct-Verify workflow</p>
+  <p class="affiliation">NC State &middot; ISE</p>
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="guide.html" class="active">Workflow Guide</a>
+  </nav>
+</header>
+
+<main>
+
+<!-- ======================================================== -->
+<h2>Why This Workflow</h2>
+
+<p>When you ask an AI coding assistant to build software directly from a description,
+the AI makes dozens of implicit decisions — which packages to use, how components
+connect, what the interfaces look like, how errors are handled, what the GUI layout
+looks like. Many of these decisions are reasonable in isolation but don&rsquo;t match what
+you intended. You discover this after the code is written, leading to costly rework
+or starting over.</p>
+
+<p>The gap between &ldquo;what you want software to do&rdquo; and &ldquo;the complexity of
+making it work in code&rdquo; is where this workflow adds value. Package ecosystems,
+interface contracts, dependency management, build systems, runtime environments, GUI
+frameworks, testing infrastructure, data flow, and compatibility with existing code
+all create opportunities for the AI to guess wrong. Planning surfaces these decisions
+explicitly so you can make them before anything is built.</p>
+
+<p>PCV separates <em>deciding what to build</em> from <em>building it</em>. During
+planning, Claude Code works with you to make decisions explicitly — surfacing trade-offs,
+asking you to choose, and recording the rationale. The result is a detailed plan that
+Claude Code then executes without guessing.</p>
+
+<!-- ======================================================== -->
+<h2>What PCV Adds Beyond Native Claude Code</h2>
+
+<p>Claude Code is already highly capable. PCV adds specific capabilities that native
+Claude Code does not provide on its own:</p>
+
+<ol>
+  <li><strong>Sequential clarification.</strong> One question at a time, dependency-ordered,
+    so each answer can inform subsequent questions. Native Claude Code tends to ask
+    batched questions or skip clarification entirely.</li>
+  <li><strong>Adversarial review.</strong> A separate Critic agent challenges the plan
+    before you approve it, catching assumptions, contradictions, and gaps.</li>
+  <li><strong>Human approval gates.</strong> Three explicit gates (MakePlan, planning
+    artifacts, ConstructionPlan) where you review and approve before construction begins.
+    Nothing is built without your sign-off.</li>
+  <li><strong>Auditable decision trail.</strong> A verbatim decision log records every
+    question, answer, and interpretation — useful for reviewing how decisions were made
+    and for educational purposes.</li>
+  <li><strong>Pattern-specific verification.</strong> Verification is tailored to the
+    deliverable type: automated tests for code, structural review for prose, correctness
+    checks for math, visual comparison for design.</li>
+  <li><strong>Prior work analysis.</strong> When building on existing code or documents,
+    PCV performs a structured assessment to determine the right scope — from
+    verification-only to full rewrite — with guards against both over- and under-scoping.</li>
+  <li><strong>Planning artifact gates.</strong> Wireframes, mathematical formulations,
+    and test specifications are reviewed and approved before construction, preventing
+    the costly rework that comes from building first and discovering misalignment later.</li>
+</ol>
+
+<!-- ======================================================== -->
+<h2>The Three Phases</h2>
+
+<h3>Plan</h3>
+
+<p>The planning phase transforms your project description (the &ldquo;charge&rdquo;) into
+two approved documents:</p>
+
+<ul>
+  <li><strong>MakePlan</strong> — High-level plan: what to build, trade-offs resolved,
+    assumptions identified, scope determined, verification criteria set.</li>
+  <li><strong>ConstructionPlan</strong> — Detailed build specification: file structure,
+    component design, dependency order, verification strategy. May include function
+    signatures and pseudocode, but not full implementations.</li>
+</ul>
+
+<p>Between these documents, PCV may also produce <strong>planning artifacts</strong> —
+wireframes for visual projects, mathematical formulations for analytical work, test
+specifications for code — that you review and approve at Gate 2.</p>
+
+<h3>Construct</h3>
+
+<p>Claude Code builds strictly per the approved ConstructionPlan. If something in the
+plan doesn&rsquo;t work during construction, Claude Code explains the issue and waits for
+your approval before changing approach. Deviations are logged. Git commits happen
+silently at milestones.</p>
+
+<h3>Verify</h3>
+
+<p>Verification is pattern-specific (see <a href="#patterns">Four Deliverable Patterns</a>
+below). PCV maps each success criterion from your charge to specific deliverable
+components, compares deliverables against approved planning artifacts, and produces a
+verification report. If an export target is configured, verified deliverables are copied
+to that location.</p>
+
+<!-- ======================================================== -->
+<h2>What to Expect at Each Stage</h2>
+
+<h3>Writing the charge</h3>
+
+<p>When you run <code>/pcv</code> in an empty project directory, PCV scaffolds three things:</p>
+
+<ul>
+  <li><code>charge.md</code> — Your project description template.</li>
+  <li><code>CLAUDE.md</code> — A minimal project identity file (you customize it).</li>
+  <li><code>.claude/settings.json</code> — Permission pre-approvals so PCV can operate
+    without per-action prompts.</li>
+</ul>
+
+<p>Fill in <code>charge.md</code> with:</p>
+<ul>
+  <li><strong>Configuration fields</strong> — Your name, project name, and optionally
+    a project directory, export target, and prior work paths.</li>
+  <li><strong>Project description</strong> — What you&rsquo;re building, who it&rsquo;s for,
+    what it should do. Be detailed; the AI can always filter but cannot invent context
+    you didn&rsquo;t provide.</li>
+  <li><strong>Technology &amp; constraints</strong> — Language, framework, specific
+    requirements.</li>
+  <li><strong>Success criteria</strong> — How you&rsquo;ll know the project is done.</li>
+</ul>
+
+<p>Then run <code>/pcv</code> again to start planning.</p>
+
+<h3>Clarification questions</h3>
+
+<p>PCV asks clarification questions <strong>one at a time</strong>. It starts with the
+question whose answer has the most downstream impact, waits for your response, then
+re-evaluates remaining questions — some may be resolved automatically, others may have
+narrowed options. Maximum 8 questions; if more are needed, PCV flags that the charge
+may need more detail.</p>
+
+<div class="callout">
+  <p><strong>Answer each question carefully.</strong> Your answers directly shape the plan.
+  PCV records the exact text of each question and your response in the decision log.</p>
+</div>
+
+<h3>Critic review and dispositions</h3>
+
+<p>After drafting the MakePlan, PCV spawns an adversarial Critic agent that reads the
+charge, the plan, and the decision log, then challenges the plan. The Critic looks for
+weak assumptions, internal contradictions, missing edge cases, unstated risks,
+requirements gaps, and verification holes.</p>
+
+<p>For each finding, the Critic proposes a disposition:</p>
+
+<ul>
+  <li><strong>Resolved</strong> — The issue can be fixed by revising the plan. PCV describes
+    the revision it will make.</li>
+  <li><strong>Escalate</strong> — The issue requires your judgment. PCV presents the finding
+    and asks you a focused question. Escalated findings are presented one at a time, just
+    like clarification questions.</li>
+  <li><strong>Acknowledge</strong> — The issue is genuine but unresolvable at planning time.
+    PCV explains why.</li>
+</ul>
+
+<p><strong>You have final say on every disposition.</strong> If you think an
+&ldquo;Acknowledge&rdquo; item can actually be resolved, say so. Nothing enters
+Assumptions &amp; Unknowns without your approval.</p>
+
+<h3>Approval gates</h3>
+
+<p>PCV has three gates where you explicitly approve before proceeding:</p>
+
+<table>
+  <thead>
+    <tr><th>Gate</th><th>What&rsquo;s approved</th><th>What happens next</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Gate 1</strong></td>
+      <td>MakePlan — scope, trade-offs, criteria</td>
+      <td>ConstructionPlan is drafted</td>
+    </tr>
+    <tr>
+      <td><strong>Gate 2</strong></td>
+      <td>Planning artifacts — wireframes, formulations, test specs</td>
+      <td>ConstructionPlan is finalized</td>
+    </tr>
+    <tr>
+      <td><strong>Gate 3</strong></td>
+      <td>ConstructionPlan — file structure, components, build order</td>
+      <td>Construction begins</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>At each gate, you can request editorial changes (applied immediately) or substantive
+changes (PCV confirms interpretation, then revises). PCV does not proceed until you
+explicitly approve.</p>
+
+<h3>Construction</h3>
+
+<p>Claude Code follows the approved ConstructionPlan. You observe but typically don&rsquo;t
+need to intervene unless PCV encounters an issue the plan didn&rsquo;t anticipate.
+Deviations require your approval and are logged.</p>
+
+<h3>Verification</h3>
+
+<p>PCV runs pattern-appropriate verification, maps each success criterion to deliverable
+components, compares deliverables to planning artifacts, and produces a summary report.
+The decision log is closed out.</p>
+
+<!-- ======================================================== -->
+<h2 id="patterns">The Four Deliverable Patterns</h2>
+
+<p>PCV adapts its planning, construction, and verification to the type of deliverable.
+Most projects combine multiple patterns.</p>
+
+<h3>Pattern 1 — Code</h3>
+<p><strong>Examples:</strong> Applications, packages, data pipelines, simulations, tools.</p>
+<p><strong>Planning artifact:</strong> Test specification (when tests are part of success criteria) —
+what unit tests cover, known-input/known-output cases, edge cases, error scenarios.</p>
+<p><strong>Construction:</strong> Build-test cycle. Each component verified in isolation before
+proceeding to dependents.</p>
+<p><strong>Verification:</strong> Automated tests, compilation, runtime checks, error handling
+of edge cases.</p>
+
+<h3>Pattern 2 — Prose/Documents</h3>
+<p><strong>Examples:</strong> SOPs, reports, technical documentation, guides.</p>
+<p><strong>Planning artifact:</strong> None required (the ConstructionPlan serves as specification).
+Optional artifacts if requested.</p>
+<p><strong>Construction:</strong> Build-review cycle. Sections constructed per plan.</p>
+<p><strong>Verification:</strong> All sections present, content is project-specific, coherent
+flow, meets readability standard.</p>
+
+<h3>Pattern 3 — Mathematical/Analytical</h3>
+<p><strong>Examples:</strong> LP/MIP formulations, optimization models, analytical frameworks.</p>
+<p><strong>Planning artifact:</strong> Formal mathematical specification — index sets, parameters,
+decision variables with domains, objective function, all constraints with labels, in LaTeX.</p>
+<p><strong>Construction:</strong> Build-verify cycle against the approved formulation.</p>
+<p><strong>Verification:</strong> Correctness, constraint satisfaction, dimensional consistency,
+variable domain completeness, implementability from document alone.</p>
+
+<h3>Pattern 4 — Design-and-Render</h3>
+<p><strong>Examples:</strong> Dashboards, HTML displays, Andon boards, visualizations.</p>
+<p><strong>Planning artifact:</strong> Wireframe or layout mockup — spatial layout, relative sizing,
+information hierarchy. Approved wireframes become binding layout contracts.</p>
+<p><strong>Construction:</strong> Build-review cycle. Implementation matches wireframe.</p>
+<p><strong>Verification:</strong> Visual comparison to approved wireframe, &ldquo;glance test&rdquo;
+for the target context, accessibility, display-target requirements.</p>
+
+<!-- ======================================================== -->
+<h2>Prior Work Analysis</h2>
+
+<p>When your charge references existing code, documents, or other prior work, PCV
+performs a structured analysis before planning:</p>
+
+<ol>
+  <li><strong>Inventory</strong> — What files and artifacts exist? What is the structure,
+    quality, and completeness?</li>
+  <li><strong>Three-category classification</strong> — Each finding is classified as:
+    already decided by you (the charge addresses it), a new issue (becomes a clarification
+    question), or a potential conflict (charge vs. prior work).</li>
+  <li><strong>Scope determination</strong> — One of three outcomes:
+    <ul>
+      <li><strong>Verification-only</strong> — Prior work meets all success criteria. Proceed
+        directly to verification.</li>
+      <li><strong>Scoped changes</strong> — Structure is sound but specific content needs
+        targeted revision.</li>
+      <li><strong>Full build</strong> — Prior work is architecturally flawed or fundamentally
+        misaligned.</li>
+    </ul>
+  </li>
+</ol>
+
+<p>PCV guards against <strong>over-scoping</strong> (defaulting to full rewrite when the
+structure is reusable) and <strong>under-scoping</strong> (calling generic content
+&ldquo;substantially meets&rdquo; when the charge requires project-specific detail).</p>
+
+<!-- ======================================================== -->
+<h2>Revising a Completed Project</h2>
+
+<p>After a project completes a full PCV cycle, you may want to revise it — adding
+features, changing requirements, or improving what was built. PCV handles this from
+the same project directory.</p>
+
+<p>Run <code>/pcv</code> in the completed project directory. PCV displays the progress
+checklist (all milestones filled), confirms the project is complete, and asks:</p>
+
+<pre>This project completed a full PCV cycle.
+Would you like to start a new revision cycle?</pre>
+
+<p>If you say yes, PCV:</p>
+
+<ol>
+  <li><strong>Archives the previous cycle</strong> — copies your original
+    <code>charge.md</code>, plans, and decision log into <code>plans/rev1/</code>
+    (or <code>rev2/</code>, etc. for subsequent revisions). Your deliverables
+    are untouched. The archived charge preserves the original project description
+    for reference.</li>
+  <li><strong>Scaffolds a fresh charge</strong> — creates a new <code>charge.md</code>
+    with the Prior Work field pre-filled with the absolute path to your project
+    directory. Your name and project name carry over from the previous charge.</li>
+  <li><strong>Stops and waits</strong> — you fill in the new charge describing your
+    revision goals and success criteria, then run <code>/pcv</code> again.</li>
+</ol>
+
+<p>From there, it&rsquo;s a normal PCV cycle. The planning phase analyzes your existing
+deliverables as prior work, determines scope (scoped changes vs. full rebuild), and
+proceeds through clarification, planning, construction, and verification.</p>
+
+<div class="callout">
+  <p><strong>Everything stays in one directory.</strong> You don&rsquo;t need to create
+  separate folders for revisions. Previous planning artifacts are preserved in
+  <code>plans/rev1/</code>, <code>plans/rev2/</code>, etc. for reference.</p>
+</div>
+
+<!-- ======================================================== -->
+<h2>Key Things to Know</h2>
+
+<h3>Progress display</h3>
+
+<p>Every time you run <code>/pcv</code>, it shows a milestone checklist so you always
+know where the project stands:</p>
+
+<pre>PCV v3.2 — MyProject
+■ Charge validated
+■ MakePlan approved
+□ ConstructionPlan approved
+□ Construction
+□ Verification complete</pre>
+
+<p>Filled squares (■) are completed milestones; empty squares (□) are remaining.
+This makes it clear at a glance whether the project is mid-planning, under construction,
+or fully complete.</p>
+
+<h3>Permissions are automatic</h3>
+
+<p>PCV scaffolds a <code>.claude/settings.json</code> file that pre-approves file operations
+within the project directory. You should not need to approve individual file reads,
+writes, or Git operations. When prompted to approve edits the first time, select
+<strong>&ldquo;Yes, allow all edits during this session&rdquo;</strong> (option 2).</p>
+
+<h3>Session resumption works</h3>
+
+<p>If you need to start a new Claude Code session mid-project (e.g., due to token limits
+or a break), just run <code>/pcv</code> again in the same directory. PCV re-reads the
+charge, plan documents, and decision log from disk to reconstruct context. It will
+tell you where you left off and confirm before proceeding.</p>
+
+<h3>The decision log is your audit trail</h3>
+
+<p>PCV maintains <code>plans/logs/decision-log.md</code> automatically. It records the
+verbatim text of every clarification question and your answer, Critic findings and
+dispositions, gate approvals, and deviations during construction. Entries are written
+at the moment they occur (chronological order). You never edit this file directly.</p>
+
+<h3>#LEARN tags capture lessons</h3>
+
+<p>When PCV logs a revision, deviation, or correction that captures a reusable insight,
+it tags the entry with <code>#LEARN</code>. These create a searchable record of what
+worked and what didn&rsquo;t across projects.</p>
+
+<h3>Git is silent and optional</h3>
+
+<p>If the project directory is (or becomes) a Git repository, PCV commits at defined
+milestones with descriptive messages. You don&rsquo;t interact with Git during the
+workflow. If Git is unavailable, PCV notes it and continues without version control.</p>
+
+<h3>The charge must be a file</h3>
+
+<p>PCV requires the charge to exist as a file on disk (<code>charge.md</code> or any
+filename containing &ldquo;charge&rdquo;). Pasted text or attached content in the
+conversation is not accepted — the file is needed for auditing and decision
+reconstruction.</p>
+
+<h3>Single command: <code>/pcv</code></h3>
+
+<p>There is no separate <code>/pcv init</code> command. Running <code>/pcv</code> handles
+everything: scaffolding new projects, detecting the current phase, and routing to the
+appropriate protocol. If you provide a filename argument (<code>/pcv MyCharge.md</code>),
+PCV uses that specific charge file.</p>
+
+<!-- ======================================================== -->
+<h2>FAQ / Troubleshooting</h2>
+
+<h3>PCV says it can&rsquo;t find my charge file.</h3>
+<p>The charge must be a file on disk with &ldquo;charge&rdquo; in its name (case-insensitive).
+Check that the file exists in your current working directory, or provide the filename
+explicitly: <code>/pcv MyProject_Charge.md</code>.</p>
+
+<h3>I&rsquo;m getting permission prompts for every file operation.</h3>
+<p>This usually means <code>.claude/settings.json</code> was not created or was
+deleted. Run <code>/pcv</code> in an empty directory to re-scaffold, or manually create
+the settings file. See the <a href="index.html">installation page</a> for details.</p>
+
+<h3>Can I use PCV with a model other than Opus?</h3>
+<p>PCV is designed for Claude Code and works best with the strongest available model
+for planning (currently Opus). It will function with other models but planning quality
+may vary. The Critic agent automatically uses Haiku for cost efficiency.</p>
+
+<h3>Can I skip the planning phase and just build?</h3>
+<p>That&rsquo;s just using Claude Code normally — and it&rsquo;s fine for simple tasks.
+PCV is opt-in. Only invoke <code>/pcv</code> when the project complexity warrants
+structured planning.</p>
+
+<h3>What if I need to change the plan during construction?</h3>
+<p>If PCV encounters a deviation during construction, it stops, explains the issue,
+and waits for your approval before changing approach. The deviation is logged. For
+larger scope changes, you may need to return to the planning phase.</p>
+
+<h3>How do I update PCV?</h3>
+<p>Download a fresh <a href="bootstrap.md" download>bootstrap.md</a> and provide it to
+Claude Code. The installer compares the version in the bootstrap against your installed
+version and updates if the new version is higher.</p>
+
+<!-- ======================================================== -->
+<h2>Design Principles</h2>
+
+<p>These principles underlie PCV&rsquo;s structure and should be understood by anyone
+using or adapting the workflow:</p>
+
+<ol>
+  <li><strong>Human authority over all decisions.</strong> The AI proposes; you approve.
+    No assumption, trade-off resolution, or scope change enters the plan without your
+    explicit consent.</li>
+  <li><strong>Explicit over implicit.</strong> Decisions made implicitly by the AI are the
+    primary source of rework. PCV forces key decisions to be made explicitly during
+    planning.</li>
+  <li><strong>Separation of planning and execution.</strong> Planning requires reasoning
+    about trade-offs, alternatives, and risks. Construction requires efficient execution
+    of settled decisions. Separating them improves both.</li>
+  <li><strong>Incremental verification.</strong> Building one component at a time with
+    verification at each step catches errors early. Building everything then testing is
+    consistently worse.</li>
+  <li><strong>Auditable decision trail.</strong> The decision log creates a complete record
+    of how the project went from idea to deliverable — valuable for learning, for
+    comparing approaches, and for understanding why decisions were made.</li>
+</ol>
+
+</main>
+
+<footer>
+  <p>PCV v3.2 &middot; M. G. Kay &middot; NC State ISE<br>
+  <a href="index.html">Home</a> &middot; <a href="bootstrap.md" download>Download bootstrap.md</a></p>
+</footer>
+
+</div>
+</body>
+</html>
