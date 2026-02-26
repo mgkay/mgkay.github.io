@@ -134,6 +134,9 @@ How we got here
 
 ## The Verification Era
 
+:::: {.columns}
+
+::: {.column width="55%"}
 LLMs self-verify by predicting text. In practice, the scarce *human* skill is verifying AI output matches intent:
 
 > *"AI is not end-to-end but middle-to-middle."* — Balaji
@@ -141,11 +144,30 @@ LLMs self-verify by predicting text. In practice, the scarce *human* skill is ve
 > *"You're not going to lose your job to AI but to someone who uses AI better than you."* — Jensen Huang
 
 > *"How good you are at the thing you're best at determines how powerful an LLM you can reasonably evaluate."* — Byrne Hobart
+:::
+
+::: {.column width="45%"}
+### New Modeling Workflow
+
+```{mermaid}
+%%| fig-width: 5.5
+%%{init: {'theme': 'base', 'themeVariables': {'fontSize': '14px', 'primaryColor': '#fff', 'primaryBorderColor': '#CC0000', 'lineColor': '#CC0000'}}}%%
+flowchart LR
+    W["`**What & Why**
+    *Human*`"] -->|"prompt"| H["`**How**
+    *LLM*`"]
+    H -->|"output"| V["`**Verify**
+    *Human*`"]
+    V -->|"refine"| W
+```
+:::
+
+::::
 
 ::: {.highlight-box}
 **Scarce skill is now verification, not production.**
 
-New modeling workflow: Human (what/why) → LLM (how) → Human (verify)
+Human (what/why) → LLM (how) → Human (verify)
 :::
 
 ::: {.notes}
@@ -676,18 +698,17 @@ flowchart TD
 
 ```{mermaid}
 %%| fig-width: 5.5
-%%{init: {'theme': 'base', 'themeVariables': {'fontSize': '14px', 'primaryColor': '#fff', 'primaryBorderColor': '#CC0000', 'lineColor': '#CC0000'}}}%%
-flowchart LR
-    W["`**What & Why**
-    *Human*`"] -->|"prompt"| H["`**How**
-    *LLM*`"]
-    H -->|"output"| V["`**Verify**
-    *Human*`"]
-    V -->|"refine"| W
+flowchart BT
+    AI[AI Partner] <-->|"handles 'how'"| S1([Student])
+    AI <--> S2([Student])
+    AI <--> S3([Student])
+    S1 -.->|"pulls 'why'"| I([Instructor])
+    S2 -.-> I
+    S3 -.-> I
 ```
 
-- Student drives *what* and *why*; AI handles *how*
-- Human verifies output, refines prompt as needed
+- Students iterate with AI on *how*
+- Pull *why* from instructor on demand
 - Previously only feasible in apprenticeships and small seminars
 - AI enables Socratic method at scale
 :::

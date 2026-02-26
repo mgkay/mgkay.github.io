@@ -424,6 +424,8 @@ Jake Benhart
 </section>
 <section id="the-verification-era" class="slide level2">
 <h2>The Verification Era</h2>
+<div class="columns">
+<div class="column" style="width:55%;">
 <p>LLMs self-verify by predicting text. In practice, the scarce <em>human</em> skill is verifying AI output matches intent:</p>
 <blockquote>
 <p><em>“AI is not end-to-end but middle-to-middle.”</em> — Balaji</p>
@@ -434,9 +436,31 @@ Jake Benhart
 <blockquote>
 <p><em>“How good you are at the thing you’re best at determines how powerful an LLM you can reasonably evaluate.”</em> — Byrne Hobart</p>
 </blockquote>
+</div><div class="column" style="width:45%;">
+<h3 id="new-modeling-workflow">New Modeling Workflow</h3>
+<div class="cell" data-reveal="true" data-fig-width="5.5" data-layout-align="default">
+<div class="cell-output-display">
+<div>
+<p></p><figure class=""><p></p>
+<div>
+<pre class="mermaid mermaid-js">%%{init: {'theme': 'base', 'themeVariables': {'fontSize': '14px', 'primaryColor': '#fff', 'primaryBorderColor': '#CC0000', 'lineColor': '#CC0000'}}}%%
+flowchart LR
+    W["`**What &amp; Why**
+    *Human*`"] --&gt;|"prompt"| H["`**How**
+    *LLM*`"]
+    H --&gt;|"output"| V["`**Verify**
+    *Human*`"]
+    V --&gt;|"refine"| W
+</pre>
+</div>
+<p></p></figure><p></p>
+</div>
+</div>
+</div>
+</div></div>
 <div class="highlight-box">
 <p><strong>Scarce skill is now verification, not production.</strong></p>
-<p>New modeling workflow: Human (what/why) → LLM (how) → Human (verify)</p>
+<p>Human (what/why) → LLM (how) → Human (verify)</p>
 </div>
 <aside class="notes">
 <p>These three quotes frame the entire presentation. Balaji’s quote establishes that AI operates in the middle of a workflow — humans provide the beginning (what/why) and the end (verification). Jensen Huang’s quote motivates the student angle. Byrne Hobart’s quote connects verification skill to the ability to leverage AI effectively.</p>
@@ -1022,14 +1046,13 @@ Jake Benhart
 <div>
 <p></p><figure class=""><p></p>
 <div>
-<pre class="mermaid mermaid-js">%%{init: {'theme': 'base', 'themeVariables': {'fontSize': '14px', 'primaryColor': '#fff', 'primaryBorderColor': '#CC0000', 'lineColor': '#CC0000'}}}%%
-flowchart LR
-    W["`**What &amp; Why**
-    *Human*`"] --&gt;|"prompt"| H["`**How**
-    *LLM*`"]
-    H --&gt;|"output"| V["`**Verify**
-    *Human*`"]
-    V --&gt;|"refine"| W
+<pre class="mermaid mermaid-js">flowchart BT
+    AI[AI Partner] &lt;--&gt;|"handles 'how'"| S1([Student])
+    AI &lt;--&gt; S2([Student])
+    AI &lt;--&gt; S3([Student])
+    S1 -.-&gt;|"pulls 'why'"| I([Instructor])
+    S2 -.-&gt; I
+    S3 -.-&gt; I
 </pre>
 </div>
 <p></p></figure><p></p>
@@ -1037,8 +1060,8 @@ flowchart LR
 </div>
 </div>
 <ul>
-<li>Student drives <em>what</em> and <em>why</em>; AI handles <em>how</em></li>
-<li>Human verifies output, refines prompt as needed</li>
+<li>Students iterate with AI on <em>how</em></li>
+<li>Pull <em>why</em> from instructor on demand</li>
 <li>Previously only feasible in apprenticeships and small seminars</li>
 <li>AI enables Socratic method at scale</li>
 </ul>
