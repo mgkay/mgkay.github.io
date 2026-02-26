@@ -1,0 +1,87 @@
+<script>
+(function () {
+  'use strict';
+
+  var SECTIONS = [
+    // Slide 1 — Roadmap
+    { match: 'Roadmap',                      label: null },
+    // Slide 2 — LLM Foundation
+    { match: 'The Engine of AI',             label: 'Foundation' },
+    // Part 1: Evolution
+    { match: 'Part 1',                       label: null },
+    { match: 'The Verification Era',         label: 'Evolution' },
+    { match: 'The Syntax Barrier',           label: 'Evolution' },
+    { match: 'First Contact',               label: 'Evolution' },
+    { match: 'The Turning Point',            label: 'Evolution' },
+    { match: 'Fall 2025',                    label: 'Evolution' },
+    { match: 'AI-Generated Checkpoints',     label: 'Evolution' },
+    { match: 'Checkpoint Demo',              label: 'Evolution' },
+    { match: 'Checkpoint Output',            label: 'Evolution' },
+    { match: 'Two-Stage Homework',           label: 'Evolution' },
+    // Part 2: Research Results (slides 10–14)
+    { match: 'Part 2',                       label: null },
+    { match: 'Two Patterns',                 label: 'Research Results' },
+    { match: 'Example - HW',                label: 'Research Results' },
+    { match: 'Example —',                   label: 'Research Results' },
+    { match: 'Scaffold',                     label: 'Research Results' },
+    // Part 3: The Future (slides 15–25)
+    { match: 'Part 3',                       label: null },
+    { match: 'Why AI Works',                 label: 'The Future' },
+    { match: 'The AI Tool Spectrum',         label: 'The Future' },
+    { match: 'From Push to Pull',            label: 'The Future' },
+    { match: 'The PCV Workflow',             label: 'The Future' },
+    { match: 'PCV in Action',               label: 'The Future' },
+    { match: 'From Chatbots to Agents',      label: 'The Future' },
+    { match: 'The Agentic Economy',          label: 'The Future' },
+    { match: 'Paper One',                    label: 'The Future' },
+    { match: 'Paper Two',                    label: 'The Future' },
+    { match: 'Where This Is Going',          label: 'The Future' },
+    { match: 'What This Means',              label: 'The Future' },
+    { match: 'Questions',                    label: null }
+  ];
+
+  var currentLabel = null;
+  var SUFFIX = ' &nbsp;&middot;&nbsp; NC State ISE &nbsp;&middot;&nbsp; 2026-2-26';
+  var DEFAULT = 'AI in Education' + SUFFIX;
+
+  function resolveLabel(slide) {
+    if (!slide) return undefined;
+    var h2 = slide.querySelector('h2');
+    if (!h2) return undefined;
+    var text = h2.textContent.trim();
+    for (var i = 0; i < SECTIONS.length; i++) {
+      if (text.indexOf(SECTIONS[i].match) === 0) {
+        return SECTIONS[i].label;
+      }
+    }
+    return undefined;
+  }
+
+  function applyFooter() {
+    var el = document.querySelector('.reveal > .footer-default')
+          || document.querySelector('.reveal > .footer')
+          || document.querySelector('.footer-default');
+    if (!el) return;
+
+    el.innerHTML = currentLabel
+      ? '<span class="footer-section">' + currentLabel + '</span>' + SUFFIX
+      : DEFAULT;
+  }
+
+  function onSlide(slide) {
+    var label = resolveLabel(slide);
+    if (label !== undefined) currentLabel = label;
+    setTimeout(applyFooter, 10);
+  }
+
+  window.addEventListener('load', function () {
+    if (typeof Reveal === 'undefined') return;
+
+    var current = (typeof Reveal.getCurrentSlide === 'function')
+      ? Reveal.getCurrentSlide() : null;
+    if (current) onSlide(current);
+
+    Reveal.on('slidechanged', function (e) { onSlide(e.currentSlide); });
+  });
+}());
+</script>
