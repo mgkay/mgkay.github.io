@@ -71,25 +71,24 @@ Where this is going (PCV, agentic economy)
 ::: {.column width="55%"}
 ### Next-Token Prediction
 
-<div style="font-size: 0.75em; font-weight: bold; color: #555; margin-bottom: 0.2em; text-align: center;">Context Window</div>
-<div style="border: 2px solid #999; border-radius: 6px; background: #f8f8f8; padding: 0.6em 0.8em; min-height: 2.4em; font-size: 0.85em;">
-::: {.r-stack}
-::: {.fragment .fade-in-then-out}
-▌
-:::
-::: {.fragment .fade-in-then-out}
-*One small step for man, one giant*  ▌
-:::
-::: {.fragment .fade-in-then-out}
-*One small step for man, one giant* **leap**  ▌
-:::
-::: {.fragment .fade-in-then-out}
-*One small step for man, one giant leap* **for**  ▌
-:::
-::: {.fragment .fade-in}
-*One small step for man, one giant leap for* **mankind.**
-:::
-:::
+<div style="font-size: 0.7em; font-weight: bold; color: #555; margin-bottom: 0.15em; text-align: center;">Context Window (Run 1)</div>
+
+<div style="border: 2px solid #999; border-radius: 6px; background: #f8f8f8; padding: 0.5em 0.8em; min-height: 2em; font-size: 0.8em;">
+<span>The best way to learn</span>
+<span class="fragment fade-in" data-fragment-index="1" style="font-weight: bold;"> is</span>
+<span class="fragment fade-in" data-fragment-index="2" style="font-weight: bold;"> by</span>
+<span class="fragment fade-in" data-fragment-index="3" style="font-weight: bold;"> doing.</span>
+</div>
+
+Next-token prediction is stochastic — the same input can produce different outputs each time.
+
+<div style="font-size: 0.7em; font-weight: bold; color: #555; margin-bottom: 0.15em; text-align: center;">Context Window (Run 2)</div>
+
+<div style="border: 2px solid #999; border-radius: 6px; background: #f8f8f8; padding: 0.5em 0.8em; min-height: 2em; font-size: 0.8em;">
+<span>The best way to learn</span>
+<span class="fragment fade-in" data-fragment-index="4" style="font-weight: bold;"> is</span>
+<span class="fragment fade-in" data-fragment-index="5" style="font-weight: bold;"> through</span>
+<span class="fragment fade-in" data-fragment-index="6" style="font-weight: bold;"> failure.</span>
 </div>
 
 That's it. Predict the next token. Repeat.
