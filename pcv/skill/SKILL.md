@@ -220,8 +220,15 @@ When scaffolding, create `charge.md` with this content:
 Name: <REPLACE>
 Project Name: <REPLACE>
 Project Directory:
+<!-- Absolute path to the folder where code/deliverables live.
+     Leave blank if this directory IS the project. -->
 Export Target:
+<!-- Absolute path to a separate folder where finished files should be copied
+     after verification (e.g., a local Git repository). Leave blank if
+     deliverables stay in the project directory. -->
 Prior Work:
+<!-- Absolute path(s) to previous versions or reference files to build on.
+     Leave blank if starting from scratch. -->
 
 ## Project Description
 <!-- What are you building? Who is it for? What should it do? -->
