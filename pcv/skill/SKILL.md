@@ -186,12 +186,17 @@ These are brief overviews. Full instructions are in each protocol file.
 - Baseline copy if carrying forward prior work.
 - Build strictly per approved ConstructionPlan.
 - Log deviations with human approval. Commit at milestones.
+- Generate initial build record (`plans/build-record.md`) capturing files modified,
+  design decisions made during construction, deviations, and lessons learned.
 
 ### Verify Phase (`verification-protocol.md`)
 - Pattern-appropriate verification (run tests, review structure, check math, visual compare).
+- Append verification fixes to the build record as they occur.
 - Map each Success Criterion to deliverable components.
 - Compare deliverables against planning artifacts.
-- Export if configured. Final commit. Decision log closeout.
+- Export if configured. Final commit.
+- Finalize build record: update verification status, prompt user for additional notes,
+  update open items. Decision log closeout.
 
 ---
 
@@ -255,43 +260,37 @@ Prior Work:
 
 ## 5. Permission Settings
 
-PCV requires these permissions to operate without prompts:
+PCV needs two categories of permissions:
 
-```
-Read(**)
-Write(**)
-Glob(*)
-Grep(*)
-Bash(git *)
-Read(~/.claude/skills/pcv/*)
-Read(~/.claude/agents/pcv-critic.md)
-```
+1. **PCV-specific** (never in global settings — always add to project):
+   - `Read(~/.claude/skills/pcv/*)`
+   - `Read(~/.claude/agents/pcv-critic.md)`
 
-The last two (`Read(~/.claude/skills/pcv/*)` and `Read(~/.claude/agents/pcv-critic.md)`)
-are **PCV-specific** and will never appear in global settings. The others are
-**general-purpose** and are commonly already present in `~/.claude/settings.json`.
+2. **General-purpose** (commonly already in global settings):
+   - `Read(**)`, `Write(**)`, `Glob(*)`, `Grep(*)`, `Bash(git *)`
 
-### Merge-aware scaffolding procedure
+### Scaffolding procedure (Step B)
 
-When creating or updating `.claude/settings.json` in Step B:
+When creating `.claude/settings.json` during scaffold:
 
-1. **Read `~/.claude/settings.json`** (skip gracefully if missing). Parse its
-   `permissions.allow` array into a "globally covered" set.
-2. **Read `.claude/settings.json`** if it already exists. Parse its current
-   `permissions.allow` array into an "already in project" set.
-3. **Filter**: From the PCV required list above, keep only entries that are
-   NOT covered by global settings AND NOT already in the project file.
-   A global entry covers a PCV entry if it is an exact match or a superset
-   (e.g., global `Read(**)` covers PCV's `Read(**)`).
-4. **Merge**: Add the filtered entries to the project file's existing allow
-   array. Preserve all other keys in the file (`deny`, `hooks`, etc.).
-5. **Write** the updated `.claude/settings.json`.
+1. **If the file already exists**, read it and preserve all existing entries and
+   structure (`deny`, `hooks`, etc.). Add only the two PCV-specific entries if
+   not already present.
+2. **If the file does not exist**, create it with only the PCV-specific entries:
+   ```json
+   {
+     "permissions": {
+       "allow": [
+         "Read(~/.claude/agents/pcv-critic.md)",
+         "Read(~/.claude/skills/pcv/*)"
+       ]
+     }
+   }
+   ```
 
-If the project file doesn't exist yet, create it with:
-`{"permissions": {"allow": [<filtered entries>]}}`
-
-This ensures PCV never duplicates permissions already granted globally and
-respects any pre-existing project permissions (e.g., from `/pre-approve`).
+General-purpose permissions are handled by `/pre-approve` when it runs against
+the construction plan (Step 2.5 of the construction protocol). Do NOT add them
+during scaffold — they are typically already covered by global settings.
 
 **No other Bash commands should be needed.** PCV uses only internal tools (Read,
 Write, Glob, Grep) for file operations. Directories are created implicitly by

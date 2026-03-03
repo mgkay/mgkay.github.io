@@ -37,6 +37,17 @@ Apply verification appropriate to each deliverable pattern identified in the Mak
 - Check accessibility requirements (color-blind support, font sizes, contrast).
 - Verify responsiveness or display-target requirements from the charge.
 
+### Verification Fixes
+
+If verification reveals issues that require code or deliverable changes:
+
+1. Fix the issue.
+2. Log the fix in the decision log as a deviation.
+3. **Append the fix to the build record** (if one exists at `plans/build-record.md`).
+   Add entries under "Design Decisions During Construction" for new decisions, or
+   under "Deviations from Plan" for plan changes. Update the "Verification Status"
+   section to reflect what was fixed and re-verified.
+
 ---
 
 ## Step 2: Charge-to-Deliverable Mapping
@@ -126,7 +137,38 @@ If Git is available:
 
 ---
 
-## Step 7: Decision Log Closeout
+## Step 7: Finalize Build Record
+
+If a build record exists at `plans/build-record.md`:
+
+### 7a. Update Verification Status
+
+Replace the "Pending" placeholder in the Verification Status section with actual
+results: which tests passed, what was fixed during verification, final state.
+
+### 7b. Pre-Closeout User Notes
+
+Prompt the human:
+
+> "Before closing out, are there any additional notes, observations, or context
+> you'd like added to the build record? These could be things like design
+> considerations that didn't come up in the workflow, advice for future work on
+> this codebase, or anything else worth preserving for reference."
+
+**STOP. Wait for the user's response.**
+
+- **If the user provides notes:** Append them to the "User Notes" section of the
+  build record, attributed and dated.
+- **If the user declines or says none:** Write "None." in the User Notes section.
+
+### 7c. Update Open Items
+
+Review the build record's Open Items section. Add any new items discovered during
+verification. Remove any that were resolved.
+
+---
+
+## Step 8: Decision Log Closeout
 
 **Append this entry to the decision log now, before ending the session.** Do not
 defer this write or batch it with other operations.

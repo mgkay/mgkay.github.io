@@ -120,6 +120,71 @@ When all ConstructionPlan items are built:
    anything else.** Do not defer this write.
 2. Inform the human: "Construction complete per the approved plan. Ready to proceed
    to verification."
+
+---
+
+## Step 7: Generate Build Record
+
+After the Construction Complete entry is written, generate an initial build record
+at `plans/build-record.md`. This document captures the implementation narrative —
+decisions, deviations, and context that would otherwise be lost when the conversation
+ends.
+
+### When to generate
+
+Generate the build record for any project that modified more than 2 files or involved
+design decisions during construction. For trivial single-file projects, skip this step
+and note "Build record: skipped (single-file project)" in the decision log.
+
+### Content
+
+Assemble the build record from artifacts that already exist. Do not ask the human to
+write it — the AI drafts it for review. Source material:
+
+- **Decision log entries** — deviations, clarifications, #LEARN tags
+- **Construction plan** — planned vs actual file changes
+- **Git history** — commits made during construction milestones
+
+### Structure
+
+```markdown
+# Build Record — [Project Name]
+
+## Overview
+[1-2 sentences: what was built and why]
+
+## Files Modified
+| File | Change |
+|------|--------|
+| [file] | [description] |
+
+## Design Decisions During Construction
+[Decisions made on details the plan left unspecified — these are NOT deviations,
+but choices made during implementation. Each entry: what was decided, why,
+and what alternatives were considered.]
+
+## Deviations from Plan
+[Summarize from decision log. If none, state "None."]
+
+## Verification Status
+[Leave as "Pending — to be completed during Verify phase." This section is
+updated during verification.]
+
+## Open Items
+[Known issues, deferred work, or items for future consideration.
+Populated during construction, appended during verification.]
+
+## Lessons Learned
+[Consolidate #LEARN entries from decision log plus any additional insights.]
+
+## User Notes
+[Reserved — populated during pre-closeout prompt in Verify phase.]
+```
+
+### After generating
+
+1. Present the draft to the human for review. They may add, remove, or correct entries.
+2. The build record remains **open** — it will be appended during verification.
 3. **Transition to Verify phase:** Read `~/.claude/skills/pcv/verification-protocol.md`
    and follow it.
 
