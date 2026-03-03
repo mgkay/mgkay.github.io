@@ -208,11 +208,24 @@ explicitly approve.</p>
 need to intervene unless PCV encounters an issue the plan didn&rsquo;t anticipate.
 Deviations require your approval and are logged.</p>
 
+<p>At the end of construction, PCV generates a <strong>build record</strong>
+(<code>plans/build-record.md</code>) that captures the implementation narrative:
+files modified, design decisions made during construction, deviations from the plan,
+and lessons learned. The build record is assembled automatically from the decision log,
+construction plan, and Git history &mdash; you review it but don&rsquo;t need to write it.
+It remains open through verification.</p>
+
 <h3>Verification</h3>
 
 <p>PCV runs pattern-appropriate verification, maps each success criterion to deliverable
 components, compares deliverables to planning artifacts, and produces a summary report.
-The decision log is closed out.</p>
+If verification reveals issues requiring fixes, those fixes and any new design decisions
+are appended to the build record.</p>
+
+<p>Before closing out, PCV asks if you have any additional notes or observations to add
+to the build record &mdash; things like design considerations that didn&rsquo;t come up
+in the workflow, advice for future work, or anything else worth preserving. The build
+record is then finalized alongside the decision log closeout.</p>
 
 <!-- ======================================================== -->
 <h2 id="patterns">The Four Deliverable Patterns</h2>
@@ -358,6 +371,16 @@ tell you where you left off and confirm before proceeding.</p>
 verbatim text of every clarification question and your answer, Critic findings and
 dispositions, gate approvals, and deviations during construction. Entries are written
 at the moment they occur (chronological order). You never edit this file directly.</p>
+
+<h3>The build record captures what actually happened</h3>
+
+<p>The decision log records clarifications, approvals, and deviations. The build record
+(<code>plans/build-record.md</code>) captures the broader implementation story: what files
+were created or modified, design decisions made on details the plan left unspecified
+(distinct from deviations), verification fixes, open items for future work, and
+consolidated lessons learned. It also includes a &ldquo;User Notes&rdquo; section where
+you can add final observations before closeout. The build record is generated
+automatically at the end of construction and finalized during verification.</p>
 
 <h3>#LEARN tags capture lessons</h3>
 
