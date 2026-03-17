@@ -36,27 +36,26 @@ is at a separate location:
 
 ## Step 2.5: Permission Pre-Flight
 
-Ensure the `/pre-approve` skill is available, then run it against
-`plans/construction-plan.md` to resolve permission gaps before construction begins.
+General-purpose permissions (Read, Write, Glob, Grep, Bash(git *)) are scaffolded
+at project initialization (SKILL.md §5). This step focuses on **technology-specific
+permissions** needed for construction.
 
-### Dependency Check
+### Scan for Technology-Specific Permissions
 
-1. Check if `~/.claude/skills/pre-approve/SKILL.md` exists.
-2. **If missing:** Copy the bundled version from
-   `~/.claude/skills/pcv/bundled/pre-approve-SKILL.md` into
-   `~/.claude/skills/pre-approve/SKILL.md` (create the directory if needed).
-   Inform the user: "Installed bundled /pre-approve skill."
-3. **If present:** Compare its contents against the bundled version.
-   - If identical: proceed.
-   - If different: warn the user that the installed version differs from the
-     PCV-bundled version. Show which is newer (by file modification time) and
-     ask whether to (a) keep the installed version, (b) overwrite with the
-     bundled version, or (c) skip pre-approval entirely.
+1. Read the ConstructionPlan and identify technology references (Julia, Python, npm,
+   cargo, make, etc.).
+2. For each identified technology, check if `Bash([tool] *)` is already in
+   `.claude/settings.json`.
+3. If missing, add the permission pattern to `.claude/settings.json`.
 
-### Run Pre-Approval
+### Optional: Run /pre-approve
 
-- Invoke `/pre-approve plans/construction-plan.md`.
+If `~/.claude/skills/pre-approve/SKILL.md` exists:
+- Invoke `/pre-approve plans/construction-plan.md` for comprehensive permission analysis.
 - If the user has already run `/pre-approve` for this plan, skip this step.
+
+If `/pre-approve` is not available, proceed — the essential permissions are already
+in place from scaffold.
 
 ---
 
@@ -165,6 +164,10 @@ and what alternatives were considered.]
 
 ## Deviations from Plan
 [Summarize from decision log. If none, state "None."]
+
+## Acceptance Testing Fixes
+[Populated during verification Step 4.5 if acceptance testing occurs.
+If acceptance testing was declined or not yet performed, state "N/A."]
 
 ## Verification Status
 [Leave as "Pending — to be completed during Verify phase." This section is

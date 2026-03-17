@@ -12,8 +12,26 @@ precisely. Do not skip steps or reorder them.
    - If **Project Directory** is specified, that path is where deliverables/code live.
      The current directory is the PCV home (planning artifacts stay here).
    - If **Project Directory** is blank, the current directory serves both roles.
-3. If **Prior Work** paths are specified, note them for Step 2. Do NOT read or modify
-   prior work locations yet — they are read-only during Planning.
+
+### 1.3 Path Resolution
+
+For each non-blank path field (Project Directory, Export Target, Prior Work):
+
+1. Determine if the path is relative (does not start with `/`, `~`, or a drive letter
+   such as `C:`).
+2. **If relative:** Resolve against the charge file's parent directory to produce an
+   absolute path. Use Glob or Read to validate the resolved path exists on disk.
+   If it does not exist, stop with:
+   > "Path `[original relative path]` in charge resolves to `[absolute path]` which
+   > does not exist. Please correct the path in the charge and re-run `/pcv`."
+3. **If absolute:** Validate it exists on disk using the same check. If it does not
+   exist, stop with the same error message.
+4. Use the resolved absolute path for all internal operations during this session.
+   The charge file on disk retains the original path (relative or absolute) for
+   portability.
+
+If **Prior Work** paths are specified, note the resolved paths for Step 2. Do NOT
+read or modify prior work locations yet — they are read-only during Planning.
 
 ---
 

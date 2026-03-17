@@ -110,30 +110,39 @@ to that location.</p>
 <!-- ======================================================== -->
 <h2>What to Expect at Each Stage</h2>
 
-<h3>Writing the charge</h3>
+<h3>Describing your idea</h3>
 
-<p>When you run <code>/pcv</code> in an empty project directory, PCV scaffolds three things:</p>
+<p>When you run <code>/pcv</code> in an empty project directory, PCV scaffolds the workspace:</p>
 
 <ul>
-  <li><code>charge.md</code> — Your project description template.</li>
+  <li><code>idea.md</code> — Where you describe your project idea (informal, freeform).</li>
+  <li><code>charge.md</code> — The structured project specification (PCV generates this for you).</li>
   <li><code>CLAUDE.md</code> — A minimal project identity file (you customize it).</li>
   <li><code>.claude/settings.json</code> — Permission pre-approvals so PCV can operate
     without per-action prompts.</li>
 </ul>
 
-<p>Fill in <code>charge.md</code> with:</p>
-<ul>
-  <li><strong>Configuration fields</strong> — Your name, project name, and optionally
-    a project directory, export target, and prior work paths.</li>
-  <li><strong>Project description</strong> — What you&rsquo;re building, who it&rsquo;s for,
-    what it should do. Be detailed; the AI can always filter but cannot invent context
-    you didn&rsquo;t provide.</li>
-  <li><strong>Technology &amp; constraints</strong> — Language, framework, specific
-    requirements.</li>
-  <li><strong>Success criteria</strong> — How you&rsquo;ll know the project is done.</li>
-</ul>
+<p>Write your idea in <code>idea.md</code> — what you&rsquo;re building, any constraints,
+what success looks like. Be informal and detailed; PCV will structure it for you.
+Then tell Claude you&rsquo;re ready.</p>
 
-<p>Then run <code>/pcv</code> again to start planning.</p>
+<h3>Charge generation</h3>
+
+<p>PCV reads your <code>idea.md</code> and generates a draft charge. The draft is
+presented <strong>in chat as a preview</strong> (not written to disk) so you can see
+what PCV understood. Below the preview, PCV asks clarifying questions one at a time
+about fields it&rsquo;s uncertain about.</p>
+
+<p>After questions are resolved, PCV asks: &ldquo;Should I write this charge to disk?&rdquo;
+The charge is only written to <code>charge.md</code> on your confirmation. Planning
+begins automatically from there — no need to run <code>/pcv</code> again.</p>
+
+<div class="callout">
+  <p><strong>Cross-session recovery.</strong> If you close Claude Code after scaffolding
+  but before the charge is generated, run <code>/pcv</code> again. PCV detects the
+  unfilled charge template and populated <code>idea.md</code> and picks up where you
+  left off.</p>
+</div>
 
 <h3>Clarification questions</h3>
 
@@ -222,6 +231,21 @@ components, compares deliverables to planning artifacts, and produces a summary 
 If verification reveals issues requiring fixes, those fixes and any new design decisions
 are appended to the build record.</p>
 
+<h4>Acceptance testing</h4>
+
+<p>After automated verification, PCV offers you the chance to test the deliverable
+hands-on before closing out. It suggests a pattern-appropriate approach:</p>
+
+<ul>
+  <li><strong>Code:</strong> run a demo notebook or test script</li>
+  <li><strong>Prose:</strong> read through the deliverable and flag issues</li>
+  <li><strong>Math:</strong> work through a formulation with known inputs</li>
+  <li><strong>Design:</strong> interact with the rendered output</li>
+</ul>
+
+<p>Acceptance testing is optional — you can decline and proceed to closeout. Any issues
+you report are fixed and logged in both the decision log and build record.</p>
+
 <p>Before closing out, PCV asks if you have any additional notes or observations to add
 to the build record &mdash; things like design considerations that didn&rsquo;t come up
 in the workflow, advice for future work, or anything else worth preserving. The build
@@ -295,42 +319,55 @@ structure is reusable) and <strong>under-scoping</strong> (calling generic conte
 &ldquo;substantially meets&rdquo; when the charge requires project-specific detail).</p>
 
 <!-- ======================================================== -->
+<h2>Paths in the Charge</h2>
+
+<p>The charge template has three path fields: Project Directory, Export Target, and
+Prior Work.</p>
+
+<ul>
+  <li><strong>External locations</strong> (a separate Git repo, a shared folder): use
+    absolute paths.</li>
+  <li><strong>Sibling or child directories</strong> (a previous version folder next door):
+    use relative paths from the charge file (e.g., <code>../v1</code>).</li>
+</ul>
+
+<p>PCV validates all paths at the start of planning. Relative paths are resolved against
+the charge file&rsquo;s directory and checked for existence — if a path doesn&rsquo;t
+exist, you get a clear error before any work begins. The charge file retains the
+original path (relative or absolute) for portability.</p>
+
+<!-- ======================================================== -->
 <h2>Revising a Completed Project</h2>
 
 <p>After a project completes a full PCV cycle, you may want to revise it — adding
-features, changing requirements, or improving what was built. PCV handles this from
-the same project directory.</p>
+features, changing requirements, or improving what was built. Run <code>/pcv</code>
+in the completed project directory. PCV displays the progress checklist (all milestones
+filled), confirms the project is complete, and offers two options:</p>
 
-<p>Run <code>/pcv</code> in the completed project directory. PCV displays the progress
-checklist (all milestones filled), confirms the project is complete, and asks:</p>
+<h3>Revision cycle (new version)</h3>
 
-<pre>This project completed a full PCV cycle.
-Would you like to start a new revision cycle?</pre>
+<p>Creates versioned sibling folders for major revisions. On the first revision, PCV
+restructures the directory:</p>
 
-<p>If you say yes, PCV:</p>
+<pre>MyProject/
+├── v1/    (original project, archived)
+├── v2/    (new revision, scaffolded)
+└── CLAUDE.md</pre>
 
-<ol>
-  <li><strong>Archives the previous cycle</strong> — copies your original
-    <code>charge.md</code>, plans, and decision log into <code>plans/rev1/</code>
-    (or <code>rev2/</code>, etc. for subsequent revisions). Your deliverables
-    are untouched. The archived charge preserves the original project description
-    for reference.</li>
-  <li><strong>Scaffolds a fresh charge</strong> — creates a new <code>charge.md</code>
-    with the Prior Work field pre-filled with the absolute path to your project
-    directory. Your name and project name carry over from the previous charge.</li>
-  <li><strong>Stops and waits</strong> — you fill in the new charge describing your
-    revision goals and success criteria, then run <code>/pcv</code> again.</li>
-</ol>
+<p>The restructure uses a safe protocol: PCV shows a dry-run list of what will be moved,
+waits for your confirmation, copies files to <code>v1/</code>, verifies the copies,
+then removes the originals. If Git is available, a checkpoint commit is made first.
+Each <code>vN/</code> folder is an independent PCV workspace with its own charge, plans,
+and deliverables. Prior Work in <code>v2/</code> points to <code>../v1</code>.</p>
 
-<p>From there, it&rsquo;s a normal PCV cycle. The planning phase analyzes your existing
-deliverables as prior work, determines scope (scoped changes vs. full rebuild), and
-proceeds through clarification, planning, construction, and verification.</p>
+<p>Subsequent revisions simply scaffold <code>v3/</code>, <code>v4/</code>, etc. as new siblings.</p>
 
-<div class="callout">
-  <p><strong>Everything stays in one directory.</strong> You don&rsquo;t need to create
-  separate folders for revisions. Previous planning artifacts are preserved in
-  <code>plans/rev1/</code>, <code>plans/rev2/</code>, etc. for reference.</p>
-</div>
+<h3>Reopen for fixes (lightweight)</h3>
+
+<p>For small post-completion fixes that don&rsquo;t warrant a full revision cycle, PCV
+reopens the existing project. It appends to the existing decision log and build record
+under &ldquo;Post-Closeout Fixes&rdquo; without creating new version folders. When fixes
+are complete, a &ldquo;Project Re-Closeout&rdquo; entry is appended.</p>
 
 <!-- ======================================================== -->
 <h2>Key Things to Know</h2>
@@ -340,7 +377,7 @@ proceeds through clarification, planning, construction, and verification.</p>
 <p>Every time you run <code>/pcv</code>, it shows a milestone checklist so you always
 know where the project stands:</p>
 
-<pre>PCV v3.4 — MyProject
+<pre>PCV v3.5 — MyProject
 ■ Charge validated
 ■ MakePlan approved
 □ ConstructionPlan approved
@@ -353,10 +390,11 @@ or fully complete.</p>
 
 <h3>Permissions are automatic</h3>
 
-<p>PCV scaffolds a <code>.claude/settings.json</code> file that pre-approves file operations
-within the project directory. You should not need to approve individual file reads,
-writes, or Git operations. When prompted to approve edits the first time, select
-<strong>&ldquo;Yes, allow all edits during this session&rdquo;</strong> (option 2).</p>
+<p>PCV scaffolds a <code>.claude/settings.json</code> file that pre-approves all
+general-purpose file operations (Read, Write, Glob, Grep, Git) at project creation.
+Technology-specific permissions (e.g., Julia, Python, npm) are added automatically
+when the ConstructionPlan is approved. You should not need to approve individual
+operations.</p>
 
 <h3>Session resumption works</h3>
 
@@ -390,9 +428,11 @@ worked and what didn&rsquo;t across projects.</p>
 
 <h3>Git is silent and optional</h3>
 
-<p>If the project directory is (or becomes) a Git repository, PCV commits at defined
-milestones with descriptive messages. You don&rsquo;t interact with Git during the
-workflow. If Git is unavailable, PCV notes it and continues without version control.</p>
+<p>PCV checks for an existing Git repository before doing anything with Git. If the
+current directory or a parent directory (up to 5 levels) has <code>.git</code>, PCV
+inherits that repo. If no Git exists anywhere, PCV asks whether to initialize or skip.
+It never silently runs <code>git init</code>. Commits happen at milestones with
+descriptive messages.</p>
 
 <h3>The charge must be a file</h3>
 
@@ -468,7 +508,7 @@ using or adapting the workflow:</p>
 </main>
 
 <footer>
-  <p>PCV v3.4 &middot; M. G. Kay &middot; NC State ISE<br>
+  <p>PCV v3.5 &middot; M. G. Kay &middot; NC State ISE<br>
   <a href="index.html">Home</a> &middot; <a href="bootstrap.md" download>Download bootstrap.md</a></p>
 </footer>
 

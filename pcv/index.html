@@ -115,21 +115,25 @@ If you don&rsquo;t have Claude Code yet, install it first:
     <strong>Start Claude Code</strong> in that directory.
   </li>
   <li>
-    <strong>Type <code>/pcv</code></strong> — PCV scaffolds a <code>charge.md</code> file
-    and a permissions file. It then asks you to fill in the charge.
+    <strong>Type <code>/pcv</code></strong> — PCV scaffolds the workspace including
+    <code>idea.md</code>, <code>charge.md</code> (template), and a permissions file.
   </li>
   <li>
-    <strong>Fill in <code>charge.md</code></strong> with your project description —
-    what you&rsquo;re building, technology constraints, success criteria.
+    <strong>Describe your idea in <code>idea.md</code></strong> — what you&rsquo;re
+    building, any constraints, what success looks like. Tell Claude you&rsquo;re ready.
   </li>
   <li>
-    <strong>Run <code>/pcv</code> again.</strong> PCV reads your charge and begins the
-    planning phase: asking clarification questions (one at a time), running an adversarial
-    review, and presenting plans for your approval.
+    <strong>Review the generated charge.</strong> PCV reads your idea, presents a
+    draft charge in chat, asks clarifying questions, then writes the finalized
+    <code>charge.md</code> on your approval.
   </li>
   <li>
-    <strong>Approve the plans.</strong> PCV builds per the approved plan, then verifies
-    the result against your success criteria.
+    <strong>Planning begins automatically.</strong> PCV asks clarification questions
+    (one at a time), runs an adversarial review, and presents plans for your approval.
+  </li>
+  <li>
+    <strong>Approve the plans.</strong> PCV builds per the approved plan, verifies
+    the result, and offers optional hands-on acceptance testing before closing out.
   </li>
 </ol>
 
@@ -157,7 +161,7 @@ deliverable patterns PCV supports, and troubleshooting tips, see the
 </main>
 
 <footer>
-  <p>PCV v3.4 &middot; M. G. Kay &middot; NC State ISE<br>
+  <p>PCV v3.5 &middot; M. G. Kay &middot; NC State ISE<br>
   <a href="guide.html">Workflow Guide</a></p>
 </footer>
 

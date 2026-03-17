@@ -98,6 +98,56 @@ Read the **Export Target** field from `charge.md`.
 
 ---
 
+## Step 4.5: Acceptance Testing (optional)
+
+After automated verification and before the verification report, offer the user
+hands-on evaluation of the deliverables.
+
+### Prompt
+
+> "Automated verification is complete. Would you like to do hands-on evaluation
+> before closing out?"
+
+Suggest a pattern-appropriate approach:
+
+- **Pattern 1 (Code):** "You could run a demo notebook or test script to exercise
+  the deliverable end-to-end."
+- **Pattern 2 (Prose):** "You could read through the deliverable document(s) and
+  flag any issues."
+- **Pattern 3 (Math):** "You could work through the formulation with known
+  inputs to verify the results."
+- **Pattern 4 (Design):** "You could interact with the rendered output to check
+  layout, readability, and usability."
+
+**STOP. Wait for user response.**
+
+### If the user declines
+
+Proceed to Step 5 (Verification Report). Note in the build record:
+"Acceptance testing: declined by user."
+
+### If the user accepts
+
+Wait for the user to complete their evaluation and report findings.
+
+For each issue reported:
+1. Fix the issue.
+2. Log the fix in the decision log:
+   ```markdown
+   ## Acceptance Testing Fix — [Date]
+
+   **Issue reported:** [User's description]
+   **Fix:** [What was changed]
+   **Files affected:** [List]
+
+   ---
+   ```
+3. Append the fix to the build record under "Acceptance Testing Fixes."
+
+When the user confirms evaluation is complete, proceed to Step 5.
+
+---
+
 ## Step 5: Verification Report
 
 Present a summary to the human:
@@ -121,6 +171,9 @@ Present a summary to the human:
 
 ### Export Status
 [Exported to [path] / No export configured / Skipped (same path)]
+
+### Acceptance Testing
+[Results from Step 4.5, or "Declined by user" / "Not applicable"]
 
 ### Open Issues
 [Any unresolved items, or "None"]
@@ -146,7 +199,13 @@ If a build record exists at `plans/build-record.md`:
 Replace the "Pending" placeholder in the Verification Status section with actual
 results: which tests passed, what was fixed during verification, final state.
 
-### 7b. Pre-Closeout User Notes
+### 7b. Update Acceptance Testing Fixes
+
+If acceptance testing was performed (Step 4.5), ensure all fixes are recorded
+under the "Acceptance Testing Fixes" section. If acceptance testing was declined,
+update the section to: "Acceptance testing declined by user."
+
+### 7c. Pre-Closeout User Notes
 
 Prompt the human:
 
@@ -161,10 +220,10 @@ Prompt the human:
   build record, attributed and dated.
 - **If the user declines or says none:** Write "None." in the User Notes section.
 
-### 7c. Update Open Items
+### 7d. Update Open Items
 
 Review the build record's Open Items section. Add any new items discovered during
-verification. Remove any that were resolved.
+verification or acceptance testing. Remove any that were resolved.
 
 ---
 
@@ -181,6 +240,8 @@ defer this write or batch it with other operations.
 **Summary:** [Brief description of what was built and verified]
 
 **Verification outcome:** [All criteria passed / N of M criteria passed]
+
+**Acceptance testing:** [Performed — N issues found and fixed / Declined by user / N/A]
 
 **Open questions:** [Any remaining items, or "None"]
 

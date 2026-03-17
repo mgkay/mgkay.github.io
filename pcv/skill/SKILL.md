@@ -63,18 +63,35 @@ This directory has no charge file. Set it up:
    **This must be created first** — its allow rules cover all subsequent file writes.
 2. Create `CLAUDE.md` with project identity placeholder (see Section 3).
 3. Create `charge.md` from the charge template (see Section 4).
-4. Create `plans/.gitkeep` (empty file) to establish the plans directory.
+4. Create `idea.md` with the idea prompt header (see Section 4a).
+5. Create `plans/.gitkeep` (empty file) to establish the plans directory.
    **Use the Write tool, not mkdir.** The Write tool creates parent directories
    implicitly and works cross-platform.
-5. Inform the user (include the version from Step 0):
-   > "PCV v[version] — workspace initialized. When prompted to approve file edits,
-   > select **'Yes, allow all edits during this session'** (option 2) — PCV manages
-   > files within this directory automatically.
+6. Inform the user (include the version from Step 0):
+   > "PCV v[version] — workspace initialized.
    >
-   > Fill in `charge.md` with your project details, then run `/pcv` again.
-   > You may rename the charge file — any filename containing 'charge' will
-   > be found automatically, or specify it directly with `/pcv <filename>`."
-6. **STOP.** Do not proceed until the user has filled in the charge and re-invoked `/pcv`.
+   > Describe your project idea in `idea.md`, then let me know when you're ready.
+   > PCV will generate a structured charge from your idea."
+7. **STOP. Wait for the user to signal readiness** (not a `/pcv` re-invocation).
+
+### Step B2: Charge generation (same session)
+
+When the user signals readiness after Step B (or when `/pcv` is re-invoked and
+detects unfilled `charge.md` template placeholders + populated `idea.md`):
+
+1. Read `idea.md`. If empty or unchanged from the template header, remind the user
+   to fill it in and **STOP**.
+2. Read any additional context in the directory: existing project files, `CLAUDE.md`,
+   prior version charge files (if this is an extension project).
+3. Generate a draft charge internally using the charge template (Section 4).
+4. Present the draft in chat as a **blockquoted preview** (clearly marked as a draft,
+   not written to disk). Below the preview, list fields where PCV is uncertain as
+   numbered questions — **one question at a time**, following the same protocol as
+   planning clarification (Step 4 of the planning protocol).
+5. After all questions are resolved, ask: **"Should I write this charge to disk?"**
+6. **STOP. Wait for user confirmation.**
+7. On confirmation, write `charge.md` with the finalized content.
+8. Present the written charge and continue directly to **Step C** (validate and route).
 
 ### Step C: Validate and route
 
@@ -93,9 +110,16 @@ Use the charge file located in Step A for all subsequent references to "the char
      "This directory is connected to a remote repository at [URL]. Planning
      documents created here would be included in future pushes. Would you like
      to proceed here, or work from a separate directory?" Wait for response.
-   - If no `.git`, run `git init` (no `cd`, no compound commands). If Git is
-     unavailable, note in the decision log that version control is unavailable
-     and inform the user once.
+   - If no `.git` in current directory, **check parent directories** for `.git` by
+     walking up: parent, grandparent, etc. Use Glob for each level. Stop at
+     filesystem root or after 5 levels.
+     - **If parent `.git` found:** Inform the user: "This directory is within a Git
+       repository rooted at `[parent path]`. Commits will be tracked there." Log
+       this in the decision log. Do NOT run `git init`.
+     - **If no `.git` anywhere:** Ask the user: "No Git repository found. Would you
+       like to initialize one here, or skip Git tracking for this project?" Wait
+       for response. If the user chooses to skip, log this in the decision log and
+       proceed without Git.
 
 3. **Phase detection and progress display.** Use Glob or Bash to survey `plans/`
    for file existence. **Always check disk state with a tool call — never infer
@@ -129,36 +153,92 @@ Use the charge file located in Step A for all subsequent references to "the char
    | Both exist, scope is verification-only | Load `verification-protocol.md`. |
    | Both exist, construction not complete | Assess construction progress. Present status summary. Load `construction-protocol.md`. |
    | Both exist, construction complete, verification not complete | Load `verification-protocol.md`. |
-   | **All milestones complete** | **Revision cycle** (see sub-step 3a below). |
+   | **All milestones complete** | **Completed project** (see sub-steps 3a and 3b below). |
 
-   ### 3a. Revision Cycle (completed project)
+   ### 3a. Revision Cycle (completed project — version chaining)
 
    When all five milestones are complete, the project has finished a full PCV cycle.
    Prompt the user:
 
-   > "This project completed a full PCV cycle. Would you like to start a new
-   > revision cycle?"
+   > "This project completed a full PCV cycle. Would you like to:
+   > (a) Start a new revision cycle (creates a versioned sibling folder), or
+   > (b) Reopen for fixes (append to existing logs)?"
 
    **STOP. Wait for the user's response.**
 
-   - **If no:** Acknowledge and stop.
-   - **If yes:** Perform the following:
-     1. Determine the next revision number. Check for existing `plans/rev*/`
-        directories. If none exist, the next revision is `rev1`. If `rev1/`
-        exists, use `rev2`, etc.
-     2. Copy `charge.md` into `plans/rev[N]/` (preserves the original charge
-        for reference). Then move all other `plans/` contents (except `rev*/`
-        subdirectories) into `plans/rev[N]/`. Use Read/Write tools to copy
-        files, then delete originals. This preserves the historical record.
-     3. Create a fresh `charge.md` from the charge template (Section 4), with
-        the **Prior Work** field pre-filled with the **absolute path** to the
-        current working directory. Preserve the **Name** and **Project Name**
-        from the previous charge.
-     4. Display:
-        > "Previous plans and charge archived to `plans/rev[N]/`.
-        > Fill in `charge.md` with your revision goals, then run `/pcv` again."
-     5. **STOP.** Do not proceed until the user has filled in the charge and
-        re-invoked `/pcv`.
+   - **If (b):** Go to sub-step 3b (Reopen for Fixes).
+   - **If neither:** Acknowledge and stop.
+   - **If (a):** Perform the version chaining restructure:
+
+   **First revision (no existing `v*/` siblings):**
+   1. Inform user: "Starting version chain. This will restructure the current
+      directory into `v1/` (current project) and `v2/` (new revision)."
+   2. **Dry-run:** Use Glob to inventory all files/directories in the current
+      directory (excluding `.git/` internals). Present the list to the user:
+      > "The following will be moved to `v1/`: [file list]. Proceed?"
+   3. **STOP. Wait for user confirmation.**
+   4. If Git is available, commit checkpoint:
+      `"PCV: pre-restructure checkpoint for [Project Name]"`
+   5. **Copy phase:** Copy all project contents (charge, plans/, deliverables,
+      .claude/, idea.md, CLAUDE.md, etc.) into `v1/` subfolder using Read/Write
+      tools. For `.git/`, use Bash `git clone` from the current directory into
+      `v1/` to preserve history, or skip `.git/` if not present.
+   6. **Verify phase:** Glob `v1/` to confirm all files present. Compare file
+      count against the dry-run inventory.
+   7. **Delete phase:** Remove originals from the root (only after verify
+      succeeds). Do NOT delete `v1/` itself.
+   8. Create parent `CLAUDE.md` with project identity and version chain context:
+      ```
+      # [Project Name] — Version Chain
+      Active versions in this directory. Each `vN/` folder is an independent
+      PCV workspace.
+      ```
+   9. Scaffold `v2/` as sibling: `idea.md`, `charge.md` (template with Prior
+      Work pre-filled as `../v1`), `.claude/settings.json` (full permissions),
+      `plans/.gitkeep`, `CLAUDE.md`.
+   10. Message:
+       > "Project restructured. Previous work archived to `v1/`.
+       > Describe your revision goals in `v2/idea.md` and let me know when ready."
+   11. **STOP.**
+
+   **Subsequent revisions (existing `v*/` siblings):**
+   1. Determine next version number N+1 by scanning for `v*/` directories.
+      Sort numerically and use max + 1.
+   2. Scaffold `vN+1/` as sibling with Prior Work pointing to `../vN`.
+   3. Message:
+      > "Fill in `vN+1/idea.md` with your revision goals and let me know
+      > when ready."
+   4. **STOP.**
+
+   ### 3b. Reopen for Fixes (completed project — lightweight)
+
+   When the user chooses to reopen for fixes instead of a full revision cycle:
+
+   1. Append a "Reopened for Fixes" entry to the decision log:
+      ```markdown
+      ## Reopened for Fixes — [Date]
+
+      **Reason:** [Ask user what issues they encountered]
+
+      ---
+      ```
+   2. **STOP. Wait for user to describe the issues.**
+   3. For each issue:
+      - Fix it per the user's direction.
+      - Log the fix in the decision log as a post-closeout fix:
+        ```markdown
+        ## Post-Closeout Fix — [Date]
+
+        **Issue:** [Description]
+        **Fix:** [What was changed]
+        **Files affected:** [List]
+
+        ---
+        ```
+      - Append the fix to the build record (if one exists) under a
+        "Post-Closeout Fixes" section.
+   4. When all fixes are complete, append a "Project Re-Closeout" entry to the
+      decision log. Git commit if available.
 
 4. **Load the appropriate protocol file.** Read the protocol file from this skill's
    directory (`~/.claude/skills/pcv/`) and follow its instructions. Only one protocol
@@ -171,7 +251,8 @@ Use the charge file located in Step A for all subsequent references to "the char
 These are brief overviews. Full instructions are in each protocol file.
 
 ### Planning Phase (`planning-protocol.md`)
-- Read charge, resolve working directory.
+- Read charge, resolve working directory, validate paths (relative paths resolved
+  to absolute for session use).
 - Analyze prior work (if any) with three-category classification.
 - Identify deliverable patterns (Code, Prose, Mathematical, Design-and-Render).
 - Sequential clarification: one question at a time, dependency-ordered.
@@ -194,6 +275,8 @@ These are brief overviews. Full instructions are in each protocol file.
 - Append verification fixes to the build record as they occur.
 - Map each Success Criterion to deliverable components.
 - Compare deliverables against planning artifacts.
+- **Acceptance testing** — optional hands-on user evaluation with pattern-appropriate
+  MVP suggestions. Fixes logged in decision log and build record.
 - Export if configured. Final commit.
 - Finalize build record: update verification status, prompt user for additional notes,
   update open items. Decision log closeout.
@@ -225,15 +308,17 @@ When scaffolding, create `charge.md` with this content:
 Name: <REPLACE>
 Project Name: <REPLACE>
 Project Directory:
-<!-- Absolute path to the folder where code/deliverables live.
-     Leave blank if this directory IS the project. -->
+<!-- Path to the folder where code/deliverables live.
+     Absolute path for external locations. Relative path (from this file)
+     for sibling/child directories. Leave blank if this directory IS the project. -->
 Export Target:
-<!-- Absolute path to a separate folder where finished files should be copied
-     after verification (e.g., a local Git repository). Leave blank if
-     deliverables stay in the project directory. -->
+<!-- Path to a separate folder where finished files should be copied
+     after verification. Absolute for external locations, relative for
+     siblings. Leave blank if deliverables stay in the project directory. -->
 Prior Work:
-<!-- Absolute path(s) to previous versions or reference files to build on.
-     Leave blank if starting from scratch. -->
+<!-- Path(s) to previous versions or reference files to build on.
+     Absolute for external locations. Relative for sibling versions
+     (e.g., ../v1). Leave blank if starting from scratch. -->
 
 ## Project Description
 <!-- What are you building? Who is it for? What should it do? -->
@@ -253,44 +338,62 @@ Prior Work:
 - **Name:** The human's name.
 - **Project Name:** Used for document headers and Git messages.
 - **Project Directory:** Where deliverables/code live. Blank = current directory.
+  Accepts absolute or relative paths.
 - **Export Target:** Where verified deliverables are copied during Verify. Blank = no export.
-- **Prior Work:** Path(s) to previous versions or reference material. Blank = starting from scratch.
+  Accepts absolute or relative paths.
+- **Prior Work:** Path(s) to previous versions or reference material. Blank = starting
+  from scratch. Accepts absolute or relative paths.
+
+---
+
+## 4a. Idea Template
+
+When scaffolding, create `idea.md` with this content:
+
+```markdown
+<!-- Describe your project idea here. Be informal — PCV will generate
+     a structured charge from this. Include what you want to build,
+     any constraints you know about, and what success looks like. -->
+```
 
 ---
 
 ## 5. Permission Settings
 
-PCV needs two categories of permissions:
+PCV requires Read, Write, Glob, and Grep access to function at all — these are
+essential for every phase of the workflow. In v3.4, general-purpose permissions
+were deferred to `/pre-approve` at construction time, but this only caused repeated
+permission prompts without adding security value, since the user has already opted
+into PCV by invoking `/pcv`. All necessary permissions are now added at scaffold
+to eliminate this friction.
 
-1. **PCV-specific** (never in global settings — always add to project):
-   - `Read(~/.claude/skills/pcv/*)`
-   - `Read(~/.claude/agents/pcv-critic.md)`
-
-2. **General-purpose** (commonly already in global settings):
-   - `Read(**)`, `Write(**)`, `Glob(*)`, `Grep(*)`, `Bash(git *)`
+Technology-specific permissions (e.g., `Bash(julia *)`, `Bash(npm *)`) are not
+added at scaffold — they are identified from the ConstructionPlan and added at
+the Gate 3 transition (see construction protocol Step 2.5).
 
 ### Scaffolding procedure (Step B)
 
 When creating `.claude/settings.json` during scaffold:
 
 1. **If the file already exists**, read it and preserve all existing entries and
-   structure (`deny`, `hooks`, etc.). Add only the two PCV-specific entries if
-   not already present.
-2. **If the file does not exist**, create it with only the PCV-specific entries:
+   structure (`deny`, `hooks`, etc.). Add the permission entries below if not
+   already present.
+2. **If the file does not exist**, create it with the full permission set:
    ```json
    {
      "permissions": {
        "allow": [
          "Read(~/.claude/agents/pcv-critic.md)",
-         "Read(~/.claude/skills/pcv/*)"
+         "Read(~/.claude/skills/pcv/*)",
+         "Read(**)",
+         "Write(**)",
+         "Glob(*)",
+         "Grep(*)",
+         "Bash(git *)"
        ]
      }
    }
    ```
-
-General-purpose permissions are handled by `/pre-approve` when it runs against
-the construction plan (Step 2.5 of the construction protocol). Do NOT add them
-during scaffold — they are typically already covered by global settings.
 
 **No other Bash commands should be needed.** PCV uses only internal tools (Read,
 Write, Glob, Grep) for file operations. Directories are created implicitly by
