@@ -1,13 +1,14 @@
 # PCV Bootstrap — Plan-Construct-Verify Installer
 
-**Version:** 3.5
-**Date:** 2026-03-17
+**Version:** 3.6
+**Date:** 2026-03-24
 
 ## What This File Does
 
 This file contains the complete PCV (Plan-Construct-Verify) skill for Claude Code.
 When you provide this file to Claude Code and ask it to follow the installation
-instructions, it will install six files that enable the `/pcv` command.
+instructions, it will install nine files — skill files and agent definition files —
+that enable the `/pcv` command.
 
 ## Prerequisite
 
@@ -29,15 +30,15 @@ You are reading a PCV bootstrap file. Follow these steps precisely.
 ### Step 1: Check for existing installation
 
 Read `~/.claude/skills/pcv/VERSION`. If the file exists, parse the first line as a
-version number. Compare it to the version in this bootstrap (3.5).
+version number. Compare it to the version in this bootstrap (3.6).
 
-- If the installed version is **equal to or higher than** 3.5, inform the user:
+- If the installed version is **equal to or higher than** 3.6, inform the user:
   "PCV v[installed version] is already installed. No update needed."
   **STOP.**
-- If the installed version is **lower than** 3.5, inform the user:
-  "Updating PCV from v[installed] to v3.5." Proceed to Step 2.
+- If the installed version is **lower than** 3.6, inform the user:
+  "Updating PCV from v[installed] to v3.6." Proceed to Step 2.
 - If the file does not exist, inform the user:
-  "Installing PCV v3.5." Proceed to Step 2.
+  "Installing PCV v3.6." Proceed to Step 2.
 
 ### Step 2: Write files
 
@@ -45,28 +46,40 @@ Write each of the following files using the content between the `===BEGIN path==
 and `===END path===` delimiters. Use the Write tool for each file. The paths use `~/`
 notation — expand to the user's home directory.
 
+Files are installed to two locations:
+- **`~/.claude/skills/pcv/`** (5 files) — VERSION, SKILL.md, and the three protocol files.
+- **`~/.claude/agents/`** (4 files) — pcv-critic.md, pcv-research.md, pcv-builder.md, pcv-verifier.md.
+
 **Important:** Write the files in the order listed. Do not modify the content in any
 way — write it exactly as provided.
 
 ### Step 3: Verify installation
 
-After writing all six files, verify the installation:
+After writing all nine files, verify the installation:
 
-1. Read `~/.claude/skills/pcv/VERSION` and confirm it contains `3.5`.
+1. Read `~/.claude/skills/pcv/VERSION` and confirm it contains `3.6`.
 2. Read `~/.claude/skills/pcv/SKILL.md` and confirm it starts with `---`.
 3. Read `~/.claude/agents/pcv-critic.md` and confirm it starts with `---`.
+4. Read `~/.claude/agents/pcv-research.md` and confirm it starts with `---`.
 
 ### Step 4: Inform the user
 
 If all verifications pass, tell the user:
 
-> **PCV v3.5 installed successfully.** Six files written:
-> - `~/.claude/skills/pcv/VERSION`
-> - `~/.claude/skills/pcv/SKILL.md`
-> - `~/.claude/skills/pcv/planning-protocol.md`
-> - `~/.claude/skills/pcv/construction-protocol.md`
-> - `~/.claude/skills/pcv/verification-protocol.md`
-> - `~/.claude/agents/pcv-critic.md`
+> **PCV v3.6 installed successfully.** Nine files written:
+>
+> **Skill files** (`~/.claude/skills/pcv/`):
+> - `VERSION`
+> - `SKILL.md`
+> - `planning-protocol.md`
+> - `construction-protocol.md`
+> - `verification-protocol.md`
+>
+> **Agent files** (`~/.claude/agents/`):
+> - `pcv-critic.md`
+> - `pcv-research.md`
+> - `pcv-builder.md`
+> - `pcv-verifier.md`
 >
 > To use PCV, navigate to a project directory and type `/pcv`.
 
@@ -75,9 +88,9 @@ If all verifications pass, tell the user:
 ## Embedded Files
 
 ===BEGIN ~/.claude/skills/pcv/VERSION===
-3.5
-2026-03-17
-Add idea-to-charge generation, version chaining with sibling folders, hybrid relative/absolute paths, git inherit-first policy, full permissions at scaffold, acceptance testing phase, reopen-for-fixes protocol.
+3.6
+2026-03-24
+Add subagent delegation: pcv-research (planning), pcv-builder (construction), pcv-verifier (all-pattern verification). Add compaction/clear recommendations at phase transitions, effort-level guidance, decision log compaction preservation. Verification agents untested in live workflows.
 ===END ~/.claude/skills/pcv/VERSION===
 
 ===BEGIN ~/.claude/skills/pcv/SKILL.md===
@@ -334,9 +347,11 @@ Use the charge file located in Step A for all subsequent references to "the char
 These are brief overviews. Full instructions are in each protocol file.
 
 ### Planning Phase (`planning-protocol.md`)
+Recommended effort: **high/max**
 - Read charge, resolve working directory, validate paths (relative paths resolved
   to absolute for session use).
-- Analyze prior work (if any) with three-category classification.
+- Dispatch `pcv-research` agent for prior work analysis (if applicable) — returns
+  structured inventory, pattern-specific findings, three-category classification.
 - Identify deliverable patterns (Code, Prose, Mathematical, Design-and-Render).
 - Sequential clarification: one question at a time, dependency-ordered.
 - Draft MakePlan → Critic review → Compliance checklist → **Gate 1: MakePlan Approval**.
@@ -346,15 +361,19 @@ These are brief overviews. Full instructions are in each protocol file.
 - Commit approved plans to Git if available.
 
 ### Construct Phase (`construction-protocol.md`)
+Recommended effort: **medium**
 - Resolve working directory from charge.
 - Baseline copy if carrying forward prior work.
-- Build strictly per approved ConstructionPlan.
+- Dispatch `pcv-builder` agent per component in dependency order — one at a time,
+  wait for completion before dispatching next.
 - Log deviations with human approval. Commit at milestones.
 - Generate initial build record (`plans/build-record.md`) capturing files modified,
   design decisions made during construction, deviations, and lessons learned.
 
 ### Verify Phase (`verification-protocol.md`)
-- Pattern-appropriate verification (run tests, review structure, check math, visual compare).
+Recommended effort: **medium**
+- Dispatch `pcv-verifier` agent with pattern-specific instructions for each
+  applicable deliverable pattern.
 - Append verification fixes to the build record as they occur.
 - Map each Success Criterion to deliverable components.
 - Compare deliverables against planning artifacts.
@@ -373,10 +392,12 @@ When scaffolding, create `CLAUDE.md` with this content:
 ```
 # <Project Name>
 Language: <Language>
+When compacting, preserve decision log (plans/logs/decision-log.md) and all files in plans/.
 ```
 
-This file contains only project identity — no PCV references, no methodology
-instructions. Under 5 lines. The user customizes it after scaffolding.
+This file contains project identity and a compaction-preservation instruction —
+no PCV references, no methodology instructions. Under 5 lines. The user
+customizes it after scaffolding.
 
 ---
 
@@ -467,6 +488,9 @@ When creating `.claude/settings.json` during scaffold:
      "permissions": {
        "allow": [
          "Read(~/.claude/agents/pcv-critic.md)",
+         "Read(~/.claude/agents/pcv-research.md)",
+         "Read(~/.claude/agents/pcv-builder.md)",
+         "Read(~/.claude/agents/pcv-verifier.md)",
          "Read(~/.claude/skills/pcv/*)",
          "Read(**)",
          "Write(**)",
@@ -501,10 +525,17 @@ Each protocol file ends with a transition instruction. Follow it.
 - If a user describes a complex project and has not invoked PCV, you may suggest it
   **once**. If declined or ignored, do not repeat.
 - The main PCV workflow runs in the main conversation context, never as a subagent.
-- The only subagent PCV spawns is the adversarial Critic during Planning (via Task tool
-  with `subagent_type: general-purpose`, `model: haiku`). The Critic's behavioral
-  instructions are in `~/.claude/agents/pcv-critic.md` for reference but must be
-  inlined in the Task prompt since custom agent types are not directly spawnable.
+- PCV dispatches subagents for context isolation and token efficiency. Each agent's
+  behavioral instructions are in `~/.claude/agents/` and must be Read and inlined in
+  the Agent tool prompt since custom agent types are not directly spawnable via
+  `subagent_type`. The four agents are:
+  - **`pcv-critic`** (Planning) — Adversarial review of MakePlan. Model: haiku.
+  - **`pcv-research`** (Planning) — Prior-work analysis. Model: sonnet.
+  - **`pcv-builder`** (Construction) — Per-component builds, dispatched sequentially.
+    Model: sonnet.
+  - **`pcv-verifier`** (Verification) — Pattern-specific verification. Model: sonnet.
+- If a subagent fails to spawn or Claude builds inline instead of dispatching, this is
+  acceptable — the work product is identical, only token efficiency is reduced.
 - All file operations for baseline copy and export must use internal Read/Write tools
   or cross-platform scripting — never OS-specific shell commands (`cp`, `copy`).
 - Git commits happen at defined milestones with descriptive messages. Git is silent —
@@ -562,71 +593,49 @@ Before examining any prior work, re-read the charge narrative carefully. Note ev
 decision the user has already made — technology choices, constraints, specific
 requirements, stated preferences. These are settled; do not re-litigate them.
 
-### 2.2 Inventory Prior Work
+### 2.2 Dispatch pcv-research Agent
 
-Read or scan each path listed in Prior Work. Produce a summary:
-- What files/artifacts exist?
-- What is the structure and organization?
-- What is the overall quality and completeness?
+Delegate the prior work inventory and analysis to the `pcv-research` agent for
+context isolation. This keeps file-reading overhead out of the main planning context.
 
-**Pattern-specific analysis depth:**
+1. Read `~/.claude/agents/pcv-research.md` for the agent's behavioral instructions.
+2. Spawn the agent via the Agent tool:
+   - `subagent_type: general-purpose`
+   - `model: sonnet`
+   - Inline the full contents of `pcv-research.md` in the prompt.
+   - Pass absolute paths to: charge file, all Prior Work locations, CLAUDE.md.
+3. The agent returns a structured summary containing:
+   - File inventory (paths, sizes, roles)
+   - Deliverable patterns detected
+   - Pattern-specific findings
+   - Three-category classification (already decided / new issues / potential conflicts)
+   - Scope signal (verification-only / scoped changes / full build)
 
-- **Pattern 1 (Code):** Read the code and critically evaluate its logic. Check for:
-  unverified assumptions about input data (e.g., hardcoded formats, assumed schemas),
-  error handling gaps, separation of concerns (or lack thereof), testability, and
-  whether the code actually handles the variability described in the charge. A
-  structural inventory is insufficient — identify specific logical flaws.
+### 2.3 Process Research Results
 
-- **Pattern 2 (Prose):** Cross-reference prior work content against every specific
-  requirement in the charge. Identify not just what is present and wrong, but what
-  is **absent** — domain-specific requirements the charge mentions that the prior work
-  does not address at all. Generic or boilerplate content that fails to address
-  project-specific details is a weakness, not a strength.
+Use the agent's returned summary to populate the planning context:
 
-- **Pattern 3 (Mathematical):** Check formulation completeness: are all variables
-  defined, constraints enumerated, domains specified? Identify implicit assumptions
-  (e.g., linearity, continuity) not justified by the charge.
+1. **Three-Category Classification** — Review the agent's classification. The
+   categories are:
+   - **Already decided by the user** — The charge explicitly addresses this point.
+     List as confirmations. Note any downstream implications.
+   - **New issues** — Discovered in the prior work, not addressed in the charge.
+     These become clarification questions in Step 4.
+   - **Potential conflicts** — The charge requests something that may be incompatible
+     with prior work the user presumably wants to keep.
 
-- **Pattern 4 (Design):** Evaluate visual design against any stated display context,
-  accessibility requirements, or user-interaction constraints in the charge.
+2. **Scope Signal** — Review the agent's scope assessment. Apply these criteria
+   to validate or adjust:
+   - **Verification-only** — The prior work meets ALL Success Criteria in the charge.
+     Content is specific and complete, not just structurally sound.
+   - **Scoped changes** — The prior work's structure is sound, but specific content
+     is inadequate. The fix is targeted revision, not ground-up rewrite.
+   - **Full build / significant revision** — The prior work is architecturally flawed
+     or fundamentally misaligned with the charge.
 
-### 2.3 Three-Category Classification
-
-Classify every finding from the prior work into exactly one category:
-
-1. **Already decided by the user** — The charge explicitly addresses this point.
-   List as confirmations. Note any downstream implications.
-2. **New issues** — Discovered in the prior work, not addressed in the charge.
-   These become clarification questions in Step 4.
-3. **Potential conflicts** — The charge requests something that may be incompatible
-   with prior work the user presumably wants to keep.
-
-### 2.4 Scope Signal
-
-Assess the prior work against the charge and classify the initial scope signal.
-Apply these decision criteria:
-
-- **Verification-only** — The prior work meets ALL Success Criteria in the charge.
-  Content is specific and complete, not just structurally sound. No sections need
-  rewriting — only verification that everything works/reads as specified.
-
-- **Scoped changes** — The prior work's **structure and organization are sound**, but
-  specific content is inadequate (generic, incomplete, or missing project-specific
-  details). The fix is targeted revision of identified sections, not a ground-up
-  rewrite. This is the correct scope when: the skeleton is usable but the substance
-  needs work.
-
-- **Full build / significant revision** — The prior work is architecturally flawed,
-  fundamentally misaligned with the charge, or so inadequate that preserving its
-  structure provides no advantage over starting fresh.
-
-**Guard against over-scoping:** If the prior work's structure is usable, do not
-default to a full rewrite. Identify specifically which sections/components need
-revision and preserve everything else.
-
-**Guard against under-scoping:** If the prior work contains only generic or
-boilerplate content where the charge requires project-specific detail, that is
-not "substantially meets" — it is scoped changes at minimum.
+   **Guard against over-scoping:** If the structure is usable, do not default to a
+   full rewrite. **Guard against under-scoping:** Generic or boilerplate content
+   where the charge requires specifics is scoped changes at minimum.
 
 Do not finalize scope yet — clarification may change the assessment.
 
@@ -790,6 +799,9 @@ substantive issues only (skip formatting/style).
 
 - **Do NOT pass file contents in the prompt.** The Critic reads from disk in its
   own context window, saving the main agent's output tokens.
+- **Scope Critic output:** Add to the prompt: "Do not reproduce file contents in
+  your findings — reference by section name and line number. Keep each finding
+  concise." This reduces the tokens carried back to the main context.
 
 ### Processing Critic Findings
 
@@ -969,7 +981,11 @@ Handle feedback using the same editorial/substantive/ambiguous protocol as Gate 
 Once approved:
 1. **Append a Gate 3 entry to the decision log now, before doing anything else.**
 2. Commit to Git if available: `"Approve ConstructionPlan for [Project Name]"`
-3. **Transition to Construct phase:** Read `~/.claude/skills/pcv/construction-protocol.md`
+3. **Context management recommendation.** Inform the human:
+   > "Planning phase complete. All decisions are persisted in `plans/`. Consider
+   > running `/compact` to reduce context before construction. `/clear` is also
+   > safe — construction reads all state from disk."
+4. **Transition to Construct phase:** Read `~/.claude/skills/pcv/construction-protocol.md`
    and follow it.
 
 ---
@@ -1114,18 +1130,54 @@ in place from scaffold.
 
 ## Step 3: Build in ConstructionPlan Order
 
-The ConstructionPlan specifies a dependency order. Follow it.
+The ConstructionPlan specifies a dependency order. Follow it by dispatching a
+`pcv-builder` agent for each component. This isolates per-component file reads,
+edits, and test runs from the main session context.
 
-1. Build each component in the specified sequence.
-2. Reference planning artifacts in `plans/artifacts/` during construction:
-   - Wireframes and mockups inform visual implementations.
-   - Architecture diagrams inform module structure.
-   - Data models inform schema and type definitions.
-   - Math formulations inform solver implementations.
-   - Pseudocode informs complex logic.
-   - Test specifications inform test implementations.
-3. After each major component, verify it works in isolation before proceeding to
-   dependent components.
+### 3.1 Load Agent Instructions
+
+Read `~/.claude/agents/pcv-builder.md` for the builder's behavioral instructions.
+You will inline these in each dispatch prompt.
+
+### 3.2 Sequential Dispatch Loop
+
+For each component in the ConstructionPlan's dependency order:
+
+1. **Extract the component specification** from the ConstructionPlan — what to build,
+   interfaces, responsibilities, file paths, relevant planning artifacts.
+2. **Dispatch pcv-builder** via the Agent tool:
+   - `subagent_type: general-purpose`
+   - `model: sonnet`
+   - Inline the full contents of `pcv-builder.md` in the prompt.
+   - Pass: component specification, planning artifacts path (absolute), project
+     directory path (absolute), prior work path (if applicable).
+3. **Wait for the builder to complete.** Review its summary.
+4. **If deviations reported:** Present to the human for approval per Step 4
+   (deviation handling). Do not dispatch the next component until deviations
+   are resolved.
+5. **If successful:** Log completion in the decision log. Commit to Git if available.
+6. **Proceed to the next component only after the current one completes.**
+
+### 3.3 Sequential Enforcement
+
+**Dispatch one pcv-builder at a time.** Wait for it to complete and review its
+summary before dispatching the next. If you find yourself dispatching multiple
+builders in the same response, **STOP — this is an error.** Revert to one at a
+time.
+
+Do not run multiple builders in parallel unless the ConstructionPlan explicitly
+marks components as independent and parallel-safe.
+
+### 3.4 Planning Artifact References
+
+The builder agent references planning artifacts in `plans/artifacts/` during
+construction:
+- Wireframes and mockups inform visual implementations.
+- Architecture diagrams inform module structure.
+- Data models inform schema and type definitions.
+- Math formulations inform solver implementations.
+- Pseudocode informs complex logic.
+- Test specifications inform test implementations.
 
 ---
 
@@ -1241,7 +1293,11 @@ Populated during construction, appended during verification.]
 
 1. Present the draft to the human for review. They may add, remove, or correct entries.
 2. The build record remains **open** — it will be appended during verification.
-3. **Transition to Verify phase:** Read `~/.claude/skills/pcv/verification-protocol.md`
+3. **Context management recommendation.** Inform the human:
+   > "Construction phase complete. Build record and decision log are on disk.
+   > Consider running `/compact` to reduce context before verification. `/clear`
+   > is also safe — verification reads all state from disk."
+4. **Transition to Verify phase:** Read `~/.claude/skills/pcv/verification-protocol.md`
    and follow it.
 
 ---
@@ -1272,41 +1328,71 @@ scope is verification-only). Verify that the deliverables meet the charge specif
 
 ## Step 1: Pattern-Specific Verification
 
-Apply verification appropriate to each deliverable pattern identified in the MakePlan.
+Delegate pattern-specific verification to the `pcv-verifier` agent for context
+isolation. This keeps test output, file reads, and verification traces out of
+the main session context.
 
-### Pattern 1 — Code
+### 1.1 Load Agent Instructions
 
+Read `~/.claude/agents/pcv-verifier.md` for the verifier's behavioral instructions.
+You will inline these plus pattern-specific instructions in the dispatch prompt.
+
+### 1.2 Dispatch pcv-verifier
+
+For each deliverable pattern identified in the MakePlan, assemble the pattern-specific
+instructions and dispatch the verifier:
+
+1. **Determine which patterns apply** from the MakePlan's deliverable patterns section.
+2. **Assemble pattern-specific instructions** by including the relevant sections below
+   in the dispatch prompt.
+3. **Dispatch pcv-verifier** via the Agent tool:
+   - `subagent_type: general-purpose`
+   - `model: sonnet`
+   - Inline the full contents of `pcv-verifier.md` in the prompt.
+   - Include the pattern-specific instructions for applicable patterns.
+   - Pass: project directory path (absolute), charge file path (absolute),
+     planning artifacts path (absolute).
+4. **Process the returned verification report.** Review issues by severity.
+
+You may dispatch a single verifier with instructions for multiple patterns, or
+dispatch once per pattern — choose based on project complexity.
+
+### 1.3 Pattern-Specific Instructions (for dispatch prompt)
+
+Include the relevant sections when dispatching the verifier:
+
+**Pattern 1 — Code:**
 - Run automated tests (e.g., `julia test/runtests.jl`, `pytest`, `npm test`).
 - Verify compilation or interpretation succeeds without errors.
 - Execute the application and check runtime behavior against expected outputs.
 - Check for error handling of edge cases specified in the charge or planning artifacts.
+- Compare implemented code against approved pseudocode or test specifications.
 
-### Pattern 2 — Prose/Documents
-
+**Pattern 2 — Prose/Documents:**
 - Verify all sections specified in the charge and ConstructionPlan are present.
 - Check structural coherence and logical flow.
 - Verify formatting requirements are met.
 - Confirm readability for the target audience specified in the charge.
+- Cross-reference every charge requirement — identify gaps and generic content.
 
-### Pattern 3 — Mathematical/Analytical
-
+**Pattern 3 — Mathematical/Analytical:**
 - Verify solution correctness with known test inputs where possible.
 - Check all constraints are satisfied.
 - Verify dimensional consistency and variable domain completeness.
 - Test reproducibility — can the formulation be implemented from the document alone?
+- Compare against approved math specification in planning artifacts.
 
-### Pattern 4 — Design-and-Render
-
+**Pattern 4 — Design-and-Render:**
 - Compare rendered output against approved wireframe specifications in `plans/artifacts/`.
 - Verify the "glance test" — can the target user quickly extract the key information?
 - Check accessibility requirements (color-blind support, font sizes, contrast).
 - Verify responsiveness or display-target requirements from the charge.
 
-### Verification Fixes
+### 1.4 Verification Fixes
 
-If verification reveals issues that require code or deliverable changes:
+If the verifier reports issues that require code or deliverable changes:
 
-1. Fix the issue.
+1. Fix the issue in the main session (not via subagent — fixes may need human judgment).
 2. Log the fix in the decision log as a deviation.
 3. **Append the fix to the build record** (if one exists at `plans/build-record.md`).
    Add entries under "Design Decisions During Construction" for new decisions, or
@@ -1605,3 +1691,355 @@ or decision log that supports your concern]
   the exact gap, contradiction, or missing element.
 - Limit findings to substantive issues. Do not flag formatting, style, or minor wording.
 ===END ~/.claude/agents/pcv-critic.md===
+
+===BEGIN ~/.claude/agents/pcv-research.md===
+---
+name: pcv-research
+description: Prior-work analyst for PCV planning phase. Inventories existing files, performs pattern-specific critical evaluation, and produces three-category classification with scope signal.
+tools: Read, Grep, Glob
+model: sonnet
+---
+
+# PCV Research — Prior Work Analysis Agent
+
+You are a prior-work analyst for the Plan-Construct-Verify (PCV) workflow. Your job
+is to thoroughly investigate existing project artifacts and produce a structured
+assessment that the planning session uses for scope determination and clarification.
+
+## Input
+
+You receive **file paths** in your task prompt:
+- `charge.md` — the project charge (requirements and success criteria)
+- Prior work path(s) — one or more directories or files to analyze
+- `CLAUDE.md` — project identity and context (if it exists)
+
+Read each file from disk using your Read tool. Do NOT ask for file contents to be
+passed to you — read them yourself.
+
+## What to Do
+
+### 1. Inventory Prior Work
+
+Scan each prior work path. For every file found, record:
+- File path and name
+- Approximate size (line count)
+- Purpose/role in the project
+
+### 2. Pattern-Specific Critical Evaluation
+
+Determine which deliverable patterns are present, then apply the appropriate
+analytical depth:
+
+**Pattern 1 (Code):** Read the code and critically evaluate its logic. Check for:
+unverified assumptions about input data (e.g., hardcoded formats, assumed schemas),
+error handling gaps, separation of concerns (or lack thereof), testability, and
+whether the code actually handles the variability described in the charge. A
+structural inventory alone is insufficient — identify specific logical flaws.
+
+**Pattern 2 (Prose/Documents):** Cross-reference prior work content against every
+specific requirement in the charge. Identify not just what is present and wrong, but
+what is **absent** — domain-specific requirements the charge mentions that the prior
+work does not address at all. Generic or boilerplate content that fails to address
+project-specific details is a weakness, not a strength.
+
+**Pattern 3 (Mathematical/Analytical):** Check formulation completeness: are all
+variables defined, constraints enumerated, domains specified? Identify implicit
+assumptions (e.g., linearity, continuity) not justified by the charge.
+
+**Pattern 4 (Design-and-Render):** Evaluate visual design against any stated display
+context, accessibility requirements, or user-interaction constraints in the charge.
+
+### 3. Three-Category Classification
+
+Classify every finding into exactly one category:
+
+1. **Already decided by the user** — The charge explicitly addresses this point.
+   List as confirmations. Note any downstream implications.
+2. **New issues** — Discovered in the prior work, not addressed in the charge.
+   These become clarification questions in planning.
+3. **Potential conflicts** — The charge requests something that may be incompatible
+   with prior work the user presumably wants to keep.
+
+### 4. Scope Signal
+
+Assess the prior work against the charge and classify the initial scope:
+
+- **Verification-only** — The prior work meets ALL Success Criteria. Content is
+  specific and complete, not just structurally sound. No sections need rewriting.
+- **Scoped changes** — The prior work's structure and organization are sound, but
+  specific content is inadequate. The fix is targeted revision, not ground-up rewrite.
+- **Full build / significant revision** — The prior work is architecturally flawed
+  or fundamentally misaligned with the charge.
+
+**Guard against over-scoping:** If the structure is usable, do not default to a
+full rewrite. Identify specifically which sections need revision.
+
+**Guard against under-scoping:** If the prior work contains only generic or
+boilerplate content where the charge requires project-specific detail, that is
+scoped changes at minimum, not verification-only.
+
+## Output Format
+
+Return a structured summary with these sections:
+
+```
+## File Inventory
+| File | Lines | Role |
+|------|-------|------|
+| [path] | [count] | [purpose] |
+
+## Deliverable Patterns Detected
+[List patterns found and evidence]
+
+## Pattern-Specific Findings
+[Organized by pattern, with specific issues identified]
+
+## Three-Category Classification
+
+### Already Decided
+[Numbered list of confirmations]
+
+### New Issues
+[Numbered list — these become clarification questions]
+
+### Potential Conflicts
+[Numbered list, or "None"]
+
+## Scope Signal
+[verification-only / scoped changes / full build — with justification]
+```
+
+## Constraints
+
+- You are **read-only**. You cannot modify any files.
+- You cannot spawn other subagents or delegate.
+- Be specific. Reference exact file paths, line numbers, and section names.
+- Do not re-litigate decisions already made in the charge — classify them as
+  "Already decided" and move on.
+- Limit your output to findings that affect planning decisions. Skip formatting
+  and style observations.
+===END ~/.claude/agents/pcv-research.md===
+
+===BEGIN ~/.claude/agents/pcv-builder.md===
+---
+name: pcv-builder
+description: Per-component builder for PCV construction phase. Implements a single component from the ConstructionPlan in isolation, returning a completion summary.
+tools: Read, Write, Edit, Bash, Glob, Grep
+model: sonnet
+---
+
+# PCV Builder — Per-Component Construction Agent
+
+You are a component builder for the Plan-Construct-Verify (PCV) workflow. You
+receive a single component specification from an approved ConstructionPlan and
+build it in isolation. The main session orchestrates your dispatch — you focus
+on one component only.
+
+## Input
+
+You receive the following in your task prompt:
+- **Component specification** — extracted from the ConstructionPlan (what to build,
+  interfaces, responsibilities, file paths)
+- **Planning artifacts path** — directory containing approved specifications
+  (wireframes, math formulations, test specs, pseudocode)
+- **Project directory path** — where deliverables/code live
+- **Prior work path** — previous version files to reference or build on (if applicable)
+
+Read all referenced files from disk. Do NOT ask for file contents to be passed
+to you — read them yourself.
+
+## What to Do
+
+### 1. Understand the Component
+
+Read the component specification carefully. Identify:
+- What files to create or modify
+- What interfaces or contracts to satisfy
+- What planning artifacts to reference
+- What dependencies exist (other components that must already be complete)
+
+### 2. Reference Planning Artifacts
+
+Before building, read the relevant planning artifacts:
+- Wireframes and mockups inform visual implementations
+- Architecture diagrams inform module structure
+- Data models inform schema and type definitions
+- Math formulations inform solver implementations
+- Pseudocode informs complex logic
+- Test specifications inform test implementations
+
+### 3. Build the Component
+
+Implement the component per the specification. Use Write, Edit, and Bash tools
+as needed. Follow the project's coding conventions (check `CLAUDE.md` and existing
+code style).
+
+### 4. Verify in Isolation
+
+After building, verify the component works on its own:
+- If code: check that it compiles/interprets without errors
+- If tests: run them and confirm they pass
+- If prose: verify structural completeness against the specification
+- If modifications to existing files: confirm no unintended side effects
+
+## Output Format
+
+Return a structured completion summary:
+
+```
+## Component: [name]
+
+### Files Created
+| File | Purpose |
+|------|---------|
+| [path] | [description] |
+
+### Files Modified
+| File | Change |
+|------|--------|
+| [path] | [description] |
+
+### Design Decisions
+[Decisions made on details the spec left unspecified — what was decided, why,
+and what alternatives were considered. If none, state "None."]
+
+### Deviations
+[If anything was built differently from the spec, explain what and why.
+If none, state "None." Deviations require human approval — flag them clearly.]
+
+### Verification
+[What was checked and the result. E.g., "Compiled successfully",
+"Tests pass (5/5)", "All sections present per spec".]
+
+### Status: [COMPLETE / COMPLETE WITH DEVIATIONS / BLOCKED]
+```
+
+## Constraints
+
+- Build **only** the component you were assigned. Do not build other components
+  or make changes outside your scope.
+- If you encounter a blocker (missing dependency, ambiguous spec, conflicting
+  requirements), report it in your summary with status BLOCKED. Do not guess.
+- Log deviations explicitly. The main session must approve them with the human
+  before proceeding.
+- Do not modify planning artifacts (`plans/` directory) — those are read-only
+  during construction.
+- Do not interact with the user directly — return your summary to the main session.
+===END ~/.claude/agents/pcv-builder.md===
+
+===BEGIN ~/.claude/agents/pcv-verifier.md===
+---
+name: pcv-verifier
+description: Pattern-specific verification agent for PCV verification phase. Handles all four deliverable patterns, dispatched with pattern-specific instructions by the verification protocol.
+tools: Read, Bash, Glob, Grep
+model: sonnet
+---
+
+# PCV Verifier — Pattern-Specific Verification Agent
+
+You are a verification agent for the Plan-Construct-Verify (PCV) workflow. You
+perform pattern-specific verification of deliverables and return a structured
+report. The verification protocol dispatches you with instructions for the
+specific pattern(s) to verify.
+
+## Input
+
+You receive the following in your task prompt:
+- **Project directory path** — where deliverables/code live
+- **Charge file path** — requirements and success criteria
+- **Pattern-specific instructions** — what to verify and how (included by the
+  verification protocol based on which deliverable patterns apply)
+- **Planning artifacts path** — approved specifications to compare against
+
+Read all referenced files from disk. Do NOT ask for file contents to be passed
+to you — read them yourself.
+
+## Pattern-Specific Verification Procedures
+
+The verification protocol includes one or more of the following instruction sets
+in your task prompt. Apply only what you are given.
+
+### Pattern 1 — Code
+
+- Run automated tests (e.g., `julia test/runtests.jl`, `pytest`, `npm test`).
+- Verify compilation or interpretation succeeds without errors.
+- Execute the application and check runtime behavior against expected outputs.
+- Check for error handling of edge cases specified in the charge or planning artifacts.
+- Compare implemented code against approved pseudocode or test specifications
+  in planning artifacts.
+
+### Pattern 2 — Prose/Documents
+
+- Verify all sections specified in the charge and ConstructionPlan are present.
+- Check structural coherence and logical flow.
+- Verify formatting requirements are met.
+- Confirm readability for the target audience specified in the charge.
+- Cross-reference every charge requirement — identify what is present, what is
+  missing, and what is generic where project-specific detail was required.
+
+### Pattern 3 — Mathematical/Analytical
+
+- Verify solution correctness with known test inputs where possible.
+- Check all constraints are satisfied.
+- Verify dimensional consistency and variable domain completeness.
+- Test reproducibility — can the formulation be implemented from the document alone?
+- Compare implemented formulation against approved math specification in
+  planning artifacts.
+
+### Pattern 4 — Design-and-Render
+
+- Compare rendered output against approved wireframe specifications in
+  planning artifacts.
+- Verify the "glance test" — can the target user quickly extract key information?
+- Check accessibility requirements (color-blind support, font sizes, contrast).
+- Verify responsiveness or display-target requirements from the charge.
+
+## Output Format
+
+Return a structured verification report:
+
+```
+## Verification Report
+
+### Patterns Verified
+[List which patterns were checked]
+
+### Results by Pattern
+
+#### Pattern N — [Name]
+
+**Tests/Checks Performed:**
+1. [What was checked]
+2. [What was checked]
+
+**Issues Found:**
+| # | Issue | Severity | File/Location |
+|---|-------|----------|---------------|
+| 1 | [description] | [Critical/Major/Minor] | [path:line] |
+
+**Planning Artifact Comparison:**
+[How deliverables compare to approved specifications. Note deviations.]
+
+**Pattern Status: [PASS / FAIL / PARTIAL]**
+
+### Summary
+- Patterns checked: [N]
+- Passed: [N]
+- Failed: [N]
+- Issues found: [N] (Critical: [N], Major: [N], Minor: [N])
+
+### Overall Status: [PASS / FAIL / PARTIAL]
+```
+
+## Constraints
+
+- You are primarily **read-only**. Do not modify deliverable files.
+- Exception: Pattern 1 may use Bash to run tests or compile code. This is
+  execution for verification, not modification.
+- You cannot spawn other subagents or delegate.
+- Be specific. Reference exact file paths, line numbers, and section names.
+- Report issues by severity: Critical (blocks acceptance), Major (should fix),
+  Minor (could improve).
+- Do not fix issues yourself — report them for the main session to handle.
+- Do not interact with the user directly — return your report to the main session.
+===END ~/.claude/agents/pcv-verifier.md===

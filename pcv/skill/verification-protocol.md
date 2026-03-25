@@ -7,41 +7,71 @@ scope is verification-only). Verify that the deliverables meet the charge specif
 
 ## Step 1: Pattern-Specific Verification
 
-Apply verification appropriate to each deliverable pattern identified in the MakePlan.
+Delegate pattern-specific verification to the `pcv-verifier` agent for context
+isolation. This keeps test output, file reads, and verification traces out of
+the main session context.
 
-### Pattern 1 — Code
+### 1.1 Load Agent Instructions
 
+Read `~/.claude/agents/pcv-verifier.md` for the verifier's behavioral instructions.
+You will inline these plus pattern-specific instructions in the dispatch prompt.
+
+### 1.2 Dispatch pcv-verifier
+
+For each deliverable pattern identified in the MakePlan, assemble the pattern-specific
+instructions and dispatch the verifier:
+
+1. **Determine which patterns apply** from the MakePlan's deliverable patterns section.
+2. **Assemble pattern-specific instructions** by including the relevant sections below
+   in the dispatch prompt.
+3. **Dispatch pcv-verifier** via the Agent tool:
+   - `subagent_type: general-purpose`
+   - `model: sonnet`
+   - Inline the full contents of `pcv-verifier.md` in the prompt.
+   - Include the pattern-specific instructions for applicable patterns.
+   - Pass: project directory path (absolute), charge file path (absolute),
+     planning artifacts path (absolute).
+4. **Process the returned verification report.** Review issues by severity.
+
+You may dispatch a single verifier with instructions for multiple patterns, or
+dispatch once per pattern — choose based on project complexity.
+
+### 1.3 Pattern-Specific Instructions (for dispatch prompt)
+
+Include the relevant sections when dispatching the verifier:
+
+**Pattern 1 — Code:**
 - Run automated tests (e.g., `julia test/runtests.jl`, `pytest`, `npm test`).
 - Verify compilation or interpretation succeeds without errors.
 - Execute the application and check runtime behavior against expected outputs.
 - Check for error handling of edge cases specified in the charge or planning artifacts.
+- Compare implemented code against approved pseudocode or test specifications.
 
-### Pattern 2 — Prose/Documents
-
+**Pattern 2 — Prose/Documents:**
 - Verify all sections specified in the charge and ConstructionPlan are present.
 - Check structural coherence and logical flow.
 - Verify formatting requirements are met.
 - Confirm readability for the target audience specified in the charge.
+- Cross-reference every charge requirement — identify gaps and generic content.
 
-### Pattern 3 — Mathematical/Analytical
-
+**Pattern 3 — Mathematical/Analytical:**
 - Verify solution correctness with known test inputs where possible.
 - Check all constraints are satisfied.
 - Verify dimensional consistency and variable domain completeness.
 - Test reproducibility — can the formulation be implemented from the document alone?
+- Compare against approved math specification in planning artifacts.
 
-### Pattern 4 — Design-and-Render
-
+**Pattern 4 — Design-and-Render:**
 - Compare rendered output against approved wireframe specifications in `plans/artifacts/`.
 - Verify the "glance test" — can the target user quickly extract the key information?
 - Check accessibility requirements (color-blind support, font sizes, contrast).
 - Verify responsiveness or display-target requirements from the charge.
 
-### Verification Fixes
+### 1.4 Verification Fixes
 
-If verification reveals issues that require code or deliverable changes:
+If the verifier reports issues that require code or deliverable changes:
 
-1. Fix the issue.
+1. Fix the issue in the main session (not via subagent — fixes may need human judgment).
 2. Log the fix in the decision log as a deviation.
 3. **Append the fix to the build record** (if one exists at `plans/build-record.md`).
    Add entries under "Design Decisions During Construction" for new decisions, or

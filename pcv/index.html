@@ -94,7 +94,8 @@ If you don&rsquo;t have Claude Code yet, install it first:
   </li>
   <li>
     <strong>Confirm the installation.</strong><br>
-    Claude Code will install six files and report success. You&rsquo;re ready to go.
+    Claude Code will install the skill files and agent definitions and report success.
+    You&rsquo;re ready to go.
   </li>
 </ol>
 
@@ -137,9 +138,12 @@ If you don&rsquo;t have Claude Code yet, install it first:
   </li>
 </ol>
 
-<p>For a detailed walkthrough of each phase, what to expect at every stage, the four
-deliverable patterns PCV supports, and troubleshooting tips, see the
-<a href="guide.html">Workflow Guide</a>.</p>
+<p>PCV uses <strong>specialized agents</strong> for context isolation and token efficiency:
+a research agent analyzes prior work, a builder agent constructs each component in
+its own context, a verifier agent checks deliverables, and a critic agent reviews
+plans adversarially. See the <a href="guide.html">Workflow Guide</a> for details on
+the subagent architecture, token efficiency, all four deliverable patterns, and
+troubleshooting tips.</p>
 
 <!-- Four Patterns (brief) -->
 <h2>Four Deliverable Patterns</h2>
@@ -161,7 +165,7 @@ deliverable patterns PCV supports, and troubleshooting tips, see the
 </main>
 
 <footer>
-  <p>PCV v3.5 &middot; M. G. Kay &middot; NC State ISE<br>
+  <p>PCV v3.6 &middot; M. G. Kay &middot; NC State ISE<br>
   <a href="guide.html">Workflow Guide</a></p>
 </footer>
 

@@ -251,9 +251,11 @@ Use the charge file located in Step A for all subsequent references to "the char
 These are brief overviews. Full instructions are in each protocol file.
 
 ### Planning Phase (`planning-protocol.md`)
+Recommended effort: **high/max**
 - Read charge, resolve working directory, validate paths (relative paths resolved
   to absolute for session use).
-- Analyze prior work (if any) with three-category classification.
+- Dispatch `pcv-research` agent for prior work analysis (if applicable) — returns
+  structured inventory, pattern-specific findings, three-category classification.
 - Identify deliverable patterns (Code, Prose, Mathematical, Design-and-Render).
 - Sequential clarification: one question at a time, dependency-ordered.
 - Draft MakePlan → Critic review → Compliance checklist → **Gate 1: MakePlan Approval**.
@@ -263,15 +265,19 @@ These are brief overviews. Full instructions are in each protocol file.
 - Commit approved plans to Git if available.
 
 ### Construct Phase (`construction-protocol.md`)
+Recommended effort: **medium**
 - Resolve working directory from charge.
 - Baseline copy if carrying forward prior work.
-- Build strictly per approved ConstructionPlan.
+- Dispatch `pcv-builder` agent per component in dependency order — one at a time,
+  wait for completion before dispatching next.
 - Log deviations with human approval. Commit at milestones.
 - Generate initial build record (`plans/build-record.md`) capturing files modified,
   design decisions made during construction, deviations, and lessons learned.
 
 ### Verify Phase (`verification-protocol.md`)
-- Pattern-appropriate verification (run tests, review structure, check math, visual compare).
+Recommended effort: **medium**
+- Dispatch `pcv-verifier` agent with pattern-specific instructions for each
+  applicable deliverable pattern.
 - Append verification fixes to the build record as they occur.
 - Map each Success Criterion to deliverable components.
 - Compare deliverables against planning artifacts.
@@ -290,10 +296,12 @@ When scaffolding, create `CLAUDE.md` with this content:
 ```
 # <Project Name>
 Language: <Language>
+When compacting, preserve decision log (plans/logs/decision-log.md) and all files in plans/.
 ```
 
-This file contains only project identity — no PCV references, no methodology
-instructions. Under 5 lines. The user customizes it after scaffolding.
+This file contains project identity and a compaction-preservation instruction —
+no PCV references, no methodology instructions. Under 5 lines. The user
+customizes it after scaffolding.
 
 ---
 
@@ -384,6 +392,9 @@ When creating `.claude/settings.json` during scaffold:
      "permissions": {
        "allow": [
          "Read(~/.claude/agents/pcv-critic.md)",
+         "Read(~/.claude/agents/pcv-research.md)",
+         "Read(~/.claude/agents/pcv-builder.md)",
+         "Read(~/.claude/agents/pcv-verifier.md)",
          "Read(~/.claude/skills/pcv/*)",
          "Read(**)",
          "Write(**)",
@@ -418,10 +429,17 @@ Each protocol file ends with a transition instruction. Follow it.
 - If a user describes a complex project and has not invoked PCV, you may suggest it
   **once**. If declined or ignored, do not repeat.
 - The main PCV workflow runs in the main conversation context, never as a subagent.
-- The only subagent PCV spawns is the adversarial Critic during Planning (via Task tool
-  with `subagent_type: general-purpose`, `model: haiku`). The Critic's behavioral
-  instructions are in `~/.claude/agents/pcv-critic.md` for reference but must be
-  inlined in the Task prompt since custom agent types are not directly spawnable.
+- PCV dispatches subagents for context isolation and token efficiency. Each agent's
+  behavioral instructions are in `~/.claude/agents/` and must be Read and inlined in
+  the Agent tool prompt since custom agent types are not directly spawnable via
+  `subagent_type`. The four agents are:
+  - **`pcv-critic`** (Planning) — Adversarial review of MakePlan. Model: haiku.
+  - **`pcv-research`** (Planning) — Prior-work analysis. Model: sonnet.
+  - **`pcv-builder`** (Construction) — Per-component builds, dispatched sequentially.
+    Model: sonnet.
+  - **`pcv-verifier`** (Verification) — Pattern-specific verification. Model: sonnet.
+- If a subagent fails to spawn or Claude builds inline instead of dispatching, this is
+  acceptable — the work product is identical, only token efficiency is reduced.
 - All file operations for baseline copy and export must use internal Read/Write tools
   or cross-platform scripting — never OS-specific shell commands (`cp`, `copy`).
 - Git commits happen at defined milestones with descriptive messages. Git is silent —

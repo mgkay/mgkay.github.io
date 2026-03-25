@@ -45,71 +45,49 @@ Before examining any prior work, re-read the charge narrative carefully. Note ev
 decision the user has already made — technology choices, constraints, specific
 requirements, stated preferences. These are settled; do not re-litigate them.
 
-### 2.2 Inventory Prior Work
+### 2.2 Dispatch pcv-research Agent
 
-Read or scan each path listed in Prior Work. Produce a summary:
-- What files/artifacts exist?
-- What is the structure and organization?
-- What is the overall quality and completeness?
+Delegate the prior work inventory and analysis to the `pcv-research` agent for
+context isolation. This keeps file-reading overhead out of the main planning context.
 
-**Pattern-specific analysis depth:**
+1. Read `~/.claude/agents/pcv-research.md` for the agent's behavioral instructions.
+2. Spawn the agent via the Agent tool:
+   - `subagent_type: general-purpose`
+   - `model: sonnet`
+   - Inline the full contents of `pcv-research.md` in the prompt.
+   - Pass absolute paths to: charge file, all Prior Work locations, CLAUDE.md.
+3. The agent returns a structured summary containing:
+   - File inventory (paths, sizes, roles)
+   - Deliverable patterns detected
+   - Pattern-specific findings
+   - Three-category classification (already decided / new issues / potential conflicts)
+   - Scope signal (verification-only / scoped changes / full build)
 
-- **Pattern 1 (Code):** Read the code and critically evaluate its logic. Check for:
-  unverified assumptions about input data (e.g., hardcoded formats, assumed schemas),
-  error handling gaps, separation of concerns (or lack thereof), testability, and
-  whether the code actually handles the variability described in the charge. A
-  structural inventory is insufficient — identify specific logical flaws.
+### 2.3 Process Research Results
 
-- **Pattern 2 (Prose):** Cross-reference prior work content against every specific
-  requirement in the charge. Identify not just what is present and wrong, but what
-  is **absent** — domain-specific requirements the charge mentions that the prior work
-  does not address at all. Generic or boilerplate content that fails to address
-  project-specific details is a weakness, not a strength.
+Use the agent's returned summary to populate the planning context:
 
-- **Pattern 3 (Mathematical):** Check formulation completeness: are all variables
-  defined, constraints enumerated, domains specified? Identify implicit assumptions
-  (e.g., linearity, continuity) not justified by the charge.
+1. **Three-Category Classification** — Review the agent's classification. The
+   categories are:
+   - **Already decided by the user** — The charge explicitly addresses this point.
+     List as confirmations. Note any downstream implications.
+   - **New issues** — Discovered in the prior work, not addressed in the charge.
+     These become clarification questions in Step 4.
+   - **Potential conflicts** — The charge requests something that may be incompatible
+     with prior work the user presumably wants to keep.
 
-- **Pattern 4 (Design):** Evaluate visual design against any stated display context,
-  accessibility requirements, or user-interaction constraints in the charge.
+2. **Scope Signal** — Review the agent's scope assessment. Apply these criteria
+   to validate or adjust:
+   - **Verification-only** — The prior work meets ALL Success Criteria in the charge.
+     Content is specific and complete, not just structurally sound.
+   - **Scoped changes** — The prior work's structure is sound, but specific content
+     is inadequate. The fix is targeted revision, not ground-up rewrite.
+   - **Full build / significant revision** — The prior work is architecturally flawed
+     or fundamentally misaligned with the charge.
 
-### 2.3 Three-Category Classification
-
-Classify every finding from the prior work into exactly one category:
-
-1. **Already decided by the user** — The charge explicitly addresses this point.
-   List as confirmations. Note any downstream implications.
-2. **New issues** — Discovered in the prior work, not addressed in the charge.
-   These become clarification questions in Step 4.
-3. **Potential conflicts** — The charge requests something that may be incompatible
-   with prior work the user presumably wants to keep.
-
-### 2.4 Scope Signal
-
-Assess the prior work against the charge and classify the initial scope signal.
-Apply these decision criteria:
-
-- **Verification-only** — The prior work meets ALL Success Criteria in the charge.
-  Content is specific and complete, not just structurally sound. No sections need
-  rewriting — only verification that everything works/reads as specified.
-
-- **Scoped changes** — The prior work's **structure and organization are sound**, but
-  specific content is inadequate (generic, incomplete, or missing project-specific
-  details). The fix is targeted revision of identified sections, not a ground-up
-  rewrite. This is the correct scope when: the skeleton is usable but the substance
-  needs work.
-
-- **Full build / significant revision** — The prior work is architecturally flawed,
-  fundamentally misaligned with the charge, or so inadequate that preserving its
-  structure provides no advantage over starting fresh.
-
-**Guard against over-scoping:** If the prior work's structure is usable, do not
-default to a full rewrite. Identify specifically which sections/components need
-revision and preserve everything else.
-
-**Guard against under-scoping:** If the prior work contains only generic or
-boilerplate content where the charge requires project-specific detail, that is
-not "substantially meets" — it is scoped changes at minimum.
+   **Guard against over-scoping:** If the structure is usable, do not default to a
+   full rewrite. **Guard against under-scoping:** Generic or boilerplate content
+   where the charge requires specifics is scoped changes at minimum.
 
 Do not finalize scope yet — clarification may change the assessment.
 
@@ -273,6 +251,9 @@ substantive issues only (skip formatting/style).
 
 - **Do NOT pass file contents in the prompt.** The Critic reads from disk in its
   own context window, saving the main agent's output tokens.
+- **Scope Critic output:** Add to the prompt: "Do not reproduce file contents in
+  your findings — reference by section name and line number. Keep each finding
+  concise." This reduces the tokens carried back to the main context.
 
 ### Processing Critic Findings
 
@@ -452,7 +433,11 @@ Handle feedback using the same editorial/substantive/ambiguous protocol as Gate 
 Once approved:
 1. **Append a Gate 3 entry to the decision log now, before doing anything else.**
 2. Commit to Git if available: `"Approve ConstructionPlan for [Project Name]"`
-3. **Transition to Construct phase:** Read `~/.claude/skills/pcv/construction-protocol.md`
+3. **Context management recommendation.** Inform the human:
+   > "Planning phase complete. All decisions are persisted in `plans/`. Consider
+   > running `/compact` to reduce context before construction. `/clear` is also
+   > safe — construction reads all state from disk."
+4. **Transition to Construct phase:** Read `~/.claude/skills/pcv/construction-protocol.md`
    and follow it.
 
 ---

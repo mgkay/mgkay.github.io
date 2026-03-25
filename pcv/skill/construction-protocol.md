@@ -61,18 +61,54 @@ in place from scaffold.
 
 ## Step 3: Build in ConstructionPlan Order
 
-The ConstructionPlan specifies a dependency order. Follow it.
+The ConstructionPlan specifies a dependency order. Follow it by dispatching a
+`pcv-builder` agent for each component. This isolates per-component file reads,
+edits, and test runs from the main session context.
 
-1. Build each component in the specified sequence.
-2. Reference planning artifacts in `plans/artifacts/` during construction:
-   - Wireframes and mockups inform visual implementations.
-   - Architecture diagrams inform module structure.
-   - Data models inform schema and type definitions.
-   - Math formulations inform solver implementations.
-   - Pseudocode informs complex logic.
-   - Test specifications inform test implementations.
-3. After each major component, verify it works in isolation before proceeding to
-   dependent components.
+### 3.1 Load Agent Instructions
+
+Read `~/.claude/agents/pcv-builder.md` for the builder's behavioral instructions.
+You will inline these in each dispatch prompt.
+
+### 3.2 Sequential Dispatch Loop
+
+For each component in the ConstructionPlan's dependency order:
+
+1. **Extract the component specification** from the ConstructionPlan — what to build,
+   interfaces, responsibilities, file paths, relevant planning artifacts.
+2. **Dispatch pcv-builder** via the Agent tool:
+   - `subagent_type: general-purpose`
+   - `model: sonnet`
+   - Inline the full contents of `pcv-builder.md` in the prompt.
+   - Pass: component specification, planning artifacts path (absolute), project
+     directory path (absolute), prior work path (if applicable).
+3. **Wait for the builder to complete.** Review its summary.
+4. **If deviations reported:** Present to the human for approval per Step 4
+   (deviation handling). Do not dispatch the next component until deviations
+   are resolved.
+5. **If successful:** Log completion in the decision log. Commit to Git if available.
+6. **Proceed to the next component only after the current one completes.**
+
+### 3.3 Sequential Enforcement
+
+**Dispatch one pcv-builder at a time.** Wait for it to complete and review its
+summary before dispatching the next. If you find yourself dispatching multiple
+builders in the same response, **STOP — this is an error.** Revert to one at a
+time.
+
+Do not run multiple builders in parallel unless the ConstructionPlan explicitly
+marks components as independent and parallel-safe.
+
+### 3.4 Planning Artifact References
+
+The builder agent references planning artifacts in `plans/artifacts/` during
+construction:
+- Wireframes and mockups inform visual implementations.
+- Architecture diagrams inform module structure.
+- Data models inform schema and type definitions.
+- Math formulations inform solver implementations.
+- Pseudocode informs complex logic.
+- Test specifications inform test implementations.
 
 ---
 
@@ -188,7 +224,11 @@ Populated during construction, appended during verification.]
 
 1. Present the draft to the human for review. They may add, remove, or correct entries.
 2. The build record remains **open** — it will be appended during verification.
-3. **Transition to Verify phase:** Read `~/.claude/skills/pcv/verification-protocol.md`
+3. **Context management recommendation.** Inform the human:
+   > "Construction phase complete. Build record and decision log are on disk.
+   > Consider running `/compact` to reduce context before verification. `/clear`
+   > is also safe — verification reads all state from disk."
+4. **Transition to Verify phase:** Read `~/.claude/skills/pcv/verification-protocol.md`
    and follow it.
 
 ---

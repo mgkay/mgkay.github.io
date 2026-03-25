@@ -1,3 +1,3 @@
-3.5
-2026-03-17
-Add idea-to-charge generation, version chaining with sibling folders, hybrid relative/absolute paths, git inherit-first policy, full permissions at scaffold, acceptance testing phase, reopen-for-fixes protocol.
+3.6
+2026-03-24
+Add subagent delegation: pcv-research (planning), pcv-builder (construction), pcv-verifier (all-pattern verification). Add compaction/clear recommendations at phase transitions, effort-level guidance, decision log compaction preservation. Verification agents untested in live workflows.

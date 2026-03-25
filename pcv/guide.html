@@ -53,8 +53,9 @@ Claude Code does not provide on its own:</p>
   <li><strong>Sequential clarification.</strong> One question at a time, dependency-ordered,
     so each answer can inform subsequent questions. Native Claude Code tends to ask
     batched questions or skip clarification entirely.</li>
-  <li><strong>Adversarial review.</strong> A separate Critic agent challenges the plan
-    before you approve it, catching assumptions, contradictions, and gaps.</li>
+  <li><strong>Adversarial review.</strong> A separate Critic agent (running in its own
+    context window) challenges the plan before you approve it, catching assumptions,
+    contradictions, and gaps.</li>
   <li><strong>Human approval gates.</strong> Three explicit gates (MakePlan, planning
     artifacts, ConstructionPlan) where you review and approve before construction begins.
     Nothing is built without your sign-off.</li>
@@ -65,7 +66,8 @@ Claude Code does not provide on its own:</p>
     deliverable type: automated tests for code, structural review for prose, correctness
     checks for math, visual comparison for design.</li>
   <li><strong>Prior work analysis.</strong> When building on existing code or documents,
-    PCV performs a structured assessment to determine the right scope — from
+    a dedicated research agent analyzes your prior work in an isolated context and
+    returns a structured assessment to determine the right scope — from
     verification-only to full rewrite — with guards against both over- and under-scoping.</li>
   <li><strong>Planning artifact gates.</strong> Wireframes, mathematical formulations,
     and test specifications are reviewed and approved before construction, preventing
@@ -94,18 +96,22 @@ specifications for code — that you review and approve at Gate 2.</p>
 
 <h3>Construct</h3>
 
-<p>Claude Code builds strictly per the approved ConstructionPlan. If something in the
-plan doesn&rsquo;t work during construction, Claude Code explains the issue and waits for
-your approval before changing approach. Deviations are logged. Git commits happen
-silently at milestones.</p>
+<p>PCV dispatches a <strong>builder agent</strong> for each component in the ConstructionPlan,
+one at a time in dependency order. Each builder works in its own context window — reading
+files, writing code, and running tests without accumulating overhead in the main session.
+The main session orchestrates: dispatch, review the summary, handle any deviations (which
+require your approval), then dispatch the next component. Git commits happen silently at
+milestones.</p>
 
 <h3>Verify</h3>
 
-<p>Verification is pattern-specific (see <a href="#patterns">Four Deliverable Patterns</a>
-below). PCV maps each success criterion from your charge to specific deliverable
-components, compares deliverables against approved planning artifacts, and produces a
-verification report. If an export target is configured, verified deliverables are copied
-to that location.</p>
+<p>PCV dispatches a <strong>verifier agent</strong> with pattern-specific instructions
+(see <a href="#patterns">Four Deliverable Patterns</a> below). The verifier runs tests,
+checks structure, validates formulations, or compares designs in its own context, then
+returns a report. The main session maps each success criterion from your charge to
+specific deliverable components, compares deliverables against approved planning artifacts,
+and produces the final verification report. If an export target is configured, verified
+deliverables are copied to that location.</p>
 
 <!-- ======================================================== -->
 <h2>What to Expect at Each Stage</h2>
@@ -213,9 +219,10 @@ explicitly approve.</p>
 
 <h3>Construction</h3>
 
-<p>Claude Code follows the approved ConstructionPlan. You observe but typically don&rsquo;t
-need to intervene unless PCV encounters an issue the plan didn&rsquo;t anticipate.
-Deviations require your approval and are logged.</p>
+<p>PCV dispatches a builder agent for each component in the ConstructionPlan&rsquo;s
+dependency order — one at a time. Each builder works in an isolated context window,
+keeping the main session lean. You observe but typically don&rsquo;t need to intervene
+unless a builder reports a deviation, which requires your approval and is logged.</p>
 
 <p>At the end of construction, PCV generates a <strong>build record</strong>
 (<code>plans/build-record.md</code>) that captures the implementation narrative:
@@ -226,8 +233,10 @@ It remains open through verification.</p>
 
 <h3>Verification</h3>
 
-<p>PCV runs pattern-appropriate verification, maps each success criterion to deliverable
-components, compares deliverables to planning artifacts, and produces a summary report.
+<p>PCV dispatches a verifier agent with pattern-specific instructions. The verifier runs
+in its own context — executing tests, reading deliverables, checking formulations — and
+returns a structured report. The main session maps each success criterion to deliverable
+components, compares deliverables to planning artifacts, and produces the final summary.
 If verification reveals issues requiring fixes, those fixes and any new design decisions
 are appended to the build record.</p>
 
@@ -294,10 +303,12 @@ for the target context, accessibility, display-target requirements.</p>
 <h2>Prior Work Analysis</h2>
 
 <p>When your charge references existing code, documents, or other prior work, PCV
-performs a structured analysis before planning:</p>
+dispatches a <strong>research agent</strong> to perform a structured analysis in its own
+context window. This keeps file-reading overhead out of the main planning session.
+The research agent:</p>
 
 <ol>
-  <li><strong>Inventory</strong> — What files and artifacts exist? What is the structure,
+  <li><strong>Inventories</strong> — What files and artifacts exist? What is the structure,
     quality, and completeness?</li>
   <li><strong>Three-category classification</strong> — Each finding is classified as:
     already decided by you (the charge addresses it), a new issue (becomes a clarification
@@ -377,7 +388,7 @@ are complete, a &ldquo;Project Re-Closeout&rdquo; entry is appended.</p>
 <p>Every time you run <code>/pcv</code>, it shows a milestone checklist so you always
 know where the project stands:</p>
 
-<pre>PCV v3.5 — MyProject
+<pre>PCV v3.6 — MyProject
 ■ Charge validated
 ■ MakePlan approved
 □ ConstructionPlan approved
@@ -449,6 +460,119 @@ appropriate protocol. If you provide a filename argument (<code>/pcv MyCharge.md
 PCV uses that specific charge file.</p>
 
 <!-- ======================================================== -->
+<h2>Subagent Architecture</h2>
+
+<p>PCV uses a <strong>hub-and-spoke agent model</strong> to keep the main conversation
+context lean. The main session (the &ldquo;hub&rdquo;) orchestrates work by dispatching
+specialized agents (the &ldquo;spokes&rdquo;) that run in their own isolated context
+windows. Each agent reads files, does its work, and returns a compact summary — the
+main session never carries the intermediate file reads and tool outputs.</p>
+
+<h3>The four agents</h3>
+
+<table>
+  <thead>
+    <tr><th>Agent</th><th>Phase</th><th>Model</th><th>Role</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>pcv-critic</strong></td>
+      <td>Plan</td>
+      <td>Haiku</td>
+      <td>Adversarial review of MakePlan — challenges assumptions, finds gaps,
+        identifies risks. Read-only.</td>
+    </tr>
+    <tr>
+      <td><strong>pcv-research</strong></td>
+      <td>Plan</td>
+      <td>Sonnet</td>
+      <td>Prior-work analysis — inventories files, performs pattern-specific
+        critical evaluation, produces three-category classification and scope signal.</td>
+    </tr>
+    <tr>
+      <td><strong>pcv-builder</strong></td>
+      <td>Construct</td>
+      <td>Sonnet</td>
+      <td>Per-component construction — implements one component from the
+        ConstructionPlan in isolation. Dispatched sequentially in dependency order.</td>
+    </tr>
+    <tr>
+      <td><strong>pcv-verifier</strong></td>
+      <td>Verify</td>
+      <td>Sonnet</td>
+      <td>Pattern-specific verification — runs tests, checks structure, validates
+        formulations, compares designs. Dispatched with pattern-appropriate instructions.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>How dispatch works</h3>
+
+<p>Each agent is defined as a standalone Markdown file in <code>~/.claude/agents/</code>.
+When the protocol needs to dispatch an agent, it reads the agent file, inlines its
+behavioral instructions into the dispatch prompt, and spawns a general-purpose
+subagent. This is a workaround for a known Claude Code limitation: custom agent types
+defined in <code>.claude/agents/</code> cannot be invoked directly via
+<code>subagent_type</code>.</p>
+
+<h3>Graceful degradation</h3>
+
+<p>If an agent fails to spawn or Claude builds inline instead of dispatching, the work
+product is identical — only token efficiency is reduced. The agents are an optimization,
+not a dependency. The workflow produces the same deliverables either way.</p>
+
+<!-- ======================================================== -->
+<h2>Token Efficiency</h2>
+
+<p>Claude Code is agentic: each tool-use step (read file, edit, run test, read error, fix)
+sends the entire accumulated conversation as input. With hundreds of tool-use round trips,
+total token usage can reach tens of millions of input tokens in a single session. PCV
+addresses this at three levels:</p>
+
+<h3>1. Subagent context isolation</h3>
+
+<p>The primary mechanism. When a builder agent reads 15 files and makes 20 edits to
+construct a component, those file contents and tool outputs live in the builder&rsquo;s
+context — not the main session. The main session grows by only the compact summary the
+builder returns (~500 tokens). Without isolation, the same work would carry ~30,000+
+tokens through every subsequent API call.</p>
+
+<p>This applies to all four agents: the research agent&rsquo;s file inventory, the
+critic&rsquo;s document analysis, the builder&rsquo;s construction work, and the
+verifier&rsquo;s test execution all stay in isolated contexts.</p>
+
+<h3>2. Phase transition compaction</h3>
+
+<p>At each phase transition (Planning &rarr; Construction, Construction &rarr; Verification),
+PCV recommends running <code>/compact</code> to reduce the conversation context. All
+planning decisions, construction progress, and verification state are persisted to
+disk in the plans directory, so <code>/clear</code> (full context reset) is also safe
+at these boundaries — the next phase reads everything it needs from files.</p>
+
+<h3>3. Decision log preservation</h3>
+
+<p>PCV&rsquo;s scaffolded <code>CLAUDE.md</code> includes an instruction to preserve the
+decision log and plans directory during compaction. This ensures that when Claude Code
+automatically compacts the conversation (as it approaches context limits), the critical
+planning state is retained rather than summarized away.</p>
+
+<h3>Effort-level recommendations</h3>
+
+<p>Each phase summary in the PCV routing file includes an effort-level recommendation:</p>
+
+<ul>
+  <li><strong>Planning: high/max</strong> — Planning requires reasoning about trade-offs,
+    alternatives, and risks. Higher effort produces better plans.</li>
+  <li><strong>Construction: medium</strong> — Construction follows an approved plan.
+    Standard effort is sufficient for executing settled decisions.</li>
+  <li><strong>Verification: medium</strong> — Verification checks deliverables against
+    specifications. Standard effort is sufficient for pattern-specific checks.</li>
+</ul>
+
+<p>These are recommendations, not enforced settings. You can adjust effort level via
+Claude Code&rsquo;s settings at any time.</p>
+
+<!-- ======================================================== -->
 <h2>FAQ / Troubleshooting</h2>
 
 <h3>PCV says it can&rsquo;t find my charge file.</h3>
@@ -464,7 +588,8 @@ the settings file. See the <a href="index.html">installation page</a> for detail
 <h3>Can I use PCV with a model other than Opus?</h3>
 <p>PCV is designed for Claude Code and works best with the strongest available model
 for planning (currently Opus). It will function with other models but planning quality
-may vary. The Critic agent automatically uses Haiku for cost efficiency.</p>
+may vary. The Critic agent uses Haiku for cost efficiency; the research, builder, and
+verifier agents use Sonnet.</p>
 
 <h3>Can I skip the planning phase and just build?</h3>
 <p>That&rsquo;s just using Claude Code normally — and it&rsquo;s fine for simple tasks.
@@ -508,7 +633,7 @@ using or adapting the workflow:</p>
 </main>
 
 <footer>
-  <p>PCV v3.5 &middot; M. G. Kay &middot; NC State ISE<br>
+  <p>PCV v3.6 &middot; M. G. Kay &middot; NC State ISE<br>
   <a href="index.html">Home</a> &middot; <a href="bootstrap.md" download>Download bootstrap.md</a></p>
 </footer>
 
