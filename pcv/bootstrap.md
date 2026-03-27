@@ -1,7 +1,7 @@
 # PCV Bootstrap — Plan-Construct-Verify Installer
 
-**Version:** 3.6
-**Date:** 2026-03-24
+**Version:** 3.7
+**Date:** 2026-03-26
 
 ## What This File Does
 
@@ -30,15 +30,15 @@ You are reading a PCV bootstrap file. Follow these steps precisely.
 ### Step 1: Check for existing installation
 
 Read `~/.claude/skills/pcv/VERSION`. If the file exists, parse the first line as a
-version number. Compare it to the version in this bootstrap (3.6).
+version number. Compare it to the version in this bootstrap (3.7).
 
-- If the installed version is **equal to or higher than** 3.6, inform the user:
+- If the installed version is **equal to or higher than** 3.7, inform the user:
   "PCV v[installed version] is already installed. No update needed."
   **STOP.**
-- If the installed version is **lower than** 3.6, inform the user:
-  "Updating PCV from v[installed] to v3.6." Proceed to Step 2.
+- If the installed version is **lower than** 3.7, inform the user:
+  "Updating PCV from v[installed] to v3.7." Proceed to Step 2.
 - If the file does not exist, inform the user:
-  "Installing PCV v3.6." Proceed to Step 2.
+  "Installing PCV v3.7." Proceed to Step 2.
 
 ### Step 2: Write files
 
@@ -57,7 +57,7 @@ way — write it exactly as provided.
 
 After writing all nine files, verify the installation:
 
-1. Read `~/.claude/skills/pcv/VERSION` and confirm it contains `3.6`.
+1. Read `~/.claude/skills/pcv/VERSION` and confirm it contains `3.7`.
 2. Read `~/.claude/skills/pcv/SKILL.md` and confirm it starts with `---`.
 3. Read `~/.claude/agents/pcv-critic.md` and confirm it starts with `---`.
 4. Read `~/.claude/agents/pcv-research.md` and confirm it starts with `---`.
@@ -66,7 +66,7 @@ After writing all nine files, verify the installation:
 
 If all verifications pass, tell the user:
 
-> **PCV v3.6 installed successfully.** Nine files written:
+> **PCV v3.7 installed successfully.** Nine files written:
 >
 > **Skill files** (`~/.claude/skills/pcv/`):
 > - `VERSION`
@@ -88,9 +88,9 @@ If all verifications pass, tell the user:
 ## Embedded Files
 
 ===BEGIN ~/.claude/skills/pcv/VERSION===
-3.6
-2026-03-24
-Add subagent delegation: pcv-research (planning), pcv-builder (construction), pcv-verifier (all-pattern verification). Add compaction/clear recommendations at phase transitions, effort-level guidance, decision log compaction preservation. Verification agents untested in live workflows.
+3.7
+2026-03-26
+Add Bash safety rules: no inline multi-line scripts (use temp files), no shell redirects, no command chaining. Fixes permission prompt storms in Claude Code caused by #-in-quoted-newline heuristic and redirect pattern matching failures.
 ===END ~/.claude/skills/pcv/VERSION===
 
 ===BEGIN ~/.claude/skills/pcv/SKILL.md===
@@ -1126,6 +1126,24 @@ If `~/.claude/skills/pre-approve/SKILL.md` exists:
 If `/pre-approve` is not available, proceed — the essential permissions are already
 in place from scaffold.
 
+### Avoid Inline Multi-Line Scripts
+
+Claude Code's security heuristic blocks Bash commands containing `#` after a newline
+inside quoted strings (it flags potential argument hiding). This commonly triggers on
+inline Python, Ruby, or other multi-line scripts passed as string arguments.
+
+**Rules:**
+1. Never pass multi-line scripts inline to an interpreter via Bash. Instead:
+   write to a temp file (`tmpclaude_*.py`, etc.), run it, then delete it.
+2. No shell redirects (`>`, `>>`, `2>/dev/null`, `|`) — they break permission
+   matching. Handle file I/O inside the script (Python `open()`, etc.).
+3. Never chain commands with `&&`, `||`, or `;`. One command per Bash call.
+   Use parallel tool calls for independent commands.
+4. Use absolute paths. No `cd`; use `git -C /path` for git commands.
+
+These rules apply to builder agents as well — they are included in the builder
+agent's constraints and reinforced in each dispatch prompt.
+
 ---
 
 ## Step 3: Build in ConstructionPlan Order
@@ -1913,6 +1931,18 @@ If none, state "None." Deviations require human approval — flag them clearly.]
 
 ### Status: [COMPLETE / COMPLETE WITH DEVIATIONS / BLOCKED]
 ```
+
+## Bash Constraints [STRICT]
+
+- **No inline multi-line scripts.** Claude Code blocks commands with `#`
+  after a newline in quoted strings. Instead: write to a temp file
+  (`tmpclaude_*.py`, etc.), run it (`py -3 tmpclaude_foo.py`), then delete it.
+- **No shell redirects** (`>`, `>>`, `2>/dev/null`, `|`). They break permission
+  matching. Handle file I/O inside the script (Python `open()`, etc.).
+  Keep Bash commands simple: `py -3 tmpclaude_foo.py` or `python script.py`.
+- **Never chain commands** with `&&`, `||`, or `;`. One command per Bash call.
+  Use parallel tool calls for independent commands.
+- **Use absolute paths.** No `cd`; use `git -C /path` for git commands.
 
 ## Constraints
 

@@ -57,6 +57,24 @@ If `~/.claude/skills/pre-approve/SKILL.md` exists:
 If `/pre-approve` is not available, proceed — the essential permissions are already
 in place from scaffold.
 
+### Avoid Inline Multi-Line Scripts
+
+Claude Code's security heuristic blocks Bash commands containing `#` after a newline
+inside quoted strings (it flags potential argument hiding). This commonly triggers on
+inline Python, Ruby, or other multi-line scripts passed as string arguments.
+
+**Rules:**
+1. Never pass multi-line scripts inline to an interpreter via Bash. Instead:
+   write to a temp file (`tmpclaude_*.py`, etc.), run it, then delete it.
+2. No shell redirects (`>`, `>>`, `2>/dev/null`, `|`) — they break permission
+   matching. Handle file I/O inside the script (Python `open()`, etc.).
+3. Never chain commands with `&&`, `||`, or `;`. One command per Bash call.
+   Use parallel tool calls for independent commands.
+4. Use absolute paths. No `cd`; use `git -C /path` for git commands.
+
+These rules apply to builder agents as well — they are included in the builder
+agent's constraints and reinforced in each dispatch prompt.
+
 ---
 
 ## Step 3: Build in ConstructionPlan Order
