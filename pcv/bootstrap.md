@@ -1,7 +1,7 @@
 # PCV Bootstrap — Plan-Construct-Verify Installer
 
-**Version:** 3.7
-**Date:** 2026-03-26
+**Version:** 3.8
+**Date:** 2026-03-28
 
 ## What This File Does
 
@@ -30,15 +30,15 @@ You are reading a PCV bootstrap file. Follow these steps precisely.
 ### Step 1: Check for existing installation
 
 Read `~/.claude/skills/pcv/VERSION`. If the file exists, parse the first line as a
-version number. Compare it to the version in this bootstrap (3.7).
+version number. Compare it to the version in this bootstrap (3.8).
 
-- If the installed version is **equal to or higher than** 3.7, inform the user:
+- If the installed version is **equal to or higher than** 3.8, inform the user:
   "PCV v[installed version] is already installed. No update needed."
   **STOP.**
-- If the installed version is **lower than** 3.7, inform the user:
-  "Updating PCV from v[installed] to v3.7." Proceed to Step 2.
+- If the installed version is **lower than** 3.8, inform the user:
+  "Updating PCV from v[installed] to v3.8." Proceed to Step 2.
 - If the file does not exist, inform the user:
-  "Installing PCV v3.7." Proceed to Step 2.
+  "Installing PCV v3.8." Proceed to Step 2.
 
 ### Step 2: Write files
 
@@ -57,7 +57,7 @@ way — write it exactly as provided.
 
 After writing all nine files, verify the installation:
 
-1. Read `~/.claude/skills/pcv/VERSION` and confirm it contains `3.7`.
+1. Read `~/.claude/skills/pcv/VERSION` and confirm it contains `3.8`.
 2. Read `~/.claude/skills/pcv/SKILL.md` and confirm it starts with `---`.
 3. Read `~/.claude/agents/pcv-critic.md` and confirm it starts with `---`.
 4. Read `~/.claude/agents/pcv-research.md` and confirm it starts with `---`.
@@ -66,7 +66,7 @@ After writing all nine files, verify the installation:
 
 If all verifications pass, tell the user:
 
-> **PCV v3.7 installed successfully.** Nine files written:
+> **PCV v3.8 installed successfully.** Nine files written:
 >
 > **Skill files** (`~/.claude/skills/pcv/`):
 > - `VERSION`
@@ -88,9 +88,9 @@ If all verifications pass, tell the user:
 ## Embedded Files
 
 ===BEGIN ~/.claude/skills/pcv/VERSION===
-3.7
-2026-03-26
-Add Bash safety rules: no inline multi-line scripts (use temp files), no shell redirects, no command chaining. Fixes permission prompt storms in Claude Code caused by #-in-quoted-newline heuristic and redirect pattern matching failures.
+3.8
+2026-03-28
+Add adaptive agent configuration: plan tier declaration, three-dimensional config proposal (model + effort + context), inline research option, mid-project revision, economy configurations. Backward compatible with v3.7.
 ===END ~/.claude/skills/pcv/VERSION===
 
 ===BEGIN ~/.claude/skills/pcv/SKILL.md===
@@ -198,6 +198,32 @@ Use the charge file located in Step A for all subsequent references to "the char
    - `Project Name:` is not `<REPLACE>` or blank.
    - Other Configuration fields may be blank (they have defaults or are optional).
    - If validation fails, stop and tell the user which fields need to be completed.
+
+   1.5 **Plan tier check.** Read `~/.claude/pcv-config.json`.
+   - **If the file does not exist or is malformed:** Ask the user:
+     > "Which Claude plan are you using? All plans can access all models, but
+     > your plan's token budget affects how aggressively PCV recommends
+     > higher-cost configurations like Opus agents."
+     >
+     > (a) Pro — $20/month
+     > (b) Max 5x — $100/month
+     > (c) Max 20x — $200/month
+     > (d) API / pay-as-you-go
+
+     **STOP. Wait for the user's response.**
+
+     On answer, write `~/.claude/pcv-config.json`:
+     ```json
+     {
+       "plan_tier": "[pro|max_5x|max_20x|api]",
+       "plan_tier_set_date": "[YYYY-MM-DD]"
+     }
+     ```
+   - **If the file exists and contains a valid `plan_tier`:** Read it silently.
+     If `plan_tier_set_date` is older than 6 months, note: "Your plan tier was
+     set on [date]. Would you like to update it?" (non-blocking).
+   - The plan tier value is available to the planning protocol's Step 1.5 for
+     agent configuration proposals.
 
 2. **Git setup.** Perform once per project. **Do NOT use `cd` in any Bash command —
    always operate from the current working directory.**
@@ -354,6 +380,9 @@ Recommended effort: **high/max**
   structured inventory, pattern-specific findings, three-category classification.
 - Identify deliverable patterns (Code, Prose, Mathematical, Design-and-Render).
 - Sequential clarification: one question at a time, dependency-ordered.
+- Agent configuration proposal: PCV proposes model tier, effort level, and context
+  window for each agent role based on charge analysis and plan tier. Human approves
+  or overrides. Approved configuration is recorded in the decision log.
 - Draft MakePlan → Critic review → Compliance checklist → **Gate 1: MakePlan Approval**.
 - Draft ConstructionPlan (or minimal verification-only file) → Planning artifact gate
   (Pattern 4 wireframes, Pattern 3 formulations, Pattern 1 test specs) →
@@ -365,7 +394,10 @@ Recommended effort: **medium**
 - Resolve working directory from charge.
 - Baseline copy if carrying forward prior work.
 - Dispatch `pcv-builder` agent per component in dependency order — one at a time,
-  wait for completion before dispatching next.
+  wait for completion before dispatching next. Builder model and effort come from
+  the approved Agent Configuration (v3.7 defaults if no configuration entry exists).
+- Mid-project revision: if 2+ builder deviations on a multi-component project,
+  PCV proposes configuration revision for remaining components.
 - Log deviations with human approval. Commit at milestones.
 - Generate initial build record (`plans/build-record.md`) capturing files modified,
   design decisions made during construction, deviations, and lessons learned.
@@ -373,7 +405,8 @@ Recommended effort: **medium**
 ### Verify Phase (`verification-protocol.md`)
 Recommended effort: **medium**
 - Dispatch `pcv-verifier` agent with pattern-specific instructions for each
-  applicable deliverable pattern.
+  applicable deliverable pattern. Verifier model and effort come from the approved
+  Agent Configuration (v3.7 defaults if no configuration entry exists).
 - Append verification fixes to the build record as they occur.
 - Map each Success Criterion to deliverable components.
 - Compare deliverables against planning artifacts.
@@ -583,6 +616,156 @@ read or modify prior work locations yet — they are read-only during Planning.
 
 ---
 
+## Step 1.5: Agent Configuration Proposal
+
+After charge validation, propose an agent configuration based on the charge and the
+user's plan tier.
+
+### 1.5.1 Read Plan Tier
+
+Read `~/.claude/pcv-config.json` for the `plan_tier` value. If the file does not
+exist (SKILL.md Step C should have prompted for it), use `pro` as a conservative
+default and note this to the user.
+
+### 1.5.2 Assess Charge Complexity
+
+Read the charge and evaluate four factors:
+
+1. **Deliverable patterns** — Code (Pattern 1) and Mathematical (Pattern 3) are more
+   complex than Prose (Pattern 2). Design-and-Render (Pattern 4) is intermediate.
+2. **Prior work scope** — Count files in Prior Work paths. Projects with 10+ files
+   benefit from inline research when 1M context is available.
+3. **Estimated component count** — Assess from the charge description. 5+ components
+   suggests complex construction.
+4. **Technology complexity** — Mathematical optimization, multi-language projects,
+   complex parsing, or unfamiliar frameworks suggest higher complexity.
+
+### 1.5.3 Apply Proposal Logic
+
+**Research agent:**
+
+```
+IF prior work exists AND file count > 10:
+  IF plan has 1M context (Max/API, or Pro with /extra-usage opt-in):
+    → Propose: Opus, high effort, inline (hub reads directly)
+    IF Pro plan: add budget note
+  ELSE:
+    → Propose: Sonnet, medium effort, subagent
+ELSE IF prior work exists (≤ 10 files):
+  → Propose: Sonnet, medium effort, subagent
+ELSE (no prior work):
+  → Not dispatched
+```
+
+**Builder agent:**
+
+```
+IF complex project (Pattern 3 Math, OR Pattern 1 Code with 5+ components,
+   OR Pattern 4 with strict wireframe compliance):
+  IF Max or API plan:
+    → Propose: Opus, medium effort, subagent
+  ELSE (Pro):
+    → Propose: Sonnet, high effort, subagent
+    Add note: "Opus builders available if Sonnet/high proves insufficient."
+ELSE IF moderate project (Pattern 1 Code 2-4 components, Pattern 4):
+  → Propose: Sonnet, medium effort, subagent
+ELSE (simple — single component, Pattern 2 Prose):
+  → Propose: Haiku, medium effort, subagent
+```
+
+**Verifier agent:**
+
+```
+ALWAYS → Sonnet, medium effort, subagent
+```
+
+**Critic agent:**
+
+```
+ALWAYS → Haiku, medium effort, subagent
+```
+
+**Hub session effort:**
+
+```
+Planning: high for complex projects, medium otherwise
+Construction/Verification: medium
+```
+
+**Context window:**
+
+```
+IF Max or API: Recommend 1M. "Phase transition compaction recommended but not required."
+ELSE IF Pro with /extra-usage: Recommend 1M with budget note.
+ELSE (Pro default): Recommend 200K. "Phase transition compaction strongly recommended."
+```
+
+### 1.5.4 Present Configuration Table
+
+Present the full configuration as a table:
+
+> **Proposed agent configuration:**
+>
+> | Agent | Model | Effort | Dispatch | Rationale |
+> |-------|-------|--------|----------|-----------|
+> | Hub (planning) | — | [level] | — | [rationale] |
+> | Hub (construction) | — | Medium | — | Executing approved plan |
+> | Hub (verification) | — | Medium | — | Mechanical checks |
+> | Research | [model] | [level] | [Inline/Subagent] | [rationale] |
+> | Critic | Haiku | Medium | Subagent | Adversarial pattern matching (always Haiku) |
+> | Builder | [model] | [level] | Subagent | [rationale] |
+> | Verifier | Sonnet | Medium | Subagent | Mechanical verification |
+>
+> **Context:** [size] ([plan] plan). [compaction note]
+>
+> *Approve this configuration, or tell me what you'd like changed.*
+
+Include any plan-tier-specific notes (e.g., Pro budget warnings for Opus proposals).
+
+**Hub effort rows are informational recommendations** — the user sets their session
+effort manually. Subagent effort is also informational — subagents inherit session
+effort; the Agent tool does not support an `effort` parameter.
+
+**STOP. Wait for user approval or overrides.**
+
+### 1.5.5 Record Configuration
+
+On approval, append the Agent Configuration entry to the decision log as the first
+milestone entry (before any clarification questions):
+
+```markdown
+## Agent Configuration — [Date]
+
+**Plan tier:** [tier]
+**Context window:** [size]
+
+| Agent | Model | Effort | Dispatch | Rationale |
+|-------|-------|--------|----------|-----------|
+| Hub (planning) | — | [level] | — | [rationale] |
+| Hub (construction) | — | Medium | — | Executing approved plan |
+| Hub (verification) | — | Medium | — | Mechanical checks |
+| Research | [model] | [level] | [mode] | [rationale] |
+| Critic | Haiku | Medium | Subagent | Adversarial review |
+| Builder | [model] | [level] | Subagent | [rationale] |
+| Verifier | Sonnet | Medium | Subagent | Mechanical checks |
+
+**User overrides:** [None / description of changes from proposal]
+
+---
+```
+
+### 1.5.6 Backward Compatibility
+
+If a project has no Agent Configuration entry in its decision log when reaching
+any dispatch point (Step 2.2, Step 6, or in construction/verification protocols),
+fall back to v3.7 defaults:
+- Critic: Haiku, medium effort, subagent
+- Research: Sonnet, medium effort, subagent
+- Builder: Sonnet, medium effort, subagent
+- Verifier: Sonnet, medium effort, subagent
+
+---
+
 ## Step 2: Prior Work Analysis (if applicable)
 
 Skip this step if the Prior Work field is blank.
@@ -593,16 +776,39 @@ Before examining any prior work, re-read the charge narrative carefully. Note ev
 decision the user has already made — technology choices, constraints, specific
 requirements, stated preferences. These are settled; do not re-litigate them.
 
-### 2.2 Dispatch pcv-research Agent
+### 2.2 Dispatch or Execute Research
 
-Delegate the prior work inventory and analysis to the `pcv-research` agent for
-context isolation. This keeps file-reading overhead out of the main planning context.
+Read the Agent Configuration from the decision log (`plans/logs/decision-log.md`).
+If no Agent Configuration entry exists, use v3.7 defaults (Sonnet, medium effort,
+subagent).
+
+**IF research dispatch mode is "Inline":**
+
+Execute prior-work analysis directly in this session. This keeps firsthand file
+knowledge in the hub's context rather than receiving a summary.
+
+1. Read `~/.claude/agents/pcv-research.md` for the behavioral checklist.
+2. Follow all analysis steps inline: inventory, pattern-specific evaluation,
+   three-category classification, scope signal.
+3. Record results in the same structured format the subagent would return.
+
+Inline research is only proposed when the hub has 1M context available and prior
+work is substantial (10+ files). On smaller context windows, the overhead of
+accumulating file reads in the hub context outweighs the benefit of firsthand
+knowledge.
+
+**ELSE (research dispatch mode is "Subagent"):**
+
+Delegate to the `pcv-research` agent for context isolation.
 
 1. Read `~/.claude/agents/pcv-research.md` for the agent's behavioral instructions.
 2. Spawn the agent via the Agent tool:
    - `subagent_type: general-purpose`
-   - `model: sonnet`
+   - `model:` use the model from the Agent Configuration (default: `sonnet`)
    - Inline the full contents of `pcv-research.md` in the prompt.
+   - Include effort recommendation in the prompt: "Recommended effort level for
+     this task: [effort from config]. This is informational — your session effort
+     is inherited from the hub."
    - Pass absolute paths to: charge file, all Prior Work locations, CLAUDE.md.
 3. The agent returns a structured summary containing:
    - File inventory (paths, sizes, roles)
@@ -795,6 +1001,8 @@ time (explain why).
 
 Constraints: read-only, no file modifications, no delegating, be specific not vague,
 substantive issues only (skip formatting/style).
+
+Recommended effort level: medium. This is informational — your session effort is inherited from the hub.
 ```
 
 - **Do NOT pass file contents in the prompt.** The Critic reads from disk in its
@@ -1161,12 +1369,18 @@ You will inline these in each dispatch prompt.
 
 For each component in the ConstructionPlan's dependency order:
 
+0. **Read Agent Configuration.** Before the first dispatch, read the Agent
+   Configuration entry from `plans/logs/decision-log.md`. Extract the Builder
+   row's model and effort values. If no Agent Configuration entry exists (v3.7
+   project), use defaults: model `sonnet`, effort `medium`.
+
 1. **Extract the component specification** from the ConstructionPlan — what to build,
    interfaces, responsibilities, file paths, relevant planning artifacts.
 2. **Dispatch pcv-builder** via the Agent tool:
    - `subagent_type: general-purpose`
-   - `model: sonnet`
+   - `model:` use the model from the Agent Configuration (default: `sonnet`)
    - Inline the full contents of `pcv-builder.md` in the prompt.
+   - Include effort recommendation in the prompt: "Recommended effort level for this task: [effort from config]. This is informational — your session effort is inherited from the hub."
    - Pass: component specification, planning artifacts path (absolute), project
      directory path (absolute), prior work path (if applicable).
 3. **Wait for the builder to complete.** Review its summary.
@@ -1186,7 +1400,45 @@ time.
 Do not run multiple builders in parallel unless the ConstructionPlan explicitly
 marks components as independent and parallel-safe.
 
-### 3.4 Planning Artifact References
+### 3.4 Mid-Project Revision Detection
+
+Track deviation count across components during the dispatch loop. A "deviation"
+is any builder-reported divergence from the ConstructionPlan that required human
+approval (logged per Step 4).
+
+**After each builder returns with deviations**, increment the deviation count.
+If the count reaches **2 or more** on a multi-component project (3+ total
+components in the ConstructionPlan), propose a configuration revision before
+dispatching the next builder:
+
+> "The builder has reported deviations on [N] of [total] components so far.
+> This suggests the construction complexity exceeds what was anticipated.
+> Would you like to revise the builder configuration?"
+>
+> | Agent | Current | Proposed Revision | Rationale |
+> |-------|---------|-------------------|-----------|
+> | Builder | [current model], [current effort] | [proposed model], [proposed effort] | [rationale] |
+
+**STOP. Wait for user approval.**
+
+- **If approved:** Log a Configuration Revision entry in the decision log:
+  ```markdown
+  ## Configuration Revision — [Date]
+
+  **Trigger:** [N] deviations on [total] components
+  **Change:** Builder [old model/effort] → [new model/effort]
+  **Applied to:** Remaining components only
+
+  ---
+  ```
+  Update the working configuration for subsequent dispatches.
+- **If declined:** Continue with the current configuration. Log the declined
+  proposal in the decision log.
+
+Mid-project revisions are only proposed when there is concrete evidence (deviation
+count). They are never proposed speculatively.
+
+### 3.5 Planning Artifact References
 
 The builder agent references planning artifacts in `plans/artifacts/` during
 construction:
@@ -1360,14 +1612,19 @@ You will inline these plus pattern-specific instructions in the dispatch prompt.
 For each deliverable pattern identified in the MakePlan, assemble the pattern-specific
 instructions and dispatch the verifier:
 
+0. **Read Agent Configuration.** Before dispatch, read the Agent Configuration
+   entry from `plans/logs/decision-log.md`. Extract the Verifier row's model
+   and effort values. If no Agent Configuration entry exists (v3.7 project),
+   use defaults: model `sonnet`, effort `medium`.
 1. **Determine which patterns apply** from the MakePlan's deliverable patterns section.
 2. **Assemble pattern-specific instructions** by including the relevant sections below
    in the dispatch prompt.
 3. **Dispatch pcv-verifier** via the Agent tool:
    - `subagent_type: general-purpose`
-   - `model: sonnet`
+   - `model:` use the model from the Agent Configuration (default: `sonnet`)
    - Inline the full contents of `pcv-verifier.md` in the prompt.
    - Include the pattern-specific instructions for applicable patterns.
+   - Include effort recommendation in the prompt: "Recommended effort level for this task: [effort from config]. This is informational — your session effort is inherited from the hub."
    - Pass: project directory path (absolute), charge file path (absolute),
      planning artifacts path (absolute).
 4. **Process the returned verification report.** Review issues by severity.

@@ -35,6 +35,156 @@ read or modify prior work locations yet — they are read-only during Planning.
 
 ---
 
+## Step 1.5: Agent Configuration Proposal
+
+After charge validation, propose an agent configuration based on the charge and the
+user's plan tier.
+
+### 1.5.1 Read Plan Tier
+
+Read `~/.claude/pcv-config.json` for the `plan_tier` value. If the file does not
+exist (SKILL.md Step C should have prompted for it), use `pro` as a conservative
+default and note this to the user.
+
+### 1.5.2 Assess Charge Complexity
+
+Read the charge and evaluate four factors:
+
+1. **Deliverable patterns** — Code (Pattern 1) and Mathematical (Pattern 3) are more
+   complex than Prose (Pattern 2). Design-and-Render (Pattern 4) is intermediate.
+2. **Prior work scope** — Count files in Prior Work paths. Projects with 10+ files
+   benefit from inline research when 1M context is available.
+3. **Estimated component count** — Assess from the charge description. 5+ components
+   suggests complex construction.
+4. **Technology complexity** — Mathematical optimization, multi-language projects,
+   complex parsing, or unfamiliar frameworks suggest higher complexity.
+
+### 1.5.3 Apply Proposal Logic
+
+**Research agent:**
+
+```
+IF prior work exists AND file count > 10:
+  IF plan has 1M context (Max/API, or Pro with /extra-usage opt-in):
+    → Propose: Opus, high effort, inline (hub reads directly)
+    IF Pro plan: add budget note
+  ELSE:
+    → Propose: Sonnet, medium effort, subagent
+ELSE IF prior work exists (≤ 10 files):
+  → Propose: Sonnet, medium effort, subagent
+ELSE (no prior work):
+  → Not dispatched
+```
+
+**Builder agent:**
+
+```
+IF complex project (Pattern 3 Math, OR Pattern 1 Code with 5+ components,
+   OR Pattern 4 with strict wireframe compliance):
+  IF Max or API plan:
+    → Propose: Opus, medium effort, subagent
+  ELSE (Pro):
+    → Propose: Sonnet, high effort, subagent
+    Add note: "Opus builders available if Sonnet/high proves insufficient."
+ELSE IF moderate project (Pattern 1 Code 2-4 components, Pattern 4):
+  → Propose: Sonnet, medium effort, subagent
+ELSE (simple — single component, Pattern 2 Prose):
+  → Propose: Haiku, medium effort, subagent
+```
+
+**Verifier agent:**
+
+```
+ALWAYS → Sonnet, medium effort, subagent
+```
+
+**Critic agent:**
+
+```
+ALWAYS → Haiku, medium effort, subagent
+```
+
+**Hub session effort:**
+
+```
+Planning: high for complex projects, medium otherwise
+Construction/Verification: medium
+```
+
+**Context window:**
+
+```
+IF Max or API: Recommend 1M. "Phase transition compaction recommended but not required."
+ELSE IF Pro with /extra-usage: Recommend 1M with budget note.
+ELSE (Pro default): Recommend 200K. "Phase transition compaction strongly recommended."
+```
+
+### 1.5.4 Present Configuration Table
+
+Present the full configuration as a table:
+
+> **Proposed agent configuration:**
+>
+> | Agent | Model | Effort | Dispatch | Rationale |
+> |-------|-------|--------|----------|-----------|
+> | Hub (planning) | — | [level] | — | [rationale] |
+> | Hub (construction) | — | Medium | — | Executing approved plan |
+> | Hub (verification) | — | Medium | — | Mechanical checks |
+> | Research | [model] | [level] | [Inline/Subagent] | [rationale] |
+> | Critic | Haiku | Medium | Subagent | Adversarial pattern matching (always Haiku) |
+> | Builder | [model] | [level] | Subagent | [rationale] |
+> | Verifier | Sonnet | Medium | Subagent | Mechanical verification |
+>
+> **Context:** [size] ([plan] plan). [compaction note]
+>
+> *Approve this configuration, or tell me what you'd like changed.*
+
+Include any plan-tier-specific notes (e.g., Pro budget warnings for Opus proposals).
+
+**Hub effort rows are informational recommendations** — the user sets their session
+effort manually. Subagent effort is also informational — subagents inherit session
+effort; the Agent tool does not support an `effort` parameter.
+
+**STOP. Wait for user approval or overrides.**
+
+### 1.5.5 Record Configuration
+
+On approval, append the Agent Configuration entry to the decision log as the first
+milestone entry (before any clarification questions):
+
+```markdown
+## Agent Configuration — [Date]
+
+**Plan tier:** [tier]
+**Context window:** [size]
+
+| Agent | Model | Effort | Dispatch | Rationale |
+|-------|-------|--------|----------|-----------|
+| Hub (planning) | — | [level] | — | [rationale] |
+| Hub (construction) | — | Medium | — | Executing approved plan |
+| Hub (verification) | — | Medium | — | Mechanical checks |
+| Research | [model] | [level] | [mode] | [rationale] |
+| Critic | Haiku | Medium | Subagent | Adversarial review |
+| Builder | [model] | [level] | Subagent | [rationale] |
+| Verifier | Sonnet | Medium | Subagent | Mechanical checks |
+
+**User overrides:** [None / description of changes from proposal]
+
+---
+```
+
+### 1.5.6 Backward Compatibility
+
+If a project has no Agent Configuration entry in its decision log when reaching
+any dispatch point (Step 2.2, Step 6, or in construction/verification protocols),
+fall back to v3.7 defaults:
+- Critic: Haiku, medium effort, subagent
+- Research: Sonnet, medium effort, subagent
+- Builder: Sonnet, medium effort, subagent
+- Verifier: Sonnet, medium effort, subagent
+
+---
+
 ## Step 2: Prior Work Analysis (if applicable)
 
 Skip this step if the Prior Work field is blank.
@@ -45,16 +195,39 @@ Before examining any prior work, re-read the charge narrative carefully. Note ev
 decision the user has already made — technology choices, constraints, specific
 requirements, stated preferences. These are settled; do not re-litigate them.
 
-### 2.2 Dispatch pcv-research Agent
+### 2.2 Dispatch or Execute Research
 
-Delegate the prior work inventory and analysis to the `pcv-research` agent for
-context isolation. This keeps file-reading overhead out of the main planning context.
+Read the Agent Configuration from the decision log (`plans/logs/decision-log.md`).
+If no Agent Configuration entry exists, use v3.7 defaults (Sonnet, medium effort,
+subagent).
+
+**IF research dispatch mode is "Inline":**
+
+Execute prior-work analysis directly in this session. This keeps firsthand file
+knowledge in the hub's context rather than receiving a summary.
+
+1. Read `~/.claude/agents/pcv-research.md` for the behavioral checklist.
+2. Follow all analysis steps inline: inventory, pattern-specific evaluation,
+   three-category classification, scope signal.
+3. Record results in the same structured format the subagent would return.
+
+Inline research is only proposed when the hub has 1M context available and prior
+work is substantial (10+ files). On smaller context windows, the overhead of
+accumulating file reads in the hub context outweighs the benefit of firsthand
+knowledge.
+
+**ELSE (research dispatch mode is "Subagent"):**
+
+Delegate to the `pcv-research` agent for context isolation.
 
 1. Read `~/.claude/agents/pcv-research.md` for the agent's behavioral instructions.
 2. Spawn the agent via the Agent tool:
    - `subagent_type: general-purpose`
-   - `model: sonnet`
+   - `model:` use the model from the Agent Configuration (default: `sonnet`)
    - Inline the full contents of `pcv-research.md` in the prompt.
+   - Include effort recommendation in the prompt: "Recommended effort level for
+     this task: [effort from config]. This is informational — your session effort
+     is inherited from the hub."
    - Pass absolute paths to: charge file, all Prior Work locations, CLAUDE.md.
 3. The agent returns a structured summary containing:
    - File inventory (paths, sizes, roles)
@@ -212,7 +385,7 @@ Write `plans/make-plan.md` with these required sections:
 Spawn an adversarial Critic using the Task tool with these settings:
 
 - **subagent_type:** `general-purpose`
-- **model:** `haiku`
+- **model: haiku** (always Haiku per Agent Configuration — this is not variable)
 - **Prompt:** Include the Critic's behavioral instructions (from
   `~/.claude/agents/pcv-critic.md`) and the absolute file paths to review.
 
@@ -247,6 +420,8 @@ time (explain why).
 
 Constraints: read-only, no file modifications, no delegating, be specific not vague,
 substantive issues only (skip formatting/style).
+
+Recommended effort level: medium. This is informational — your session effort is inherited from the hub.
 ```
 
 - **Do NOT pass file contents in the prompt.** The Critic reads from disk in its

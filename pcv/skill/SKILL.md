@@ -103,6 +103,32 @@ Use the charge file located in Step A for all subsequent references to "the char
    - Other Configuration fields may be blank (they have defaults or are optional).
    - If validation fails, stop and tell the user which fields need to be completed.
 
+   1.5 **Plan tier check.** Read `~/.claude/pcv-config.json`.
+   - **If the file does not exist or is malformed:** Ask the user:
+     > "Which Claude plan are you using? All plans can access all models, but
+     > your plan's token budget affects how aggressively PCV recommends
+     > higher-cost configurations like Opus agents."
+     >
+     > (a) Pro — $20/month
+     > (b) Max 5x — $100/month
+     > (c) Max 20x — $200/month
+     > (d) API / pay-as-you-go
+
+     **STOP. Wait for the user's response.**
+
+     On answer, write `~/.claude/pcv-config.json`:
+     ```json
+     {
+       "plan_tier": "[pro|max_5x|max_20x|api]",
+       "plan_tier_set_date": "[YYYY-MM-DD]"
+     }
+     ```
+   - **If the file exists and contains a valid `plan_tier`:** Read it silently.
+     If `plan_tier_set_date` is older than 6 months, note: "Your plan tier was
+     set on [date]. Would you like to update it?" (non-blocking).
+   - The plan tier value is available to the planning protocol's Step 1.5 for
+     agent configuration proposals.
+
 2. **Git setup.** Perform once per project. **Do NOT use `cd` in any Bash command —
    always operate from the current working directory.**
    - Use Glob to check for `.git` in the current directory. Do NOT use Bash for this check.
@@ -258,6 +284,9 @@ Recommended effort: **high/max**
   structured inventory, pattern-specific findings, three-category classification.
 - Identify deliverable patterns (Code, Prose, Mathematical, Design-and-Render).
 - Sequential clarification: one question at a time, dependency-ordered.
+- Agent configuration proposal: PCV proposes model tier, effort level, and context
+  window for each agent role based on charge analysis and plan tier. Human approves
+  or overrides. Approved configuration is recorded in the decision log.
 - Draft MakePlan → Critic review → Compliance checklist → **Gate 1: MakePlan Approval**.
 - Draft ConstructionPlan (or minimal verification-only file) → Planning artifact gate
   (Pattern 4 wireframes, Pattern 3 formulations, Pattern 1 test specs) →
@@ -269,7 +298,10 @@ Recommended effort: **medium**
 - Resolve working directory from charge.
 - Baseline copy if carrying forward prior work.
 - Dispatch `pcv-builder` agent per component in dependency order — one at a time,
-  wait for completion before dispatching next.
+  wait for completion before dispatching next. Builder model and effort come from
+  the approved Agent Configuration (v3.7 defaults if no configuration entry exists).
+- Mid-project revision: if 2+ builder deviations on a multi-component project,
+  PCV proposes configuration revision for remaining components.
 - Log deviations with human approval. Commit at milestones.
 - Generate initial build record (`plans/build-record.md`) capturing files modified,
   design decisions made during construction, deviations, and lessons learned.
@@ -277,7 +309,8 @@ Recommended effort: **medium**
 ### Verify Phase (`verification-protocol.md`)
 Recommended effort: **medium**
 - Dispatch `pcv-verifier` agent with pattern-specific instructions for each
-  applicable deliverable pattern.
+  applicable deliverable pattern. Verifier model and effort come from the approved
+  Agent Configuration (v3.7 defaults if no configuration entry exists).
 - Append verification fixes to the build record as they occur.
 - Map each Success Criterion to deliverable components.
 - Compare deliverables against planning artifacts.
@@ -433,11 +466,13 @@ Each protocol file ends with a transition instruction. Follow it.
   behavioral instructions are in `~/.claude/agents/` and must be Read and inlined in
   the Agent tool prompt since custom agent types are not directly spawnable via
   `subagent_type`. The four agents are:
-  - **`pcv-critic`** (Planning) — Adversarial review of MakePlan. Model: haiku.
-  - **`pcv-research`** (Planning) — Prior-work analysis. Model: sonnet.
+  - **`pcv-critic`** (Planning) — Adversarial review of MakePlan. Always Haiku, always dispatched.
+  - **`pcv-research`** (Planning) — Prior-work analysis. Model and dispatch mode
+    (inline or subagent) determined by approved Agent Configuration.
   - **`pcv-builder`** (Construction) — Per-component builds, dispatched sequentially.
-    Model: sonnet.
-  - **`pcv-verifier`** (Verification) — Pattern-specific verification. Model: sonnet.
+    Model determined by approved Agent Configuration.
+  - **`pcv-verifier`** (Verification) — Pattern-specific verification.
+    Model determined by approved Agent Configuration.
 - If a subagent fails to spawn or Claude builds inline instead of dispatching, this is
   acceptable — the work product is identical, only token efficiency is reduced.
 - All file operations for baseline copy and export must use internal Read/Write tools

@@ -1,3 +1,3 @@
-3.7
-2026-03-26
-Add Bash safety rules: no inline multi-line scripts (use temp files), no shell redirects, no command chaining. Fixes permission prompt storms in Claude Code caused by #-in-quoted-newline heuristic and redirect pattern matching failures.
+3.8
+2026-03-28
+Add adaptive agent configuration: plan tier declaration, three-dimensional config proposal (model + effort + context), inline research option, mid-project revision, economy configurations. Backward compatible with v3.7.

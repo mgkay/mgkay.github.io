@@ -92,12 +92,18 @@ You will inline these in each dispatch prompt.
 
 For each component in the ConstructionPlan's dependency order:
 
+0. **Read Agent Configuration.** Before the first dispatch, read the Agent
+   Configuration entry from `plans/logs/decision-log.md`. Extract the Builder
+   row's model and effort values. If no Agent Configuration entry exists (v3.7
+   project), use defaults: model `sonnet`, effort `medium`.
+
 1. **Extract the component specification** from the ConstructionPlan — what to build,
    interfaces, responsibilities, file paths, relevant planning artifacts.
 2. **Dispatch pcv-builder** via the Agent tool:
    - `subagent_type: general-purpose`
-   - `model: sonnet`
+   - `model:` use the model from the Agent Configuration (default: `sonnet`)
    - Inline the full contents of `pcv-builder.md` in the prompt.
+   - Include effort recommendation in the prompt: "Recommended effort level for this task: [effort from config]. This is informational — your session effort is inherited from the hub."
    - Pass: component specification, planning artifacts path (absolute), project
      directory path (absolute), prior work path (if applicable).
 3. **Wait for the builder to complete.** Review its summary.
@@ -117,7 +123,45 @@ time.
 Do not run multiple builders in parallel unless the ConstructionPlan explicitly
 marks components as independent and parallel-safe.
 
-### 3.4 Planning Artifact References
+### 3.4 Mid-Project Revision Detection
+
+Track deviation count across components during the dispatch loop. A "deviation"
+is any builder-reported divergence from the ConstructionPlan that required human
+approval (logged per Step 4).
+
+**After each builder returns with deviations**, increment the deviation count.
+If the count reaches **2 or more** on a multi-component project (3+ total
+components in the ConstructionPlan), propose a configuration revision before
+dispatching the next builder:
+
+> "The builder has reported deviations on [N] of [total] components so far.
+> This suggests the construction complexity exceeds what was anticipated.
+> Would you like to revise the builder configuration?"
+>
+> | Agent | Current | Proposed Revision | Rationale |
+> |-------|---------|-------------------|-----------|
+> | Builder | [current model], [current effort] | [proposed model], [proposed effort] | [rationale] |
+
+**STOP. Wait for user approval.**
+
+- **If approved:** Log a Configuration Revision entry in the decision log:
+  ```markdown
+  ## Configuration Revision — [Date]
+
+  **Trigger:** [N] deviations on [total] components
+  **Change:** Builder [old model/effort] → [new model/effort]
+  **Applied to:** Remaining components only
+
+  ---
+  ```
+  Update the working configuration for subsequent dispatches.
+- **If declined:** Continue with the current configuration. Log the declined
+  proposal in the decision log.
+
+Mid-project revisions are only proposed when there is concrete evidence (deviation
+count). They are never proposed speculatively.
+
+### 3.5 Planning Artifact References
 
 The builder agent references planning artifacts in `plans/artifacts/` during
 construction:

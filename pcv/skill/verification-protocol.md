@@ -21,14 +21,19 @@ You will inline these plus pattern-specific instructions in the dispatch prompt.
 For each deliverable pattern identified in the MakePlan, assemble the pattern-specific
 instructions and dispatch the verifier:
 
+0. **Read Agent Configuration.** Before dispatch, read the Agent Configuration
+   entry from `plans/logs/decision-log.md`. Extract the Verifier row's model
+   and effort values. If no Agent Configuration entry exists (v3.7 project),
+   use defaults: model `sonnet`, effort `medium`.
 1. **Determine which patterns apply** from the MakePlan's deliverable patterns section.
 2. **Assemble pattern-specific instructions** by including the relevant sections below
    in the dispatch prompt.
 3. **Dispatch pcv-verifier** via the Agent tool:
    - `subagent_type: general-purpose`
-   - `model: sonnet`
+   - `model:` use the model from the Agent Configuration (default: `sonnet`)
    - Inline the full contents of `pcv-verifier.md` in the prompt.
    - Include the pattern-specific instructions for applicable patterns.
+   - Include effort recommendation in the prompt: "Recommended effort level for this task: [effort from config]. This is informational — your session effort is inherited from the hub."
    - Pass: project directory path (absolute), charge file path (absolute),
      planning artifacts path (absolute).
 4. **Process the returned verification report.** Review issues by severity.
