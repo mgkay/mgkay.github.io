@@ -387,94 +387,186 @@ under &ldquo;Post-Closeout Fixes&rdquo; without creating new version folders. Wh
 are complete, a &ldquo;Project Re-Closeout&rdquo; entry is appended.</p>
 
 <!-- ======================================================== -->
-<h2>Multi-Phase Projects</h2>
+<h2 id="adaptive-config">Adaptive Agent Configuration</h2>
 
-<p>Some projects have sequential dependencies — later work depends on validating or
-completing earlier work. PCV supports these through <strong>multi-phase projects</strong>,
-where each phase is a full PCV cycle (Plan-Construct-Verify) in its own subfolder,
-coordinated by a project-level master log.</p>
+<p>PCV doesn&rsquo;t use a fixed set of models for every project. During planning, it
+evaluates your project&rsquo;s complexity and your Anthropic plan, then proposes an agent
+configuration that balances quality against token cost. You approve (or override) the
+proposal before construction begins.</p>
 
-<h3>When to use multi-phase</h3>
+<h3>Plan tier</h3>
 
-<p>Multi-phase is a good fit when a project has:</p>
-<ul>
-  <li><strong>Sequential dependencies</strong> — later stages depend on validating earlier stages</li>
-  <li><strong>Distinct deliverable milestones</strong> — 2+ separable deliverables, each with
-    its own success criteria</li>
-  <li><strong>Risk-gated work</strong> — the viability of later steps depends on the outcome
-    of earlier steps</li>
-  <li><strong>Cross-session scale</strong> — the project will likely span multiple Claude Code sessions</li>
-</ul>
-
-<h3>Three entry paths</h3>
-
-<p>Multi-phase structure can be established at different points in the workflow:</p>
+<p>The first time you use PCV, it asks which <strong>Anthropic API plan</strong> you&rsquo;re
+on. This is a one-time question — your answer is saved to
+<code>~/.claude/pcv-config.json</code> and used for all future projects.</p>
 
 <table>
   <thead>
-    <tr><th>Path</th><th>When</th><th>How</th></tr>
+    <tr><th>Plan Tier</th><th>Context Window</th><th>What It Unlocks</th></tr>
   </thead>
   <tbody>
     <tr>
-      <td><strong>Path 1</strong></td>
-      <td>Charge contains explicit multi-phase language</td>
-      <td>PCV detects phrases like &ldquo;multi-phase,&rdquo; &ldquo;stages,&rdquo; or
-        &ldquo;sequential milestones&rdquo; and flags the project as a candidate</td>
+      <td><strong>Max / API</strong></td>
+      <td>1M tokens</td>
+      <td>Opus builders for complex projects. Inline research (hub reads prior work
+        directly instead of delegating to a subagent). Phase transition compaction
+        recommended but not required.</td>
     </tr>
     <tr>
-      <td><strong>Path 2</strong></td>
-      <td>After clarification, PCV assesses scope</td>
-      <td>PCV evaluates the project against multi-phase criteria and proposes a phase
-        structure if three or more criteria are met</td>
-    </tr>
-    <tr>
-      <td><strong>Path 3</strong></td>
-      <td>Mid-construction, complexity emerges</td>
-      <td>During construction, unexpected sequential dependencies are discovered. PCV
-        proposes restructuring the in-progress project into phases</td>
+      <td><strong>Pro</strong></td>
+      <td>200K tokens (1M with <code>/extra-usage</code>)</td>
+      <td>Sonnet builders (Opus available but flagged with budget note). Phase transition
+        compaction strongly recommended due to smaller context.</td>
     </tr>
   </tbody>
 </table>
 
-<p>In all cases, <strong>you decide</strong> whether to accept, modify, or decline the
-multi-phase proposal. Declining simply continues single-phase planning.</p>
+<p>You can change your plan tier at any time by editing <code>~/.claude/pcv-config.json</code>.</p>
 
-<h3>How multi-phase works</h3>
+<h3>How PCV chooses a configuration</h3>
 
-<p>A multi-phase project has this structure:</p>
+<p>After validating the charge, PCV reads four signals from your project — deliverable
+patterns, prior-work file count, estimated component count, and technology complexity —
+then applies decision rules for each agent. The plan tier determines which models are
+available; the project complexity determines which are proposed.</p>
 
-<pre>MyProject/
-├── phase-1-extract/     (complete PCV workspace)
-│   ├── charge.md
-│   ├── plans/
-│   └── deliverables/
-├── phase-2-validate/    (complete PCV workspace)
-│   ├── charge.md
-│   ├── plans/
-│   └── deliverables/
-├── phase-3-populate/    (tentative — not yet scaffolded)
-├── plans/
-│   ├── make-plan.md     (project-level, includes tentative phase plan)
-│   └── logs/
-│       └── master-log.md
-└── CLAUDE.md</pre>
+<table>
+  <thead>
+    <tr><th>Agent</th><th>Simple / Prose</th><th>Moderate</th><th>Complex</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Builder</strong></td>
+      <td>Haiku</td>
+      <td>Sonnet</td>
+      <td>Opus (Max/API) or Sonnet+high (Pro)</td>
+    </tr>
+    <tr>
+      <td><strong>Research</strong></td>
+      <td colspan="3">Sonnet subagent if prior work exists (&gt;10 files).
+        Inline (no subagent) if &le;10 files and 1M context available.
+        Skipped if no prior work.</td>
+    </tr>
+    <tr>
+      <td><strong>Verifier</strong></td>
+      <td colspan="3">Always Sonnet</td>
+    </tr>
+    <tr>
+      <td><strong>Critic</strong></td>
+      <td colspan="3">Always Haiku</td>
+    </tr>
+  </tbody>
+</table>
 
-<p>Key characteristics:</p>
+<p><strong>What counts as complex?</strong> Pattern 3 (mathematical) projects, Pattern 1
+(code) with 5+ components, or Pattern 4 (design) with strict wireframe compliance.
+<strong>Moderate</strong> is Pattern 1 with 2&ndash;4 components or standard Pattern 4.
+<strong>Simple</strong> is single-component projects or Pattern 2 (prose-only).</p>
+
+<h3>The configuration table</h3>
+
+<p>PCV presents the proposed configuration as a table during planning, with a rationale
+for each choice:</p>
+
+<pre>Proposed agent configuration:
+
+| Agent              | Model  | Effort | Dispatch | Rationale              |
+|--------------------|--------|--------|----------|------------------------|
+| Hub (planning)     | —      | High   | —        | Complex trade-offs     |
+| Hub (construction) | —      | Medium | —        | Executing approved plan|
+| Hub (verification) | —      | Medium | —        | Mechanical checks      |
+| Research           | Sonnet | Medium | Subagent | 12 prior-work files    |
+| Critic             | Haiku  | Medium | Subagent | Adversarial review     |
+| Builder            | Sonnet | High   | Subagent | Code + 6 components    |
+| Verifier           | Sonnet | Medium | Subagent | Mechanical verification|
+
+Context: 200K (Pro plan). Phase transition compaction strongly recommended.
+
+Approve this configuration, or tell me what you'd like changed.</pre>
+
+<p>You can override any row — for example, upgrading builders from Haiku to Sonnet if
+you want higher quality, or choosing inline research instead of a subagent. Your
+overrides are logged alongside the proposal.</p>
+
+<h3>Mid-project revision</h3>
+
+<p>If construction encounters repeated difficulty — two or more deviations that suggest
+the agent configuration is insufficient — PCV proposes an upgrade. For example, if Haiku
+builders are struggling with a component that turned out to be more complex than expected,
+PCV may propose switching to Sonnet builders for the remaining components. You approve
+or decline the change, and either way the proposal is logged.</p>
+
+<!-- ======================================================== -->
+<h2>Multi-Phase Projects</h2>
+
+<p>Some projects have stages that must happen in order — you need to extract data before
+you can validate it, validate it before you can use it. In a single-phase project,
+everything is planned and built in one pass. A <strong>multi-phase project</strong> splits
+the work into sequential phases, where each phase is a complete PCV cycle
+(Plan-Construct-Verify) that produces deliverables the next phase depends on.</p>
+
+<h3>When does multi-phase apply?</h3>
+
+<p>PCV considers multi-phase when three or more of these are true:</p>
 <ul>
-  <li><strong>Phase 1 is fully planned.</strong> It goes through the complete PCV cycle —
-    charge, MakePlan, ConstructionPlan, construction, verification.</li>
-  <li><strong>Later phases are tentative.</strong> The project-level MakePlan includes a
-    Tentative Phase Plan that sketches future phases, but only enough to show the overall
-    arc and dependencies. Later phases are refined at each phase transition.</li>
-  <li><strong>Each phase is independent.</strong> Running <code>/pcv</code> inside a phase
-    subfolder shows single-phase progress for that phase. Running <code>/pcv</code> from
-    the project root shows the master progress display.</li>
+  <li>Later work depends on <strong>validating</strong> earlier work before proceeding</li>
+  <li>There are 2+ clearly separable deliverables with distinct success criteria</li>
+  <li>The estimated component count is 8+</li>
+  <li>The viability of later steps depends on the outcome of earlier steps</li>
+  <li>The project will likely span multiple Claude Code sessions</li>
 </ul>
 
-<h3>Master progress display</h3>
+<p>You can also declare multi-phase intent directly in the charge by using language like
+&ldquo;phases,&rdquo; &ldquo;stages,&rdquo; or &ldquo;break this into sequential
+milestones.&rdquo;</p>
 
-<p>When you run <code>/pcv</code> from a multi-phase project root, you see an overview of
-all phases:</p>
+<h3>How multi-phase gets established</h3>
+
+<p>There are three ways a project becomes multi-phase, depending on when the need is
+recognized:</p>
+
+<ol>
+  <li><strong>You declare it.</strong> The charge uses explicit multi-phase language. PCV
+    flags it during charge validation and structures the project accordingly.</li>
+  <li><strong>PCV proposes it during planning.</strong> After clarification questions reveal
+    the scope, PCV evaluates the criteria above and presents a phase table. You accept,
+    modify, or decline.</li>
+  <li><strong>It emerges during construction.</strong> Unexpected sequential dependencies
+    surface while building. PCV proposes restructuring the in-progress work into Phase 1
+    of a multi-phase project, with remaining work becoming Phase 2+.</li>
+</ol>
+
+<p>In every case, you have final say. Declining continues single-phase as normal.</p>
+
+<h3>Project structure</h3>
+
+<p>A multi-phase project has a root directory that coordinates phases, plus a subfolder
+for each phase that is a complete, independent PCV workspace:</p>
+
+<pre>MyProject/
+├── plans/
+│   ├── make-plan.md           project-level plan with tentative phase plan
+│   └── logs/
+│       └── master-log.md      cross-phase decisions and outcomes
+├── phase-1-extract/           ← complete PCV workspace
+│   ├── charge.md
+│   ├── plans/                 phase-specific plans, decision log, build record
+│   └── deliverables/
+├── phase-2-validate/          ← complete PCV workspace
+│   ├── charge.md
+│   ├── plans/
+│   └── deliverables/
+├── phase-3-populate/          (tentative — not yet scaffolded)
+└── CLAUDE.md</pre>
+
+<p><strong>Only Phase 1 is fully planned up front.</strong> Later phases appear in the
+project-level MakePlan as a <em>tentative phase plan</em> — a lightweight sketch showing
+the overall arc, dependencies, and open questions. Tentative phases are refined (or
+added, removed, merged, reordered) each time a phase completes.</p>
+
+<h3>Working in a multi-phase project</h3>
+
+<p>Running <code>/pcv</code> from the <strong>project root</strong> shows a master overview:</p>
 
 <pre>PCV v3.9 — MyProject (Multi-Phase)
 
@@ -495,94 +587,39 @@ Phase 2: Validation [Sonnet builders]
 Phase 3: Population (tentative)
 Phase 4: Integration (tentative)</pre>
 
+<p>Running <code>/pcv</code> inside a <strong>phase subfolder</strong> shows standard
+single-phase progress for that phase only, with a note that it&rsquo;s part of a larger
+multi-phase project.</p>
+
 <h3>Phase transitions</h3>
 
-<p>When a phase completes verification, PCV loads a <strong>phase transition protocol</strong>
-that guides:</p>
+<p>When a phase completes verification, PCV runs a transition protocol before starting
+the next phase:</p>
 
 <ol>
-  <li><strong>Phase closeout</strong> — finalizing the completed phase&rsquo;s decision log
-    and build record</li>
-  <li><strong>Master log update</strong> — recording the phase completion, key outcomes,
-    and lessons learned in the project-level master log</li>
-  <li><strong>Tentative plan revision</strong> — updating the remaining phases based on what
-    was learned. Phases can be added, removed, merged, split, or reordered.</li>
-  <li><strong>Next phase scaffolding</strong> — creating the next phase subfolder with its
-    own charge, ready for a new PCV cycle</li>
+  <li><strong>Phase closeout</strong> — finalize the completed phase&rsquo;s decision log
+    and build record, including the agent configuration used and any lessons learned.</li>
+  <li><strong>Master log update</strong> — record the completion, key outcomes, and lessons
+    in the project-level <code>master-log.md</code>.</li>
+  <li><strong>Tentative plan revision</strong> — revisit remaining phases in light of what
+    was learned. Phase boundaries, scope, and even the number of remaining phases can
+    change here.</li>
+  <li><strong>Next phase scaffolding</strong> — create the next phase&rsquo;s subfolder
+    with its own charge, ready for a new PCV cycle.</li>
 </ol>
 
-<p>The transition protocol includes <strong>exit ramps</strong> — if results from the
-completed phase indicate that remaining phases are unnecessary, or that the project
-scope has changed fundamentally, PCV surfaces this and lets you decide whether to
-continue, restructure, or close out the entire project.</p>
+<p>The transition protocol includes <strong>exit ramps</strong> at each step. If results
+from the completed phase show that remaining phases are unnecessary, or that the scope
+has changed fundamentally, PCV surfaces this and lets you decide: continue as planned,
+restructure the remaining phases, or close out the entire project.</p>
 
 <h3>Cross-phase learning</h3>
 
-<p>When planning a phase after the first, PCV reads the master log for <strong>advisory
-context</strong>. If a previous phase required a mid-project upgrade from economy to full
-agent configuration due to complexity, PCV factors that into its proposal for the next
-phase. This learning is advisory — you always have final say, and each phase&rsquo;s
-charge is evaluated independently.</p>
-
-<!-- ======================================================== -->
-<h2 id="adaptive-config">Adaptive Agent Configuration</h2>
-
-<p>PCV adapts its agent configuration to each project&rsquo;s complexity. Rather than using
-a fixed set of models, PCV proposes a configuration during planning that balances quality
-against token cost.</p>
-
-<h3>Plan tier</h3>
-
-<p>On first use, PCV asks a one-time question about your preferred planning depth:</p>
-
-<ul>
-  <li><strong>Full</strong> — maximum clarification and adversarial review (best for complex
-    or high-stakes projects)</li>
-  <li><strong>Standard</strong> — balanced planning (good default for most projects)</li>
-  <li><strong>Light</strong> — minimal planning overhead (for simpler projects where the
-    charge is already clear)</li>
-</ul>
-
-<p>Your choice is persisted to <code>~/.claude/pcv-config.json</code> and applied to all
-future projects. You can change it at any time.</p>
-
-<h3>Agent configuration proposal</h3>
-
-<p>During planning, PCV evaluates three dimensions and proposes a configuration:</p>
-
-<table>
-  <thead>
-    <tr><th>Dimension</th><th>Economy</th><th>Full</th></tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><strong>Builder model</strong></td>
-      <td>Haiku — for simple or prose-only projects</td>
-      <td>Sonnet — for code, math, or complex deliverables</td>
-    </tr>
-    <tr>
-      <td><strong>Verifier model</strong></td>
-      <td>Sonnet (always)</td>
-      <td>Sonnet (always)</td>
-    </tr>
-    <tr>
-      <td><strong>Research mode</strong></td>
-      <td>Inline — hub reads prior work directly (when &lt;10 files)</td>
-      <td>Delegated — research agent in isolated context</td>
-    </tr>
-  </tbody>
-</table>
-
-<p>PCV presents the proposal with its reasoning, and you approve or modify it. The
-approved configuration is logged in the decision log and used throughout construction.</p>
-
-<h3>Mid-project revision</h3>
-
-<p>If construction encounters repeated difficulty — two or more deviations that suggest
-the agent configuration is insufficient — PCV proposes upgrading. For example, if Haiku
-builders are struggling with a component that turned out to be more complex than expected,
-PCV may propose switching to Sonnet builders for the remaining components. You approve
-or decline the change.</p>
+<p>When planning Phase 2 or later, PCV reads the master log to see what happened in
+prior phases. This is <strong>advisory</strong> — it informs the agent configuration
+proposal (e.g., if Phase 1 needed a mid-project upgrade to stronger builders, PCV starts
+Phase 2&rsquo;s proposal at that level) but doesn&rsquo;t override your judgment. Each
+phase&rsquo;s charge is evaluated on its own merits.</p>
 
 <!-- ======================================================== -->
 <h2>Key Things to Know</h2>
