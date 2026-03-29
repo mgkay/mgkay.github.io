@@ -72,6 +72,12 @@ Claude Code does not provide on its own:</p>
   <li><strong>Planning artifact gates.</strong> Wireframes, mathematical formulations,
     and test specifications are reviewed and approved before construction, preventing
     the costly rework that comes from building first and discovering misalignment later.</li>
+  <li><strong>Adaptive agent configuration.</strong> PCV proposes economy or full agent
+    configurations based on project complexity, with mid-project revision if the initial
+    configuration proves insufficient.</li>
+  <li><strong>Multi-phase project support.</strong> Projects with sequential dependencies
+    can be structured as multiple phases, each a full PCV cycle, with cross-phase learning
+    and coordinated phase transitions.</li>
 </ol>
 
 <!-- ======================================================== -->
@@ -381,6 +387,204 @@ under &ldquo;Post-Closeout Fixes&rdquo; without creating new version folders. Wh
 are complete, a &ldquo;Project Re-Closeout&rdquo; entry is appended.</p>
 
 <!-- ======================================================== -->
+<h2>Multi-Phase Projects</h2>
+
+<p>Some projects have sequential dependencies — later work depends on validating or
+completing earlier work. PCV supports these through <strong>multi-phase projects</strong>,
+where each phase is a full PCV cycle (Plan-Construct-Verify) in its own subfolder,
+coordinated by a project-level master log.</p>
+
+<h3>When to use multi-phase</h3>
+
+<p>Multi-phase is a good fit when a project has:</p>
+<ul>
+  <li><strong>Sequential dependencies</strong> — later stages depend on validating earlier stages</li>
+  <li><strong>Distinct deliverable milestones</strong> — 2+ separable deliverables, each with
+    its own success criteria</li>
+  <li><strong>Risk-gated work</strong> — the viability of later steps depends on the outcome
+    of earlier steps</li>
+  <li><strong>Cross-session scale</strong> — the project will likely span multiple Claude Code sessions</li>
+</ul>
+
+<h3>Three entry paths</h3>
+
+<p>Multi-phase structure can be established at different points in the workflow:</p>
+
+<table>
+  <thead>
+    <tr><th>Path</th><th>When</th><th>How</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Path 1</strong></td>
+      <td>Charge contains explicit multi-phase language</td>
+      <td>PCV detects phrases like &ldquo;multi-phase,&rdquo; &ldquo;stages,&rdquo; or
+        &ldquo;sequential milestones&rdquo; and flags the project as a candidate</td>
+    </tr>
+    <tr>
+      <td><strong>Path 2</strong></td>
+      <td>After clarification, PCV assesses scope</td>
+      <td>PCV evaluates the project against multi-phase criteria and proposes a phase
+        structure if three or more criteria are met</td>
+    </tr>
+    <tr>
+      <td><strong>Path 3</strong></td>
+      <td>Mid-construction, complexity emerges</td>
+      <td>During construction, unexpected sequential dependencies are discovered. PCV
+        proposes restructuring the in-progress project into phases</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>In all cases, <strong>you decide</strong> whether to accept, modify, or decline the
+multi-phase proposal. Declining simply continues single-phase planning.</p>
+
+<h3>How multi-phase works</h3>
+
+<p>A multi-phase project has this structure:</p>
+
+<pre>MyProject/
+├── phase-1-extract/     (complete PCV workspace)
+│   ├── charge.md
+│   ├── plans/
+│   └── deliverables/
+├── phase-2-validate/    (complete PCV workspace)
+│   ├── charge.md
+│   ├── plans/
+│   └── deliverables/
+├── phase-3-populate/    (tentative — not yet scaffolded)
+├── plans/
+│   ├── make-plan.md     (project-level, includes tentative phase plan)
+│   └── logs/
+│       └── master-log.md
+└── CLAUDE.md</pre>
+
+<p>Key characteristics:</p>
+<ul>
+  <li><strong>Phase 1 is fully planned.</strong> It goes through the complete PCV cycle —
+    charge, MakePlan, ConstructionPlan, construction, verification.</li>
+  <li><strong>Later phases are tentative.</strong> The project-level MakePlan includes a
+    Tentative Phase Plan that sketches future phases, but only enough to show the overall
+    arc and dependencies. Later phases are refined at each phase transition.</li>
+  <li><strong>Each phase is independent.</strong> Running <code>/pcv</code> inside a phase
+    subfolder shows single-phase progress for that phase. Running <code>/pcv</code> from
+    the project root shows the master progress display.</li>
+</ul>
+
+<h3>Master progress display</h3>
+
+<p>When you run <code>/pcv</code> from a multi-phase project root, you see an overview of
+all phases:</p>
+
+<pre>PCV v3.9 — MyProject (Multi-Phase)
+
+Phase 1: Data Extraction [Sonnet builders]
+  ■ Charge validated
+  ■ MakePlan approved
+  ■ ConstructionPlan approved
+  ■ Construction
+  ■ Verification complete
+
+Phase 2: Validation [Sonnet builders]
+  ■ Charge validated
+  ■ MakePlan approved
+  □ ConstructionPlan approved
+  □ Construction
+  □ Verification complete
+
+Phase 3: Population (tentative)
+Phase 4: Integration (tentative)</pre>
+
+<h3>Phase transitions</h3>
+
+<p>When a phase completes verification, PCV loads a <strong>phase transition protocol</strong>
+that guides:</p>
+
+<ol>
+  <li><strong>Phase closeout</strong> — finalizing the completed phase&rsquo;s decision log
+    and build record</li>
+  <li><strong>Master log update</strong> — recording the phase completion, key outcomes,
+    and lessons learned in the project-level master log</li>
+  <li><strong>Tentative plan revision</strong> — updating the remaining phases based on what
+    was learned. Phases can be added, removed, merged, split, or reordered.</li>
+  <li><strong>Next phase scaffolding</strong> — creating the next phase subfolder with its
+    own charge, ready for a new PCV cycle</li>
+</ol>
+
+<p>The transition protocol includes <strong>exit ramps</strong> — if results from the
+completed phase indicate that remaining phases are unnecessary, or that the project
+scope has changed fundamentally, PCV surfaces this and lets you decide whether to
+continue, restructure, or close out the entire project.</p>
+
+<h3>Cross-phase learning</h3>
+
+<p>When planning a phase after the first, PCV reads the master log for <strong>advisory
+context</strong>. If a previous phase required a mid-project upgrade from economy to full
+agent configuration due to complexity, PCV factors that into its proposal for the next
+phase. This learning is advisory — you always have final say, and each phase&rsquo;s
+charge is evaluated independently.</p>
+
+<!-- ======================================================== -->
+<h2 id="adaptive-config">Adaptive Agent Configuration</h2>
+
+<p>PCV adapts its agent configuration to each project&rsquo;s complexity. Rather than using
+a fixed set of models, PCV proposes a configuration during planning that balances quality
+against token cost.</p>
+
+<h3>Plan tier</h3>
+
+<p>On first use, PCV asks a one-time question about your preferred planning depth:</p>
+
+<ul>
+  <li><strong>Full</strong> — maximum clarification and adversarial review (best for complex
+    or high-stakes projects)</li>
+  <li><strong>Standard</strong> — balanced planning (good default for most projects)</li>
+  <li><strong>Light</strong> — minimal planning overhead (for simpler projects where the
+    charge is already clear)</li>
+</ul>
+
+<p>Your choice is persisted to <code>~/.claude/pcv-config.json</code> and applied to all
+future projects. You can change it at any time.</p>
+
+<h3>Agent configuration proposal</h3>
+
+<p>During planning, PCV evaluates three dimensions and proposes a configuration:</p>
+
+<table>
+  <thead>
+    <tr><th>Dimension</th><th>Economy</th><th>Full</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Builder model</strong></td>
+      <td>Haiku — for simple or prose-only projects</td>
+      <td>Sonnet — for code, math, or complex deliverables</td>
+    </tr>
+    <tr>
+      <td><strong>Verifier model</strong></td>
+      <td>Sonnet (always)</td>
+      <td>Sonnet (always)</td>
+    </tr>
+    <tr>
+      <td><strong>Research mode</strong></td>
+      <td>Inline — hub reads prior work directly (when &lt;10 files)</td>
+      <td>Delegated — research agent in isolated context</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>PCV presents the proposal with its reasoning, and you approve or modify it. The
+approved configuration is logged in the decision log and used throughout construction.</p>
+
+<h3>Mid-project revision</h3>
+
+<p>If construction encounters repeated difficulty — two or more deviations that suggest
+the agent configuration is insufficient — PCV proposes upgrading. For example, if Haiku
+builders are struggling with a component that turned out to be more complex than expected,
+PCV may propose switching to Sonnet builders for the remaining components. You approve
+or decline the change.</p>
+
+<!-- ======================================================== -->
 <h2>Key Things to Know</h2>
 
 <h3>Progress display</h3>
@@ -472,7 +676,7 @@ main session never carries the intermediate file reads and tool outputs.</p>
 
 <table>
   <thead>
-    <tr><th>Agent</th><th>Phase</th><th>Model</th><th>Role</th></tr>
+    <tr><th>Agent</th><th>Phase</th><th>Default Model</th><th>Role</th></tr>
   </thead>
   <tbody>
     <tr>
@@ -485,14 +689,14 @@ main session never carries the intermediate file reads and tool outputs.</p>
     <tr>
       <td><strong>pcv-research</strong></td>
       <td>Plan</td>
-      <td>Sonnet</td>
+      <td>Sonnet*</td>
       <td>Prior-work analysis — inventories files, performs pattern-specific
         critical evaluation, produces three-category classification and scope signal.</td>
     </tr>
     <tr>
       <td><strong>pcv-builder</strong></td>
       <td>Construct</td>
-      <td>Sonnet</td>
+      <td>Sonnet*</td>
       <td>Per-component construction — implements one component from the
         ConstructionPlan in isolation. Dispatched sequentially in dependency order.</td>
     </tr>
@@ -505,6 +709,10 @@ main session never carries the intermediate file reads and tool outputs.</p>
     </tr>
   </tbody>
 </table>
+
+<p><small>* Configurable via <a href="#adaptive-config">Adaptive Agent Configuration</a>.
+Builder may use Haiku for simple or prose-only projects. Research may run inline (no
+separate agent) for small prior-work sets.</small></p>
 
 <h3>How dispatch works</h3>
 

@@ -56,6 +56,7 @@ in an auditable trail, then executes the approved plan precisely.</p>
       <li>Projects with visual interfaces (GUIs, dashboards)</li>
       <li>Documents with domain-specific requirements</li>
       <li>Mathematical formulations and analytical models</li>
+      <li>Multi-phase projects with sequential dependencies</li>
       <li>Anything where getting the design wrong means starting over</li>
     </ul>
   </div>
@@ -141,9 +142,11 @@ If you don&rsquo;t have Claude Code yet, install it first:
 <p>PCV uses <strong>specialized agents</strong> for context isolation and token efficiency:
 a research agent analyzes prior work, a builder agent constructs each component in
 its own context, a verifier agent checks deliverables, and a critic agent reviews
-plans adversarially. See the <a href="guide.html">Workflow Guide</a> for details on
-the subagent architecture, token efficiency, all four deliverable patterns, and
-troubleshooting tips.</p>
+plans adversarially. Agent models are <strong>adaptively configured</strong> per project —
+PCV proposes economy or full configurations based on project complexity, and you can
+adjust at any time. See the <a href="guide.html">Workflow Guide</a> for details on
+the subagent architecture, adaptive configuration, multi-phase projects, token efficiency,
+all four deliverable patterns, and troubleshooting tips.</p>
 
 <!-- Four Patterns (brief) -->
 <h2>Four Deliverable Patterns</h2>
