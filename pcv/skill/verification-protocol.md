@@ -285,6 +285,19 @@ defer this write or batch it with other operations.
 ---
 ```
 
+### 8.1 Multi-Phase Detection (v3.9)
+
+After writing the closeout entry above, check if this is a multi-phase project by
+testing for `../plans/logs/master-log.md` (relative to the current phase subfolder).
+
+- **If found:** This phase is part of a multi-phase project. Do NOT end the session.
+  Instead, load `~/.claude/skills/pcv/phase-transition-protocol.md` and follow it.
+  The transition protocol handles phase closeout, master log update, and user direction
+  for the next phase.
+
+- **If not found:** This is a single-phase project (or a standalone phase). End
+  normally per the existing closeout logic.
+
 ---
 
 ## Session Resumption

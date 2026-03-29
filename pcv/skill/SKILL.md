@@ -147,9 +147,69 @@ Use the charge file located in Step A for all subsequent references to "the char
        for response. If the user chooses to skip, log this in the decision log and
        proceed without Git.
 
-3. **Phase detection and progress display.** Use Glob or Bash to survey `plans/`
-   for file existence. **Always check disk state with a tool call — never infer
-   from conversation history.**
+3. **Phase detection and progress display (v3.9).**
+
+   ### 3.1 Multi-Phase Root Detection
+
+   Before displaying progress, check for multi-phase project structure. Use Glob or
+   file checks to determine if this is a multi-phase project:
+
+   - **Multi-phase indicator:** The directory contains at least one subdirectory
+     that has its own `charge.md` AND a `plans/` subdirectory (phase subfolder),
+     AND the project root contains `plans/logs/master-log.md`.
+   - **Single-phase indicator:** None of the above apply, OR `master-log.md` does not exist.
+
+   Store the result for routing in sub-step 3.2 below.
+
+   ### 3.2 Master Progress Display (v3.9)
+
+   If multi-phase project root detected in 3.1:
+
+   **Read phase information** from each phase subfolder:
+   - Phase name from `charge.md` (Name field)
+   - Agent config summary from the phase's decision log (look for Agent Configuration entry)
+   - Phase completion status from `plans/logs/` directory and decision log
+
+   **Determine milestone status for each phase** (same as single-phase logic):
+   - **Charge validated:** Phase has `charge.md`
+   - **MakePlan approved:** Phase has `plans/make-plan.md`
+   - **ConstructionPlan approved:** Phase has `plans/construction-plan.md`
+   - **Construction:** Phase decision log contains "Construction Complete" OR deliverables exist
+   - **Verification complete:** Phase decision log contains "Phase Complete" or "Project Closeout"
+
+   **Display master progress in this format:**
+
+   ```
+   PCV v[version] — [Project Name] (Multi-Phase)
+
+   Phase 1: [Name] [agent config summary]
+     ■ Charge validated
+     ■ MakePlan approved
+     ■ ConstructionPlan approved
+     ■ Construction
+     ■ Verification complete
+
+   Phase 2: [Name] [agent config summary]
+     ■ Charge validated
+     ■ MakePlan approved
+     □ ConstructionPlan approved
+     □ Construction
+     □ Verification complete
+
+   Phase 3: [Name] (tentative)
+   Phase 4: [Name] (tentative)
+   ```
+
+   Use ■ for completed milestones, □ for incomplete. Tentative phases (not yet
+   planned) show only the name without milestone checklists. After display,
+   determine which phase is active (earliest incomplete phase) and route accordingly.
+
+   ### 3.3 Single-Phase Progress Display
+
+   If single-phase or phase subfolder detected (see 3.4 below):
+
+   Use Glob or Bash to survey `plans/` for file existence. **Always check disk state
+   with a tool call — never infer from conversation history.**
 
    Determine which milestones are complete, then display the progress checklist:
 
@@ -169,6 +229,16 @@ Use the charge file located in Step A for all subsequent references to "the char
    - **Construction:** Decision log contains a "Construction Complete" entry, OR
      deliverables exist matching the ConstructionPlan file structure.
    - **Verification complete:** Decision log contains a "Project Closeout" entry.
+
+   ### 3.4 Phase Subfolder Routing (v3.9)
+
+   When `/pcv` is invoked inside a phase subfolder (detected by checking parent
+   directory for `plans/logs/master-log.md`), display single-phase progress for
+   this phase only (standard display from 3.3 above). Route to appropriate protocol
+   as normal. After routing, add this note:
+
+   > "This phase is part of a multi-phase project. Use `/pcv` from the project root
+   > to see all phases and navigate between them."
 
    **Always display the progress checklist before routing.** Then apply:
 
@@ -320,6 +390,12 @@ Recommended effort: **medium**
 - Finalize build record: update verification status, prompt user for additional notes,
   update open items. Decision log closeout.
 
+### Phase Transition (v3.9) (`phase-transition-protocol.md`)
+Recommended effort: **medium**
+- At the completion of a phase in a multi-phase project, read the phase transition
+  protocol. This protocol guides phase closeout, update of the tentative phase plan,
+  and scaffolding of the next phase subfolder.
+
 ---
 
 ## 3. CLAUDE.md Template
@@ -445,12 +521,21 @@ writing files into them — do NOT use `mkdir` via Bash.
 
 ---
 
+## 5a. Permission Settings for Multi-Phase Projects (v3.9)
+
+When scaffolding a multi-phase project or phase subfolder, apply the same
+`.claude/settings.json` permission set as single-phase (above). No additional
+permissions are required for multi-phase operations.
+
+---
+
 ## 6. Protocol Loading
 
 When transitioning between phases:
 - **Planning → Construct:** Read `~/.claude/skills/pcv/construction-protocol.md` and follow it.
 - **Planning → Verify (verification-only scope):** Read `~/.claude/skills/pcv/verification-protocol.md` and follow it.
 - **Construct → Verify:** Read `~/.claude/skills/pcv/verification-protocol.md` and follow it.
+- **Phase complete → Phase Transition (v3.9):** Read `~/.claude/skills/pcv/phase-transition-protocol.md` and follow it.
 
 Each protocol file ends with a transition instruction. Follow it.
 
@@ -482,3 +567,55 @@ Each protocol file ends with a transition instruction. Follow it.
 - **Never use `cd` in Bash commands.** Always operate from the current working
   directory. Compound Bash commands with `cd` trigger security prompts in Claude Code.
   Use absolute paths if needed, or rely on Read/Write/Glob tools instead of Bash.
+
+---
+
+## 8. Multi-Phase Scaffolding (v3.9)
+
+When the user accepts a multi-phase proposal during planning, PCV scaffolds the
+project-level structure:
+
+### 8.1 Project-Level Scaffolding
+
+1. **Create project-level charge.md** with Multi-Phase Configuration section
+   (includes reference to tentative phase plan in the upcoming MakePlan).
+2. **Create project-level plans/make-plan.md** — includes a Tentative Phase Plan
+   section (per spec §9.2). Mark all phases after Phase 1 as "tentative."
+3. **Create plans/logs/master-log.md** with initial entry:
+   ```markdown
+   # Master Decision Log — [Project Name]
+
+   ## Multi-Phase Project Initiated — [Date]
+
+   **Phase structure:** [Number of planned phases]
+   **Phase 1 focus:** [Brief description]
+
+   ---
+   ```
+4. **Update project-level .claude/settings.json** to full permissions (same as single-phase).
+
+### 8.2 Phase 1 Subfolder Scaffolding
+
+After project-level scaffolding, scaffold Phase 1 subfolder:
+
+1. **Create `phase-1-[name]/` folder** (use descriptive name from tentative phase plan).
+2. **Create phase-specific `charge.md`** — fully specified charge for Phase 1 only.
+3. **Create `CLAUDE.md`** with phase identity (see Section 3 template, using phase name).
+4. **Create `plans/.gitkeep`** to establish the plans directory.
+5. **Create `.claude/settings.json`** with full permissions.
+6. **Continue with planning for Phase 1** — do NOT scaffold Phase 2+ subfolders yet.
+
+### 8.3 Mid-Project Conversion to Multi-Phase (v3.9)
+
+If a single-phase project needs to convert to multi-phase mid-stream (Path 3 from
+the enhancement spec), use the same safe restructure protocol as version chaining:
+
+1. **Dry-run phase:** Inventory current project files.
+2. **Confirmation phase:** Present list to user and await approval.
+3. **Copy phase:** Copy all current project contents into `phase-1-[name]/` subfolder.
+4. **Verify phase:** Confirm files in Phase 1 subfolder match the inventory.
+5. **Delete phase:** Remove originals from project root (only after verify succeeds).
+6. **Create project-level structure** (§8.1 above) with master-log.md and project-level MakePlan.
+7. **Resume planning** for Phase 1 in its new subfolder.
+
+---

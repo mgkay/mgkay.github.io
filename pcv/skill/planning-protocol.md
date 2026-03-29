@@ -33,6 +33,19 @@ For each non-blank path field (Project Directory, Export Target, Prior Work):
 If **Prior Work** paths are specified, note the resolved paths for Step 2. Do NOT
 read or modify prior work locations yet — they are read-only during Planning.
 
+### 1.4 Path 1 Detection — Multi-Phase Language (v3.9)
+
+After resolving paths and before charge validation completes, scan the charge narrative
+and any provided `idea.md` for explicit multi-phase language: "multi-phase," "phases,"
+"stages," "sequential milestones," "break this into stages," "this will span multiple
+sessions," or similar declarations.
+
+If detected:
+- Flag this project as a candidate for multi-phase structure.
+- Note the user's specific language and intent (exact phrases for decision log).
+- Proceed to charge validation normally, but flag the detection for Step 5 (tentative
+  phase plan creation).
+
 ---
 
 ## Step 1.5: Agent Configuration Proposal
@@ -40,11 +53,28 @@ read or modify prior work locations yet — they are read-only during Planning.
 After charge validation, propose an agent configuration based on the charge and the
 user's plan tier.
 
-### 1.5.1 Read Plan Tier
+### 1.5.1 Read Plan Tier and Cross-Phase Context (v3.9)
 
 Read `~/.claude/pcv-config.json` for the `plan_tier` value. If the file does not
 exist (SKILL.md Step C should have prompted for it), use `pro` as a conservative
 default and note this to the user.
+
+**NEW in v3.9 — Master Log Read for Cross-Phase Learning:**
+
+If `../plans/logs/master-log.md` exists (indicating a multi-phase project where you
+are planning a phase after the first), read it for cross-phase learning. Use prior
+phase configurations as **advisory context** when applying the proposal logic in
+Step 1.5.3. For example:
+
+- If phase N required a mid-project upgrade from Sonnet to Opus builders due to
+  complexity, start the proposal for phase N+1 with Opus builders if the new phase
+  is similarly complex (qualitative assessment based on charge comparison).
+- If phase N completed smoothly with Haiku builders, you are more likely to propose
+  Haiku for phase N+1 if complexity is comparable.
+
+This learning is advisory — evaluate the current phase's charge independently, and
+the user always has final say. The goal is to prevent patterns of repeatedly starting
+with inadequate configurations and revising mid-phase.
 
 ### 1.5.2 Assess Charge Complexity
 
@@ -297,7 +327,7 @@ For each pattern present, note:
 
 ---
 
-## Step 4: Sequential Clarification
+## Step 4: Sequential Clarification and Multi-Phase Assessment
 
 ### Dependency Ordering
 
@@ -337,9 +367,79 @@ unambiguous and directly tied to the question asked.
 - Re-ask questions already answered in the charge.
 - Ask leading questions that telegraph your preferred answer.
 
+### 4.4 Path 2 Detection — Multi-Phase Assessment (v3.9)
+
+After clarification concludes, assess the project scope against the multi-phase decision
+criteria from the specification (§9.1). **Do this assessment whether or not Path 1
+language was detected earlier.** Use these criteria:
+
+- **Sequential dependencies:** Does the charge describe stages where later work depends
+  on validating or completing earlier work? Example: "extract data, then verify it,
+  then use it to populate templates."
+- **Distinct deliverable milestones:** Are there 2+ clearly separable deliverables,
+  each with its own success criteria, where completing one informs the approach to
+  the next?
+- **Estimated component count:** Will this project likely have 8+ components? Larger
+  counts often benefit from phased construction.
+- **Risk-gated work:** Does the charge describe work where the viability of later
+  steps depends on the outcome of earlier steps?
+- **Cross-session scale:** Is this project large enough that it will likely span
+  multiple Claude Code sessions?
+
+If **three or more criteria** are clearly present:
+
+Present the multi-phase proposal using this format:
+
+> "This project appears to benefit from a multi-phase approach. The charge describes
+> [specific reason: sequential stages / distinct milestones / component count / etc.].
+> Here's a proposed phase structure:"
+>
+> | Phase | Focus | Depends On | Key Deliverable |
+> |-------|-------|------------|-----------------|
+> | 1 | [Scope] | — | [Specific output] |
+> | 2 | [Scope] | Phase 1 | [Specific output] |
+> | 3 | [Scope] | Phase(s) [N] | [Specific output] |
+>
+> *Phases 2+ are tentative and will be refined as each phase completes. Only Phase 1
+> is fully planned now. Would you like to proceed with this multi-phase structure, or
+> build as a single project?*
+
+The user can:
+- **Accept** — Log the decision. PCV scaffolds the multi-phase project structure and
+  proceeds to Step 5 to create the tentative phase plan as part of the MakePlan.
+- **Modify** — Adjust phase boundaries, merge/split phases, reorder. Log the updated
+  structure. Proceed to Step 5.
+- **Decline** — Log the decision. PCV proceeds with single-phase planning. Any multi-phase
+  recommendation is noted in the decision log as "Proposed but declined by user."
+
+### 4.5 Path 3 Detection — Mid-Clarification Emergence (v3.9)
+
+**During clarification** (not just at the end), if unexpected complexity or sequential
+dependencies emerge that suggest multi-phase structure:
+
+Opportunistically propose restructuring:
+
+> "Based on your clarification, this project has sequential dependencies that would
+> benefit from a phased approach. The [specific work] needs to be validated before
+> [later work] can begin. Would you like to restructure into phases?"
+
+If accepted mid-clarification:
+1. Pause clarification.
+2. Apply the safe restructure protocol (see SKILL.md §8.3 for the full steps):
+   dry-run inventory, user confirmation, copy current work into Phase 1 subfolder,
+   verify, delete originals, create project root with master-log.md and project-level
+   MakePlan.
+3. Resume clarification for Phase 1 only.
+4. Proceed to Step 5 with the full tentative phase plan.
+
+If declined:
+- Continue single-phase clarification as planned.
+- Log the multi-phase recommendation in the decision log as "Proposed but declined
+  during clarification."
+
 ---
 
-## Step 5: Draft MakePlan
+## Step 5: Draft MakePlan (and Tentative Phase Plan if applicable)
 
 Write `plans/make-plan.md` with these required sections:
 
@@ -371,6 +471,48 @@ Write `plans/make-plan.md` with these required sections:
    | Rev | Date | Change | Reason |
    |-----|------|--------|--------|
    | 1.0 | [date] | Initial draft | — |
+
+### 5.1 Tentative Phase Plan Section — Optional (v3.9)
+
+**Only include this section if multi-phase was accepted or detected in Step 4.**
+
+If the project is multi-phase (either Path 1, Path 2, or Path 3 acceptance), add
+this section within MakePlan **after** Scope Determination and **before** Revision History:
+
+```markdown
+## Tentative Phase Plan
+
+### Phase 1: [Name] (current — fully planned)
+**Focus:** [What this phase produces]
+**Success criteria:** [Specific, testable]
+**Deliverables:** [Concrete outputs]
+
+### Phase 2: [Name] (tentative)
+**Focus:** [Expected focus, subject to revision]
+**Depends on:** [Which Phase 1 outputs]
+**Open questions:** [What Phase 1 results will clarify]
+
+### Phase 3: [Name] (tentative)
+**Focus:** [Expected focus]
+**Depends on:** [Which prior phase outputs]
+**Open questions:** [What earlier phase results will clarify]
+
+[Additional phases as needed]
+
+**Note:** Phases 2+ are tentative. Phase boundaries, scope, and even the number of
+remaining phases will be refined at each phase transition based on actual results.
+The user may add, remove, merge, or reorder phases at any transition point.
+```
+
+**Key characteristics:**
+- **Phase 1 is fully specified** — it will get a complete charge, MakePlan, and
+  ConstructionPlan through the normal PCV planning process.
+- **Later phases are sketched** — enough detail to show the overall arc and dependencies,
+  but explicitly marked as tentative. No ConstructionPlan, no detailed component design.
+- **The tentative plan is a living document** — it is updated at each phase transition
+  based on what was learned. Phases can be added, removed, merged, split, or reordered.
+- **The tentative plan does not commit tokens** — it's lightweight planning, not a source
+  of analysis paralysis. Spend minimal effort on tentative phases, maximum effort on Phase 1.
 
 ### MakePlan Boundaries — Do NOT:
 
@@ -631,6 +773,9 @@ it is a standard PCV artifact, not an optional feature.**
 - **After Critic review:** Findings, dispositions, user responses.
 - **At each approval gate:** What was approved, any conditions, modifications requested.
 - **Planning artifacts:** What was presented, human response, file path to approved version.
+- **Multi-phase decisions (v3.9):** When Path 1, Path 2, or Path 3 is detected or proposed,
+  log the specific language or criteria that triggered the detection, the user's response,
+  and the resulting phase structure (if accepted).
 
 ### Verbatim Logging Requirement
 

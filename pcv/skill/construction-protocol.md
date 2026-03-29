@@ -161,7 +161,84 @@ dispatching the next builder:
 Mid-project revisions are only proposed when there is concrete evidence (deviation
 count). They are never proposed speculatively.
 
-### 3.5 Planning Artifact References
+### 3.5 Path 3 Detection — Phased Restructuring During Construction (v3.9)
+
+During the component dispatch loop, if construction encounters scope that was
+underestimated at planning time and reveals **sequential dependencies** that would
+benefit from a multi-phase approach, propose restructuring after the current round
+of deviations is resolved.
+
+**Trigger criteria:**
+- Scope creep indicates work that depends on validation of earlier components.
+- The charge did not explicitly declare multi-phase intent (Path 1), and the
+  planning assessment did not detect multi-phase criteria (Path 2).
+- At least one component is complete and demonstrates the pattern.
+
+**Proposal format** (match the style from planning-protocol.md):
+
+> "Based on construction progress, this project has sequential dependencies that
+> would benefit from a phased approach. [Specific reason: e.g., 'data validation
+> must occur before pipeline construction' or 'architecture proof-of-concept
+> should be validated before full implementation']. Would you like to restructure
+> into phases?"
+
+**If accepted:**
+
+1. **Write a "Construction Complete — Phase 1" entry** to the decision log immediately:
+   ```markdown
+   ## Construction Complete — Phase 1 — [Date]
+
+   **Completed components:** [List components built so far]
+   **Reason for phase boundary:** [Explanation of sequential dependencies discovered]
+   **Phase 1 status:** All planned components in Phase 1 complete. Ready to restructure.
+
+   ---
+   ```
+
+2. **Apply the safe restructure protocol:**
+   - Document the current project state (record which files exist, current structure).
+   - Create a multi-phase directory structure at the project root:
+     ```
+     project-root/
+       phase-1/              [Current work moves here]
+       phase-2/              [Scaffolded for next phase]
+       plans/
+         make-plan.md        [Project-level MakePlan with tentative phase plan]
+         logs/
+           master-log.md     [Cross-phase transitions and configurations]
+     ```
+   - **Dry-run phase:** Show the human the planned structure before moving files.
+   - **Confirmation:** Wait for human approval of the restructure.
+   - **Execute:** Copy current deliverable files into `phase-1/`, moving or copying
+     planning artifacts to the root `plans/` directory as appropriate. Create
+     `phase-1/plans/` structure to hold Phase 1-specific planning artifacts.
+   - **Verify:** Confirm all files are intact in their new locations before deleting originals.
+
+3. **Load phase-transition-protocol.md** to continue the multi-phase workflow:
+   ```
+   Read ~/.claude/skills/pcv/phase-transition-protocol.md and follow it.
+   This protocol manages phase boundaries, session resumption, and verification
+   across phases.
+   ```
+
+**If declined:**
+
+- Continue single-phase construction with remaining components.
+- Log the recommendation in the decision log as a declined proposal:
+  ```markdown
+  ## Multi-Phase Proposal (Declined) — [Date]
+
+  **Proposed restructuring:** [Describe what was proposed]
+  **User decision:** Continue single-phase construction
+  **Rationale:** [Note any user explanation]
+
+  ---
+  ```
+- Proceed to Step 3.6 (formerly 3.5) to resume component dispatch.
+
+---
+
+### 3.6 Planning Artifact References
 
 The builder agent references planning artifacts in `plans/artifacts/` during
 construction:

@@ -1,4 +1,3 @@
-
 # PCV Phase Transition Protocol
 
 You are executing the **Phase Transition Protocol**. This protocol runs at phase
