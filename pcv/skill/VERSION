@@ -1,3 +1,3 @@
-3.9
-2026-03-28
-Add multi-phase project support: tentative phase plans, phase transition protocol, master decision log, cross-phase learning, three entry paths, master progress display. Backward compatible with v3.8.
+3.10
+2026-04-05
+Add PCV Lite compressed workflow, deployment/documentation checklist, auto-generated project summary, global settings check at bootstrap. Backward compatible with v3.9.

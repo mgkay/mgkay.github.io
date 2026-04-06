@@ -207,6 +207,37 @@ If the user chooses **(D)**, the project is complete even though tentative phase
    - [Phase N+2: Description]
    - ...
    ```
+
+1.5 **Generate master project summary (v3.10).** Read all per-phase summaries
+    from each completed phase's `plans/` directory (files matching
+    `project-summary-phase-*.md`). Generate a lightweight master summary at
+    the project root:
+
+    Write to `plans/project-summary.md`:
+
+    ```markdown
+    # Project Summary — [Project Name]
+
+    **Author:** [Name from charge]
+    **Date:** [final closeout date]
+    **Phases:** [N completed]
+
+    ## Phase Overview
+
+    | Phase | Name | Summary File |
+    |-------|------|-------------|
+    | 1 | [Name] | [relative path to phase summary] |
+    | 2 | [Name] | [relative path to phase summary] |
+    | ... | ... | ... |
+
+    ## Project Arc
+    [2-3 sentences describing the overall project trajectory across phases —
+     what was accomplished, how the project evolved from phase to phase.]
+    ```
+
+    This is a table-of-contents document that links to individual phase summaries.
+    Keep it lightweight — do not reproduce phase summary content.
+
 2. Commit to Git if available: `"PCV: Phase [N] complete — project deferred pending future phases"`
 3. Inform the user: "Project marked complete. Deferred phases logged in master log for
    future reference."
@@ -221,7 +252,9 @@ If the user chooses **(E)**, merge all remaining tentative phases into one:
 2. Update the tentative phase plan: show all completed phases, then a single "Final"
    phase combining the remaining work.
 3. Update `../plans/make-plan.md`.
-4. Proceed to Step 5, scaffolding the final collapsed phase.
+4. Generate a master project summary linking all completed phase summaries
+   (same format as Option D Step 1.5 above).
+5. Proceed to Step 5, scaffolding the final collapsed phase.
 
 ### 4.7 Handle Option F: Convert to Single-Phase
 
@@ -230,11 +263,13 @@ completed phase:
 
 1. Update the master log: "Converted to single-phase mode — remaining work will be
    addressed via reopen-for-fixes on Phase [N]."
-2. Generate a charge for the remaining work (summary of all remaining tentative phases).
-3. Instruct the user: "Remaining work will be handled via `/pcv reopen` on Phase [N]'s
+2. Generate a master project summary linking all completed phase summaries
+   (same format as Option D Step 1.5 above).
+3. Generate a charge for the remaining work (summary of all remaining tentative phases).
+4. Instruct the user: "Remaining work will be handled via `/pcv reopen` on Phase [N]'s
    subfolder when you're ready." (Per the existing revision chaining workflow.)
-4. Commit to Git if available.
-5. End the session.
+5. Commit to Git if available.
+6. End the session.
 
 ---
 

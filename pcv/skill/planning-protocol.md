@@ -46,6 +46,19 @@ If detected:
 - Proceed to charge validation normally, but flag the detection for Step 5 (tentative
   phase plan creation).
 
+### 1.4a Path 1 Detection — Lite Language (v3.10)
+
+After multi-phase language detection, scan the charge narrative and any provided
+`idea.md` for explicit simplicity language: "simple," "straightforward," "quick,"
+"small project," "lightweight," "not complex," "just need," "basic," or similar
+declarations of simplicity.
+
+If detected:
+- Flag this project as a candidate for PCV Lite mode.
+- Note the user's specific language and intent (exact phrases for decision log).
+- Proceed to charge validation normally, but flag the detection for Step 4.4a
+  (Lite assessment).
+
 ---
 
 ## Step 1.5: Agent Configuration Proposal
@@ -118,7 +131,12 @@ IF complex project (Pattern 3 Math, OR Pattern 1 Code with 5+ components,
     Add note: "Opus builders available if Sonnet/high proves insufficient."
 ELSE IF moderate project (Pattern 1 Code 2-4 components, Pattern 4):
   → Propose: Sonnet, medium effort, subagent
-ELSE (simple — single component, Pattern 2 Prose):
+ELSE IF Pattern 2 Prose — analytical or synthetic (estimated 10+ pages,
+   synthesizing findings across multiple source files, or producing
+   original analysis rather than following a detailed structural template):
+  → Propose: Sonnet, medium effort, subagent
+ELSE (simple — single component, Pattern 2 Prose with bounded insertions
+   or template-driven generation, Pattern 2 under 10 pages):
   → Propose: Haiku, medium effort, subagent
 ```
 
@@ -369,9 +387,10 @@ unambiguous and directly tied to the question asked.
 
 ### 4.4 Path 2 Detection — Multi-Phase Assessment (v3.9)
 
-After clarification concludes, assess the project scope against the multi-phase decision
-criteria from the specification (§9.1). **Do this assessment whether or not Path 1
-language was detected earlier.** Use these criteria:
+**MANDATORY.** After clarification concludes, assess the project scope against the
+multi-phase decision criteria. Log the assessment result in the decision log even if
+multi-phase is not proposed. **Do this assessment whether or not Path 1 language was
+detected earlier.** Use these criteria:
 
 - **Sequential dependencies:** Does the charge describe stages where later work depends
   on validating or completing earlier work? Example: "extract data, then verify it,
@@ -412,6 +431,42 @@ The user can:
 - **Decline** — Log the decision. PCV proceeds with single-phase planning. Any multi-phase
   recommendation is noted in the decision log as "Proposed but declined by user."
 
+### 4.4a Path 2 Detection — Lite Assessment (v3.10)
+
+**MANDATORY.** After multi-phase assessment (Step 4.4), you MUST assess whether the
+project qualifies for PCV Lite. Log the assessment result in the decision log even
+if Lite is not proposed — record which criteria were met and which were not. **Do
+this assessment whether or not Path 1 Lite language was detected earlier.**
+
+Criteria for proposing Lite:
+- Single deliverable pattern (typically Pattern 1 or Pattern 2)
+- 1-3 components estimated
+- No prior work as a build baseline, or minimal baseline (≤5 files). Note: prior
+  work listed as a *review subject* or *reference material* (read-only) still counts
+  against this criterion if the analysis task requires synthesizing across many files.
+- Straightforward success criteria (2-3 items, no complex interdependencies)
+- No multi-phase indicators
+- Low cognitive complexity — the task involves bounded edits, template filling, or
+  straightforward generation, NOT analytical synthesis across many source files
+
+If **three or more criteria** are clearly met (and no criteria strongly contraindicate):
+
+Present the Lite proposal:
+
+> "This project appears straightforward enough for PCV Lite — a compressed
+> workflow with a single combined plan, inline construction, and streamlined
+> verification. The critic still reviews your plan independently. Would you
+> like to use Lite mode, or proceed with full PCV?"
+
+The user can:
+- **Accept** — Log the decision. Route to Step 5a (Lite plan drafting).
+- **Decline** — Log the decision as "Lite proposed but declined by user."
+  Proceed with full PCV planning.
+
+**Interaction with multi-phase:** If Step 4.4 proposed multi-phase AND Step 4.4a
+criteria also suggest Lite, multi-phase takes precedence (a project needing phases
+is not simple). Do not propose Lite if multi-phase was accepted or is pending.
+
 ### 4.5 Path 3 Detection — Mid-Clarification Emergence (v3.9)
 
 **During clarification** (not just at the end), if unexpected complexity or sequential
@@ -437,6 +492,26 @@ If declined:
 - Log the multi-phase recommendation in the decision log as "Proposed but declined
   during clarification."
 
+### 4.5a Path 3 Detection — Mid-Clarification Simplification (v3.10)
+
+**During clarification**, if answers reveal the project is simpler than initially
+assessed (fewer components, simpler requirements, narrower scope than the charge
+suggested):
+
+Opportunistically propose Lite mode:
+
+> "Based on your clarification, this project may be simpler than initially scoped.
+> Would you like to switch to PCV Lite for a faster workflow?"
+
+If accepted mid-clarification:
+1. Log the decision in the decision log.
+2. Convert any existing MakePlan draft notes to lite-plan format.
+3. Route to Step 5a (Lite plan drafting).
+
+If declined:
+- Continue full PCV planning.
+- Log the Lite recommendation as "Proposed but declined during clarification."
+
 ---
 
 ## Step 5: Draft MakePlan (and Tentative Phase Plan if applicable)
@@ -447,6 +522,7 @@ Write `plans/make-plan.md` with these required sections:
 
 1. **Structured Charge Summary** — Reference the charge, don't reproduce it.
    Highlight key requirements and constraints in your own synthesis.
+   If the charge's Deployment: field is populated, surface it in this summary.
 
 2. **Prior Work Assessment** (if applicable) — The three-category findings from Step 2.
    Include scope signal (verification-only / scoped changes / full build).
@@ -514,6 +590,50 @@ The user may add, remove, merge, or reorder phases at any transition point.
 - **The tentative plan does not commit tokens** — it's lightweight planning, not a source
   of analysis paralysis. Spend minimal effort on tentative phases, maximum effort on Phase 1.
 
+### 5a. Draft Lite Plan (v3.10)
+
+When Lite mode is active (accepted via Path 1, 2, or 3), write `plans/lite-plan.md`
+instead of separate make-plan.md and construction-plan.md.
+
+#### Lite Plan Template
+
+Write `plans/lite-plan.md` with these sections:
+
+```markdown
+# Lite Plan — [Project Name]
+
+## Charge Summary
+[Brief synthesis of charge — 3-5 sentences. Surface Deployment field if populated.]
+
+## Deliverable Pattern
+[Single pattern identified, verification approach]
+
+## Approach
+[What will be built, key decisions, file structure.
+ Dependency order if multiple components.]
+
+## Verification Mode
+[Inline / Subagent — with rationale if Pattern 1 or 3.
+ Inline is the default for Pattern 2 and Pattern 4.
+ Subagent is recommended for Pattern 1 (Code) and Pattern 3 (Math)
+ where execution output or independent review has value.]
+
+## Success Criteria Mapping
+[Each criterion from the charge → how it will be verified]
+
+## Revision History
+| Rev | Date | Change | Reason |
+|-----|------|--------|--------|
+| 1.0 | [date] | Initial draft | — |
+```
+
+The lite-plan should be approximately half a page to one page. Do not include
+separate sections for dilemmas, assumptions, or baseline preservation unless
+genuinely needed.
+
+After drafting, proceed to Step 6 (Adversarial Review / Critic) — the critic
+still reviews lite-plan.md, using the same Haiku subagent for independent context.
+
 ### MakePlan Boundaries — Do NOT:
 
 - Propose final design decisions (enumerate options and criteria instead).
@@ -571,6 +691,13 @@ Recommended effort level: medium. This is informational — your session effort 
 - **Scope Critic output:** Add to the prompt: "Do not reproduce file contents in
   your findings — reference by section name and line number. Keep each finding
   concise." This reduces the tokens carried back to the main context.
+
+### Lite Mode Adjustment (v3.10)
+
+When reviewing a Lite project, the Critic reads `plans/lite-plan.md` instead of
+`plans/make-plan.md`. Adjust the prompt paths accordingly. The Critic's scope is
+proportionate to the simpler plan — fewer findings are expected, but the
+independent review remains valuable.
 
 ### Processing Critic Findings
 
@@ -639,6 +766,20 @@ Once approved:
 1. **Append a Gate 1 entry to the decision log now, before doing anything else.**
 2. Commit to Git if available: `"Approve MakePlan for [Project Name]"`
 3. Proceed to Step 9.
+
+### Lite Mode Gate (v3.10)
+
+For Lite projects, Gate 1 approves `plans/lite-plan.md` (the single combined
+artifact). On approval:
+1. Append a Gate 1 entry to the decision log.
+2. Commit to Git if available: `"Approve Lite Plan for [Project Name]"`
+3. **Skip Steps 9-11** (ConstructionPlan drafting and Gate 3). The lite-plan
+   already contains the construction approach.
+4. **Context management recommendation:** Inform the user:
+   > "Lite plan approved. Consider running `/compact` before construction.
+   > `/clear` is also safe — construction reads state from disk."
+5. **Transition to Construct phase:** Read `~/.claude/skills/pcv/construction-protocol.md`
+   and follow it (Lite path — inline construction per the lite-plan).
 
 ---
 
@@ -776,6 +917,9 @@ it is a standard PCV artifact, not an optional feature.**
 - **Multi-phase decisions (v3.9):** When Path 1, Path 2, or Path 3 is detected or proposed,
   log the specific language or criteria that triggered the detection, the user's response,
   and the resulting phase structure (if accepted).
+- **Lite mode decisions (v3.10):** When Lite language (Path 1.4a) is detected or Lite
+  assessment (Path 4.4a) or mid-clarification simplification (Path 4.5a) is proposed,
+  log the specific language or criteria, the user's response, and the routing decision.
 
 ### Verbatim Logging Requirement
 
@@ -831,7 +975,7 @@ Include any inferences drawn or decisions resolved by this answer.]
 If resuming a planning session in a new conversation:
 
 1. Re-read `charge.md`.
-2. Re-read any existing plan documents (`plans/make-plan.md`, `plans/construction-plan.md`).
+2. Re-read any existing plan documents (`plans/make-plan.md`, `plans/construction-plan.md`, `plans/lite-plan.md`).
 3. Re-read `plans/logs/decision-log.md`.
 4. Reconstruct context from these files.
 5. Inform the human of the current state: "Resuming PCV Planning. Current status: [summary]."

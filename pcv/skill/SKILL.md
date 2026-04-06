@@ -59,6 +59,27 @@ disk, do NOT proceed. Instead, tell the user:
 
 This directory has no charge file. Set it up:
 
+0. **Global settings check (v3.10).** Read `~/.claude/settings.json`.
+   - Define "minimal" as: file doesn't exist, or `permissions.allow` is absent/empty,
+     or contains fewer than 3 allow rules.
+   - **If minimal:** Present recommended global permissions:
+     > "PCV works best with these global permissions to avoid repeated prompts
+     > across all Claude Code projects:
+     >
+     > `Read(**)`, `Write(**)`, `Edit(**)`, `Glob(*)`, `Grep(*)`, `Bash(*)`,
+     > `Agent`, `WebSearch`
+     >
+     > These are broad but standard for active development. Would you like to
+     > add them to your global settings (`~/.claude/settings.json`)?"
+     
+     **STOP. Wait for user response.**
+     
+     - **On approval:** Read existing `~/.claude/settings.json` (or create if absent).
+       Merge proposed permissions into `permissions.allow`, preserving all existing
+       entries (`deny`, `hooks`, `model`, `statusLine`, etc.). Write back.
+     - **On decline:** Log in decision log, proceed without changes.
+   - **If user already has established settings (3+ allow rules):** Skip silently.
+
 1. Create `.claude/settings.json` with permission pre-approvals (see Section 5).
    **This must be created first** — its allow rules cover all subsequent file writes.
 2. Create `CLAUDE.md` with project identity placeholder (see Section 3).
@@ -101,6 +122,7 @@ Use the charge file located in Step A for all subsequent references to "the char
    - `Name:` is not `<REPLACE>` or blank.
    - `Project Name:` is not `<REPLACE>` or blank.
    - Other Configuration fields may be blank (they have defaults or are optional).
+   - `Deployment:` may be blank (default: no deployment steps).
    - If validation fails, stop and tell the user which fields need to be completed.
 
    1.5 **Plan tier check.** Read `~/.claude/pcv-config.json`.
@@ -148,6 +170,21 @@ Use the charge file located in Step A for all subsequent references to "the char
        proceed without Git.
 
 3. **Phase detection and progress display (v3.9).**
+
+   ### 3.0 Lite Project Detection (v3.10)
+
+   Before checking for multi-phase or single-phase structure, check for PCV Lite:
+
+   - **Lite indicator:** `plans/lite-plan.md` exists in the current directory.
+   - **Precedence rule:** If both `plans/lite-plan.md` AND `plans/make-plan.md` exist,
+     treat as Lite and display a warning: "Both `lite-plan.md` and `make-plan.md`
+     found — routing as Lite project. Delete `lite-plan.md` if you intend to use
+     full PCV."
+
+   If Lite detected, skip multi-phase and single-phase detection. Go to §3.5 (Lite
+   Progress Display).
+
+   If no `lite-plan.md`, proceed to §3.1 (Multi-Phase Root Detection) as before.
 
    ### 3.1 Multi-Phase Root Detection
 
@@ -242,6 +279,9 @@ Use the charge file located in Step A for all subsequent references to "the char
 
    **Always display the progress checklist before routing.** Then apply:
 
+   **Note:** If `plans/lite-plan.md` exists, Lite routing (§3.5) takes precedence
+   over this table. The table below applies only to full-PCV and multi-phase projects.
+
    | State | Action |
    |:------|:-------|
    | No `make-plan.md` | Start/resume **Planning**. Load `planning-protocol.md`. |
@@ -250,6 +290,32 @@ Use the charge file located in Step A for all subsequent references to "the char
    | Both exist, construction not complete | Assess construction progress. Present status summary. Load `construction-protocol.md`. |
    | Both exist, construction complete, verification not complete | Load `verification-protocol.md`. |
    | **All milestones complete** | **Completed project** (see sub-steps 3a and 3b below). |
+
+   ### 3.5 Lite Progress Display (v3.10)
+
+   If Lite project detected in §3.0:
+
+   Display a compressed 3-milestone checklist:
+
+   ```
+   PCV v[version] — [Project Name] (Lite)
+   [■/□] Charge validated
+   [■/□] Lite Plan approved
+   [■/□] Verification complete
+   ```
+
+   Determine status:
+   - **Charge validated:** The charge file passed validation in sub-step 1 above.
+   - **Lite Plan approved:** `plans/lite-plan.md` exists.
+   - **Verification complete:** Decision log contains a "Project Closeout" entry.
+
+   **Routing table for Lite projects:**
+
+   | State | Action |
+   |:------|:-------|
+   | No `lite-plan.md` | Start planning (Lite detection happens during planning). Load `planning-protocol.md`. |
+   | `lite-plan.md` exists, no closeout | Inline construction and verification. Load `construction-protocol.md` (Lite path). |
+   | All milestones complete | Completed Lite project. Offer version chain or reopen (same as §3a/3b). |
 
    ### 3a. Revision Cycle (completed project — version chaining)
 
@@ -389,12 +455,26 @@ Recommended effort: **medium**
 - Export if configured. Final commit.
 - Finalize build record: update verification status, prompt user for additional notes,
   update open items. Decision log closeout.
+- **Project summary** generated at closeout (`plans/project-summary.md`) — focuses
+  on deliverable content and user decisions, not PCV process details.
+- **Deployment** — automatic execution of mechanical deployment actions when charge
+  `Deployment:` field is populated. Content-heavy updates flagged as follow-up.
 
 ### Phase Transition (v3.9) (`phase-transition-protocol.md`)
 Recommended effort: **medium**
 - At the completion of a phase in a multi-phase project, read the phase transition
   protocol. This protocol guides phase closeout, update of the tentative phase plan,
   and scaffolding of the next phase subfolder.
+
+### PCV Lite (`planning-protocol.md`, `construction-protocol.md`, `verification-protocol.md`)
+Recommended effort: **medium**
+- Compressed two-gate workflow for simple projects.
+- Single combined artifact `plans/lite-plan.md` replaces MakePlan + ConstructionPlan.
+- Critic subagent dispatched (Haiku) for independent review.
+- Inline construction (no builder subagent).
+- Inline verification by default; subagent for Pattern 1 (Code) or Pattern 3 (Math).
+- Project summary generated at closeout (deliverable-focused, all project types).
+- Deployment actions at closeout (when `Deployment:` field populated).
 
 ---
 
@@ -436,6 +516,10 @@ Prior Work:
 <!-- Path(s) to previous versions or reference files to build on.
      Absolute for external locations. Relative for sibling versions
      (e.g., ../v1). Leave blank if starting from scratch. -->
+Deployment:
+<!-- Where is this project deployed or published? (e.g., GitHub Pages,
+     npm, standalone repo). Leave blank if deliverables stay local.
+     When populated, PCV prompts for deployment actions at closeout. -->
 
 ## Project Description
 <!-- What are you building? Who is it for? What should it do? -->
@@ -460,6 +544,7 @@ Prior Work:
   Accepts absolute or relative paths.
 - **Prior Work:** Path(s) to previous versions or reference material. Blank = starting
   from scratch. Accepts absolute or relative paths.
+- **Deployment:** Where the project is deployed/published. Blank = no deployment steps. When populated, verification closeout includes an interactive deployment checklist.
 
 ---
 

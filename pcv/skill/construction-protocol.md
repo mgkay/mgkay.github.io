@@ -236,6 +236,41 @@ of deviations is resolved.
   ```
 - Proceed to Step 3.6 (formerly 3.5) to resume component dispatch.
 
+### 3.5a Lite Inline Construction (v3.10)
+
+When `plans/lite-plan.md` exists (instead of `plans/construction-plan.md`), the
+project is in PCV Lite mode. Construction is done inline by the hub — no builder
+subagent dispatch.
+
+1. Read `plans/lite-plan.md` for the Approach section and file structure.
+2. Build all components directly in the main session. Follow the Approach
+   section as the construction contract.
+3. Apply the same deviation logging rules as full construction (Step 4) —
+   if something doesn't work as planned, explain to the human and wait for
+   approval before changing approach.
+4. Apply the same milestone commit rules as full construction (Step 5) —
+   commit at logical milestones if Git is available.
+5. Generate a build record as normal (`plans/build-record.md`) per Step 7,
+   unless the project is trivial (single-file, no design decisions).
+
+**Skip the sequential dispatch loop (Steps 3.1-3.4)** — there is no builder
+subagent to dispatch. The hub builds everything inline.
+
+After construction is complete, proceed to Step 6 (Construction Complete) as
+normal, then to verification (inline or subagent per the lite-plan's
+Verification Mode).
+
+### 3.5b Note on Mid-Construction Simplification (v3.10)
+
+The symmetric case — discovering a project is simpler than planned mid-construction —
+does **not** trigger a mode switch to Lite. If construction is already underway,
+switching modes adds confusion without saving effort. Instead, note the observation
+in the build record under Lessons Learned: "Project was simpler than anticipated;
+consider PCV Lite for similar projects."
+
+Lite simplification is a planning-time decision (see planning-protocol.md Steps
+1.4a, 4.4a, 4.5a), not a construction-time one.
+
 ---
 
 ### 3.6 Planning Artifact References
@@ -376,7 +411,7 @@ Populated during construction, appended during verification.]
 
 If resuming construction in a new conversation:
 
-1. Read `charge.md` and `plans/construction-plan.md`.
+1. Read `charge.md` and `plans/construction-plan.md` (or `plans/lite-plan.md` for Lite projects).
 2. Read `plans/logs/decision-log.md` for context.
 3. Survey the project directory (use Glob/Bash to check file existence and state).
 4. If Git is available, check `git log --oneline` for construction commit history.

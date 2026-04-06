@@ -83,6 +83,28 @@ If the verifier reports issues that require code or deliverable changes:
    under "Deviations from Plan" for plan changes. Update the "Verification Status"
    section to reflect what was fixed and re-verified.
 
+### 1.5 Lite Inline Verification (v3.10)
+
+When `plans/lite-plan.md` exists, check the **Verification Mode** section of the
+lite-plan to determine the approach:
+
+**If Verification Mode is "Inline":**
+- Hub performs verification directly — no verifier subagent dispatch.
+- Read all deliverables produced during construction.
+- Check each deliverable against the Success Criteria Mapping from lite-plan.md.
+- For Pattern 1 (Code): run tests inline, check compilation/runtime.
+- For Pattern 2 (Prose): structural review, completeness check against charge.
+- For Pattern 3 (Math): check formulation completeness and consistency.
+- For Pattern 4 (Design): visual review against any approved specs.
+- Results go directly to the decision log (no separate verification report file).
+- Skip Steps 2 and 3 (criteria mapping and artifact comparison are embedded in
+  the inline check). Proceed to Step 4 (Export) as normal.
+
+**If Verification Mode is "Subagent" (recommended for Pattern 1/3):**
+- Dispatch the verifier as normal per Steps 1.1-1.3 above.
+- The verifier reads `plans/lite-plan.md` instead of separate make-plan and
+  construction-plan files.
+
 ---
 
 ## Step 2: Charge-to-Deliverable Mapping
@@ -285,6 +307,164 @@ defer this write or batch it with other operations.
 ---
 ```
 
+**v3.10 additions:** After the closeout entry above, Steps 8.05 (Project Summary)
+and 8.06 (Deployment Checklist) fire before Step 8.1 (Multi-Phase Detection).
+
+### 8.05 Project Summary Generation (v3.10)
+
+**Always generate a project summary at closeout**, regardless of project type
+(Lite, full PCV, or multi-phase phase). This fires before multi-phase routing
+(Step 8.1) so that each phase gets its own summary.
+
+#### Source Artifacts
+
+Read these files to assemble the summary:
+- `idea.md` (if exists) — for the Idea section
+- `charge.md` — for author name (Name field), project name, Deployment field,
+  and charge summary
+- `plans/logs/decision-log.md` — for clarification Q&A and key decisions
+- **The deliverables themselves** — read actual deliverable files to summarize
+  their content, findings, or functionality. This is the primary source for
+  the Deliverable Summary section.
+- The Project Closeout entry just written in Step 8 — for verification outcome
+
+#### Determine Filename
+
+- **Single-phase or Lite project:** Write to `plans/project-summary.md`
+- **Multi-phase project (phase subfolder):** Determine phase number and name
+  from the charge or directory name. Write to
+  `plans/project-summary-phase-N-[name].md`
+  (e.g., `plans/project-summary-phase-1-data-extraction.md`)
+
+#### Summary Template
+
+Generate the summary using this structure:
+
+```markdown
+# Project Summary — [Project Name]
+
+**Author:** [Name from charge]
+**Date:** [closeout date]
+[If multi-phase: **Phase:** [N] — [Phase Name]]
+
+## Idea
+[2-3 sentence distillation from idea.md. If idea.md doesn't exist, derive
+from charge description.]
+
+## Charge Summary
+[Key requirements, constraints, and technology choices — not full reproduction.
+3-5 sentences.]
+
+## Planning Decisions
+[For each significant clarification Q&A from the decision log:
+- The question (condensed)
+- The answer
+- How the answer shaped the project scope or content (1 sentence)
+
+Focus on decisions that affected WHAT was built, not how PCV was configured.
+Omit agent configuration details, model choices, and methodology decisions
+unless the user explicitly engaged with them as project substance.]
+
+## Deliverable Summary
+[Read the actual deliverable files and summarize their content. This is the
+most substantial section — it answers "what did this project produce?"
+
+For Pattern 1 (Code): what the software does, key features, architecture.
+For Pattern 2 (Prose): key findings, arguments, recommendations, structure.
+For Pattern 3 (Math): formulation summary, key results, constraints modeled.
+For Pattern 4 (Design): what was designed, layout decisions, visual approach.
+
+Target 1/3 to 1/2 of the total summary length on this section. A reader
+who sees only this section should understand the project's output.]
+
+## Verification
+[Pass/fail per criterion from the closeout entry. Substantive issues found
+and fixed (not formatting or mechanical fixes). 2-3 sentences.]
+
+## Deployment
+<!-- Only include this section if Deployment field was populated in charge -->
+[Which deployment actions were performed. From the Deployment entry in the
+decision log.]
+```
+
+#### Length and Tone
+
+- Target 1-2 pages total.
+- Concise distillation, not reproduction of source artifacts.
+- Written for student submission or project audit — professional tone.
+- The **Deliverable Summary** section should be the most substantial, giving
+  the reader a clear picture of what was actually produced.
+- The **Planning Decisions** section should be the second most substantial,
+  preserving user engagement with the project scope.
+- **Exclude PCV process details** — agent model choices, builder/verifier
+  dispatch mechanics, subagent configuration, methodology lessons learned.
+  These belong in the build record, not the project summary.
+
+### 8.06 Deployment Checklist (v3.10)
+
+**Conditional:** only fires when the `Deployment:` field in `charge.md` is populated.
+If the field is blank or absent, skip this step entirely.
+
+#### Read Deployment Context
+
+1. Read the `Deployment:` field value from `charge.md`.
+2. Survey the project for deployment-relevant files:
+   - Check if a git remote exists (run `git remote -v`).
+   - Check for `README.md` or `docs/` directory.
+   - Check for `VERSION` file or version field in `package.json`.
+   - Check for any deployment-specific files mentioned in the charge.
+
+#### Classify and Execute Deployment Items
+
+Based on the deployment field and detected files, classify each deployment action:
+
+- **Mechanical** — version bumps, file copies to deployment targets, README version
+  updates. Execute these automatically without asking.
+- **Push** — `git push` or equivalent publish action. Execute automatically, but
+  report what was pushed and where.
+- **Content-heavy** — substantial documentation rewrites (e.g., updating a multi-page
+  guide with new feature descriptions). These are too large for a deployment step.
+  Log as open items for a follow-up session, not as deployment checklist items.
+
+**Execution order:** Mechanical edits first → commit (`"PCV deploy: [brief description]"`)
+→ push actions last. This ensures all edits are committed before pushing.
+
+Present a brief summary of what was done (not a per-item prompt):
+
+> **Deployment** (from charge: "[deployment field value]")
+>
+> - [action taken]
+> - [action taken]
+> - [flagged as follow-up: description]
+
+Log each action in the decision log:
+
+```markdown
+## Deployment Action — [Date]
+
+**Item:** [description]
+**Action taken:** [what was done]
+**Result:** [success/failure]
+
+---
+```
+
+Log content-heavy items as open items in the build record rather than executing them.
+
+#### Log Deployment Summary
+
+After all items processed, append a deployment summary entry:
+
+```markdown
+## Deployment Complete — [Date]
+
+**Deployment target:** [from charge field]
+**Items completed:** [list]
+**Follow-up items:** [content-heavy items deferred, or "None"]
+
+---
+```
+
 ### 8.1 Multi-Phase Detection (v3.9)
 
 After writing the closeout entry above, check if this is a multi-phase project by
@@ -304,7 +484,8 @@ testing for `../plans/logs/master-log.md` (relative to the current phase subfold
 
 If resuming verification in a new conversation:
 
-1. Read `charge.md`, `plans/make-plan.md`, and `plans/construction-plan.md`.
+1. Read `charge.md`, `plans/make-plan.md`, and `plans/construction-plan.md`
+   (or `plans/lite-plan.md` for Lite projects).
 2. Read `plans/logs/decision-log.md`.
 3. Check if a verification report already exists.
 4. Inform the human of current state and confirm before proceeding or re-verifying.
