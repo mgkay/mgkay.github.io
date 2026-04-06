@@ -78,6 +78,17 @@ Claude Code does not provide on its own:</p>
   <li><strong>Multi-phase project support.</strong> Projects with sequential dependencies
     can be structured as multiple phases, each a full PCV cycle, with cross-phase learning
     and coordinated phase transitions.</li>
+  <li><strong>PCV Lite.</strong> A compressed two-gate workflow for simple projects &mdash;
+    single combined plan, inline construction, streamlined verification. The critic still
+    reviews independently. PCV proposes Lite when the project is straightforward.</li>
+  <li><strong>Deployment awareness.</strong> When the charge specifies a deployment target
+    (GitHub Pages, npm, etc.), PCV automatically executes mechanical deployment actions
+    at closeout &mdash; version bumps, file copies, pushes &mdash; and flags content-heavy
+    updates as follow-up items.</li>
+  <li><strong>Project summary.</strong> At closeout, PCV generates a deliverable-focused
+    summary (<code>plans/project-summary.md</code>) that captures the idea, key planning
+    decisions, what was actually produced, and verification outcome &mdash; suitable for
+    student submission or project audit.</li>
 </ol>
 
 <!-- ======================================================== -->
@@ -461,7 +472,10 @@ available; the project complexity determines which are proposed.</p>
 <p><strong>What counts as complex?</strong> Pattern 3 (mathematical) projects, Pattern 1
 (code) with 5+ components, or Pattern 4 (design) with strict wireframe compliance.
 <strong>Moderate</strong> is Pattern 1 with 2&ndash;4 components or standard Pattern 4.
-<strong>Simple</strong> is single-component projects or Pattern 2 (prose-only).</p>
+<strong>Simple</strong> is single-component projects or short Pattern 2 (prose) with bounded
+insertions. Note: Pattern 2 analytical or synthetic prose (10+ pages, multi-source
+synthesis) routes to Sonnet, not Haiku &mdash; analytical documents require more
+reasoning than template-driven generation.</p>
 
 <h3>The configuration table</h3>
 
@@ -568,7 +582,7 @@ added, removed, merged, reordered) each time a phase completes.</p>
 
 <p>Running <code>/pcv</code> from the <strong>project root</strong> shows a master overview:</p>
 
-<pre>PCV v3.9 — MyProject (Multi-Phase)
+<pre>PCV v3.10 — MyProject (Multi-Phase)
 
 Phase 1: Data Extraction [Sonnet builders]
   ■ Charge validated
@@ -622,6 +636,144 @@ Phase 2&rsquo;s proposal at that level) but doesn&rsquo;t override your judgment
 phase&rsquo;s charge is evaluated on its own merits.</p>
 
 <!-- ======================================================== -->
+<h2>PCV Lite</h2>
+
+<p>Not every project needs the full three-gate workflow. <strong>PCV Lite</strong> is a
+compressed two-gate path for straightforward projects &mdash; single deliverable pattern,
+1&ndash;3 components, no complex prior work, and low cognitive complexity.</p>
+
+<h3>How Lite gets activated</h3>
+
+<p>PCV evaluates six criteria after clarification questions are resolved:</p>
+
+<ul>
+  <li>Single deliverable pattern (typically Code or Prose)</li>
+  <li>1&ndash;3 estimated components</li>
+  <li>No prior work as a build baseline, or minimal baseline (&le;5 files)</li>
+  <li>Straightforward success criteria (2&ndash;3 items)</li>
+  <li>No multi-phase indicators</li>
+  <li>Low cognitive complexity &mdash; bounded edits or template-driven generation,
+    not analytical synthesis across many source files</li>
+</ul>
+
+<p>If three or more criteria are clearly met, PCV proposes Lite mode. You can accept
+or decline (full PCV continues normally). You can also trigger Lite by using simplicity
+language in your charge (&ldquo;simple,&rdquo; &ldquo;straightforward,&rdquo;
+&ldquo;quick&rdquo;), or PCV may propose it mid-clarification if answers reveal simpler
+scope than expected.</p>
+
+<h3>What&rsquo;s different in Lite</h3>
+
+<table>
+  <thead>
+    <tr><th>Aspect</th><th>Full PCV</th><th>PCV Lite</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Plan documents</td>
+      <td>MakePlan + ConstructionPlan (2 files)</td>
+      <td>Single <code>lite-plan.md</code></td>
+    </tr>
+    <tr>
+      <td>Approval gates</td>
+      <td>3 gates</td>
+      <td>2 gates (charge + lite plan)</td>
+    </tr>
+    <tr>
+      <td>Critic review</td>
+      <td>Haiku subagent</td>
+      <td>Haiku subagent (same)</td>
+    </tr>
+    <tr>
+      <td>Construction</td>
+      <td>Builder subagent per component</td>
+      <td>Inline (hub builds directly)</td>
+    </tr>
+    <tr>
+      <td>Verification</td>
+      <td>Verifier subagent</td>
+      <td>Inline by default; subagent for Code/Math</td>
+    </tr>
+    <tr>
+      <td>Project summary</td>
+      <td>Yes</td>
+      <td>Yes (same)</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The progress display for Lite projects shows three milestones instead of five:</p>
+
+<pre>PCV v3.10 &mdash; MyProject (Lite)
+&#9632; Charge validated
+&#9632; Lite Plan approved
+&#9633; Verification complete</pre>
+
+<!-- ======================================================== -->
+<h2>Deployment</h2>
+
+<p>When the charge&rsquo;s <code>Deployment:</code> field specifies where the project is
+published (e.g., GitHub Pages, npm, a standalone repository), PCV automatically handles
+deployment actions at closeout. No separate deployment step is needed.</p>
+
+<p>PCV classifies each deployment action into one of three categories:</p>
+
+<ul>
+  <li><strong>Mechanical</strong> &mdash; version bumps, file copies to deployment targets,
+    README version updates. Executed automatically.</li>
+  <li><strong>Push</strong> &mdash; <code>git push</code> or equivalent publish action.
+    Executed automatically with a report of what was pushed and where.</li>
+  <li><strong>Content-heavy</strong> &mdash; substantial documentation rewrites (e.g.,
+    updating a multi-page guide). Flagged as follow-up items for a separate session.</li>
+</ul>
+
+<p>Execution order is always: mechanical edits &rarr; commit &rarr; push. This ensures
+all deployment edits are committed before anything is pushed.</p>
+
+<!-- ======================================================== -->
+<h2>Project Summary</h2>
+
+<p>At closeout, PCV generates a <strong>project summary</strong> at
+<code>plans/project-summary.md</code>. The summary is written for student submission or
+project audit &mdash; it captures what the project produced, not how PCV operated.</p>
+
+<p>The summary has five sections:</p>
+
+<ol>
+  <li><strong>Idea</strong> &mdash; 2&ndash;3 sentence distillation of the project concept.</li>
+  <li><strong>Charge Summary</strong> &mdash; key requirements and constraints.</li>
+  <li><strong>Planning Decisions</strong> &mdash; the clarification Q&amp;A that shaped the
+    project scope. Focuses on decisions about <em>what</em> was built, not PCV
+    configuration details.</li>
+  <li><strong>Deliverable Summary</strong> &mdash; the most substantial section. PCV reads
+    the actual deliverables and summarizes their content, findings, or functionality.
+    For code projects: what the software does. For prose: key findings and recommendations.
+    For math: formulation summary. For design: layout decisions.</li>
+  <li><strong>Verification</strong> &mdash; pass/fail and substantive issues found.</li>
+</ol>
+
+<p>A conditional <strong>Deployment</strong> section is included when the charge has a
+deployment target. The summary explicitly excludes PCV process details (agent model
+choices, builder dispatch mechanics, methodology lessons) &mdash; those belong in the
+build record.</p>
+
+<p>For multi-phase projects, each phase gets its own summary file, and a lightweight
+master summary links them together at final closeout.</p>
+
+<!-- ======================================================== -->
+<h2>Global Settings Check</h2>
+
+<p>When PCV scaffolds a new project, it checks your global Claude Code settings at
+<code>~/.claude/settings.json</code>. If the file is missing or has minimal permissions
+(fewer than 3 allow rules), PCV offers to add recommended global permissions:</p>
+
+<pre>Read(**), Write(**), Edit(**), Glob(*), Grep(*), Bash(*), Agent, WebSearch</pre>
+
+<p>These are broad but standard for active development. You can approve or decline &mdash;
+PCV proceeds either way. If you already have established settings, PCV skips this
+silently.</p>
+
+<!-- ======================================================== -->
 <h2>Key Things to Know</h2>
 
 <h3>Progress display</h3>
@@ -629,7 +781,7 @@ phase&rsquo;s charge is evaluated on its own merits.</p>
 <p>Every time you run <code>/pcv</code>, it shows a milestone checklist so you always
 know where the project stands:</p>
 
-<pre>PCV v3.9 — MyProject
+<pre>PCV v3.10 — MyProject
 ■ Charge validated
 ■ MakePlan approved
 □ ConstructionPlan approved
@@ -878,7 +1030,7 @@ using or adapting the workflow:</p>
 </main>
 
 <footer>
-  <p>PCV v3.9 &middot; M. G. Kay &middot; NC State ISE<br>
+  <p>PCV v3.10 &middot; M. G. Kay &middot; NC State ISE<br>
   <a href="index.html">Home</a> &middot; <a href="bootstrap.md" download>Download bootstrap.md</a></p>
 </footer>
 
