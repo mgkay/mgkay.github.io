@@ -1004,6 +1004,121 @@ Claude Code. The installer compares the version in the bootstrap against your in
 version and updates if the new version is higher.</p>
 
 <!-- ======================================================== -->
+<h2 id="reliability-hooks">Reliability Hooks (v3.11-alpha)</h2>
+
+<p>PCV v3.11 introduces a <strong>hook-based reliability layer</strong> that uses Claude
+Code&rsquo;s native hook system to enforce workflow discipline automatically. Phase 1
+(3.11-alpha) ships four hooks that add backstops to the most failure-prone workflow
+transitions &mdash; session end without closeout, context loss after compaction, and
+builder completion tracking. Hooks are per-project (registered in the project&rsquo;s
+<code>.claude/settings.json</code>, not globally) and carry a kill switch for projects
+that do not need them.</p>
+
+<p>Hooks replace manual protocol reminders for mechanical checks but do <em>not</em>
+remove existing protocol text. Phase 2 and Phase 3 will progressively replace protocol
+text for the checks that become fully automated.</p>
+
+<h3>The four reliability hooks</h3>
+
+<table>
+  <thead>
+    <tr><th>Hook</th><th>Event</th><th>Purpose</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Stop closeout</strong></td>
+      <td><code>Stop</code></td>
+      <td>Blocks session end if the project is in the verification phase and no
+        closeout or abandonment entry exists in the decision log. Ensures the
+        verification phase is explicitly resolved before the session ends.</td>
+    </tr>
+    <tr>
+      <td><strong>SessionStart resume</strong></td>
+      <td><code>SessionStart</code></td>
+      <td>Reads the state snapshot (<code>plans/logs/pcv-state.json</code>) written
+        by the PreCompact hook and injects a one-line PCV status into
+        <code>additionalContext</code> at session start. Provides orientation after
+        context loss without requiring <code>/pcv</code>.</td>
+    </tr>
+    <tr>
+      <td><strong>PreCompact snapshot</strong></td>
+      <td><code>PreCompact</code></td>
+      <td>Writes a minimal JSON snapshot of the current PCV state before context
+        compaction. Captures phase, milestone, last decision log entry header, and
+        plan file existence flags. The SessionStart resume hook reads this snapshot.
+        Written atomically via <code>mv</code> so the file is never half-written.</td>
+    </tr>
+    <tr>
+      <td><strong>SubagentStop tracker</strong></td>
+      <td><code>SubagentStop</code></td>
+      <td>Appends a tab-separated entry to <code>plans/logs/builder-tracker.log</code>
+        when a builder subagent completes. Tracks timestamp, subagent type, model,
+        and status. Non-builder subagents are silently ignored. Phase 2 will use
+        this log for enforcement; Phase 1 is tracking only.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Input format and exit semantics</h3>
+
+<p>All hooks are pure Bash scripts at <code>~/.claude/skills/pcv/hooks/*.sh</code>.
+They receive the event payload as JSON on <code>stdin</code>. Input fields used:</p>
+
+<ul>
+  <li><strong>Stop, PreCompact, SessionStart:</strong> No payload fields consumed
+    directly &mdash; hooks derive state from on-disk files (<code>plans/logs/decision-log.md</code>,
+    <code>plans/logs/pcv-state.json</code>, <code>plans/</code> existence).</li>
+  <li><strong>SubagentStop:</strong> Reads <code>subagent_type</code>, <code>model</code>,
+    and <code>status</code> from the payload JSON.</li>
+</ul>
+
+<p>Exit semantics:</p>
+
+<ul>
+  <li><strong>Stop hook:</strong> Exits non-zero (blocking) only when all four conditions
+    hold: (a) project has a <code>plans/</code> directory, (b) verification phase reached
+    (decision log contains <code>## Verification Started</code> or construction plan shows
+    all components complete), (c) no <code>## Project Closeout</code> entry exists, and
+    (d) no <code>## Verification Abandoned</code> entry exists. All other states exit 0
+    (allow). The block message instructs the user to write a closeout or abandonment entry,
+    or set the kill switch.</li>
+  <li><strong>All other hooks:</strong> Always exit 0. Errors are logged to stderr and
+    treated as advisory.</li>
+</ul>
+
+<h3>Auto-retrofit prompt</h3>
+
+<p>When you run <code>/pcv</code> in a project that lacks the four hook entries in its
+<code>.claude/settings.json</code> (e.g., a v3.10-era project) and the project has not
+opted out, PCV prompts you to install them:</p>
+
+<pre>PCV: This project does not have reliability hooks registered.
+Install the four hook entries in .claude/settings.json? (y/n)</pre>
+
+<p>Accepting writes the four entries. Declining creates a sentinel file at
+<code>.claude/.pcv-hooks-opted-out</code> and the prompt does not re-fire. Re-running
+<code>/pcv</code> after acceptance also does not re-prompt (entries already present).</p>
+
+<p>The sentinel file serves double duty: it suppresses the retrofit
+prompt and serves as the kill switch for projects that explicitly do not want hooks.</p>
+
+<h3>Kill switch</h3>
+
+<p>To disable all PCV hooks for a project, create the sentinel file:</p>
+
+<pre>echo "opted-out" > .claude/.pcv-hooks-opted-out</pre>
+
+<p>With this file present, all four hook scripts exit 0 silently regardless of project
+state. To re-enable hooks, delete the file. The kill switch does not affect the PCV
+workflow itself &mdash; planning, construction, and verification proceed normally.</p>
+
+<div class="callout">
+  <p><strong>Spike test results are not published.</strong> The hook-scoping feasibility
+  spike conducted during v3.11 Phase 1 development is an internal artifact. Results are
+  recorded in the project decision log only.</p>
+</div>
+
+<!-- ======================================================== -->
 <h2>Design Principles</h2>
 
 <p>These principles underlie PCV&rsquo;s structure and should be understood by anyone
@@ -1030,7 +1145,7 @@ using or adapting the workflow:</p>
 </main>
 
 <footer>
-  <p>PCV v3.10 &middot; M. G. Kay &middot; NC State ISE<br>
+  <p>PCV v3.11-alpha &middot; M. G. Kay &middot; NC State ISE<br>
   <a href="index.html">Home</a> &middot; <a href="bootstrap.md" download>Download bootstrap.md</a></p>
 </footer>
 

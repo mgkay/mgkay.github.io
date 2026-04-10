@@ -151,6 +151,37 @@ Use the charge file located in Step A for all subsequent references to "the char
    - The plan tier value is available to the planning protocol's Step 1.5 for
      agent configuration proposals.
 
+   1.7 **Hook registration check (auto-retrofit).** Read the current project's
+   `.claude/settings.json`.
+   - **If all four hook entries are present** (`SessionStart`, `Stop`, `PreCompact`,
+     `SubagentStop` each pointing to `~/.claude/skills/pcv/hooks/*.sh`) → skip
+     silently; hooks already registered.
+   - **If `.claude/.pcv-hooks-opted-out` exists** → skip silently; user has
+     declined hooks for this project.
+   - **If hooks are missing AND no opt-out marker file exists** → prompt the user:
+     > "This project doesn't have PCV reliability hooks registered. These hooks
+     > provide automatic state snapshots, session resume context, closeout
+     > enforcement, and builder tracking. Would you like to install them? (y/n)"
+
+     **STOP. Wait for user response.**
+
+     - **On "y":** Read the current `.claude/settings.json`. Add the following
+       `"hooks"` key as a top-level sibling of `"permissions"`, preserving all
+       existing keys. Write the merged JSON back to `.claude/settings.json`.
+       Log in decision log: "Hook Registration — auto-retrofit accepted."
+       ```json
+       "hooks": {
+         "SessionStart": [{"hooks": [{"type": "command", "command": "bash ~/.claude/skills/pcv/hooks/session-start-resume.sh"}]}],
+         "Stop": [{"hooks": [{"type": "command", "command": "bash ~/.claude/skills/pcv/hooks/stop-closeout.sh"}]}],
+         "PreCompact": [{"hooks": [{"type": "command", "command": "bash ~/.claude/skills/pcv/hooks/pre-compact-snapshot.sh"}]}],
+         "SubagentStop": [{"hooks": [{"type": "command", "command": "bash ~/.claude/skills/pcv/hooks/subagent-stop-track.sh"}]}]
+       }
+       ```
+     - **On "n":** Create the file `.claude/.pcv-hooks-opted-out` with content
+       `opted-out` (this sentinel file prevents future re-prompting). Log in
+       decision log: "Hook Registration — auto-retrofit declined, opt-out marker
+       set." Continue without error.
+
 2. **Git setup.** Perform once per project. **Do NOT use `cd` in any Bash command —
    always operate from the current working directory.**
    - Use Glob to check for `.git` in the current directory. Do NOT use Bash for this check.
@@ -595,6 +626,48 @@ When creating `.claude/settings.json` during scaffold:
          "Glob(*)",
          "Grep(*)",
          "Bash(git *)"
+       ]
+     },
+     "hooks": {
+       "SessionStart": [
+         {
+           "hooks": [
+             {
+               "type": "command",
+               "command": "bash ~/.claude/skills/pcv/hooks/session-start-resume.sh"
+             }
+           ]
+         }
+       ],
+       "Stop": [
+         {
+           "hooks": [
+             {
+               "type": "command",
+               "command": "bash ~/.claude/skills/pcv/hooks/stop-closeout.sh"
+             }
+           ]
+         }
+       ],
+       "PreCompact": [
+         {
+           "hooks": [
+             {
+               "type": "command",
+               "command": "bash ~/.claude/skills/pcv/hooks/pre-compact-snapshot.sh"
+             }
+           ]
+         }
+       ],
+       "SubagentStop": [
+         {
+           "hooks": [
+             {
+               "type": "command",
+               "command": "bash ~/.claude/skills/pcv/hooks/subagent-stop-track.sh"
+             }
+           ]
+         }
        ]
      }
    }

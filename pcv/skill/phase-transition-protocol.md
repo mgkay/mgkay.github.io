@@ -325,6 +325,48 @@ Copy the project root's `.claude/settings.json` to the phase subfolder:
       "Grep(*)",
       "Bash(git *)"
     ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/skills/pcv/hooks/session-start-resume.sh"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/skills/pcv/hooks/stop-closeout.sh"
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/skills/pcv/hooks/pre-compact-snapshot.sh"
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/skills/pcv/hooks/subagent-stop-track.sh"
+          }
+        ]
+      }
+    ]
   }
 }
 ```

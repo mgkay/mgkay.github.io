@@ -144,6 +144,53 @@ If you don&rsquo;t have Claude Code yet, install it first:
   </li>
 </ol>
 
+<p><!-- Version History -->
+<h2>Version History</h2>
+
+<table>
+  <thead>
+    <tr><th>Version</th><th>Date</th><th>Summary</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>3.11-alpha</strong></td>
+      <td>2026-04-09</td>
+      <td>Reliability Hooks (Phase 1 of 3) &mdash; Stop closeout enforcement,
+        SessionStart resume injection, PreCompact state snapshot, SubagentStop
+        builder tracker. Per-project hook registration, auto-retrofit prompt for
+        v3.10 projects, kill switch.</td>
+    </tr>
+    <tr>
+      <td><strong>3.10</strong></td>
+      <td>2026-04-05</td>
+      <td>PCV Lite compressed workflow, deployment/documentation checklist,
+        auto-generated project summary, global settings check at bootstrap.</td>
+    </tr>
+    <tr>
+      <td><strong>3.9</strong></td>
+      <td>2026-03-28</td>
+      <td>Multi-phase project support, three entry paths, phase transition protocol,
+        cross-phase learning.</td>
+    </tr>
+    <tr>
+      <td><strong>3.8</strong></td>
+      <td>2026-03-28</td>
+      <td>Plan tier declaration, adaptive agent configuration, inline research option,
+        economy configurations.</td>
+    </tr>
+    <tr>
+      <td><strong>3.7</strong></td>
+      <td>2026-03-26</td>
+      <td>Bash safety rules in construction and builder protocols.</td>
+    </tr>
+    <tr>
+      <td><strong>3.6</strong></td>
+      <td>2026-03-24</td>
+      <td>Subagent architecture (critic, research, builder, verifier agents), bootstrap installer.</td>
+    </tr>
+  </tbody>
+</table>
+
 <p>PCV uses <strong>specialized agents</strong> for context isolation and token efficiency:
 a research agent analyzes prior work, a builder agent constructs each component in
 its own context, a verifier agent checks deliverables, and a critic agent reviews
@@ -174,7 +221,7 @@ troubleshooting tips.</p>
 </main>
 
 <footer>
-  <p>PCV v3.10 &middot; M. G. Kay &middot; NC State ISE<br>
+  <p>PCV v3.11-alpha &middot; M. G. Kay &middot; NC State ISE<br>
   <a href="guide.html">Workflow Guide</a></p>
 </footer>
 
