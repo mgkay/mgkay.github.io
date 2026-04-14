@@ -138,28 +138,17 @@ troubleshooting.</p>
   <tbody>
     <tr>
       <td><strong>3.11</strong></td>
-      <td>2026-04-12</td>
-      <td>Permissions + Format + Scaffolding Migration (Phase 3 of 3). Five new hook
-        scripts: <code>scaffold-settings.sh</code> (single source of truth for
-        settings.json), <code>tech-permissions-scan.sh</code> (technology permission
-        detection), <code>validate-pcv-format.sh</code> (structural validation),
-        <code>post-tool-use-format.sh</code> (real-time format enforcement via
-        PostToolUse), <code>scaffold-phase.sh</code> (mechanical phase scaffolding).
-        Stop hook expanded to 7-state matrix with acceptance-testing sub-state.
-        Protocol text reduced ~150 lines. GitHub Pages restructured to quickstart +
-        reference format.</td>
-    </tr>
-    <tr>
-      <td><strong>3.11-beta</strong></td>
-      <td>2026-04-10</td>
-      <td>Routing + Dispatch Migration (Phase 2 of 3). Session-start routing hook
-        replaces SKILL.md prose routing. SKILL.md reduced by 84 lines.</td>
-    </tr>
-    <tr>
-      <td><strong>3.11-alpha</strong></td>
-      <td>2026-04-09</td>
-      <td>Reliability Hooks (Phase 1 of 3). Stop closeout enforcement, SessionStart
-        resume injection, PreCompact state snapshot, SubagentStop builder tracker.</td>
+      <td>2026-04-14</td>
+      <td>Hook-based architecture migration (6 phases). Deterministic operations
+        moved from protocol prose to bash hook scripts: reliability hooks (Stop,
+        SessionStart, PreCompact, SubagentStop), routing dispatch, permissions
+        and format enforcement (<code>scaffold-settings.sh</code>,
+        <code>tech-permissions-scan.sh</code>, <code>validate-pcv-format.sh</code>,
+        <code>post-tool-use-format.sh</code>). Protocol compressed to spine +
+        fragment architecture (48% reduction). Scope-creep detection and persistence
+        assurance rules. Token and speed optimization: always-loaded context reduced
+        27%, fragment mergers, shared <code>pcv-lib.sh</code> helpers, jq fast-path
+        with auto-provisioning, deliverable surfacing, compact decision log format.</td>
     </tr>
     <tr>
       <td><strong>3.10</strong></td>
