@@ -1,0 +1,1618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PCV Reference</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1><span>PCV</span> Reference</h1>
+  <p class="subtitle">Component catalog and reference for PCV v3.11</p>
+  <p class="affiliation">NC State &middot; ISE</p>
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="reference.html" class="active">Reference</a>
+  </nav>
+</header>
+
+<main>
+
+<!-- ======================================================== -->
+<h2 id="toc">Contents</h2>
+
+<div class="cols">
+  <div class="col">
+    <strong>Why &amp; What</strong>
+    <ul>
+      <li><a href="#why">Why This Workflow</a></li>
+      <li><a href="#adds">What PCV Adds</a></li>
+      <li><a href="#principles">Design Principles</a></li>
+    </ul>
+    <strong>Core Workflow</strong>
+    <ul>
+      <li><a href="#phases">The Three Phases</a></li>
+      <li><a href="#stages">What to Expect at Each Stage</a></li>
+      <li><a href="#patterns">Four Deliverable Patterns</a></li>
+      <li><a href="#prior-work">Prior Work Analysis</a></li>
+    </ul>
+  </div>
+  <div class="col">
+    <strong>Project Variants</strong>
+    <ul>
+      <li><a href="#lite">PCV Lite</a></li>
+      <li><a href="#multi-phase">Multi-Phase Projects</a></li>
+      <li><a href="#revision">Revising a Completed Project</a></li>
+    </ul>
+    <strong>Configuration &amp; Operations</strong>
+    <ul>
+      <li><a href="#config">Adaptive Agent Configuration</a></li>
+      <li><a href="#paths">Paths in the Charge</a></li>
+      <li><a href="#deployment">Deployment</a></li>
+      <li><a href="#summary">Project Summary</a></li>
+      <li><a href="#global-settings">Global Settings Check</a></li>
+    </ul>
+  </div>
+  <div class="col">
+    <strong>Architecture</strong>
+    <ul>
+      <li><a href="#agents">Subagent Architecture</a></li>
+      <li><a href="#tokens">Token Efficiency</a></li>
+      <li><a href="#protocol-arch">Protocol Architecture</a></li>
+      <li><a href="#keys">Key Things to Know</a></li>
+    </ul>
+    <strong>v3.11 Reliability Layer</strong>
+    <ul>
+      <li><a href="#hooks">Reliability Hooks</a></li>
+      <li><a href="#format-enforcement">Format Enforcement</a></li>
+      <li><a href="#permissions">Permission Management</a></li>
+      <li><a href="#scaffolding">Phase Scaffolding</a></li>
+      <li><a href="#behavioral">Behavioral Constraints</a></li>
+      <li><a href="#optimization">Token &amp; Speed Optimization</a></li>
+    </ul>
+    <strong>Help</strong>
+    <ul>
+      <li><a href="#faq">FAQ / Troubleshooting</a></li>
+    </ul>
+  </div>
+</div>
+
+<!-- ======================================================== -->
+<h2 id="why">Why This Workflow</h2>
+
+<p>When you ask an AI coding assistant to build software directly from a description,
+the AI makes dozens of implicit decisions &mdash; which packages to use, how components
+connect, what the interfaces look like, how errors are handled, what the GUI layout
+looks like. Many of these decisions are reasonable in isolation but don&rsquo;t match what
+you intended. You discover this after the code is written, leading to costly rework
+or starting over.</p>
+
+<p>The gap between &ldquo;what you want software to do&rdquo; and &ldquo;the complexity of
+making it work in code&rdquo; is where this workflow adds value. Package ecosystems,
+interface contracts, dependency management, build systems, runtime environments, GUI
+frameworks, testing infrastructure, data flow, and compatibility with existing code
+all create opportunities for the AI to guess wrong. Planning surfaces these decisions
+explicitly so you can make them before anything is built.</p>
+
+<p>PCV separates <em>deciding what to build</em> from <em>building it</em>. During
+planning, Claude Code works with you to make decisions explicitly &mdash; surfacing trade-offs,
+asking you to choose, and recording the rationale. The result is a detailed plan that
+Claude Code then executes without guessing.</p>
+
+<!-- ======================================================== -->
+<h2 id="adds">What PCV Adds Beyond Native Claude Code</h2>
+
+<p>Claude Code is already highly capable. PCV adds specific capabilities that native
+Claude Code does not provide on its own:</p>
+
+<ol>
+  <li><strong>Sequential clarification.</strong> One question at a time, dependency-ordered,
+    so each answer can inform subsequent questions. Native Claude Code tends to ask
+    batched questions or skip clarification entirely.</li>
+  <li><strong>Adversarial review.</strong> A separate Critic agent (running in its own
+    context window) challenges the plan before you approve it, catching assumptions,
+    contradictions, and gaps.</li>
+  <li><strong>Human approval gates.</strong> Three explicit gates (MakePlan, planning
+    artifacts, ConstructionPlan) where you review and approve before construction begins.
+    Nothing is built without your sign-off.</li>
+  <li><strong>Auditable decision trail.</strong> A verbatim decision log records every
+    question, answer, and interpretation &mdash; useful for reviewing how decisions were made
+    and for educational purposes.</li>
+  <li><strong>Pattern-specific verification.</strong> Verification is tailored to the
+    deliverable type: automated tests for code, structural review for prose, correctness
+    checks for math, visual comparison for design.</li>
+  <li><strong>Prior work analysis.</strong> When building on existing code or documents,
+    a dedicated research agent analyzes your prior work in an isolated context and
+    returns a structured assessment to determine the right scope &mdash; from
+    verification-only to full rewrite &mdash; with guards against both over- and under-scoping.</li>
+  <li><strong>Planning artifact gates.</strong> Wireframes, mathematical formulations,
+    and test specifications are reviewed and approved before construction, preventing
+    the costly rework that comes from building first and discovering misalignment later.</li>
+  <li><strong>Adaptive agent configuration.</strong> PCV proposes economy or full agent
+    configurations based on project complexity, with mid-project revision if the initial
+    configuration proves insufficient.</li>
+  <li><strong>Multi-phase project support.</strong> Projects with sequential dependencies
+    can be structured as multiple phases, each a full PCV cycle, with cross-phase learning
+    and coordinated phase transitions.</li>
+  <li><strong>PCV Lite.</strong> A compressed two-gate workflow for simple projects &mdash;
+    single combined plan, inline construction, streamlined verification. The critic still
+    reviews independently. PCV proposes Lite when the project is straightforward.</li>
+  <li><strong>Deployment awareness.</strong> When the charge specifies a deployment target
+    (GitHub Pages, npm, etc.), PCV automatically executes mechanical deployment actions
+    at closeout &mdash; version bumps, file copies, pushes &mdash; and flags content-heavy
+    updates as follow-up items.</li>
+  <li><strong>Project summary.</strong> At closeout, PCV generates a deliverable-focused
+    summary (<code>plans/project-summary.md</code>) that captures the idea, key planning
+    decisions, what was actually produced, and verification outcome &mdash; suitable for
+    student submission or project audit.</li>
+</ol>
+
+<!-- ======================================================== -->
+<h2 id="principles">Design Principles</h2>
+
+<p>These principles underlie PCV&rsquo;s structure and should be understood by anyone
+using or adapting the workflow:</p>
+
+<ol>
+  <li><strong>Human authority over all decisions.</strong> The AI proposes; you approve.
+    No assumption, trade-off resolution, or scope change enters the plan without your
+    explicit consent.</li>
+  <li><strong>Explicit over implicit.</strong> Decisions made implicitly by the AI are the
+    primary source of rework. PCV forces key decisions to be made explicitly during
+    planning.</li>
+  <li><strong>Separation of planning and execution.</strong> Planning requires reasoning
+    about trade-offs, alternatives, and risks. Construction requires efficient execution
+    of settled decisions. Separating them improves both.</li>
+  <li><strong>Incremental verification.</strong> Building one component at a time with
+    verification at each step catches errors early. Building everything then testing is
+    consistently worse.</li>
+  <li><strong>Auditable decision trail.</strong> The decision log creates a complete record
+    of how the project went from idea to deliverable &mdash; valuable for learning, for
+    comparing approaches, and for understanding why decisions were made.</li>
+</ol>
+
+<!-- ======================================================== -->
+<h2 id="phases">The Three Phases</h2>
+
+<div class="phases">
+  <div class="phase-box">Plan<small>Clarify &amp; decide</small></div>
+  <div class="phase-arrow">&#x2192;</div>
+  <div class="phase-box">Construct<small>Build per plan</small></div>
+  <div class="phase-arrow">&#x2192;</div>
+  <div class="phase-box">Verify<small>Check &amp; confirm</small></div>
+</div>
+
+<h3>Plan</h3>
+
+<p>The planning phase transforms your project description (the &ldquo;charge&rdquo;) into
+two approved documents:</p>
+
+<ul>
+  <li><strong>MakePlan</strong> &mdash; High-level plan: what to build, trade-offs resolved,
+    assumptions identified, scope determined, verification criteria set.</li>
+  <li><strong>ConstructionPlan</strong> &mdash; Detailed build specification: file structure,
+    component design, dependency order, verification strategy. May include function
+    signatures and pseudocode, but not full implementations.</li>
+</ul>
+
+<p>Between these documents, PCV may also produce <strong>planning artifacts</strong> &mdash;
+wireframes for visual projects, mathematical formulations for analytical work, test
+specifications for code &mdash; that you review and approve at Gate 2.</p>
+
+<h3>Construct</h3>
+
+<p>PCV dispatches a <strong>builder agent</strong> for each component in the ConstructionPlan,
+one at a time in dependency order. Each builder works in its own context window &mdash; reading
+files, writing code, and running tests without accumulating overhead in the main session.
+The main session orchestrates: dispatch, review the summary, handle any deviations (which
+require your approval), then dispatch the next component. Git commits happen silently at
+milestones.</p>
+
+<h3>Verify</h3>
+
+<p>PCV dispatches a <strong>verifier agent</strong> with pattern-specific instructions
+(see <a href="#patterns">Four Deliverable Patterns</a> below). The verifier runs tests,
+checks structure, validates formulations, or compares designs in its own context, then
+returns a report. The main session maps each success criterion from your charge to
+specific deliverable components, compares deliverables against approved planning artifacts,
+and produces the final verification report. If an export target is configured, verified
+deliverables are copied to that location.</p>
+
+<!-- ======================================================== -->
+<h2 id="stages">What to Expect at Each Stage</h2>
+
+<h3>Describing your idea</h3>
+
+<p>When you run <code>/pcv</code> in an empty project directory, PCV scaffolds the workspace:</p>
+
+<ul>
+  <li><code>idea.md</code> &mdash; Where you describe your project idea (informal, freeform).</li>
+  <li><code>charge.md</code> &mdash; The structured project specification (PCV generates this for you).</li>
+  <li><code>CLAUDE.md</code> &mdash; A minimal project identity file (you customize it).</li>
+  <li><code>.claude/settings.json</code> &mdash; Permission pre-approvals so PCV can operate
+    without per-action prompts.</li>
+</ul>
+
+<p>Write your idea in <code>idea.md</code> &mdash; what you&rsquo;re building, any constraints,
+what success looks like. Be informal and detailed; PCV will structure it for you.
+Then tell Claude you&rsquo;re ready.</p>
+
+<h3>Charge generation</h3>
+
+<p>PCV reads your <code>idea.md</code> and generates a draft charge. The draft is
+presented <strong>in chat as a preview</strong> (not written to disk) so you can see
+what PCV understood. Below the preview, PCV asks clarifying questions one at a time
+about fields it&rsquo;s uncertain about.</p>
+
+<p>After questions are resolved, PCV asks: &ldquo;Should I write this charge to disk?&rdquo;
+The charge is only written to <code>charge.md</code> on your confirmation. Planning
+begins automatically from there &mdash; no need to run <code>/pcv</code> again.</p>
+
+<div class="callout">
+  <p><strong>Cross-session recovery.</strong> If you close Claude Code after scaffolding
+  but before the charge is generated, run <code>/pcv</code> again. PCV detects the
+  unfilled charge template and populated <code>idea.md</code> and picks up where you
+  left off.</p>
+</div>
+
+<h3>Clarification questions</h3>
+
+<p>PCV asks clarification questions <strong>one at a time</strong>. It starts with the
+question whose answer has the most downstream impact, waits for your response, then
+re-evaluates remaining questions &mdash; some may be resolved automatically, others may have
+narrowed options. Maximum 8 questions; if more are needed, PCV flags that the charge
+may need more detail.</p>
+
+<div class="callout">
+  <p><strong>Answer each question carefully.</strong> Your answers directly shape the plan.
+  PCV records the exact text of each question and your response in the decision log.</p>
+</div>
+
+<h3>Critic review and dispositions</h3>
+
+<p>After drafting the MakePlan, PCV spawns an adversarial Critic agent that reads the
+charge, the plan, and the decision log, then challenges the plan. The Critic looks for
+weak assumptions, internal contradictions, missing edge cases, unstated risks,
+requirements gaps, and verification holes.</p>
+
+<p>For each finding, the Critic proposes a disposition:</p>
+
+<ul>
+  <li><strong>Resolved</strong> &mdash; The issue can be fixed by revising the plan. PCV describes
+    the revision it will make.</li>
+  <li><strong>Escalate</strong> &mdash; The issue requires your judgment. PCV presents the finding
+    and asks you a focused question. Escalated findings are presented one at a time, just
+    like clarification questions.</li>
+  <li><strong>Acknowledge</strong> &mdash; The issue is genuine but unresolvable at planning time.
+    PCV explains why.</li>
+</ul>
+
+<p><strong>You have final say on every disposition.</strong> If you think an
+&ldquo;Acknowledge&rdquo; item can actually be resolved, say so. Nothing enters
+Assumptions &amp; Unknowns without your approval.</p>
+
+<h3>Approval gates</h3>
+
+<p>PCV has three gates where you explicitly approve before proceeding:</p>
+
+<table>
+  <thead>
+    <tr><th>Gate</th><th>What&rsquo;s approved</th><th>What happens next</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Gate 1</strong></td>
+      <td>MakePlan &mdash; scope, trade-offs, criteria</td>
+      <td>ConstructionPlan is drafted</td>
+    </tr>
+    <tr>
+      <td><strong>Gate 2</strong></td>
+      <td>Planning artifacts &mdash; wireframes, formulations, test specs</td>
+      <td>ConstructionPlan is finalized</td>
+    </tr>
+    <tr>
+      <td><strong>Gate 3</strong></td>
+      <td>ConstructionPlan &mdash; file structure, components, build order</td>
+      <td>Construction begins</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>At each gate, you can request editorial changes (applied immediately) or substantive
+changes (PCV confirms interpretation, then revises). PCV does not proceed until you
+explicitly approve.</p>
+
+<h3>Construction</h3>
+
+<p>PCV dispatches a builder agent for each component in the ConstructionPlan&rsquo;s
+dependency order &mdash; one at a time. Each builder works in an isolated context window,
+keeping the main session lean. You observe but typically don&rsquo;t need to intervene
+unless a builder reports a deviation, which requires your approval and is logged.</p>
+
+<p>At the end of construction, PCV generates a <strong>build record</strong>
+(<code>plans/build-record.md</code>) that captures the implementation narrative:
+files modified, design decisions made during construction, deviations from the plan,
+and lessons learned. The build record is assembled automatically from the decision log,
+construction plan, and Git history &mdash; you review it but don&rsquo;t need to write it.
+It remains open through verification.</p>
+
+<h3>Verification</h3>
+
+<p>PCV dispatches a verifier agent with pattern-specific instructions. The verifier runs
+in its own context &mdash; executing tests, reading deliverables, checking formulations &mdash; and
+returns a structured report. The main session maps each success criterion to deliverable
+components, compares deliverables to planning artifacts, and produces the final summary.
+If verification reveals issues requiring fixes, those fixes and any new design decisions
+are appended to the build record.</p>
+
+<h4>Acceptance testing</h4>
+
+<p>After automated verification, PCV offers you the chance to test the deliverable
+hands-on before closing out. It suggests a pattern-appropriate approach:</p>
+
+<ul>
+  <li><strong>Code:</strong> run a demo notebook or test script</li>
+  <li><strong>Prose:</strong> read through the deliverable and flag issues</li>
+  <li><strong>Math:</strong> work through a formulation with known inputs</li>
+  <li><strong>Design:</strong> interact with the rendered output</li>
+</ul>
+
+<p>Acceptance testing is optional &mdash; you can decline and proceed to closeout. Any issues
+you report are fixed and logged in both the decision log and build record.</p>
+
+<p>Before closing out, PCV asks if you have any additional notes or observations to add
+to the build record &mdash; things like design considerations that didn&rsquo;t come up
+in the workflow, advice for future work, or anything else worth preserving. The build
+record is then finalized alongside the decision log closeout.</p>
+
+<!-- ======================================================== -->
+<h2 id="patterns">The Four Deliverable Patterns</h2>
+
+<p>PCV adapts its planning, construction, and verification to the type of deliverable.
+Most projects combine multiple patterns.</p>
+
+<h3>Pattern 1 &mdash; Code</h3>
+<p><strong>Examples:</strong> Applications, packages, data pipelines, simulations, tools.</p>
+<p><strong>Planning artifact:</strong> Test specification (when tests are part of success criteria) &mdash;
+what unit tests cover, known-input/known-output cases, edge cases, error scenarios.</p>
+<p><strong>Construction:</strong> Build-test cycle. Each component verified in isolation before
+proceeding to dependents.</p>
+<p><strong>Verification:</strong> Automated tests, compilation, runtime checks, error handling
+of edge cases.</p>
+
+<h3>Pattern 2 &mdash; Prose/Documents</h3>
+<p><strong>Examples:</strong> SOPs, reports, technical documentation, guides.</p>
+<p><strong>Planning artifact:</strong> None required (the ConstructionPlan serves as specification).
+Optional artifacts if requested.</p>
+<p><strong>Construction:</strong> Build-review cycle. Sections constructed per plan.</p>
+<p><strong>Verification:</strong> All sections present, content is project-specific, coherent
+flow, meets readability standard.</p>
+
+<h3>Pattern 3 &mdash; Mathematical/Analytical</h3>
+<p><strong>Examples:</strong> LP/MIP formulations, optimization models, analytical frameworks.</p>
+<p><strong>Planning artifact:</strong> Formal mathematical specification &mdash; index sets, parameters,
+decision variables with domains, objective function, all constraints with labels, in LaTeX.</p>
+<p><strong>Construction:</strong> Build-verify cycle against the approved formulation.</p>
+<p><strong>Verification:</strong> Correctness, constraint satisfaction, dimensional consistency,
+variable domain completeness, implementability from document alone.</p>
+
+<h3>Pattern 4 &mdash; Design-and-Render</h3>
+<p><strong>Examples:</strong> Dashboards, HTML displays, Andon boards, visualizations.</p>
+<p><strong>Planning artifact:</strong> Wireframe or layout mockup &mdash; spatial layout, relative sizing,
+information hierarchy. Approved wireframes become binding layout contracts.</p>
+<p><strong>Construction:</strong> Build-review cycle. Implementation matches wireframe.</p>
+<p><strong>Verification:</strong> Visual comparison to approved wireframe, &ldquo;glance test&rdquo;
+for the target context, accessibility, display-target requirements.</p>
+
+<!-- ======================================================== -->
+<h2 id="prior-work">Prior Work Analysis</h2>
+
+<p>When your charge references existing code, documents, or other prior work, PCV
+dispatches a <strong>research agent</strong> to perform a structured analysis in its own
+context window. This keeps file-reading overhead out of the main planning session.
+The research agent:</p>
+
+<ol>
+  <li><strong>Inventories</strong> &mdash; What files and artifacts exist? What is the structure,
+    quality, and completeness?</li>
+  <li><strong>Three-category classification</strong> &mdash; Each finding is classified as:
+    already decided by you (the charge addresses it), a new issue (becomes a clarification
+    question), or a potential conflict (charge vs. prior work).</li>
+  <li><strong>Scope determination</strong> &mdash; One of three outcomes:
+    <ul>
+      <li><strong>Verification-only</strong> &mdash; Prior work meets all success criteria. Proceed
+        directly to verification.</li>
+      <li><strong>Scoped changes</strong> &mdash; Structure is sound but specific content needs
+        targeted revision.</li>
+      <li><strong>Full build</strong> &mdash; Prior work is architecturally flawed or fundamentally
+        misaligned.</li>
+    </ul>
+  </li>
+</ol>
+
+<p>PCV guards against <strong>over-scoping</strong> (defaulting to full rewrite when the
+structure is reusable) and <strong>under-scoping</strong> (calling generic content
+&ldquo;substantially meets&rdquo; when the charge requires project-specific detail).</p>
+
+<!-- ======================================================== -->
+<h2 id="lite">PCV Lite</h2>
+
+<p>Not every project needs the full three-gate workflow. <strong>PCV Lite</strong> is a
+compressed two-gate path for straightforward projects &mdash; single deliverable pattern,
+1&ndash;3 components, no complex prior work, and low cognitive complexity.</p>
+
+<h3>How Lite gets activated</h3>
+
+<p>PCV evaluates six criteria after clarification questions are resolved:</p>
+
+<ul>
+  <li>Single deliverable pattern (typically Code or Prose)</li>
+  <li>1&ndash;3 estimated components</li>
+  <li>No prior work as a build baseline, or minimal baseline (&le;5 files)</li>
+  <li>Straightforward success criteria (2&ndash;3 items)</li>
+  <li>No multi-phase indicators</li>
+  <li>Low cognitive complexity &mdash; bounded edits or template-driven generation,
+    not analytical synthesis across many source files</li>
+</ul>
+
+<p>If three or more criteria are clearly met, PCV proposes Lite mode. You can accept
+or decline (full PCV continues normally). You can also trigger Lite by using simplicity
+language in your charge (&ldquo;simple,&rdquo; &ldquo;straightforward,&rdquo;
+&ldquo;quick&rdquo;), or PCV may propose it mid-clarification if answers reveal simpler
+scope than expected.</p>
+
+<h3>What&rsquo;s different in Lite</h3>
+
+<table>
+  <thead>
+    <tr><th>Aspect</th><th>Full PCV</th><th>PCV Lite</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Plan documents</td>
+      <td>MakePlan + ConstructionPlan (2 files)</td>
+      <td>Single <code>lite-plan.md</code></td>
+    </tr>
+    <tr>
+      <td>Approval gates</td>
+      <td>3 gates</td>
+      <td>2 gates (charge + lite plan)</td>
+    </tr>
+    <tr>
+      <td>Critic review</td>
+      <td>Haiku subagent</td>
+      <td>Haiku subagent (same)</td>
+    </tr>
+    <tr>
+      <td>Construction</td>
+      <td>Builder subagent per component</td>
+      <td>Inline (hub builds directly)</td>
+    </tr>
+    <tr>
+      <td>Verification</td>
+      <td>Verifier subagent</td>
+      <td>Inline by default; subagent for Code/Math</td>
+    </tr>
+    <tr>
+      <td>Project summary</td>
+      <td>Yes</td>
+      <td>Yes (same)</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The progress display for Lite projects shows three milestones instead of five:</p>
+
+<pre>PCV v3.11 &mdash; MyProject (Lite)
+&#9632; Charge validated
+&#9632; Lite Plan approved
+&#9633; Verification complete</pre>
+
+<!-- ======================================================== -->
+<h2 id="multi-phase">Multi-Phase Projects</h2>
+
+<p>Some projects have stages that must happen in order &mdash; you need to extract data before
+you can validate it, validate it before you can use it. In a single-phase project,
+everything is planned and built in one pass. A <strong>multi-phase project</strong> splits
+the work into sequential phases, where each phase is a complete PCV cycle
+(Plan-Construct-Verify) that produces deliverables the next phase depends on.</p>
+
+<h3>When does multi-phase apply?</h3>
+
+<p>PCV considers multi-phase when three or more of these are true:</p>
+<ul>
+  <li>Later work depends on <strong>validating</strong> earlier work before proceeding</li>
+  <li>There are 2+ clearly separable deliverables with distinct success criteria</li>
+  <li>The estimated component count is 8+</li>
+  <li>The viability of later steps depends on the outcome of earlier steps</li>
+  <li>The project will likely span multiple Claude Code sessions</li>
+</ul>
+
+<p>You can also declare multi-phase intent directly in the charge by using language like
+&ldquo;phases,&rdquo; &ldquo;stages,&rdquo; or &ldquo;break this into sequential
+milestones.&rdquo;</p>
+
+<h3>How multi-phase gets established</h3>
+
+<p>There are three ways a project becomes multi-phase, depending on when the need is
+recognized:</p>
+
+<ol>
+  <li><strong>You declare it.</strong> The charge uses explicit multi-phase language. PCV
+    flags it during charge validation and structures the project accordingly.</li>
+  <li><strong>PCV proposes it during planning.</strong> After clarification questions reveal
+    the scope, PCV evaluates the criteria above and presents a phase table. You accept,
+    modify, or decline.</li>
+  <li><strong>It emerges during construction.</strong> Unexpected sequential dependencies
+    surface while building. PCV proposes restructuring the in-progress work into Phase 1
+    of a multi-phase project, with remaining work becoming Phase 2+.</li>
+</ol>
+
+<p>In every case, you have final say. Declining continues single-phase as normal.</p>
+
+<h3>Project structure</h3>
+
+<p>A multi-phase project has a root directory that coordinates phases, plus a subfolder
+for each phase that is a complete, independent PCV workspace:</p>
+
+<pre>MyProject/
+&#x251C;&#x2500;&#x2500; plans/
+&#x2502;   &#x251C;&#x2500;&#x2500; make-plan.md           project-level plan with tentative phase plan
+&#x2502;   &#x2514;&#x2500;&#x2500; logs/
+&#x2502;       &#x2514;&#x2500;&#x2500; master-log.md      cross-phase decisions and outcomes
+&#x251C;&#x2500;&#x2500; phase-1-extract/           &#x2190; complete PCV workspace
+&#x2502;   &#x251C;&#x2500;&#x2500; charge.md
+&#x2502;   &#x251C;&#x2500;&#x2500; plans/                 phase-specific plans, decision log, build record
+&#x2502;   &#x2514;&#x2500;&#x2500; deliverables/
+&#x251C;&#x2500;&#x2500; phase-2-validate/          &#x2190; complete PCV workspace
+&#x2502;   &#x251C;&#x2500;&#x2500; charge.md
+&#x2502;   &#x251C;&#x2500;&#x2500; plans/
+&#x2502;   &#x2514;&#x2500;&#x2500; deliverables/
+&#x251C;&#x2500;&#x2500; phase-3-populate/          (tentative &mdash; not yet scaffolded)
+&#x2514;&#x2500;&#x2500; CLAUDE.md</pre>
+
+<p><strong>Only Phase 1 is fully planned up front.</strong> Later phases appear in the
+project-level MakePlan as a <em>tentative phase plan</em> &mdash; a lightweight sketch showing
+the overall arc, dependencies, and open questions. Tentative phases are refined (or
+added, removed, merged, reordered) each time a phase completes.</p>
+
+<h3>Working in a multi-phase project</h3>
+
+<p>Running <code>/pcv</code> from the <strong>project root</strong> shows a master overview:</p>
+
+<pre>PCV v3.11 &mdash; MyProject (Multi-Phase)
+
+Phase 1: Data Extraction [Sonnet builders]
+  &#9632; Charge validated
+  &#9632; MakePlan approved
+  &#9632; ConstructionPlan approved
+  &#9632; Construction
+  &#9632; Verification complete
+
+Phase 2: Validation [Sonnet builders]
+  &#9632; Charge validated
+  &#9632; MakePlan approved
+  &#9633; ConstructionPlan approved
+  &#9633; Construction
+  &#9633; Verification complete
+
+Phase 3: Population (tentative)
+Phase 4: Integration (tentative)</pre>
+
+<p>Running <code>/pcv</code> inside a <strong>phase subfolder</strong> shows standard
+single-phase progress for that phase only, with a note that it&rsquo;s part of a larger
+multi-phase project.</p>
+
+<h3>Phase transitions</h3>
+
+<p>When a phase completes verification, PCV runs a transition protocol before starting
+the next phase:</p>
+
+<ol>
+  <li><strong>Phase closeout</strong> &mdash; finalize the completed phase&rsquo;s decision log
+    and build record, including the agent configuration used and any lessons learned.</li>
+  <li><strong>Master log update</strong> &mdash; record the completion, key outcomes, and lessons
+    in the project-level <code>master-log.md</code>.</li>
+  <li><strong>Tentative plan revision</strong> &mdash; revisit remaining phases in light of what
+    was learned. Phase boundaries, scope, and even the number of remaining phases can
+    change here.</li>
+  <li><strong>Next phase scaffolding</strong> &mdash; create the next phase&rsquo;s subfolder
+    with its own charge, ready for a new PCV cycle. In v3.11, this is automated by
+    <a href="#scaffolding">scaffold-phase.sh</a>.</li>
+</ol>
+
+<p>The transition protocol includes <strong>exit ramps</strong> at each step. If results
+from the completed phase show that remaining phases are unnecessary, or that the scope
+has changed fundamentally, PCV surfaces this and lets you decide: continue as planned,
+restructure the remaining phases, or close out the entire project.</p>
+
+<h3>Cross-phase learning</h3>
+
+<p>When planning Phase 2 or later, PCV reads the master log to see what happened in
+prior phases. This is <strong>advisory</strong> &mdash; it informs the agent configuration
+proposal (e.g., if Phase 1 needed a mid-project upgrade to stronger builders, PCV starts
+Phase 2&rsquo;s proposal at that level) but doesn&rsquo;t override your judgment. Each
+phase&rsquo;s charge is evaluated on its own merits.</p>
+
+<!-- ======================================================== -->
+<h2 id="revision">Revising a Completed Project</h2>
+
+<p>After a project completes a full PCV cycle, you may want to revise it &mdash; adding
+features, changing requirements, or improving what was built. Run <code>/pcv</code>
+in the completed project directory. PCV displays the progress checklist (all milestones
+filled), confirms the project is complete, and offers two options:</p>
+
+<h3>Revision cycle (new version)</h3>
+
+<p>Creates versioned sibling folders for major revisions. On the first revision, PCV
+restructures the directory:</p>
+
+<pre>MyProject/
+&#x251C;&#x2500;&#x2500; v1/    (original project, archived)
+&#x251C;&#x2500;&#x2500; v2/    (new revision, scaffolded)
+&#x2514;&#x2500;&#x2500; CLAUDE.md</pre>
+
+<p>The restructure uses a safe protocol: PCV shows a dry-run list of what will be moved,
+waits for your confirmation, copies files to <code>v1/</code>, verifies the copies,
+then removes the originals. If Git is available, a checkpoint commit is made first.
+Each <code>vN/</code> folder is an independent PCV workspace with its own charge, plans,
+and deliverables. Prior Work in <code>v2/</code> points to <code>../v1</code>.</p>
+
+<p>Subsequent revisions simply scaffold <code>v3/</code>, <code>v4/</code>, etc. as new siblings.</p>
+
+<h3>Reopen for fixes (lightweight)</h3>
+
+<p>For small post-completion fixes that don&rsquo;t warrant a full revision cycle, PCV
+reopens the existing project. It appends to the existing decision log and build record
+under &ldquo;Post-Closeout Fixes&rdquo; without creating new version folders. When fixes
+are complete, a &ldquo;Project Re-Closeout&rdquo; entry is appended.</p>
+
+<!-- ======================================================== -->
+<h2 id="config">Adaptive Agent Configuration</h2>
+
+<p>PCV doesn&rsquo;t use a fixed set of models for every project. During planning, it
+evaluates your project&rsquo;s complexity and your Anthropic plan, then proposes an agent
+configuration that balances quality against token cost. You approve (or override) the
+proposal before construction begins.</p>
+
+<h3>Plan tier</h3>
+
+<p>The first time you use PCV, it asks which <strong>Anthropic API plan</strong> you&rsquo;re
+on. This is a one-time question &mdash; your answer is saved to
+<code>~/.claude/pcv-config.json</code> and used for all future projects.</p>
+
+<table>
+  <thead>
+    <tr><th>Plan Tier</th><th>Context Window</th><th>What It Unlocks</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Max / API</strong></td>
+      <td>1M tokens</td>
+      <td>Opus builders for complex projects. Inline research (hub reads prior work
+        directly instead of delegating to a subagent). Phase transition compaction
+        recommended but not required.</td>
+    </tr>
+    <tr>
+      <td><strong>Pro</strong></td>
+      <td>200K tokens (1M with <code>/extra-usage</code>)</td>
+      <td>Sonnet builders (Opus available but flagged with budget note). Phase transition
+        compaction strongly recommended due to smaller context.</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>You can change your plan tier at any time by editing <code>~/.claude/pcv-config.json</code>.</p>
+
+<h3>How PCV chooses a configuration</h3>
+
+<p>After validating the charge, PCV reads four signals from your project &mdash; deliverable
+patterns, prior-work file count, estimated component count, and technology complexity &mdash;
+then applies decision rules for each agent. The plan tier determines which models are
+available; the project complexity determines which are proposed.</p>
+
+<table>
+  <thead>
+    <tr><th>Agent</th><th>Simple / Prose</th><th>Moderate</th><th>Complex</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Builder</strong></td>
+      <td>Haiku</td>
+      <td>Sonnet</td>
+      <td>Opus (Max/API) or Sonnet+high (Pro)</td>
+    </tr>
+    <tr>
+      <td><strong>Research</strong></td>
+      <td colspan="3">Sonnet subagent if prior work exists (&gt;10 files).
+        Inline (no subagent) if &le;10 files and 1M context available.
+        Skipped if no prior work.</td>
+    </tr>
+    <tr>
+      <td><strong>Verifier</strong></td>
+      <td colspan="3">Always Sonnet</td>
+    </tr>
+    <tr>
+      <td><strong>Critic</strong></td>
+      <td colspan="3">Always Haiku</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>What counts as complex?</strong> Pattern 3 (mathematical) projects, Pattern 1
+(code) with 5+ components, or Pattern 4 (design) with strict wireframe compliance.
+<strong>Moderate</strong> is Pattern 1 with 2&ndash;4 components or standard Pattern 4.
+<strong>Simple</strong> is single-component projects or short Pattern 2 (prose) with bounded
+insertions. Note: Pattern 2 analytical or synthetic prose (10+ pages, multi-source
+synthesis) routes to Sonnet, not Haiku &mdash; analytical documents require more
+reasoning than template-driven generation.</p>
+
+<h3>The configuration table</h3>
+
+<p>PCV presents the proposed configuration as a table during planning, with a rationale
+for each choice:</p>
+
+<pre>Proposed agent configuration:
+
+| Agent              | Model  | Effort | Dispatch | Rationale              |
+|--------------------|--------|--------|----------|------------------------|
+| Hub (planning)     | &mdash;      | High   | &mdash;        | Complex trade-offs     |
+| Hub (construction) | &mdash;      | Medium | &mdash;        | Executing approved plan|
+| Hub (verification) | &mdash;      | Medium | &mdash;        | Mechanical checks      |
+| Research           | Sonnet | Medium | Subagent | 12 prior-work files    |
+| Critic             | Haiku  | Medium | Subagent | Adversarial review     |
+| Builder            | Sonnet | High   | Subagent | Code + 6 components    |
+| Verifier           | Sonnet | Medium | Subagent | Mechanical verification|
+
+Context: 200K (Pro plan). Phase transition compaction strongly recommended.
+
+Approve this configuration, or tell me what you&rsquo;d like changed.</pre>
+
+<p>You can override any row &mdash; for example, upgrading builders from Haiku to Sonnet if
+you want higher quality, or choosing inline research instead of a subagent. Your
+overrides are logged alongside the proposal.</p>
+
+<h3>Mid-project revision</h3>
+
+<p>If construction encounters repeated difficulty &mdash; two or more deviations that suggest
+the agent configuration is insufficient &mdash; PCV proposes an upgrade. For example, if Haiku
+builders are struggling with a component that turned out to be more complex than expected,
+PCV may propose switching to Sonnet builders for the remaining components. You approve
+or decline the change, and either way the proposal is logged.</p>
+
+<!-- ======================================================== -->
+<h2 id="paths">Paths in the Charge</h2>
+
+<p>The charge template has three path fields: Project Directory, Export Target, and
+Prior Work.</p>
+
+<ul>
+  <li><strong>External locations</strong> (a separate Git repo, a shared folder): use
+    absolute paths.</li>
+  <li><strong>Sibling or child directories</strong> (a previous version folder next door):
+    use relative paths from the charge file (e.g., <code>../v1</code>).</li>
+</ul>
+
+<p>PCV validates all paths at the start of planning. Relative paths are resolved against
+the charge file&rsquo;s directory and checked for existence &mdash; if a path doesn&rsquo;t
+exist, you get a clear error before any work begins. The charge file retains the
+original path (relative or absolute) for portability.</p>
+
+<!-- ======================================================== -->
+<h2 id="deployment">Deployment</h2>
+
+<p>When the charge&rsquo;s <code>Deployment:</code> field specifies where the project is
+published (e.g., GitHub Pages, npm, a standalone repository), PCV automatically handles
+deployment actions at closeout. No separate deployment step is needed.</p>
+
+<p>PCV classifies each deployment action into one of three categories:</p>
+
+<ul>
+  <li><strong>Mechanical</strong> &mdash; version bumps, file copies to deployment targets,
+    README version updates. Executed automatically.</li>
+  <li><strong>Push</strong> &mdash; <code>git push</code> or equivalent publish action.
+    Executed automatically with a report of what was pushed and where.</li>
+  <li><strong>Content-heavy</strong> &mdash; substantial documentation rewrites (e.g.,
+    updating a multi-page guide). Flagged as follow-up items for a separate session.</li>
+</ul>
+
+<p>Execution order is always: mechanical edits &rarr; commit &rarr; push. This ensures
+all deployment edits are committed before anything is pushed.</p>
+
+<!-- ======================================================== -->
+<h2 id="summary">Project Summary</h2>
+
+<p>At closeout, PCV generates a <strong>project summary</strong> at
+<code>plans/project-summary.md</code>. The summary is written for student submission or
+project audit &mdash; it captures what the project produced, not how PCV operated.</p>
+
+<p>The summary has five sections:</p>
+
+<ol>
+  <li><strong>Idea</strong> &mdash; 2&ndash;3 sentence distillation of the project concept.</li>
+  <li><strong>Charge Summary</strong> &mdash; key requirements and constraints.</li>
+  <li><strong>Planning Decisions</strong> &mdash; the clarification Q&amp;A that shaped the
+    project scope. Focuses on decisions about <em>what</em> was built, not PCV
+    configuration details.</li>
+  <li><strong>Deliverable Summary</strong> &mdash; the most substantial section. PCV reads
+    the actual deliverables and summarizes their content, findings, or functionality.
+    For code projects: what the software does. For prose: key findings and recommendations.
+    For math: formulation summary. For design: layout decisions.</li>
+  <li><strong>Verification</strong> &mdash; pass/fail and substantive issues found.</li>
+</ol>
+
+<p>A conditional <strong>Deployment</strong> section is included when the charge has a
+deployment target. The summary explicitly excludes PCV process details (agent model
+choices, builder dispatch mechanics, methodology lessons) &mdash; those belong in the
+build record.</p>
+
+<p>For multi-phase projects, each phase gets its own summary file, and a lightweight
+master summary links them together at final closeout.</p>
+
+<!-- ======================================================== -->
+<h2 id="global-settings">Global Settings Check</h2>
+
+<p>When PCV scaffolds a new project, it checks your global Claude Code settings at
+<code>~/.claude/settings.json</code>. If the file is missing or has minimal permissions
+(fewer than 3 allow rules), PCV offers to add recommended global permissions:</p>
+
+<pre>Read(**), Write(**), Edit(**), Glob(*), Grep(*), Bash(*), Agent, WebSearch</pre>
+
+<p>These are broad but standard for active development. You can approve or decline &mdash;
+PCV proceeds either way. If you already have established settings, PCV skips this
+silently.</p>
+
+<p>In v3.11, the global settings check and per-project settings generation are handled
+by <a href="#permissions">scaffold-settings.sh</a>, which is the single source of truth
+for settings structure.</p>
+
+<!-- ======================================================== -->
+<h2 id="agents">Subagent Architecture</h2>
+
+<p>PCV uses a <strong>hub-and-spoke agent model</strong> to keep the main conversation
+context lean. The main session (the &ldquo;hub&rdquo;) orchestrates work by dispatching
+specialized agents (the &ldquo;spokes&rdquo;) that run in their own isolated context
+windows. Each agent reads files, does its work, and returns a compact summary &mdash; the
+main session never carries the intermediate file reads and tool outputs.</p>
+
+<h3>The four agents</h3>
+
+<table>
+  <thead>
+    <tr><th>Agent</th><th>Phase</th><th>Default Model</th><th>Role</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>pcv-critic</strong></td>
+      <td>Plan</td>
+      <td>Haiku</td>
+      <td>Adversarial review of MakePlan &mdash; challenges assumptions, finds gaps,
+        identifies risks. Read-only.</td>
+    </tr>
+    <tr>
+      <td><strong>pcv-research</strong></td>
+      <td>Plan</td>
+      <td>Sonnet*</td>
+      <td>Prior-work analysis &mdash; inventories files, performs pattern-specific
+        critical evaluation, produces three-category classification and scope signal.</td>
+    </tr>
+    <tr>
+      <td><strong>pcv-builder</strong></td>
+      <td>Construct</td>
+      <td>Sonnet*</td>
+      <td>Per-component construction &mdash; implements one component from the
+        ConstructionPlan in isolation. Dispatched sequentially in dependency order.</td>
+    </tr>
+    <tr>
+      <td><strong>pcv-verifier</strong></td>
+      <td>Verify</td>
+      <td>Sonnet</td>
+      <td>Pattern-specific verification &mdash; runs tests, checks structure, validates
+        formulations, compares designs. Dispatched with pattern-appropriate instructions.</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><small>* Configurable via <a href="#config">Adaptive Agent Configuration</a>.
+Builder may use Haiku for simple or prose-only projects. Research may run inline (no
+separate agent) for small prior-work sets.</small></p>
+
+<h3>How dispatch works</h3>
+
+<p>Each agent is defined as a standalone Markdown file in <code>~/.claude/agents/</code>.
+When the protocol needs to dispatch an agent, it reads the agent file, inlines its
+behavioral instructions into the dispatch prompt, and spawns a general-purpose
+subagent. This is a workaround for a known Claude Code limitation: custom agent types
+defined in <code>.claude/agents/</code> cannot be invoked directly via
+<code>subagent_type</code>.</p>
+
+<h3>Graceful degradation</h3>
+
+<p>If an agent fails to spawn or Claude builds inline instead of dispatching, the work
+product is identical &mdash; only token efficiency is reduced. The agents are an optimization,
+not a dependency. The workflow produces the same deliverables either way.</p>
+
+<!-- ======================================================== -->
+<h2 id="tokens">Token Efficiency</h2>
+
+<p>Claude Code is agentic: each tool-use step (read file, edit, run test, read error, fix)
+sends the entire accumulated conversation as input. With hundreds of tool-use round trips,
+total token usage can reach tens of millions of input tokens in a single session. PCV
+addresses this at three levels:</p>
+
+<h3>1. Subagent context isolation</h3>
+
+<p>The primary mechanism. When a builder agent reads 15 files and makes 20 edits to
+construct a component, those file contents and tool outputs live in the builder&rsquo;s
+context &mdash; not the main session. The main session grows by only the compact summary the
+builder returns (~500 tokens). Without isolation, the same work would carry ~30,000+
+tokens through every subsequent API call.</p>
+
+<p>This applies to all four agents: the research agent&rsquo;s file inventory, the
+critic&rsquo;s document analysis, the builder&rsquo;s construction work, and the
+verifier&rsquo;s test execution all stay in isolated contexts.</p>
+
+<h3>2. Phase transition compaction</h3>
+
+<p>At each phase transition (Planning &rarr; Construction, Construction &rarr; Verification),
+PCV recommends running <code>/compact</code> to reduce the conversation context. All
+planning decisions, construction progress, and verification state are persisted to
+disk in the plans directory, so <code>/clear</code> (full context reset) is also safe
+at these boundaries &mdash; the next phase reads everything it needs from files.</p>
+
+<h3>3. Decision log preservation</h3>
+
+<p>PCV&rsquo;s scaffolded <code>CLAUDE.md</code> includes an instruction to preserve the
+decision log and plans directory during compaction. This ensures that when Claude Code
+automatically compacts the conversation (as it approaches context limits), the critical
+planning state is retained rather than summarized away.</p>
+
+<h3>Effort-level recommendations</h3>
+
+<p>Each phase summary in the PCV routing file includes an effort-level recommendation:</p>
+
+<ul>
+  <li><strong>Planning: high/max</strong> &mdash; Planning requires reasoning about trade-offs,
+    alternatives, and risks. Higher effort produces better plans.</li>
+  <li><strong>Construction: medium</strong> &mdash; Construction follows an approved plan.
+    Standard effort is sufficient for executing settled decisions.</li>
+  <li><strong>Verification: medium</strong> &mdash; Verification checks deliverables against
+    specifications. Standard effort is sufficient for pattern-specific checks.</li>
+</ul>
+
+<p>These are recommendations, not enforced settings. You can adjust effort level via
+Claude Code&rsquo;s settings at any time.</p>
+
+<!-- ======================================================== -->
+<h2 id="protocol-arch">Protocol Architecture (v3.11)</h2>
+
+<h3>Spine + fragment loading</h3>
+
+<p>PCV&rsquo;s protocol files use a <strong>spine + fragment</strong> architecture that
+minimizes how much instruction text is loaded into context at any given moment.
+Each protocol file (planning, construction, verification, phase transition) is a
+compact <em>spine</em> (26&ndash;35 lines) containing a step table and loading
+instructions. Detailed per-step instructions live in <em>fragment</em> files in
+subdirectories, loaded on demand as the workflow progresses.</p>
+
+<p>A shared <code>pcv-common.md</code> file (191 lines) contains patterns used across
+all protocols: decision log entry formats, agent dispatch boilerplate, gate handling,
+session resumption, and templates. It is loaded once per session rather than being
+duplicated in each protocol.</p>
+
+<p><strong>Context loaded per phase entry:</strong> spine (~30 lines) + pcv-common.md
+(191 lines) + current step fragment (~50&ndash;90 lines) = <strong>~270&ndash;290
+lines</strong>. Before this architecture, a single protocol file loaded 400&ndash;980
+lines &mdash; a 60&ndash;70% reduction in protocol context.</p>
+
+<h4>File structure</h4>
+
+<pre>~/.claude/skills/pcv/
+  SKILL.md                         Entry point, routing, templates (271 lines)
+  pcv-common.md                    Shared patterns (191 lines)
+  planning-protocol.md             Spine (32 lines)
+  planning/
+    step1-charge-config.md         Charge resolution + agent config
+    step2-prior-work.md            Prior work analysis
+    step3-4-patterns-clarify.md    Patterns + clarification + assessments
+    step5-makeplan.md              MakePlan / Lite plan
+    step6-8-critic-gates.md        Critic + compliance + Gate 1
+    step9-11-construction-gates.md ConstructionPlan + Gates 2&ndash;3
+  construction-protocol.md         Spine (27 lines)
+  construction/
+    step1-3-baseline-build.md      Baseline + build loop
+    step4-7-deviations-record.md   Deviations + build record
+  verification-protocol.md         Spine (26 lines)
+  verification/
+    step1-verify.md                Pattern-specific verification
+    step2-4-mapping-export.md      Mapping + comparison + export
+    step4.5-acceptance.md          Acceptance testing
+    step5-8-report-closeout.md     Report + closeout + summary + deployment
+  phase-transition-protocol.md     Spine (35 lines)
+  transition/
+    step1-3-close-review.md        Phase close + master log
+    step4-user-directs.md          User direction (options A&ndash;F)
+    step5-6-scaffold-begin.md      Scaffold + begin next phase
+  hooks/                           Bash hook scripts (unchanged)
+  VERSION                          Version + date + changelog</pre>
+
+<p><strong>Total:</strong> 1,522 lines across 22 files (was 2,928 lines across 5 files
+before compression). The terse instruction format uses imperative bullets rather than
+explanatory prose &mdash; optimized for LLM execution, not human reading. This
+reference document preserves the explanatory content.</p>
+
+<!-- ======================================================== -->
+<h2 id="keys">Key Things to Know</h2>
+
+<h3>Progress display</h3>
+
+<p>Every time you run <code>/pcv</code>, it shows a milestone checklist so you always
+know where the project stands:</p>
+
+<pre>PCV v3.11 &mdash; MyProject
+&#9632; Charge validated
+&#9632; MakePlan approved
+&#9633; ConstructionPlan approved
+&#9633; Construction
+&#9633; Verification complete</pre>
+
+<p>Filled squares (&#9632;) are completed milestones; empty squares (&#9633;) are remaining.
+This makes it clear at a glance whether the project is mid-planning, under construction,
+or fully complete.</p>
+
+<h3>Permissions are automatic</h3>
+
+<p>PCV scaffolds a <code>.claude/settings.json</code> file that pre-approves all
+general-purpose file operations (Read, Write, Glob, Grep, Git) at project creation.
+Technology-specific permissions (e.g., Julia, Python, npm) are added automatically
+when the ConstructionPlan is approved. You should not need to approve individual
+operations.</p>
+
+<h3>Session resumption works</h3>
+
+<p>If you need to start a new Claude Code session mid-project (e.g., due to token limits
+or a break), just run <code>/pcv</code> again in the same directory. PCV re-reads the
+charge, plan documents, and decision log from disk to reconstruct context. It will
+tell you where you left off and confirm before proceeding.</p>
+
+<h3>The decision log is your audit trail</h3>
+
+<p>PCV maintains <code>plans/logs/decision-log.md</code> automatically. It records the
+verbatim text of every clarification question and your answer, Critic findings and
+dispositions, gate approvals, and deviations during construction. Entries are written
+at the moment they occur (chronological order). You never edit this file directly.</p>
+
+<h3>The build record captures what actually happened</h3>
+
+<p>The decision log records clarifications, approvals, and deviations. The build record
+(<code>plans/build-record.md</code>) captures the broader implementation story: what files
+were created or modified, design decisions made on details the plan left unspecified
+(distinct from deviations), verification fixes, open items for future work, and
+consolidated lessons learned. It also includes a &ldquo;User Notes&rdquo; section where
+you can add final observations before closeout. The build record is generated
+automatically at the end of construction and finalized during verification.</p>
+
+<h3>#LEARN tags capture lessons</h3>
+
+<p>When PCV logs a revision, deviation, or correction that captures a reusable insight,
+it tags the entry with <code>#LEARN</code>. These create a searchable record of what
+worked and what didn&rsquo;t across projects.</p>
+
+<h3>Git is silent and optional</h3>
+
+<p>PCV checks for an existing Git repository before doing anything with Git. If the
+current directory or a parent directory (up to 5 levels) has <code>.git</code>, PCV
+inherits that repo. If no Git exists anywhere, PCV asks whether to initialize or skip.
+It never silently runs <code>git init</code>. Commits happen at milestones with
+descriptive messages.</p>
+
+<h3>The charge must be a file</h3>
+
+<p>PCV requires the charge to exist as a file on disk (<code>charge.md</code> or any
+filename containing &ldquo;charge&rdquo;). Pasted text or attached content in the
+conversation is not accepted &mdash; the file is needed for auditing and decision
+reconstruction.</p>
+
+<h3>Single command: <code>/pcv</code></h3>
+
+<p>There is no separate <code>/pcv init</code> command. Running <code>/pcv</code> handles
+everything: scaffolding new projects, detecting the current phase, and routing to the
+appropriate protocol. If you provide a filename argument (<code>/pcv MyCharge.md</code>),
+PCV uses that specific charge file.</p>
+
+<!-- ======================================================== -->
+<h2 id="hooks">Reliability Hooks (v3.11)</h2>
+
+<p>PCV v3.11 introduces a <strong>hook-based reliability layer</strong> that uses Claude
+Code&rsquo;s native hook system to enforce workflow discipline automatically. Five hooks
+add backstops to the most failure-prone workflow transitions &mdash; session end without
+closeout, context loss after compaction, builder completion tracking, and real-time
+format validation. Hooks are per-project (registered in the project&rsquo;s
+<code>.claude/settings.json</code>, not globally) and carry a kill switch for projects
+that do not need them.</p>
+
+<p>Hooks replace manual protocol reminders for mechanical checks. Protocol text has
+been compressed to terse instruction format and split into a
+<a href="#protocol-arch">spine + fragment architecture</a> for minimal context loading.
+Utility scripts (called by hooks or protocol) handle settings generation, permission
+scanning, format validation, and phase scaffolding.</p>
+
+<h3>The five hooks</h3>
+
+<table>
+  <thead>
+    <tr><th>Hook</th><th>Event</th><th>Purpose</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Stop closeout</strong></td>
+      <td><code>Stop</code></td>
+      <td>Blocks session end if the project is in an unresolved state. Implements a
+        7-state matrix: (1) no <code>plans/</code> directory &mdash; pass; (2) charge
+        file missing &mdash; warn; (3) verification complete &amp; closed &mdash; pass;
+        (4) in acceptance testing sub-state &mdash; warn and block; (5) verification
+        started but not closed &mdash; block; (6) construction phase &mdash; warn;
+        (7) planning phase &mdash; pass. Validates format of artifact files on block
+        via <a href="#format-enforcement">validate-pcv-format.sh</a>.</td>
+    </tr>
+    <tr>
+      <td><strong>SessionStart resume</strong></td>
+      <td><code>SessionStart</code></td>
+      <td>Reads the state snapshot (<code>plans/logs/pcv-state.json</code>) written
+        by the PreCompact hook and injects a one-line PCV status into
+        <code>additionalContext</code> at session start. Provides orientation after
+        context loss without requiring <code>/pcv</code>.</td>
+    </tr>
+    <tr>
+      <td><strong>PreCompact snapshot</strong></td>
+      <td><code>PreCompact</code></td>
+      <td>Writes a minimal JSON snapshot of the current PCV state before context
+        compaction. Captures phase, milestone, last decision log entry header, and
+        plan file existence flags. The SessionStart resume hook reads this snapshot.
+        Written atomically via <code>mv</code> so the file is never half-written.</td>
+    </tr>
+    <tr>
+      <td><strong>SubagentStop tracker</strong></td>
+      <td><code>SubagentStop</code></td>
+      <td>Appends a tab-separated entry to <code>plans/logs/builder-tracker.log</code>
+        when a builder subagent completes. Tracks timestamp, subagent type, model,
+        and status. Non-builder subagents are silently ignored.</td>
+    </tr>
+    <tr>
+      <td><strong>PostToolUse format</strong></td>
+      <td><code>PostToolUse</code> (Write)</td>
+      <td>Runs real-time format validation on PCV artifact files immediately after each
+        Write tool call. Calls <a href="#format-enforcement">validate-pcv-format.sh</a>
+        on the written file. Outputs a warning if structural requirements are not met.
+        Always exits 0 (advisory only). Acts as an early-warning layer &mdash; the Stop
+        hook provides the guaranteed floor.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Utility scripts</h3>
+
+<p>These scripts are not hooks but are called by hooks or protocol steps:</p>
+
+<table>
+  <thead>
+    <tr><th>Script</th><th>Called by</th><th>Purpose</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>scaffold-settings.sh</strong></td>
+      <td>Protocol (scaffolding step)</td>
+      <td>Single source of truth for <code>.claude/settings.json</code> generation
+        and merge. Replaces the 94-line JSON template previously embedded in SKILL.md.
+        Generates a minimal valid settings file and merges hook entries into existing
+        files without clobbering user customizations. See
+        <a href="#permissions">Permission Management</a>.</td>
+    </tr>
+    <tr>
+      <td><strong>tech-permissions-scan.sh</strong></td>
+      <td>Protocol (Gate 3 approval)</td>
+      <td>Scans the ConstructionPlan for technology keywords (Julia, Python, Node/npm,
+        Ruby, Go, Rust, Docker, etc.) and appends the corresponding <code>Bash()</code>
+        allow rules to <code>.claude/settings.json</code>. Eliminates the need to
+        manually identify and add technology-specific permissions. See
+        <a href="#permissions">Permission Management</a>.</td>
+    </tr>
+    <tr>
+      <td><strong>validate-pcv-format.sh</strong></td>
+      <td>Stop hook, PostToolUse hook</td>
+      <td>Validates structural format of PCV artifact files: <code>decision-log.md</code>,
+        <code>build-record.md</code>, and <code>project-summary.md</code>. Checks for
+        required section headers, entry format, and file completeness. Called by both
+        the Stop hook (on block) and the PostToolUse hook (on every Write). See
+        <a href="#format-enforcement">Format Enforcement</a>.</td>
+    </tr>
+    <tr>
+      <td><strong>scaffold-phase.sh</strong></td>
+      <td>Protocol (phase transition)</td>
+      <td>Creates the mechanical files for a new phase subfolder in a multi-phase
+        project: charge template, <code>plans/</code> directory structure, CLAUDE.md
+        identity file, and settings stub. Replaces 140 lines of manual phase-scaffolding
+        instructions in the transition protocol. See
+        <a href="#scaffolding">Phase Scaffolding</a>.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Input format and exit semantics</h3>
+
+<p>All hooks are pure Bash scripts at <code>~/.claude/skills/pcv/hooks/*.sh</code>.
+They receive the event payload as JSON on <code>stdin</code>. Input fields used:</p>
+
+<ul>
+  <li><strong>Stop, PreCompact, SessionStart:</strong> No payload fields consumed
+    directly &mdash; hooks derive state from on-disk files (<code>plans/logs/decision-log.md</code>,
+    <code>plans/logs/pcv-state.json</code>, <code>plans/</code> existence).</li>
+  <li><strong>SubagentStop:</strong> Reads <code>subagent_type</code>, <code>model</code>,
+    and <code>status</code> from the payload JSON.</li>
+  <li><strong>PostToolUse:</strong> Reads <code>tool_name</code> and <code>tool_input.file_path</code>
+    from the payload JSON. Skips non-Write calls silently.</li>
+</ul>
+
+<p>Exit semantics:</p>
+
+<ul>
+  <li><strong>Stop hook:</strong> Exits non-zero (blocking) only when the state matrix
+    requires it (states 4 and 5 above). All other states exit 0 (allow). The block
+    message instructs the user to write a closeout or abandonment entry, or set the
+    kill switch.</li>
+  <li><strong>All other hooks:</strong> Always exit 0. Errors are logged to stderr and
+    treated as advisory.</li>
+</ul>
+
+<h3>Auto-retrofit prompt</h3>
+
+<p>When you run <code>/pcv</code> in a project that lacks the hook entries in its
+<code>.claude/settings.json</code> (e.g., a v3.10-era project) and the project has not
+opted out, PCV prompts you to install them:</p>
+
+<pre>PCV: This project does not have reliability hooks registered.
+Install hook entries in .claude/settings.json? (y/n)</pre>
+
+<p>Accepting writes the entries via scaffold-settings.sh. Declining creates a sentinel file at
+<code>.claude/.pcv-hooks-opted-out</code> and the prompt does not re-fire.</p>
+
+<h3>Kill switch</h3>
+
+<p>To disable all PCV hooks for a project, create the sentinel file:</p>
+
+<pre>echo "opted-out" &gt; .claude/.pcv-hooks-opted-out</pre>
+
+<p>With this file present, all hook scripts exit 0 silently regardless of project
+state. To re-enable hooks, delete the file. The kill switch does not affect the PCV
+workflow itself &mdash; planning, construction, and verification proceed normally.</p>
+
+<!-- ======================================================== -->
+<h2 id="format-enforcement">Format Enforcement (v3.11)</h2>
+
+<p>PCV artifact files &mdash; <code>decision-log.md</code>, <code>build-record.md</code>,
+and <code>project-summary.md</code> &mdash; have required structural formats. v3.11 adds
+automated enforcement so malformed artifacts are caught immediately, not discovered
+at closeout or audit.</p>
+
+<h3>What is validated</h3>
+
+<table>
+  <thead>
+    <tr><th>Artifact</th><th>Required structure</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>decision-log.md</code></td>
+      <td>Required section headers present; entries follow the
+        <code>## [Entry Type] &mdash; [date]</code> format; no orphaned content outside
+        a section.</td>
+    </tr>
+    <tr>
+      <td><code>build-record.md</code></td>
+      <td>Required sections: Construction Overview, Files Modified/Created,
+        Design Decisions, Deviations, Lessons Learned, User Notes. Each section
+        present as an <code>##</code> header.</td>
+    </tr>
+    <tr>
+      <td><code>project-summary.md</code></td>
+      <td>Required sections: Idea, Charge Summary, Planning Decisions, Deliverable
+        Summary, Verification. Each present as an <code>##</code> header.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Two enforcement layers</h3>
+
+<p>Both layers call the same <code>validate-pcv-format.sh</code> script:</p>
+
+<ul>
+  <li><strong>PostToolUse(Write) hook &mdash; real-time layer.</strong> Fires immediately
+    after any Write call that touches a PCV artifact file. Outputs a warning to stderr
+    if the file does not meet structural requirements. Always exits 0 (advisory). Gives
+    the model an opportunity to self-correct before the session ends.</li>
+  <li><strong>Stop hook &mdash; guaranteed floor.</strong> Runs format validation as part
+    of its state-matrix check when the stop would otherwise block. If artifacts are
+    malformed and the session is in a blocking state, the block message includes the
+    format error. This layer is guaranteed to fire at session end regardless of
+    whether the PostToolUse hook is installed.</li>
+</ul>
+
+<p>The two-layer design means projects that install only the Stop hook (the minimum
+configuration) still get format checking at the final gate. Projects with both hooks
+get earlier feedback.</p>
+
+<!-- ======================================================== -->
+<h2 id="permissions">Permission Management (v3.11)</h2>
+
+<p>Before v3.11, the settings.json template was a 94-line JSON block embedded in SKILL.md.
+Technology-specific permissions were added manually during construction. v3.11 replaces
+both with scripts that are the single source of truth.</p>
+
+<h3>scaffold-settings.sh</h3>
+
+<p>Generates or merges <code>.claude/settings.json</code> at project scaffolding and
+hook retrofit. Key behaviors:</p>
+
+<ul>
+  <li><strong>Create mode:</strong> When no settings file exists, writes a minimal valid
+    file with the standard PCV allow rules and all five hook registrations.</li>
+  <li><strong>Merge mode:</strong> When a settings file already exists, adds missing hook
+    entries and allow rules without overwriting existing content. Uses
+    <code>jq</code> for safe JSON merge; falls back to append-with-comment if
+    <code>jq</code> is unavailable.</li>
+  <li><strong>Idempotent:</strong> Running it twice produces the same result. Existing
+    entries are not duplicated.</li>
+</ul>
+
+<h3>tech-permissions-scan.sh</h3>
+
+<p>Called at Gate 3 approval (ConstructionPlan approved). Scans the ConstructionPlan
+text for technology keywords and adds the corresponding <code>Bash()</code> allow rules:</p>
+
+<table>
+  <thead>
+    <tr><th>Keyword detected</th><th>Permission added</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>julia, .jl</td><td><code>Bash(julia:*)</code></td></tr>
+    <tr><td>python, pip, conda, .py</td><td><code>Bash(python:*)</code>, <code>Bash(pip:*)</code></td></tr>
+    <tr><td>node, npm, yarn, .js, .ts</td><td><code>Bash(node:*)</code>, <code>Bash(npm:*)</code></td></tr>
+    <tr><td>ruby, gem, bundle, .rb</td><td><code>Bash(ruby:*)</code>, <code>Bash(bundle:*)</code></td></tr>
+    <tr><td>go, golang, .go</td><td><code>Bash(go:*)</code></td></tr>
+    <tr><td>rust, cargo, .rs</td><td><code>Bash(cargo:*)</code></td></tr>
+    <tr><td>docker, dockerfile</td><td><code>Bash(docker:*)</code></td></tr>
+    <tr><td>make, cmake, makefile</td><td><code>Bash(make:*)</code></td></tr>
+  </tbody>
+</table>
+
+<p>Rules are merged into the existing settings file by scaffold-settings.sh (also
+idempotent). Technology detection is keyword-based and may produce false positives for
+documentation-only mentions &mdash; you can remove rules manually after scaffolding if
+needed.</p>
+
+<!-- ======================================================== -->
+<h2 id="scaffolding">Phase Scaffolding (v3.11)</h2>
+
+<p>Before v3.11, the phase transition protocol included ~140 lines of manual instructions
+for creating a new phase subfolder: directory structure, charge template, CLAUDE.md
+identity file, settings stub. v3.11 replaces this with <code>scaffold-phase.sh</code>.</p>
+
+<h3>What scaffold-phase.sh creates</h3>
+
+<p>Given a phase name (e.g., <code>phase-3-populate</code>), the script creates:</p>
+
+<pre>phase-3-populate/
+&#x251C;&#x2500;&#x2500; charge.md              (charge template with phase-specific fields pre-filled)
+&#x251C;&#x2500;&#x2500; CLAUDE.md              (phase identity file referencing parent project)
+&#x251C;&#x2500;&#x2500; .claude/
+&#x2502;   &#x2514;&#x2500;&#x2500; settings.json      (settings stub with hook registrations)
+&#x2514;&#x2500;&#x2500; plans/
+    &#x251C;&#x2500;&#x2500; .gitkeep
+    &#x2514;&#x2500;&#x2500; logs/
+        &#x2514;&#x2500;&#x2500; .gitkeep</pre>
+
+<h3>How it is called</h3>
+
+<p>The phase transition protocol calls scaffold-phase.sh at Step 4 (next phase
+scaffolding). The script is passed:</p>
+
+<ul>
+  <li>The new phase directory name</li>
+  <li>The project root path (for CLAUDE.md cross-reference)</li>
+  <li>The previous phase&rsquo;s deliverables path (pre-filled as Prior Work in the
+    charge template)</li>
+</ul>
+
+<p>The script writes all files and reports what was created. The protocol then confirms
+creation before proceeding. If the phase directory already exists (e.g., the script
+was run twice), it exits with a warning and takes no action.</p>
+
+<h3>Relationship to scaffold-settings.sh</h3>
+
+<p>scaffold-phase.sh calls scaffold-settings.sh to generate the new phase&rsquo;s
+<code>.claude/settings.json</code>. This ensures the new phase starts with hook
+registrations already in place, without needing a separate retrofit prompt.</p>
+
+<!-- ======================================================== -->
+<h2 id="behavioral">Behavioral Constraints (v3.11)</h2>
+
+<p>Three behavioral rules in <code>pcv-common.md</code> that prevent protocol failures
+discovered during v3.11 development.</p>
+
+<h3>Scope-Creep Check</h3>
+
+<p>Before executing user-directed work not in the approved plan (acceptance testing
+fixes, scope extensions, ad-hoc requests), PCV assesses the aggregate scope against
+three thresholds:</p>
+
+<ul>
+  <li><strong>3+ new files</strong> to be created</li>
+  <li><strong>Changes spanning 3+ existing files</strong></li>
+  <li><strong>Decisions not in the approved plan</strong> &mdash; changes to control flow,
+    sequencing, gate behavior, or file/directory structure</li>
+</ul>
+
+<p>If any threshold is met, PCV presents a scope assessment with three options:
+(a)&nbsp;approve as in-scope fix, (b)&nbsp;defer to a new phase,
+(c)&nbsp;reduce scope to fit the current phase. The user&rsquo;s choice is logged in
+the decision log.</p>
+
+<p>Thresholds are conservative by design. The check evaluates the <em>aggregate</em>
+scope of all reported work, not each item individually &mdash; preventing a sequence
+of small fixes from accumulating into a hidden scope bypass.</p>
+
+<p><strong>Origin:</strong> During v3.11 Phase&nbsp;3 acceptance testing, a full phase of
+work (17 new files, 1,400+ line changes) was executed inline as a &ldquo;scope
+extension&rdquo; without any PCV quality gates. This check would have caught it.</p>
+
+<h3>Persistence Assurance</h3>
+
+<p>Any recommendation, decision, or deferred work item the user may need in a future
+session must be written to a file before the session ends. PCV must never assure
+availability of information that exists only in conversation context.</p>
+
+<p>When a cross-session recommendation emerges, PCV writes it to the appropriate file
+(decision log, build record, or master log), then confirms: &ldquo;I&rsquo;ve written
+[item] to [file]. It will persist across sessions.&rdquo;</p>
+
+<p><strong>Origin:</strong> During v3.11, recommendations for further improvement were
+made and the user was assured they would be available in the next session. They were
+never written to disk and were lost when the session ended.</p>
+
+<h3>Explicit Gate Approval</h3>
+
+<p>Every GATE presentation must end with a direct approval question (e.g.,
+&ldquo;Do you approve?&rdquo;). PCV must not present information and stop
+silently &mdash; the user must be able to distinguish a gate from a pause.</p>
+
+<!-- ======================================================== -->
+<h2 id="optimization">Token &amp; Speed Optimization (v3.11 Phase 6)</h2>
+
+<p>Phase 6 implements 16 ranked optimizations that reduce protocol overhead and improve
+execution speed without changing PCV behavior.</p>
+
+<h3>Always-Loaded Reduction (27%)</h3>
+
+<p>SKILL.md and pcv-common.md are read on every <code>/pcv</code> invocation. Phase 6
+reduced their combined size from 520 to 380 lines:</p>
+
+<ul>
+  <li><strong>Template extraction (R1):</strong> CLAUDE.md, charge, idea templates, multi-phase
+    scaffolding, and version chaining moved to <code>scaffold-templates.md</code> &mdash; loaded
+    only during scaffold and version chaining.</li>
+  <li><strong>One-time content redistribution (R2):</strong> MakePlan sections, Build Record
+    template, Deliverable Patterns table, and Agent Config defaults moved from pcv-common.md
+    into the fragments that consume them.</li>
+  <li><strong>Routing fallback elimination (R11):</strong> 40 lines of duplicated routing
+    logic replaced with a one-line hook invocation plus error handling.</li>
+</ul>
+
+<h3>Fragment &amp; Spine Mergers</h3>
+
+<p>Reduces Read tool calls per session by consolidating small fragments:</p>
+
+<ul>
+  <li><strong>R8:</strong> Two construction fragments merged into <code>construction/steps.md</code>.</li>
+  <li><strong>R7:</strong> Verification steps 2&ndash;4 merged into step 1 fragment.</li>
+  <li><strong>R14:</strong> All four protocol spines merged into the top of their first fragment.
+    Protocol entry files become 4-line pointers.</li>
+</ul>
+
+<h3>Deliverable Surfacing (R0, R0a)</h3>
+
+<ul>
+  <li><strong>R0:</strong> Construction complete and closeout now name each deliverable file
+    with its absolute path.</li>
+  <li><strong>R0a:</strong> Protocol convention: deliverables go in the project root, not
+    in <code>plans/</code>. Pre-build check enforces this.</li>
+</ul>
+
+<h3>Protocol Simplifications</h3>
+
+<ul>
+  <li><strong>R6:</strong> Compliance checklist replaced with silent pre-gate validation.</li>
+  <li><strong>R9:</strong> Agent configuration uses defaults-first approach. Full decision
+    tree only when complexity signals are present (Pattern 3, 5+ components, etc.).</li>
+  <li><strong>R12:</strong> Compact format for mechanical decision log entries (gate approvals,
+    assessments). Pipe-delimited single line instead of 5&ndash;8 lines.</li>
+  <li><strong>R13:</strong> Build record skipped for simple projects (&le;3 files, no
+    deviations, no design decisions).</li>
+  <li><strong>R5:</strong> Builder agent instructions cached after first dispatch; re-inlined
+    from cache for subsequent components.</li>
+</ul>
+
+<h3>Hook Improvements</h3>
+
+<ul>
+  <li><strong>R3:</strong> Dead probe scripts deleted (null-probe.sh, post-tool-use-probe.sh,
+    subagent-start-probe.sh).</li>
+  <li><strong>R4:</strong> Shared helper functions extracted to <code>pcv-lib.sh</code>
+    (string_in_file, normalize_allow_array, append_to_allow_array, is_valid_json_shape).
+    Sourced by scaffold-settings.sh and tech-permissions-scan.sh.</li>
+  <li><strong>R10:</strong> stop-closeout.sh uses inline header-grep check instead of
+    spawning validate-pcv-format.sh as a subprocess on every turn.</li>
+  <li><strong>R15:</strong> jq fast-path for scaffold-settings.sh JSON operations. Auto-provisions
+    jq binary from GitHub releases if not installed. Pure-bash fallback preserved.</li>
+</ul>
+
+<!-- ======================================================== -->
+<h2 id="faq">FAQ / Troubleshooting</h2>
+
+<h3>PCV says it can&rsquo;t find my charge file.</h3>
+<p>The charge must be a file on disk with &ldquo;charge&rdquo; in its name (case-insensitive).
+Check that the file exists in your current working directory, or provide the filename
+explicitly: <code>/pcv MyProject_Charge.md</code>.</p>
+
+<h3>I&rsquo;m getting permission prompts for every file operation.</h3>
+<p>This usually means <code>.claude/settings.json</code> was not created or was
+deleted. Run <code>/pcv</code> in an empty directory to re-scaffold, or run
+<code>scaffold-settings.sh</code> directly to regenerate the settings file. In v3.11,
+the scaffold step is automated &mdash; see <a href="#permissions">Permission Management</a>.</p>
+
+<h3>Can I use PCV with a model other than Opus?</h3>
+<p>PCV is designed for Claude Code and works best with the strongest available model
+for planning (currently Opus). It will function with other models but planning quality
+may vary. The Critic agent uses Haiku for cost efficiency; the research, builder, and
+verifier agents use Sonnet.</p>
+
+<h3>Can I skip the planning phase and just build?</h3>
+<p>That&rsquo;s just using Claude Code normally &mdash; and it&rsquo;s fine for simple tasks.
+PCV is opt-in. Only invoke <code>/pcv</code> when the project complexity warrants
+structured planning.</p>
+
+<h3>What if I need to change the plan during construction?</h3>
+<p>If PCV encounters a deviation during construction, it stops, explains the issue,
+and waits for your approval before changing approach. The deviation is logged. For
+larger scope changes, you may need to return to the planning phase.</p>
+
+<h3>How do I update PCV?</h3>
+<p>Download a fresh <a href="bootstrap.md" download>bootstrap.md</a> and provide it to
+Claude Code. The installer compares the version in the bootstrap against your installed
+version and updates if the new version is higher.</p>
+
+<h3>The Stop hook is blocking my session end unexpectedly.</h3>
+<p>The hook fires when the project is in verification or construction phase without
+a closeout entry. Add a <code>## Project Closeout</code> or <code>## Verification Abandoned</code>
+entry to <code>plans/logs/decision-log.md</code>, or set the kill switch
+(<code>echo "opted-out" &gt; .claude/.pcv-hooks-opted-out</code>) if you want to end
+the session without a formal closeout.</p>
+
+<h3>The PostToolUse hook is reporting format warnings on my files.</h3>
+<p>The hook checks PCV artifact files for required section headers immediately after
+each write. If your file is mid-construction (not yet complete), the warning is
+expected and advisory &mdash; it does not block the write. Complete the file structure
+before the session ends to avoid the Stop hook also flagging it.</p>
+
+</main>
+
+<footer>
+  <p>PCV v3.11 &middot; M. G. Kay &middot; NC State ISE<br>
+  <a href="index.html">Home</a> &middot; <a href="bootstrap.md" download>Download bootstrap.md</a></p>
+</footer>
+
+</div>
+</body>
+</html>
