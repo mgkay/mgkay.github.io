@@ -5,15 +5,15 @@
 
 ## What This File Does
 
-This file is an installer manifest for the PCV (Plan-Construct-Verify) skill for Claude Code. When you provide this file to Claude Code and ask it to follow the installation instructions, it will install the full PCV skill — protocol files, handlers, hooks, and agent definitions — that enable the `/pcv` command.
+Installer manifest for the PCV (Plan-Construct-Verify) skill for Claude Code. When Claude Code follows the instructions below, it downloads the full PCV skill — protocol files, handlers, hooks, and agent definitions — enabling the `/pcv` command.
 
 ## Prerequisite
 
-**Claude Code** must be installed and working on your machine. PCV is a Claude Code skill — it runs inside Claude Code, not separately.
+**Claude Code** must be installed. PCV is a Claude Code skill; it runs inside Claude Code, not separately. `curl` must be available (default in Git Bash on Windows; default on macOS and Linux).
 
 ## How to Install
 
-1. Start a Claude Code session (anywhere — PCV is installed to your user profile, not a specific project).
+1. Start a Claude Code session (anywhere — PCV installs to your user profile, not a specific project).
 2. Say: `Read https://mgkay.github.io/pcv/bootstrap.md and follow the installation instructions inside it.`
 3. Claude Code will download the skill files and confirm success.
 
@@ -25,34 +25,47 @@ You are reading the PCV v3.14 bootstrap manifest. Follow these steps precisely.
 
 ### Step 1: Check for existing installation
 
-Read `~/.claude/skills/pcv/VERSION`. If the file exists, parse the first line as a version number. Compare it to the version in this bootstrap (3.14).
+Read `~/.claude/skills/pcv/VERSION`. If the file exists, parse the first line as a version number. Compare to 3.14.
 
-- If the installed version is **equal to** 3.14, inform the user: "PCV v3.14 is already installed. No update needed." **STOP.**
-- If the installed version is **higher than** 3.14, inform the user: "PCV v[installed] is newer than this bootstrap (3.14). Aborting — will not downgrade." **STOP.**
-- If the installed version is **lower than** 3.14, inform the user: "Updating PCV from v[installed] to v3.14." Proceed to Step 2.
-- If the file does not exist, inform the user: "Installing PCV v3.14." Proceed to Step 2.
+- **Equal to 3.14** → "PCV v3.14 is already installed. No update needed." **STOP.**
+- **Higher than 3.14** → "PCV v[installed] is newer than this bootstrap (3.14). Aborting — will not downgrade." **STOP.**
+- **Lower than 3.14** → "Updating PCV from v[installed] to v3.14." Proceed to Step 2.
+- **Does not exist** → "Installing PCV v3.14." Proceed to Step 2.
 
-### Step 2: Download and write all files
+### Step 2: Download and install all files (curl-based)
 
-For each file listed in the MANIFEST below:
+**Why curl, not WebFetch:** Claude Code's WebFetch tool post-processes content through an LLM and does *not* return raw bytes — it will summarize, refuse, or rewrite file content, corrupting installs. Use `curl` via the Bash tool to fetch raw bytes.
 
-1. Fetch the file content from `https://mgkay.github.io/pcv/<relative-path>` using WebFetch.
-2. Write the fetched content to the corresponding path under `~/.claude/skills/pcv/` or `~/.claude/agents/` using the Write tool.
-3. Create any needed parent directories (the Write tool creates them implicitly on most systems).
+**Source URLs use `raw.githubusercontent.com`**, not `mgkay.github.io`. This bypasses GitHub Pages' Jekyll processing (which otherwise strips frontmatter and 404s on files like `SKILL.md`). All source files live on the `main` branch of the `mgkay/mgkay.github.io` repository.
 
-**If any WebFetch fails**, stop and report the specific file + URL to the user. Do not continue with a partial install.
+For each entry in the MANIFEST below:
 
-**Important:** write files exactly as fetched. Do not modify content.
+1. Ensure the destination's parent directory exists. Parent directories under `~/.claude/skills/pcv/` and `~/.claude/agents/` will be created implicitly by most downloaders, but on some systems you may need `mkdir -p ~/.claude/skills/pcv/handlers` (etc.) first.
+2. Run in Bash: `curl -fsSL "<source-url>" -o "<destination-path>"`
+   - `-f` fails on HTTP errors (404, 500, etc.)
+   - `-s` silent (no progress bar)
+   - `-S` show errors on failure even with `-s`
+   - `-L` follow redirects
+3. If any curl invocation exits non-zero, stop and report the failing URL + destination to the user. Do not continue with a partial install.
+
+**After all files downloaded**, verify each destination file is non-empty:
+```bash
+for f in <list of destinations>; do
+  [ -s "$f" ] || echo "EMPTY: $f"
+done
+```
+
+Any "EMPTY" output indicates a silent download failure — report to the user.
 
 ### Step 3: Verify installation
 
-After writing all files, verify:
-
 1. Read `~/.claude/skills/pcv/VERSION` → first line must be `3.14`.
-2. Read `~/.claude/skills/pcv/SKILL.md` → must exist and begin with `---`.
+2. Read `~/.claude/skills/pcv/SKILL.md` → must begin with `---` (YAML frontmatter).
 3. Read `~/.claude/skills/pcv/handlers/lib.sh` → must exist (new in v3.14).
-4. Read `~/.claude/skills/pcv/hooks/session-start-resume.sh` → must contain the string `v3.14 session-state sentinel write` (confirms the v3.14 sentinel writer is present).
+4. Search `~/.claude/skills/pcv/hooks/session-start-resume.sh` for the string `v3.14 session-state sentinel write` → must be present (confirms v3.14 sentinel writer is installed).
 5. Read `~/.claude/agents/pcv-critic.md` → must begin with `---`.
+
+Any verification failure → report to user and do not claim success.
 
 ### Step 4: Inform the user
 
@@ -60,9 +73,12 @@ On success, tell the user:
 
 > **PCV v3.14 installed successfully.**
 >
-> **Protocol files** (`~/.claude/skills/pcv/`): SKILL.md, pcv-common.md, planning-protocol.md, construction-protocol.md, verification-protocol.md, phase-transition-protocol.md, scaffold-templates.md, VERSION, plus fragments under `planning/`, `construction/`, `verification/`, `transition/`.
+> **Protocol files** (`~/.claude/skills/pcv/`): SKILL.md, pcv-common.md, planning-protocol.md, construction-protocol.md, verification-protocol.md, phase-transition-protocol.md, scaffold-templates.md, VERSION, plus step fragments under `planning/`, `construction/`, `verification/`, `transition/`.
+>
 > **Handlers** (`~/.claude/skills/pcv/handlers/`, NEW in v3.14): lib.sh + 8 mechanical gate handlers (hook-registration, plan-tier, git-setup, global-settings, charge-write, test-response-clarification, test-response-escalation, scope-creep-trigger).
+>
 > **Hooks** (`~/.claude/skills/pcv/hooks/`): pcv-lib.sh, session-start-resume.sh, scaffold-settings.sh, scaffold-phase.sh, stop-closeout.sh, pre-compact-snapshot.sh, post-tool-use-format.sh, subagent-stop-track.sh, tech-permissions-scan.sh, validate-pcv-format.sh.
+>
 > **Agents** (`~/.claude/agents/`): pcv-critic.md, pcv-research.md, pcv-builder.md, pcv-verifier.md.
 >
 > To use PCV, navigate to a project directory and type `/pcv`.
@@ -71,7 +87,7 @@ On success, tell the user:
 
 ## MANIFEST — files to install
 
-Each entry is `source-URL → destination-path`. All source URLs are under `https://mgkay.github.io/pcv/`; destinations are under `~/.claude/`.
+Each entry lists source-URL → destination-path. Base URL: `https://raw.githubusercontent.com/mgkay/mgkay.github.io/main/pcv/`.
 
 ### Protocol files (skill root)
 - `skill/VERSION` → `~/.claude/skills/pcv/VERSION`
@@ -137,18 +153,28 @@ Each entry is `source-URL → destination-path`. All source URLs are under `http
 
 ## v3.14 Changelog Summary
 
-**Protocol Reliability.** Replaces prose conditional logic for mechanical gates (git setup, hook registration, plan tier, artifact scaffolding, metadata writes) with deterministic shell-script handlers backed by a hook-written session-state sentinel. Judgment gates (clarifications, critic escalation, deviation resolution, scope-creep response) remain prose with conflict-audit-driven reconciliation. Every gate site emits `gate-context.json` for future agent-as-user interop. Default permission expansion eliminates repetitive approval prompts for mundane temp-dir and PCV-internal operations. See full notes at `https://mgkay.github.io/pcv/` and the v3.14 build record in the source project.
+**Protocol Reliability.** Replaces prose conditional logic for mechanical gates (git setup, hook registration, plan tier, artifact scaffolding, metadata writes) with deterministic shell-script handlers backed by a hook-written session-state sentinel. Judgment gates (clarifications, critic escalation, deviation resolution, scope-creep response) remain prose with conflict-audit-driven reconciliation. Every gate site emits `gate-context.json` for future agent-as-user interop. Default permission expansion eliminates repetitive approval prompts for mundane temp-dir and PCV-internal operations. See `https://mgkay.github.io/pcv/` for full version history.
 
 ## Troubleshooting
 
-If install fails mid-way:
-- Confirm network access to `mgkay.github.io` (the manifest fetches files from there).
-- Confirm Claude Code has WebFetch permission for `mgkay.github.io` (add to your `~/.claude/settings.json` allow list if prompted).
-- Partial installs: re-run the bootstrap — writes are idempotent (overwrite).
-- If a specific file 404s, the URL listed in the manifest may be stale. File an issue at `https://github.com/mgkay/mgkay.github.io/issues`.
+**If `curl` is missing:** install Git for Windows (bundles Git Bash with curl) or use your OS's equivalent. On PowerShell, `Invoke-WebRequest -Uri <url> -OutFile <dest>` is the closest analog but Claude Code's default shell is Bash, so stick with curl.
+
+**If a specific file 404s on the raw URL:** the URL may reference a file not yet committed or pushed. Check `https://github.com/mgkay/mgkay.github.io/tree/main/pcv` in a browser to see what's actually in the repository.
+
+**If Claude Code prompts for network permission:** this is normal on first install. Approve `Bash(curl *)` and the specific destination paths for Write. To avoid prompts on future installs, add to `~/.claude/settings.json`:
+```json
+"allow": [
+  "Bash(curl *)",
+  "Read(~/.claude/skills/**)", "Write(~/.claude/skills/**)",
+  "Read(~/.claude/agents/**)", "Write(~/.claude/agents/**)"
+]
+```
+
+**Partial installs:** re-run the bootstrap. curl overwrites destinations, and the Step 1 version check will re-detect and re-install.
 
 ## Source Repository
 
-Full files at: https://github.com/mgkay/mgkay.github.io/tree/main/pcv
+Raw files: https://raw.githubusercontent.com/mgkay/mgkay.github.io/main/pcv/
+Repository: https://github.com/mgkay/mgkay.github.io/tree/main/pcv
 
-For development setups, clone the repo directly rather than bootstrapping.
+For development or bulk install, `git clone https://github.com/mgkay/mgkay.github.io` then copy `pcv/skill/*` to `~/.claude/skills/pcv/` and `pcv/agents/*` to `~/.claude/agents/`.
