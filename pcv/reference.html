@@ -11,7 +11,7 @@
 
 <header>
   <h1><span>PCV</span> Reference</h1>
-  <p class="subtitle">Component catalog and reference for PCV v3.11</p>
+  <p class="subtitle">Component catalog and reference for PCV v3.14</p>
   <p class="affiliation">NC State &middot; ISE</p>
   <nav>
     <a href="index.html">Home</a>
@@ -72,6 +72,10 @@
       <li><a href="#scaffolding">Phase Scaffolding</a></li>
       <li><a href="#behavioral">Behavioral Constraints</a></li>
       <li><a href="#optimization">Token &amp; Speed Optimization</a></li>
+    </ul>
+    <strong>v3.12 Automated Testing</strong>
+    <ul>
+      <li><a href="#testing">Automated Testing</a></li>
     </ul>
     <strong>Help</strong>
     <ul>
@@ -1559,6 +1563,54 @@ reduced their combined size from 520 to 380 lines:</p>
 </ul>
 
 <!-- ======================================================== -->
+<h2 id="testing">Automated Testing <small>(v3.12)</small></h2>
+
+<p>PCV v3.12 adds protocol-level support for fully automated test runs, enabling
+regression testing after any workflow change.</p>
+
+<h3>Test Mode Environment Variables</h3>
+
+<table>
+  <thead>
+    <tr><th>Variable</th><th>Purpose</th><th>Effect</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>PCV_AUTO_APPROVE=1</code></td>
+      <td>Auto-approve all gates</td>
+      <td>Gates auto-approved with defaults; logged as &ldquo;Auto-approved (test mode)&rdquo;</td>
+    </tr>
+    <tr>
+      <td><code>PCV_TEST_RESPONSES=&lt;path&gt;</code></td>
+      <td>Pre-scripted clarification answers</td>
+      <td>JSON file with keyed responses: <code>Q1</code>, <code>Q2</code> (single-phase) or <code>Q1-1</code>, <code>Q2-1</code> (multi-phase)</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Machine-Readable Milestones</h3>
+
+<p>Protocol milestones append <code>[MILESTONE:&lt;TAG&gt;]</code> to decision log entry headers
+(e.g., <code>[MILESTONE:GATE_1]</code>, <code>[MILESTONE:CONSTRUCTION_COMPLETE]</code>).
+The <code>pre-compact-snapshot.sh</code> hook extracts these into a
+<code>milestones_reached</code> array in <code>pcv-state.json</code>.</p>
+
+<h3>Test Mode Annotation</h3>
+
+<p>When <code>PCV_AUTO_APPROVE=1</code> is set, all decision log entry headers are prefixed
+with <code>[TEST]</code> for easy identification and filtering.</p>
+
+<h3>Regression Test Harness</h3>
+
+<p><strong>Tier 1 (deterministic):</strong> Nine bash test scripts covering all hook scripts
+(156+ assertions). Run with <code>bash run-tests.sh</code>.</p>
+
+<p><strong>Tier 2 (LLM-in-the-loop):</strong> Three pre-built test charges (Lite, Standard,
+Multi-phase) with a Python driver (<code>driver.py</code>) that scaffolds a project,
+invokes <code>claude -p "/pcv"</code> with test env vars, and validates artifacts via
+<code>validate-run.sh</code>.</p>
+
+<!-- ======================================================== -->
 <h2 id="faq">FAQ / Troubleshooting</h2>
 
 <h3>PCV says it can&rsquo;t find my charge file.</h3>
@@ -1609,7 +1661,7 @@ before the session ends to avoid the Stop hook also flagging it.</p>
 </main>
 
 <footer>
-  <p>PCV v3.11 &middot; M. G. Kay &middot; NC State ISE<br>
+  <p>PCV v3.12 &middot; M. G. Kay &middot; NC State ISE<br>
   <a href="index.html">Home</a> &middot; <a href="bootstrap.md" download>Download bootstrap.md</a></p>
 </footer>
 

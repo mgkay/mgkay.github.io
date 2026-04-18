@@ -137,6 +137,21 @@ troubleshooting.</p>
   </thead>
   <tbody>
     <tr>
+      <td><strong>3.14</strong></td>
+      <td>2026-04-18</td>
+      <td>Protocol Reliability: mechanical gate handlers (M1&ndash;M8) replace prose conditional logic with deterministic shell scripts using <em>announce + execute</em> UX. Hook-written <code>session-state.json</code> sentinel eliminates env-var checks scattered across protocol prose. <code>gate-context.json</code> emitted at all 24 gates for future agent-as-user interop. Conflict-audit-driven prose reconciliation (Gate Protocol scope clause for judgment vs. mechanical). <code>--repeat N=3</code> flag on <code>run-all.sh</code> for integration verification. Default permission expansion eliminates repetitive approval prompts for temp-dir and PCV-internal operations.</td>
+    </tr>
+    <tr>
+      <td><strong>3.13</strong></td>
+      <td>2026-04-15</td>
+      <td>Usability: <code>plans/</code> renamed to <code>pcvplans/</code> (breaking change); <code>charge.md</code> moves into <code>pcvplans/</code>; <code>pcv_idea.md</code> scaffolded in project root then relocated to <code>pcvplans/idea.md</code> after charge generation. Gate prompts include help footer. Interop feasibility assessment for future agent/skill assistance at gates.</td>
+    </tr>
+    <tr>
+      <td><strong>3.12</strong></td>
+      <td>2026-04-14</td>
+      <td>Automated testability: <code>PCV_AUTO_APPROVE</code> env var for gate auto-approval, <code>PCV_TEST_RESPONSES</code> for pre-scripted clarification answers with phase-scoped keys, <code>[MILESTONE:*]</code> tags on decision log headers, <code>[TEST]</code> prefix on test-mode entries. Regression test harness with Tier 1 (deterministic) and Tier 2 (LLM-in-the-loop) validation.</td>
+    </tr>
+    <tr>
       <td><strong>3.11</strong></td>
       <td>2026-04-14</td>
       <td>Hook-based architecture migration (6 phases). Deterministic operations
@@ -184,7 +199,7 @@ troubleshooting.</p>
 </main>
 
 <footer>
-  <p>PCV v3.11 &middot; M. G. Kay &middot; NC State ISE<br>
+  <p>PCV v3.14 &middot; M. G. Kay &middot; NC State ISE<br>
   <a href="reference.html">Reference</a> &middot; <a href="bootstrap.md" download>Download bootstrap.md</a></p>
 </footer>
 

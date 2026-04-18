@@ -1,1 +1,3 @@
-3.11
+3.14
+2026-04-18
+Protocol Reliability: mechanical gate handlers (M1-M8) with announce+execute UX, hook-written session-state.json sentinel, gate-context.json emission at all 24 gates, conflict-audit-driven prose reconciliation, --repeat N=3 integration verification flag, driver.py preflight updated, default permission expansion (C12) for temp-dirs and PCV-internals.
