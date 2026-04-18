@@ -48,14 +48,14 @@ For each entry in the MANIFEST below:
    - `-L` follow redirects
 3. If any curl invocation exits non-zero, stop and report the failing URL + destination to the user. Do not continue with a partial install.
 
-**After all files downloaded**, verify each destination file is non-empty:
+**After all files downloaded**, verify no file ended up empty (silent download failure):
 ```bash
-for f in <list of destinations>; do
-  [ -s "$f" ] || echo "EMPTY: $f"
-done
+find ~/.claude/skills/pcv ~/.claude/agents -type f -empty -print
 ```
 
-Any "EMPTY" output indicates a silent download failure — report to the user.
+If this prints nothing, all installed files are non-empty. If it prints any paths, those files failed to download correctly — report to the user and re-run the bootstrap (curl overwrites, so retrying is safe).
+
+Do not inline a long `for f in path1 path2 ...` loop — some Claude Code versions have parser limits on very long shell commands (~4000+ characters).
 
 ### Step 3: Verify installation
 
