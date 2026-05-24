@@ -82,7 +82,7 @@ if you haven&rsquo;t already. The skill also needs <strong>Python 3</strong> and
   </li>
   <li>
     <strong>Give the bootstrap URL to Claude Code.</strong> Type:<br>
-    <code>Read https://mgkay.github.io/track-changes/bootstrap.md and follow the installation instructions inside it.</code>
+    <code>Read <a href="bootstrap.md">https://mgkay.github.io/track-changes/bootstrap.md</a> and follow the installation instructions inside it.</code>
   </li>
   <li>
     <strong>Confirm the installation.</strong> Claude Code downloads the skill files, merges
@@ -129,14 +129,15 @@ HTML &mdash; what you&rsquo;ll see in VS Code&rsquo;s built-in markdown preview
 (<kbd>Ctrl+Shift+V</kbd>) or any markdown viewer that renders HTML.</p>
 
 <h4>1. Original (on disk)</h4>
-<div class="example">The bound holds for all n.</div>
+<div class="example">The greedy algorithm finds the optimal solution.</div>
 
 <h4>2. AI proposes two edits (file rewritten by Claude)</h4>
-<div class="example">The bound holds for <mark><s>all</s>every</mark><sup>1</sup> <mark><s>n</s>positive integer <em>n</em></mark><sup>2</sup>.</div>
+<div class="example">The greedy algorithm<mark> often</mark><sup>1</sup> finds <mark><s>the optimal</s>a near-optimal</mark><sup>2</sup> solution.</div>
 
-<p>The PreToolUse hook accepted this write because every changed character is inside a
-<code>&lt;mark&gt;</code> wrapper. Each <code>&lt;sup&gt;N&lt;/sup&gt;</code> is a unique
-reference number for the next step.</p>
+<p>Mark 1 is an insertion (adds " often"). Mark 2 is a replacement (strikes through "the
+optimal", proposes "a near-optimal"). The PreToolUse hook accepted this write because
+every changed character is inside a <code>&lt;mark&gt;</code> wrapper. Each
+<code>&lt;sup&gt;N&lt;/sup&gt;</code> is a unique reference number for the next step.</p>
 
 <h4>3. You review and decide: accept #1, reject #2</h4>
 
@@ -146,14 +147,14 @@ without disabling tracking. (You can also delete the wrappers yourself in any te
 editor.)</p>
 
 <h4>4. Final result (on disk)</h4>
-<div class="example">The bound holds for every n.</div>
+<div class="example">The greedy algorithm often finds the optimal solution.</div>
 
-<p>Mark #1 was accepted &mdash; <em>every</em> survives, <em>all</em> is gone.
-Mark #2 was rejected &mdash; the original <em>n</em> survives, the proposed
-<em>positive integer n</em> is dropped. Both decisions, with timestamps and old/new
-strings, are appended to <code>&lt;git-repo-root&gt;/.tc-history.md</code> &mdash; the
-audit log lives in git, so <code>git diff</code>, <code>git blame</code>, and PR review
-all surface AI-attributed changes naturally.</p>
+<p>Mark 1 was accepted &mdash; "often" survives. Mark 2 was rejected &mdash; the original
+"the optimal" survives, the proposed "a near-optimal" is dropped. Both decisions, with
+timestamps and old/new strings, are appended to
+<code>&lt;git-repo-root&gt;/.tc-history.md</code> &mdash; the audit log lives in git, so
+<code>git diff</code>, <code>git blame</code>, and PR review all surface AI-attributed
+changes naturally.</p>
 
 <h2>What you get</h2>
 
