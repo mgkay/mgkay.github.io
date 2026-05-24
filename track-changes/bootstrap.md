@@ -11,7 +11,7 @@ Installer manifest for the **track-changes** skill for Claude Code. When Claude 
 
 - **Claude Code** installed. track-changes is a Claude Code skill; it runs inside Claude Code, not separately.
 - **`curl`** — default in Git Bash on Windows, default on macOS and Linux.
-- **Python 3** — required by the validator and audit hooks (Fix #11 / #13 native Python rewrite).
+- **Python 3** — required by the validator and audit hooks.
 - **`jq`** — only needed by the legacy `bash install.sh` path; the curl bootstrap uses a Python helper for the settings.json merge.
 
 ## How to Install
@@ -152,7 +152,7 @@ Each entry lists source-URL → destination-path. Base URL: `https://raw.githubu
 
 ## v1.13 Changelog Summary
 
-Native Python PreToolUse + PostToolUse hooks (Fixes #11, #13) replace the bash+jq+Python-heredoc architecture; per-tracked-edit overhead 625ms → 154ms (−75%). Walk-based per-region coverage check (Fix #10) closes the lenient line-level rule. Resolution-mode pre-pass (Fix #8) lets the AI accept/reject marks without `/draft`. `<s>` strikethrough encoding (Fix #7) renders correctly in markdown-it-based viewers. 198/198 tests pass. See `https://mgkay.github.io/track-changes/` for full version history.
+Native Python PreToolUse + PostToolUse hooks replace the prior bash + jq + Python-heredoc architecture; per-tracked-edit overhead is ~154ms (down from ~625ms). The validator uses a walk-based per-region coverage check that closes the previous lenient line-level rule. A resolution-mode pre-pass lets the AI accept/reject marks on the user's instruction without disabling tracking via `/draft`. Markdown strikethrough uses HTML `<s>` (not GFM `~~`), which renders correctly in markdown-it-based viewers (VS Code preview, Chrome markdown extensions) as well as GitHub and Quarto. 198/198 tests pass. See `https://mgkay.github.io/track-changes/` for project details.
 
 ## Troubleshooting
 
