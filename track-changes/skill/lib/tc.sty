@@ -1,0 +1,44 @@
+% tc.sty — track-changes LaTeX support
+%
+% Provides the \tc{} and \tcn{} macros used by the track-changes skill
+% to wrap AI-introduced edits in a yellow highlight with a reference
+% number sitting outside the highlight.
+%
+% Usage in a .tex preamble:
+%   \usepackage{tc}
+%
+% Then in the body:
+%   tes\tc{ted}\tcn{7}                       % insertion
+%   tes\tc{\sout{ted}}\tcn{8}                % deletion
+%   \tc{\sout{slow}tired}\tcn{9}             % replacement
+%
+% Loads `soul` for \hl (highlight) and \sout (strikeout). If `soul` is
+% incompatible with your setup (hyperref, fontspec with non-TeX-Gyre
+% fonts under XeLaTeX/LuaLaTeX, or another highlight package), define
+% the fallback inline in your preamble after omitting this package:
+%
+%   \usepackage{xcolor,ulem}
+%   \newcommand{\tc}[1]{\colorbox{yellow}{#1}}
+%   \newcommand{\tcn}[1]{\textsuperscript{#1}}
+%
+% See reference/highlight-syntax.md and SKILL.md §10 for details.
+
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{tc}[2026/05/23 v2.0 track-changes highlight macros]
+
+\RequirePackage{soul}
+\RequirePackage{color}
+
+% Set the highlight color to yellow (soul default is also yellow but we
+% set it explicitly so the rendering is stable across distributions).
+\sethlcolor{yellow}
+
+% \tc{<content>} — wrap content in a yellow highlight.
+\newcommand{\tc}[1]{\hl{#1}}
+
+% \tcn{<N>} — render the reference number as a superscript outside the
+% highlight. Single integer argument; the package does not enforce that
+% it is numeric (the PreToolUse hook does).
+\newcommand{\tcn}[1]{\textsuperscript{#1}}
+
+\endinput

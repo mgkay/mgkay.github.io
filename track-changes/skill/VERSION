@@ -1,0 +1,3 @@
+1.13
+2026-05-24
+Native Python hooks (Fix #11/#13) + walk-based coverage (Fix #10) + resolution-mode pre-pass (Fix #8) + <s> strikethrough encoding (Fix #7); per-tracked-edit overhead 154ms; 198/198 tests pass.

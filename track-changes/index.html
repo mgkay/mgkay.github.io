@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>track-changes: Source-preserving AI edit protocol</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1><span>track-changes</span></h1>
+  <p class="subtitle">A Claude Code skill that wraps every AI-introduced edit in a numbered yellow highlight you can review and accept or reject</p>
+  <p class="affiliation">NC State &middot; ISE</p>
+  <nav>
+    <a href="index.html" class="active">Home</a>
+  </nav>
+</header>
+
+<main>
+
+<h2>What is track-changes?</h2>
+
+<p>track-changes is a <strong>skill for Claude Code</strong> that intercepts every Write
+/ Edit / MultiEdit on tracked <code>.md</code>, <code>.qmd</code>, and <code>.tex</code> files.
+Each AI-introduced change is wrapped in a <code>&lt;mark&gt;</code> highlight followed by
+<code>&lt;sup&gt;N&lt;/sup&gt;</code> &mdash; rendered yellow with strikethrough overlay in any
+markdown viewer &mdash; so you can review every change individually and accept or reject it
+the way you would in Word or Google Docs.</p>
+
+<div class="phases">
+  <div class="phase-box">Block<small>Unmarked AI edit</small></div>
+  <div class="phase-arrow">&#x2192;</div>
+  <div class="phase-box">Wrap<small>Mark the diff</small></div>
+  <div class="phase-arrow">&#x2192;</div>
+  <div class="phase-box">Review<small>Accept / reject</small></div>
+  <div class="phase-arrow">&#x2192;</div>
+  <div class="phase-box">Audit<small>Append to log</small></div>
+</div>
+
+<h2>Why it exists</h2>
+
+<p>Vetted source documents &mdash; lecture notes, exams, manuscripts &mdash; have often been
+reviewed by their author for years. Silent AI-introduced changes destroy that trust. The
+PreToolUse hook refuses any edit to a tracked file that doesn&rsquo;t wrap the differing
+characters in a numbered mark. The PostToolUse hook appends every mark (and every later
+resolution) to a project-local <code>.tc-history.md</code> audit log that lives in git.</p>
+
+<h2>Prerequisites</h2>
+
+<p><strong>Claude Code</strong> must be installed and working.
+track-changes is a Claude Code skill &mdash; it runs inside Claude Code, not separately.
+<a href="https://docs.anthropic.com/en/docs/claude-code/overview">Install Claude Code first</a>
+if you haven&rsquo;t already. The skill also needs <strong>Python 3</strong> and
+<strong>curl</strong> (both default on most setups).</p>
+
+<h2>Installation</h2>
+
+<ol class="steps">
+  <li>
+    <strong>Start a Claude Code session</strong> &mdash; anywhere; track-changes installs to
+    your user profile, not a specific project.
+  </li>
+  <li>
+    <strong>Give the bootstrap URL to Claude Code.</strong> Type:<br>
+    <code>Read https://mgkay.github.io/track-changes/bootstrap.md and follow the installation instructions inside it.</code>
+  </li>
+  <li>
+    <strong>Confirm the installation.</strong> Claude Code downloads the skill files, merges
+    five hook registrations into your <code>~/.claude/settings.json</code>, and reports
+    success.
+  </li>
+  <li>
+    <strong>Open a new Claude Code session</strong> so the registered hooks take effect.
+  </li>
+</ol>
+
+<div class="callout">
+  <p><strong>Updating.</strong> Run the same install command again. The installer reads the
+  current <code>~/.claude/skills/track-changes/VERSION</code> and only overwrites if the
+  remote version is higher. The settings.json merge is idempotent.</p>
+</div>
+
+<h2>Quick Start</h2>
+
+<ol class="steps">
+  <li><strong>Mark a folder as tracked.</strong> Drop an empty <code>.tc-tracked</code> file
+    in the folder containing your <code>.md</code> / <code>.qmd</code> / <code>.tex</code>
+    sources. The skill checks only the file&rsquo;s OWN folder &mdash; no walk-up, no
+    descent into subfolders. (Or enable per-file via YAML frontmatter
+    <code>track-changes: true</code>, or via the slash command <code>/tc enable
+    &lt;file&gt;</code>.)</li>
+  <li><strong>Edit a tracked file with Claude.</strong> The AI will wrap each change in
+    <code>&lt;mark&gt;&lt;s&gt;old&lt;/s&gt;new&lt;/mark&gt;&lt;sup&gt;N&lt;/sup&gt;</code> (or
+    <code>\tc{...}\tcn{N}</code> for LaTeX). The PreToolUse hook blocks the write if any
+    diff region is unmarked.</li>
+  <li><strong>Review in your editor.</strong> Open the file in VS Code preview
+    (<kbd>Ctrl+Shift+V</kbd>) or any markdown viewer &mdash; marks render as yellow
+    highlights with strikethrough on the old text.</li>
+  <li><strong>Accept or reject each change.</strong> Either delete the mark wrapper yourself
+    (keep the new chars) or restore the old chars (reject). Or ask Claude: <em>&ldquo;accept
+    marks 1, 3, and 7; reject 2.&rdquo;</em> The resolution-mode pre-pass (Fix #8) lets the
+    AI perform the cleanup without disabling tracking.</li>
+  <li><strong>Inspect the audit log.</strong> Every introduced and resolved mark is appended
+    to <code>&lt;git-repo-root&gt;/.tc-history.md</code> with timestamp, type, line number,
+    and decision. The log is git-friendly: <code>git diff</code> and <code>git blame</code>
+    surface AI-attributed changes naturally.</li>
+</ol>
+
+<h2>What you get</h2>
+
+<div class="cols">
+  <div class="col">
+    <h4>Hooks (registered in settings.json)</h4>
+    <ul>
+      <li><strong>PreToolUse</strong> validates every Write / Edit / MultiEdit on a tracked
+        file. Blocks if any diff region isn&rsquo;t inside a <code>&lt;mark&gt;</code>.</li>
+      <li><strong>PostToolUse</strong> diffs current marks vs prior cache; appends
+        introduced + resolved entries to <code>.tc-history.md</code>.</li>
+      <li><strong>SessionStart</strong> surfaces a LaTeX-preamble advisory when editing
+        <code>.tex</code> files.</li>
+      <li><strong>Stop / UserPromptSubmit</strong> manage the <code>/draft</code> per-turn
+        sentinel.</li>
+    </ul>
+  </div>
+  <div class="col">
+    <h4>Slash commands</h4>
+    <ul>
+      <li><code>/draft</code> &mdash; suspend tracking for the next turn (e.g., for a
+        large refactor that&rsquo;s too noisy to mark).</li>
+      <li><code>/tc enable &lt;file&gt;</code> / <code>/tc disable &lt;file&gt;</code>
+        &mdash; per-file YAML frontmatter writer.</li>
+      <li><code>/tc mark [&lt;dir&gt;]</code> &mdash; drop a <code>.tc-tracked</code> marker.</li>
+      <li><code>/tc status [&lt;file&gt;]</code> &mdash; inspect the activation chain.</li>
+      <li><code>/tc migrate &lt;dir&gt;</code> &mdash; convert v1 marks to v2 in place.</li>
+    </ul>
+  </div>
+</div>
+
+<h2>Performance</h2>
+
+<p>Per-tracked-edit overhead is <strong>~154ms</strong> on Windows + Git Bash with the
+Fix #11 / #13 native Python hook architecture (PreToolUse ~75ms + PostToolUse ~79ms). The
+optional Python daemon (lib/tc_daemon.py) is auto-spawned on first hook call and keeps
+analyzer state warm for the rest of the session. Test suite: 198 tests in ~7s under
+parallel mode.</p>
+
+<h2>Design</h2>
+
+<table>
+  <thead>
+    <tr><th>Property</th><th>Value</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Storage format</td><td>Inline <code>&lt;mark&gt;</code>+<code>&lt;sup&gt;</code> wrappers in the source file</td></tr>
+    <tr><td>Audit trail</td><td>Append-only <code>.tc-history.md</code> at git repo root</td></tr>
+    <tr><td>Editor surface</td><td>Any &mdash; renders in VS Code preview, GitHub, Quarto, Chrome markdown extensions</td></tr>
+    <tr><td>Activation</td><td>Folder marker (<code>.tc-tracked</code>), per-file YAML, or per-turn <code>/draft</code></td></tr>
+    <tr><td>Coverage rule</td><td>Per-region: every diff character must be inside a mark or be a resolution of an existing mark</td></tr>
+    <tr><td>Mark encoding</td><td><code>&lt;mark&gt;&lt;s&gt;old&lt;/s&gt;new&lt;/mark&gt;&lt;sup&gt;N&lt;/sup&gt;</code> for Markdown; <code>\tc{\sout{old}new}\tcn{N}</code> for LaTeX</td></tr>
+    <tr><td>Resolution</td><td>AI can accept/reject on user instruction without <code>/draft</code> (Fix #8 pre-pass)</td></tr>
+    <tr><td>Default</td><td>OFF &mdash; per-folder or per-file opt-in</td></tr>
+  </tbody>
+</table>
+
+<h2>Version History</h2>
+
+<table>
+  <thead>
+    <tr><th>Version</th><th>Date</th><th>Summary</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>1.13</strong></td>
+      <td>2026-05-24</td>
+      <td>Fix #13 &mdash; Native Python PostToolUse hook + daemon support; PostToolUse latency 550ms &rarr; 79ms; per-tracked-edit overhead 154ms total.</td>
+    </tr>
+    <tr>
+      <td><strong>1.12</strong></td>
+      <td>2026-05-23</td>
+      <td>Fix #12 &mdash; Per-category isolated HOME for parallel tests; suite 36s &rarr; 11s.</td>
+    </tr>
+    <tr>
+      <td><strong>1.11</strong></td>
+      <td>2026-05-23</td>
+      <td>Fix #11 &mdash; Native Python PreToolUse hook + persistent daemon; per-hook latency 470ms &rarr; 75ms (&minus;84%).</td>
+    </tr>
+    <tr>
+      <td><strong>1.10</strong></td>
+      <td>2026-05-23</td>
+      <td>Fix #10 &mdash; Walk-based per-region coverage replaces the lenient line-level rule; closes the sneaky-edit hole.</td>
+    </tr>
+    <tr>
+      <td><strong>1.9</strong></td>
+      <td>2026-05-23</td>
+      <td>Fix #9 &mdash; Hook latency: single-Python consolidation (build + diff + analyze in one invocation).</td>
+    </tr>
+    <tr>
+      <td><strong>1.8</strong></td>
+      <td>2026-05-23</td>
+      <td>Fix #8 &mdash; Resolution-mode pre-pass; AI can accept/reject marks on instruction without <code>/draft</code>.</td>
+    </tr>
+    <tr>
+      <td><strong>1.7</strong></td>
+      <td>2026-05-23</td>
+      <td>Fix #7 &mdash; Markdown strikethrough encoding <code>~~old~~</code> &rarr; <code>&lt;s&gt;old&lt;/s&gt;</code> for cross-renderer reliability (VS Code preview, Chrome markdown extensions).</td>
+    </tr>
+    <tr>
+      <td><strong>1.6</strong></td>
+      <td>2026-05-23</td>
+      <td>Fix #6 &mdash; Folder-local <code>.tc-tracked</code> marker (no walk-up); list mode; hidden-file exclusion; audit log; session-level commands dropped.</td>
+    </tr>
+    <tr>
+      <td><strong>1.5</strong></td>
+      <td>2026-05-23</td>
+      <td>Fix #5 &mdash; Unified <code>/tc</code> command with <code>enable</code> / <code>disable</code> / <code>mark</code> / <code>migrate</code> / <code>status</code> subcommands.</td>
+    </tr>
+    <tr>
+      <td><strong>1.4</strong></td>
+      <td>2026-05-23</td>
+      <td>Fix #4 &mdash; Token-minimal v2 encoding; default-off opt-in activation.</td>
+    </tr>
+    <tr>
+      <td><strong>1.3</strong></td>
+      <td>2026-05-22</td>
+      <td>Fix #3 &mdash; Stop hook no-op; bare-prose-reference cleanup.</td>
+    </tr>
+    <tr>
+      <td><strong>1.2</strong></td>
+      <td>2026-05-22</td>
+      <td>Fix #2 &mdash; <code>/draft</code> slash command env-var resilience.</td>
+    </tr>
+    <tr>
+      <td><strong>1.1</strong></td>
+      <td>2026-05-22</td>
+      <td>Fix #1 &mdash; Non-rendering region masking for the structural validator.</td>
+    </tr>
+    <tr>
+      <td><strong>1.0</strong></td>
+      <td>2026-05-22</td>
+      <td>Initial PCV closeout: skill installed as default-active, v1 mark format,
+        SessionStart-loaded protocol, four hooks registered, full test suite green.</td>
+    </tr>
+  </tbody>
+</table>
+
+</main>
+
+<footer>
+  <p>track-changes v1.13 &middot; M. G. Kay &middot; NC State ISE<br>
+  <a href="bootstrap.md" download>Download bootstrap.md</a></p>
+</footer>
+
+</div>
+</body>
+</html>

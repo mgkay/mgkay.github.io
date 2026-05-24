@@ -1,0 +1,266 @@
+/* PCV Site — Shared Stylesheet */
+
+:root {
+  --red: #CC0000;
+  --red-dark: #990000;
+  --gray-50: #f9fafb;
+  --gray-100: #f3f4f6;
+  --gray-200: #e5e7eb;
+  --gray-400: #9ca3af;
+  --gray-600: #4b5563;
+  --gray-700: #374151;
+  --gray-800: #1f2937;
+  --gray-900: #111827;
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { font-size: 16px; scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font);
+  color: var(--gray-900);
+  background: #fff;
+  margin: 0;
+  padding: 0;
+  line-height: 1.65;
+}
+
+/* Layout */
+.wrap {
+  max-width: 740px;
+  margin: 0 auto;
+  padding: 0 1.25rem;
+}
+
+/* Header */
+header {
+  border-bottom: 3px solid var(--red);
+  padding: 2rem 0 1.25rem;
+  margin-bottom: 2rem;
+}
+header h1 {
+  font-size: 1.75rem;
+  margin: 0 0 0.25rem;
+  letter-spacing: -0.02em;
+}
+header h1 span { color: var(--red); }
+header .subtitle {
+  color: var(--gray-600);
+  font-size: 0.95rem;
+  margin: 0;
+}
+header .affiliation {
+  color: var(--gray-400);
+  font-size: 0.8rem;
+  margin: 0.25rem 0 0;
+}
+
+/* Navigation */
+nav {
+  display: flex;
+  gap: 1.5rem;
+  margin-top: 0.75rem;
+}
+nav a {
+  color: var(--red);
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+nav a:hover { text-decoration: underline; }
+nav a.active {
+  color: var(--gray-900);
+  font-weight: 600;
+}
+
+/* Headings */
+h2 {
+  font-size: 1.35rem;
+  margin: 2.5rem 0 0.75rem;
+  padding-bottom: 0.25rem;
+  border-bottom: 1px solid var(--gray-200);
+  letter-spacing: -0.01em;
+}
+h3 {
+  font-size: 1.1rem;
+  margin: 1.75rem 0 0.5rem;
+  color: var(--gray-800);
+}
+h4 {
+  font-size: 0.95rem;
+  margin: 1.25rem 0 0.4rem;
+  color: var(--gray-700);
+}
+
+/* Paragraphs and lists */
+p { margin: 0 0 1rem; }
+ul, ol { margin: 0 0 1rem; padding-left: 1.5rem; }
+li { margin-bottom: 0.3rem; }
+
+/* Links */
+a { color: var(--red); }
+a:hover { color: var(--red-dark); }
+
+/* Code */
+code {
+  font-family: var(--mono);
+  font-size: 0.88em;
+  background: var(--gray-100);
+  padding: 0.15em 0.35em;
+  border-radius: 3px;
+}
+pre {
+  background: var(--gray-50);
+  border: 1px solid var(--gray-200);
+  border-radius: 4px;
+  padding: 1rem;
+  overflow-x: auto;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  margin: 0 0 1.25rem;
+}
+pre code {
+  background: none;
+  padding: 0;
+  border-radius: 0;
+}
+
+/* Phase diagram */
+.phases {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  margin: 1.75rem 0;
+  flex-wrap: wrap;
+}
+.phase-box {
+  text-align: center;
+  padding: 0.75rem 1.5rem;
+  border: 2px solid var(--red);
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 1rem;
+  background: #fff;
+  min-width: 120px;
+}
+.phase-box small {
+  display: block;
+  font-weight: 400;
+  font-size: 0.78rem;
+  color: var(--gray-600);
+  margin-top: 0.2rem;
+}
+.phase-arrow {
+  font-size: 1.5rem;
+  color: var(--red);
+  padding: 0 0.5rem;
+  line-height: 1;
+}
+
+/* Steps */
+.steps {
+  counter-reset: step;
+  list-style: none;
+  padding-left: 0;
+}
+.steps li {
+  counter-increment: step;
+  padding-left: 2.25rem;
+  position: relative;
+  margin-bottom: 0.75rem;
+}
+.steps li::before {
+  content: counter(step);
+  position: absolute;
+  left: 0;
+  top: 0.05em;
+  width: 1.5rem;
+  height: 1.5rem;
+  background: var(--red);
+  color: #fff;
+  border-radius: 50%;
+  font-size: 0.8rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Two-column lists (when/when not) */
+.cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin: 1rem 0 1.5rem;
+}
+.col h4 { margin-top: 0; }
+
+/* Callout boxes */
+.callout {
+  border-left: 3px solid var(--red);
+  background: var(--gray-50);
+  padding: 0.75rem 1rem;
+  margin: 1rem 0 1.25rem;
+  border-radius: 0 4px 4px 0;
+  font-size: 0.92rem;
+}
+.callout p:last-child { margin-bottom: 0; }
+
+/* Tables */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0 1.5rem;
+  font-size: 0.9rem;
+}
+th, td {
+  text-align: left;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--gray-200);
+}
+th {
+  font-weight: 600;
+  border-bottom: 2px solid var(--gray-200);
+  white-space: nowrap;
+}
+
+/* Button */
+.btn {
+  display: inline-block;
+  background: var(--red);
+  color: #fff;
+  padding: 0.6rem 1.25rem;
+  border-radius: 4px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: background 0.15s;
+}
+.btn:hover {
+  background: var(--red-dark);
+  color: #fff;
+}
+
+/* Footer */
+footer {
+  margin-top: 3rem;
+  padding: 1.25rem 0;
+  border-top: 1px solid var(--gray-200);
+  color: var(--gray-400);
+  font-size: 0.8rem;
+}
+footer a { color: var(--gray-600); }
+
+/* Mobile */
+@media (max-width: 600px) {
+  header h1 { font-size: 1.4rem; }
+  h2 { font-size: 1.15rem; }
+  .phases { flex-direction: column; gap: 0; }
+  .phase-arrow { transform: rotate(90deg); padding: 0.25rem 0; }
+  .cols { grid-template-columns: 1fr; gap: 0.75rem; }
+  .phase-box { min-width: unset; width: 100%; }
+}
