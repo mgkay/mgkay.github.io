@@ -26,6 +26,7 @@ Wrapper grammar (C1):
   - PATH may contain spaces (e.g. "Freight Transport.txt"); it is taken up
     to the optional `#` fragment or a ` mode=` token or the closing ` -->`.
 """
+import os
 import re
 
 # Opening / closing wrapper comments. The opening form is parsed in two
@@ -157,6 +158,166 @@ def scan_wrappers(text):
         ))
         pos = cm.end()
     return wrappers
+
+
+# ---------------------------------------------------------------------------
+# Unresolved-with-reason marker (C4/C5 shared mechanism).
+#
+# A `sources` map value can be:
+#   - a resolved slice STRING  (verified path),
+#   - None                     (generic unverified — unchanged v1 behavior),
+#   - an unresolved-with-reason marker (this tagged dict) carrying a SPECIFIC,
+#     actionable message (binary rejection C5 / not-found C4).
+#
+# The marker is a plain JSON-serializable dict so it survives the daemon
+# socket round-trip (tc_daemon serializes `sources` to JSON). Both the daemon
+# path and the in-process analyze(...) path produce the same block message.
+# ---------------------------------------------------------------------------
+_UNRESOLVED_TAG = '__tc_unresolved__'
+
+
+def unresolved(reason):
+    """Build an unresolved-with-reason source-map marker (JSON-serializable)."""
+    return {_UNRESOLVED_TAG: True, 'reason': str(reason)}
+
+
+def unresolved_reason(value):
+    """If `value` is an unresolved-with-reason marker, return its reason
+    string; otherwise return None. Tolerant of the JSON round-trip (a plain
+    dict with the tag key)."""
+    if isinstance(value, dict) and value.get(_UNRESOLVED_TAG):
+        r = value.get('reason')
+        return r if isinstance(r, str) else ''
+    return None
+
+
+# Text-source allowlist (C5 / FIX-3). Case-insensitive extension gate; only
+# these formats are eligible to be imported from. A binary/non-text format
+# (e.g. .docx, .pdf) is rejected without any read/decode attempt.
+TEXT_SOURCE_EXTS = frozenset({'.md', '.markdown', '.qmd', '.rmd', '.tex', '.txt'})
+
+# Bytes to sniff for a NUL byte / UTF-8 validity once the extension passes.
+_SNIFF_BYTES = 8192
+
+
+def is_text_source(path):
+    """C5 (FIX-3) — is `path` an eligible text source for §0 import?
+
+    Returns (ok, reason):
+      - ok=True, reason='' when the extension is in TEXT_SOURCE_EXTS
+        (case-insensitive) AND a small head of the file decodes as UTF-8 with
+        no NUL byte (catches a mislabeled binary that wears a text extension).
+      - ok=False, reason=<short phrase naming the rejected extension or the
+        content problem> otherwise.
+
+    Pure function: never raises. A missing/unreadable file is NOT this
+    function's concern (extension gate passes, content sniff is skipped on an
+    open error) — the caller's resolution step reports not-found.
+    """
+    ext = os.path.splitext(path or '')[1].lower()
+    if ext not in TEXT_SOURCE_EXTS:
+        shown = ext if ext else '(no extension)'
+        return (False, 'is a binary/non-text format (%s)' % shown)
+    # Extension passes; sniff a small head for a NUL byte / UTF-8 decode
+    # failure (a mislabeled binary). An open error is left to the resolver.
+    try:
+        with open(path, 'rb') as f:
+            head = f.read(_SNIFF_BYTES)
+    except (IOError, OSError):
+        return (True, '')
+    if b'\x00' in head:
+        return (False, 'contains a NUL byte (mislabeled binary)')
+    try:
+        head.decode('utf-8')
+    except UnicodeDecodeError:
+        # A multibyte char may straddle the sniff boundary; only flag when the
+        # error is not at the very tail of the truncated head.
+        try:
+            head.decode('utf-8', errors='strict')
+        except UnicodeDecodeError as e:
+            if e.start < len(head) - 4:
+                return (False, 'is not valid UTF-8 text (mislabeled binary)')
+    return (True, '')
+
+
+def nearest_tc_tracked_dir(file_path):
+    """C4 — walk up from file_path's directory for a `.tc-tracked` marker.
+    Return the first ancestor directory containing one, else None. Pure
+    filesystem probe; never raises."""
+    if not file_path:
+        return None
+    try:
+        cur = os.path.dirname(os.path.abspath(file_path))
+    except Exception:
+        return None
+    for _ in range(100):
+        try:
+            if os.path.isfile(os.path.join(cur, '.tc-tracked')):
+                return cur
+        except OSError:
+            pass
+        parent = os.path.dirname(cur)
+        if parent == cur:
+            break
+        cur = parent
+    return None
+
+
+def resolution_candidates(file_path, find_project_root=None):
+    """C4 — ordered candidate base directories for a RELATIVE from= path,
+    de-duplicated by realpath, first existing wins (caller joins w.path):
+      1. the directory of the edited file (dirname(file_path)),
+      2. the nearest ancestor `.tc-tracked` marker directory,
+      3. the git project root.
+    `find_project_root` is an optional callable (pass tc_audit.find_project_root
+    to avoid a circular import here)."""
+    cands = []
+    seen = set()
+
+    def _add(d):
+        if not d:
+            return
+        try:
+            rp = os.path.realpath(d)
+        except Exception:
+            rp = d
+        if rp in seen:
+            return
+        seen.add(rp)
+        cands.append(d)
+
+    if file_path:
+        _add(os.path.dirname(os.path.abspath(file_path)))
+    _add(nearest_tc_tracked_dir(file_path))
+    if find_project_root is not None:
+        try:
+            _add(find_project_root(file_path))
+        except Exception:
+            pass
+    return cands
+
+
+def resolve_source_path(rel_or_abs_path, file_path, find_project_root=None):
+    """C4 — resolve a from= PATH to an existing file.
+
+    Returns (resolved_path or None, tried_dirs). An absolute path is honored
+    as-is (returned if it exists, else (None, [])). For a relative path, the
+    ordered candidate base dirs are probed; the first whose join is an existing
+    file wins (realpath-normalized). `tried_dirs` lists the candidate base dirs
+    probed (for the not-found did-you-mean message)."""
+    if rel_or_abs_path and os.path.isabs(rel_or_abs_path):
+        if os.path.isfile(rel_or_abs_path):
+            return (os.path.realpath(rel_or_abs_path), [])
+        return (None, [])
+    tried = resolution_candidates(file_path, find_project_root)
+    for base in tried:
+        cand = os.path.join(base, rel_or_abs_path)
+        try:
+            if os.path.isfile(cand):
+                return (os.path.realpath(cand), tried)
+        except OSError:
+            pass
+    return (None, tried)
 
 
 def slice_fragment(source_text, frag):

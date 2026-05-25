@@ -229,22 +229,25 @@ def _scan_imported(source_text, abs_file_path):
         return []
     if not wrappers:
         return []
-    root = find_project_root(abs_file_path) or os.path.dirname(
-        os.path.abspath(abs_file_path))
     out = []
     for w in wrappers:
-        if os.path.isabs(w.path):
-            src_path = w.path
-        else:
-            src_path = os.path.join(root, w.path)
+        # C4: resolve with the same ordered candidate list the PreToolUse hook
+        # uses (file-dir -> nearest .tc-tracked -> git root; absolute as-is) so
+        # the audit `imported:` entry agrees with the gate's verification.
+        src_path, _tried = tc_provenance.resolve_source_path(
+            w.path, abs_file_path, find_project_root)
         verified = False
-        try:
-            with open(src_path, 'r', encoding='utf-8', newline='') as f:
-                src_text = f.read()
-            src_slice = tc_provenance.slice_fragment(src_text, w.frag)
-            verified = tc_provenance.matches(w.body, src_slice, w.mode)
-        except Exception:
-            verified = False
+        if src_path is not None:
+            # C5: only verify against an eligible text source.
+            ok, _why = tc_provenance.is_text_source(src_path)
+            if ok:
+                try:
+                    with open(src_path, 'r', encoding='utf-8', newline='') as f:
+                        src_text = f.read()
+                    src_slice = tc_provenance.slice_fragment(src_text, w.frag)
+                    verified = tc_provenance.matches(w.body, src_slice, w.mode)
+                except Exception:
+                    verified = False
         if verified:
             out.append({
                 'lines': (w.body_start_line, w.line_end - 1),

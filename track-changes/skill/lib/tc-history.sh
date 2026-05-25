@@ -2,7 +2,7 @@
 # lib/tc-history.sh — audit log helpers for the PostToolUse hook.
 #
 # Provides path computation (cache + log) and the Python-backed
-# mark-extractor / log-formatter used by hooks/post-tool-use.sh.
+# mark-extractor / log-formatter used by hooks/post_tool_use.py.
 #
 # Cache layout:
 #   ~/.claude/skills/track-changes/state/cache/<sha1>.marks    (JSON)

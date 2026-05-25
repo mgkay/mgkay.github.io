@@ -136,7 +136,7 @@ tc_enable_disable() {
     *) echo "tc: ERROR — file extension not supported: ${file} (must be .md, .qmd, or .tex)" >&2; return 2 ;;
   esac
 
-  # Resolve Python (mirrors tc_resolve_python in pre-tool-use.sh).
+  # Resolve Python (mirrors the interpreter resolution in pre_tool_use.py).
   local py=""
   local cand
   for cand in python3 python "py -3" py; do

@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # tc-common.sh — track-changes shared bash library
 #
-# Sourced by all four track-changes hook scripts (session-start.sh,
-# pre-tool-use.sh, stop.sh, user-prompt-submit.sh). Provides session-ID
+# Sourced by the bash track-changes hook scripts (session-start.sh,
+# stop.sh, user-prompt-submit.sh). Provides session-ID
 # resolution, state-directory management, sentinel-file path computation
 # and existence check, CRLF normalization, file-type dispatch, and mark-
 # number extraction helpers used by the PreToolUse highlight verifier.

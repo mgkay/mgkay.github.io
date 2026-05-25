@@ -95,40 +95,22 @@ def _emit_block(tool_name, file_path, violations, ftype, suggest_draft, subagent
             sys.stderr.write(msg.encode('utf-8', 'replace').decode('ascii', 'replace'))
 
 
-def _project_root_for(file_path):
-    """§0 (C2) root resolution: reuse tc_audit.find_project_root (.git walk),
-    then fall back to the nearest .tc-tracked marker dir, then the edited
-    file's own directory."""
-    try:
-        import tc_audit
-        root = tc_audit.find_project_root(file_path)
-        if root:
-            return root
-    except Exception:
-        pass
-    # Fallback: walk up looking for a .tc-tracked marker.
-    d = os.path.dirname(os.path.abspath(file_path))
-    cur = d
-    for _ in range(100):
-        if os.path.isfile(os.path.join(cur, '.tc-tracked')):
-            return cur
-        parent = os.path.dirname(cur)
-        if parent == cur:
-            break
-        cur = parent
-    # Last resort: the edited file's own directory.
-    return d
-
-
 def _resolve_sources(source_text, payload, tool_name, file_path):
-    """§0 (C2): when the proposed text contains import wrappers, read + slice
-    each named source and return {from_spec: sliced_text}. Returns None when
+    """§0: when the proposed text contains import wrappers, resolve + slice
+    each named source and return a {from_spec: value} map. Returns None when
     there are no wrappers (so the analyzer takes its byte-identical v1 path).
 
-    FAIL-CLOSED: a missing/unreadable source maps its from_spec to None, which
-    the analyzer treats as an unverified wrapper (block). Any unexpected error
-    in resolution leaves that entry None (fail-closed) rather than skipping the
-    wrapper.
+    Each map value is one of:
+      - the resolved slice STRING (verified path),
+      - None (generic unverified — missing/unreadable past the sniff),
+      - an unresolved-with-reason marker (tc_provenance.unresolved(...)) with a
+        SPECIFIC actionable reason: not-found+did-you-mean (C4) or a binary /
+        non-text rejection (C5). The marker is JSON-serializable so it survives
+        the daemon socket round-trip; tc_analyzer surfaces its reason verbatim.
+
+    FAIL-CLOSED: any unexpected error in resolution leaves that entry None (or a
+    specific marker) rather than skipping the wrapper. Resolution order (C4):
+    edited-file dir -> nearest .tc-tracked dir -> git root; absolute honored.
     """
     try:
         import tc_analyzer
@@ -149,27 +131,76 @@ def _resolve_sources(source_text, payload, tool_name, file_path):
     if not wrappers:
         return None  # no wrappers -> analyzer stays on the v1 path
 
-    root = _project_root_for(file_path)
+    find_root = None
+    try:
+        import tc_audit
+        find_root = tc_audit.find_project_root
+    except Exception:
+        find_root = None
+
     sources = {}
     for w in wrappers:
         if w.from_spec in sources:
             continue
-        # Resolve the source path relative to the project root. An absolute
-        # from= path is honored as-is.
-        if os.path.isabs(w.path):
-            src_path = w.path
-        else:
-            src_path = os.path.join(root, w.path)
+        # C4: ordered resolution (file-dir, nearest .tc-tracked, git root);
+        # absolute from= honored as-is. First existing file wins.
+        src_path, tried = tc_provenance.resolve_source_path(
+            w.path, file_path, find_root)
+        if src_path is None:
+            # C4: not-found -> unresolved-with-reason (did-you-mean).
+            sources[w.from_spec] = tc_provenance.unresolved(
+                _not_found_reason(w.path, file_path, tried))
+            continue
+        # C5: reject binary / non-text BEFORE opening/decoding the file.
+        ok, why = tc_provenance.is_text_source(src_path)
+        if not ok:
+            sources[w.from_spec] = tc_provenance.unresolved(
+                _binary_reason(w.path, why))
+            continue
         try:
             with open(src_path, 'r', encoding='utf-8', newline='') as f:
                 src_text = f.read()
             sources[w.from_spec] = tc_provenance.slice_fragment(src_text, w.frag)
         except (IOError, OSError, UnicodeDecodeError):
-            # Fail-closed: unverified.
+            # Fail-closed: generic unverified (e.g. a TOCTOU disappearance or a
+            # latent decode issue past the sniff head).
             sources[w.from_spec] = None
         except Exception:
             sources[w.from_spec] = None
     return sources
+
+
+def _not_found_reason(path, file_path, tried):
+    """C4 — actionable not-found message: tried dirs + a did-you-mean hint."""
+    tried_disp = ', '.join(tried) if tried else '(no candidate roots)'
+    base = os.path.basename(path) or path
+    suggestion = "write the path relative to the edited file (e.g. from=%s)" % base
+    # If a git root is known, also suggest a repo-root-relative path.
+    try:
+        import tc_audit
+        root = tc_audit.find_project_root(file_path)
+    except Exception:
+        root = None
+    if root:
+        try:
+            rel = os.path.relpath(os.path.join(
+                os.path.dirname(os.path.abspath(file_path)), path), root)
+            rel = rel.replace(os.sep, '/')
+            suggestion += " or to the repo root (e.g. from=%s)" % rel
+        except Exception:
+            pass
+    return ("from=%s not found. Tried: %s. If the source is in the repo, %s."
+            % (path, tried_disp, suggestion))
+
+
+def _binary_reason(path, why):
+    """C5 — actionable binary/non-text rejection message (names the format,
+    points to SKILL.md §0; explicitly no decode/convert is attempted)."""
+    base = os.path.basename(path) or path
+    return ("track-changes §0 imports from text sources only "
+            "(.md/.markdown/.qmd/.rmd/.tex/.txt). '%s' %s. Convert it to a "
+            "vetted text source in a separate step, then import from that. "
+            "See SKILL.md §0." % (base, why))
 
 
 def main():

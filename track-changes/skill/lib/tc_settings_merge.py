@@ -10,11 +10,14 @@ Usage:
 
 Behavior:
 - If <settings_path> doesn't exist, writes the patch verbatim (pretty-printed).
-- Otherwise: idempotently appends track-changes hook entries to each event
-  array. An entry is identified as track-changes-owned if its `command` field
-  contains the substring `track-changes/hooks/`. Existing track-changes
-  entries are LEFT IN PLACE (idempotent), but the patch's entry is added if
-  no track-changes entry exists for that event.
+- Otherwise: Option-A "update-on-upgrade" merge. For each event in the patch,
+  the existing track-changes-owned groups are STRIPPED and replaced by the
+  patch's groups; non-track-changes groups (third-party hooks) are preserved.
+  A group is identified as track-changes-owned if any of its `hooks[].command`
+  fields contains the substring `track-changes/hooks/`. This makes the merge
+  both idempotent (re-running yields the same single TC group per event) AND
+  self-repairing on upgrade: a stale v1-era `bash …/pre-tool-use.sh`
+  registration is replaced by the patch's `python …/pre_tool_use.py` command.
 - Backs up the existing settings.json to a `.bak.YYYYMMDDTHHMMSSZ` sibling
   file before writing.
 
@@ -33,19 +36,33 @@ import shutil
 SIGNATURE = 'track-changes/hooks/'
 
 
+def _is_tc_group(group):
+    """True if `group` (a dict containing `hooks`) has any hook whose command
+    mentions the track-changes signature."""
+    if not isinstance(group, dict):
+        return False
+    for h in group.get('hooks', []) or []:
+        cmd = (h or {}).get('command', '') or ''
+        if SIGNATURE in cmd:
+            return True
+    return False
+
+
 def _has_tc_entry(event_groups):
     """True if any entry in `event_groups` (a list of dicts containing
     `hooks`) has a hook whose command mentions the track-changes signature."""
     if not isinstance(event_groups, list):
         return False
-    for group in event_groups:
-        if not isinstance(group, dict):
-            continue
-        for h in group.get('hooks', []) or []:
-            cmd = (h or {}).get('command', '') or ''
-            if SIGNATURE in cmd:
-                return True
-    return False
+    return any(_is_tc_group(group) for group in event_groups)
+
+
+def _strip_tc_groups(event_groups):
+    """Return the subset of `event_groups` whose groups are NOT
+    track-changes-owned (i.e., drop any group carrying the TC signature,
+    preserve all third-party groups). Order is preserved."""
+    if not isinstance(event_groups, list):
+        return []
+    return [g for g in event_groups if not _is_tc_group(g)]
 
 
 def merge(patch_path, settings_path):
@@ -90,15 +107,21 @@ def merge(patch_path, settings_path):
         # Continue anyway — the merge is read-then-write so a crash mid-write
         # is the only loss vector, and that's narrow.
 
-    # Idempotent merge.
+    # Option-A update-on-upgrade merge: per event, replace TC-owned groups
+    # with the patch's groups, preserving any third-party groups. Always
+    # writes, so a stale `bash …` TC registration is rewritten to the patch's
+    # `python …` command (self-repairing) while remaining idempotent.
     settings.setdefault('hooks', {})
     added_events = []
+    updated_events = []
     for event, groups in new_hooks.items():
-        settings['hooks'].setdefault(event, [])
-        if _has_tc_entry(settings['hooks'][event]):
-            continue
-        settings['hooks'][event].extend(groups)
-        added_events.append(event)
+        existing = settings['hooks'].get(event, [])
+        had_tc = _has_tc_entry(existing)
+        settings['hooks'][event] = _strip_tc_groups(existing) + list(groups)
+        if had_tc:
+            updated_events.append(event)
+        else:
+            added_events.append(event)
 
     # Write.
     with open(settings_path, 'w', encoding='utf-8') as f:
@@ -114,9 +137,11 @@ def merge(patch_path, settings_path):
                     total += 1
 
     if added_events:
-        print(f'merged {len(added_events)} new event(s) into {settings_path}: {", ".join(added_events)}')
-    else:
-        print(f'{settings_path} already has track-changes entries for all events (idempotent no-op)')
+        print(f'added {len(added_events)} new event(s) into {settings_path}: {", ".join(added_events)}')
+    if updated_events:
+        print(f'updated {len(updated_events)} existing event(s) in {settings_path}: {", ".join(updated_events)}')
+    if not added_events and not updated_events:
+        print(f'{settings_path}: no track-changes events to merge (patch empty)')
     print(f'total track-changes hook entries registered: {total}')
     return 0
 

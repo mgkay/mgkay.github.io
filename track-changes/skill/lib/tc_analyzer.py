@@ -452,8 +452,13 @@ def _stage0_provenance(proposed_text, sources):
     """§0 stage-0 pass (C4). Scan the proposed text for import wrappers and
     validate each against its resolved source slice in `sources`.
 
-    `sources` maps from_spec -> resolved source slice text (or None when the
-    hook could not read/slice the source — fail-closed: treated as mismatch).
+    `sources` maps from_spec -> resolved source slice text, OR None when the
+    hook could not read/slice the source (generic fail-closed: treated as
+    mismatch), OR an unresolved-with-reason marker (a tagged dict carrying a
+    SPECIFIC actionable reason: binary-source rejection C5 / not-found C4).
+    The specific reason is surfaced in the discrepancy text when present;
+    plain None keeps the generic "source missing or unreadable" wording
+    (back-compat).
 
     Returns (exempt_lines, imported_regions, discrepancies):
       exempt_lines      : set of 1-indexed proposed line numbers that are
@@ -474,8 +479,11 @@ def _stage0_provenance(proposed_text, sources):
         return exempt_lines, imported_regions, discrepancies
     for w in wrappers:
         src_slice = sources.get(w.from_spec) if sources else None
+        # An unresolved-with-reason marker (binary C5 / not-found C4) carries a
+        # specific, actionable message. It is never a verifiable slice.
+        specific_reason = tc_provenance.unresolved_reason(src_slice)
         verified = False
-        if src_slice is not None:
+        if specific_reason is None and src_slice is not None:
             try:
                 verified = tc_provenance.matches(w.body, src_slice, w.mode)
             except Exception:
@@ -493,7 +501,16 @@ def _stage0_provenance(proposed_text, sources):
             })
         else:
             # Fall through to normal handling AND surface a discrepancy.
-            if src_slice is None:
+            if specific_reason is not None:
+                # C4/C5: surface the specific reason. Keep the word
+                # "unverified" so back-compat assertions still match, and keep
+                # the same remediation tail as the generic path.
+                reason = (f"wrapped import from '{w.from_spec}' could not be "
+                          f"verified: {specific_reason}; treated as unverified "
+                          f"new content. Either fix the source reference, "
+                          f"correct the paraphrase, wrap the deviation in <mark>, "
+                          f"or drop the import wrapper")
+            elif src_slice is None:
                 reason = (f"wrapped import from '{w.from_spec}' could not be "
                           f"verified (source missing or unreadable); treated as "
                           f"unverified new content. Either fix the source reference, "

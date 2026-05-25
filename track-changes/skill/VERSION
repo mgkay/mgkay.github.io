@@ -1,3 +1,16 @@
+2.0.1
+2026-05-25
+track-changes v2.0.1 (§0 Import & Hook Fixes) — registration/merge repair
+  (Option-A update-on-upgrade in tc_settings_merge.py + install.sh jq path: a
+  stale v1-era `bash …/pre-tool-use.sh` registration is replaced by the
+  `python …/pre_tool_use.py` command, third-party hooks preserved); file-dir-first
+  `from=` resolution (edited-file dir → nearest .tc-tracked → git root; absolute
+  honored; did-you-mean on miss); text-source-only import (extension allowlist +
+  NUL/UTF-8 content sniff; binary sources e.g. .docx rejected with no decode);
+  self-contained SKILL.md §0; legacy bash hooks (pre-tool-use.sh, post-tool-use.sh)
+  removed. New test category W (run-W.sh) gates all the above on both daemon and
+  in-process paths.
+
 2.0.0
 2026-05-24
 track-changes v2 — source-provenance + authoring UX + docs/safety net.

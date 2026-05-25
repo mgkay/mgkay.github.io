@@ -24,6 +24,80 @@ landing page and version history.
 
 Local install (developer path): `bash install.sh` from the project root.
 
+## 0. Importing from a source (provenance wrappers)
+
+When the author asks you to **import** a passage **verbatim from a vetted
+source** into a tracked file — rather than write or edit prose yourself —
+wrap it so the hook can confirm the bytes really came from that source. A
+verified wrapped block is exempt from per-character marks (it is a faithful
+copy, not your change), while any AI-authored glue around it still gets
+normal marks.
+
+**Grammar.**
+
+```
+<!-- track-changes: from=PATH[#L<a>-L<b>] [mode=MODE] -->
+…the imported body, verbatim from the source slice…
+<!-- /track-changes -->
+```
+
+- `from=PATH` — required; may contain spaces. See **Path resolution** below.
+- `#L<a>-L<b>` — optional 1-indexed inclusive line range; omit for whole file.
+- `mode=` — `normalized` (default), `strict`, or `fuzzy`:
+  - **normalized** — ASCII-folds smart punctuation and collapses whitespace
+    runs (tolerates reflow/indentation); still rejects added/removed words.
+  - **strict** — byte-exact after EOL normalization.
+  - **fuzzy** — normalized, then accept at Levenshtein ratio ≥ 0.85 (opt-in).
+
+The PreToolUse hook reads the source, slices the range, and checks the body
+against it under `mode`. Match → the wrapped lines are exempt and a verified
+`imported:` entry is appended to `.tc-history.md` (§11). Mismatch or an
+unresolved source → the write is **blocked** (fail-closed) with a specific
+reason.
+
+**Text sources only.** `from=` must resolve to a **text** file — `.md`,
+`.markdown`, `.qmd`, `.rmd`, `.tex`, or `.txt`. A binary/non-text source
+(`.docx`, `.pdf`, slides, spreadsheets, …) is **rejected before any read**
+with an actionable message: §0 verifies by text comparison, and a binary
+cannot be compared.
+
+**Path resolution.** A relative `from=PATH` is resolved in order, first
+existing file wins:
+1. the directory of the file being edited (the intuitive "next to mine"),
+2. the nearest ancestor directory holding a `.tc-tracked` marker,
+3. the repository root (nearest `.git`).
+An absolute path is honored as-is. On a miss, the block message lists the
+directories tried and suggests a relative path. *Example:* editing
+`book/ch3.md` with the source `book/figs.md` beside it → `from=figs.md`
+resolves in step 1 even when `.git` is several levels up.
+
+### Non-goal: track-changes does not convert binary documents
+
+Converting a Word/PDF/slide original into text is an **upstream, separately
+reviewed activity** — not part of this skill. §0 imports only from an
+already-vetted text source. Conversion is lossy (equations, figures, and
+cross-references degrade) and so requires human judgement, not a silent hook
+transform. LaTeX is a better conversion *target* than Markdown, because
+equations survive as text — where the §0 match is meaningful.
+
+**When the contract applies (scoping).** track-changes is a *write-time gate
+on tracked text files*, never a converter. The text-source rule governs
+exactly one situation: **an import whose final write lands in a tracked
+file.** Activation being on does not turn unrelated work into track-changes
+work — a conversion done on the side (new/untracked output, or just printed)
+is invisible to the skill. The deciding test is *structural, not linguistic*:
+"does this write go into a tracked file?", not a guess about the prompt's
+wording.
+
+**Behavioral guidance — sequence, don't refuse.** If the author asks to
+import a section from a **binary** into a tracked file, do **not** refuse the
+goal and do **not** feed the binary to `from=`. Instead **sequence** it:
+convert the binary to a vetted text source as a separate, reviewed step, then
+§0-import from that text. Decline the binary only as a `from=` provenance
+source. When the destination is ambiguous (e.g. "put the methods section from
+`paper.docx` into `ch3.tex`"), ask one question — tracked §0 import vs. a
+plain drop — rather than assume.
+
 ## 1. Protocol
 
 **Disposition.** The human is the author. You are the copy-editor. Vetted
@@ -797,7 +871,7 @@ workflow *around* them is implicit. A typical tracked-revision session runs:
 1. **Author asks for a revision.** The author opts the file in (folder
    `.tc-tracked` marker via `/tc mark`, or per-file `/tc enable <file>`), then
    asks Claude for the edit in plain language — "tighten the intro", "modernize
-   this example", "import the Periodic Shipments section from the source".
+   this example", "import the Periodic Shipments section from the source *text* document (§0)".
 2. **Claude lands marks.** Claude edits the file, wrapping only the changed
    characters in `<mark>…</mark><sup>N</sup>` (`.md`/`.qmd`) or
    `\tc{}\tcn{N}` (`.tex`). Verbatim-from-source blocks are wrapped in import

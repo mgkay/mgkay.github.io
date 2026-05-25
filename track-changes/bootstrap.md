@@ -130,9 +130,7 @@ Each entry lists source-URL → destination-path. Base URL: `https://raw.githubu
 
 ### Hooks
 - `skill/hooks/session-start.sh` → `~/.claude/skills/track-changes/hooks/session-start.sh`
-- `skill/hooks/pre-tool-use.sh` → `~/.claude/skills/track-changes/hooks/pre-tool-use.sh`
 - `skill/hooks/pre_tool_use.py` → `~/.claude/skills/track-changes/hooks/pre_tool_use.py`
-- `skill/hooks/post-tool-use.sh` → `~/.claude/skills/track-changes/hooks/post-tool-use.sh`
 - `skill/hooks/post_tool_use.py` → `~/.claude/skills/track-changes/hooks/post_tool_use.py`
 - `skill/hooks/stop.sh` → `~/.claude/skills/track-changes/hooks/stop.sh`
 - `skill/hooks/user-prompt-submit.sh` → `~/.claude/skills/track-changes/hooks/user-prompt-submit.sh`
