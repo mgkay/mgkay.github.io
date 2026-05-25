@@ -48,12 +48,30 @@ def tc_session_id():
 
 
 def tc_sentinel_active_draft():
-    """True if a /draft sentinel exists for the current session."""
+    """True if a /draft sentinel exists for the current session.
+
+    §1 (C11) Windows fallback: honor BOTH the session-specific sentinel
+    (state/<session>.draft) AND the shared fallback (state/default.draft).
+    draft-on.sh writes to default.draft whenever $CLAUDE_SESSION_ID is unset
+    (the common Windows / cross-shell case where the slash command runs in a
+    bash environment that does not inherit the session id). The activation
+    gate must therefore accept the fallback path even when a session id IS
+    present in this process's environment, or a /draft written under an empty
+    session id would be silently ignored.
+
+    Concurrency limitation: default.draft is shared across any concurrent
+    sessions that also lack a distinct $CLAUDE_SESSION_ID. In that (rare)
+    case one session's /draft suspends tracking for the others until the
+    next UserPromptSubmit clear or the SessionStart 1h TTL sweep. Sessions
+    with a distinct session id are unaffected.
+    """
     sd = tc_state_dir()
     if not sd:
         return False
     sid = tc_session_id()
-    return os.path.isfile(os.path.join(sd, sid + '.draft'))
+    if os.path.isfile(os.path.join(sd, sid + '.draft')):
+        return True
+    return os.path.isfile(os.path.join(sd, 'default.draft'))
 
 
 def tc_check_yaml_override(file_path):

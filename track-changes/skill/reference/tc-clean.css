@@ -1,0 +1,27 @@
+/* tc-clean.css — track-changes §4 render-time mark hiding (C12).
+ *
+ * When the document body carries the `no-marks` class, track-changes
+ * highlights are rendered invisibly: the <mark> background is removed (the
+ * text reads as ordinary prose) and the trailing <sup>N</sup> reference
+ * number is hidden. This lets an author share a lecture mid-review (faculty
+ * meeting, student preview, PR review by a non-author) without exposing the
+ * yellow highlights and superscript numbers — WITHOUT mutating the source.
+ *
+ * The class is toggled at render time by tc-clean.js (URL `?clean=1`) or by
+ * any other mechanism that adds `no-marks` to <body>. Removing the class (or
+ * loading the page without `?clean=1`) restores the marks unchanged.
+ *
+ * Include both this file and tc-clean.js in the rendered HTML. For Quarto,
+ * add them under `format: html:` as `css:` and `include-after-body:` (a
+ * <script src> tag), or via `header-includes`. See SKILL.md "Render-time
+ * visibility of marks".
+ */
+
+body.no-marks mark {
+  background: transparent;
+  padding: 0;
+}
+
+body.no-marks mark + sup {
+  display: none;
+}

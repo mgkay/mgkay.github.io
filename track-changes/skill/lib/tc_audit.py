@@ -39,6 +39,14 @@ _TEX_TCN_AFTER_RE = re.compile(r'\\tcn\{(\d+)\}')
 _TEX_SOUT_REP_RE = re.compile(r'^\\sout\{(.*?)\}(.+)$', re.DOTALL)
 _TEX_SOUT_DEL_RE = re.compile(r'^\\sout\{(.*?)\}\s*$', re.DOTALL)
 
+# §7 cross-file lineage comment appended to a renumbered destination mark.
+# Markdown: ...</mark><sup>14</sup><!-- from-file=doc-A:7 -->
+# LaTeX:    ...\tcn{14}<!-- from-file=notes:4 -->
+_MD_LINEAGE_RE = re.compile(
+    r'</mark><sup>(?P<dest>\d+)</sup>\s*<!--\s*from-file=(?P<src>[^:>]+):(?P<srcn>\d+)\s*-->')
+_TEX_LINEAGE_RE = re.compile(
+    r'\\tcn\{(?P<dest>\d+)\}\s*<!--\s*from-file=(?P<src>[^:>]+):(?P<srcn>\d+)\s*-->')
+
 
 def _classify_md(body):
     m = _MD_S_REP_RE.match(body)
@@ -193,6 +201,75 @@ def log_path_for(abs_file, marker_path=None):
 
 
 # ---------------------------------------------------------------------------
+# §0 (C6) imported-region scan + §7 (C7) cross-file lineage scan.
+# ---------------------------------------------------------------------------
+
+def _scan_imported(source_text, abs_file_path):
+    """C6: scan the post-edit file for verified import wrappers and return a
+    list of {lines, from, verified, normalization} dicts for the audit
+    `imported:` block.
+
+    Re-resolves + re-validates each wrapper against its named source (the
+    PreToolUse verification already passed; this re-check keeps the audit
+    self-contained and honest). Best-effort: any I/O or import error yields an
+    empty list rather than blocking the workflow.
+    """
+    try:
+        import sys
+        here = os.path.dirname(os.path.abspath(__file__))
+        if here not in sys.path:
+            sys.path.insert(0, here)
+        import tc_provenance
+    except Exception:
+        return []
+    try:
+        wrappers = tc_provenance.scan_wrappers(
+            source_text.replace('\r\n', '\n'))
+    except Exception:
+        return []
+    if not wrappers:
+        return []
+    root = find_project_root(abs_file_path) or os.path.dirname(
+        os.path.abspath(abs_file_path))
+    out = []
+    for w in wrappers:
+        if os.path.isabs(w.path):
+            src_path = w.path
+        else:
+            src_path = os.path.join(root, w.path)
+        verified = False
+        try:
+            with open(src_path, 'r', encoding='utf-8', newline='') as f:
+                src_text = f.read()
+            src_slice = tc_provenance.slice_fragment(src_text, w.frag)
+            verified = tc_provenance.matches(w.body, src_slice, w.mode)
+        except Exception:
+            verified = False
+        if verified:
+            out.append({
+                'lines': (w.body_start_line, w.line_end - 1),
+                'from': w.from_spec,
+                'verified': True,
+                'normalization': w.mode,
+            })
+    return out
+
+
+def _scan_lineage(source_text, ftype):
+    """C7: scan for cross-file lineage comments appended to renumbered marks.
+    Returns a list of {src, src_n, dest_n} mapping dicts."""
+    rx = _TEX_LINEAGE_RE if ftype == 'tex' else _MD_LINEAGE_RE
+    out = []
+    for m in rx.finditer(source_text):
+        out.append({
+            'src': m.group('src').strip(),
+            'src_n': m.group('srcn'),
+            'dest_n': m.group('dest'),
+        })
+    return out
+
+
+# ---------------------------------------------------------------------------
 # Main entry point.
 # ---------------------------------------------------------------------------
 
@@ -201,39 +278,69 @@ def record(source_text, tool_name, ftype, abs_file_path, log_path,
     """Run the audit-log update.
 
     Diffs current marks vs prior cache, appends a log entry for
-    introduced + resolved marks, and writes the new cache state.
+    introduced + resolved marks, verified import regions (§0 C6), and
+    cross-file lineage mappings (§7 C7), then writes the new cache state.
 
-    Returns: {'introduced': [marks], 'resolved': [marks], 'wrote_log': bool}.
+    Returns: {'introduced': [marks], 'resolved': [marks], 'imported': [...],
+              'lineage': [...], 'wrote_log': bool}.
     Best-effort: I/O errors are swallowed; the user's workflow is never blocked.
     """
-    result = {'introduced': [], 'resolved': [], 'wrote_log': False}
+    result = {'introduced': [], 'resolved': [], 'imported': [],
+              'lineage': [], 'wrote_log': False}
     current_marks = _extract_marks(source_text, ftype)
     current_by_n = {m['N']: m for m in current_marks}
 
-    # Load prior cache.
+    # Load prior cache (marks + previously-logged imports/lineage keys).
     prior_by_n = {}
+    prior_imported_keys = set()
+    prior_lineage_keys = set()
     if os.path.exists(cache_path):
         try:
             with open(cache_path, 'r', encoding='utf-8') as f:
                 prior_data = json.load(f)
             prior_by_n = {m['N']: m for m in prior_data.get('marks', [])}
+            prior_imported_keys = set(prior_data.get('imported_keys', []))
+            prior_lineage_keys = set(prior_data.get('lineage_keys', []))
         except (IOError, ValueError):
             prior_by_n = {}
 
-    # Diff.
+    # Diff marks.
     introduced = [m for n, m in current_by_n.items() if n not in prior_by_n]
     resolved = [m for n, m in prior_by_n.items() if n not in current_by_n]
     result['introduced'] = introduced
     result['resolved'] = resolved
 
-    # Update cache regardless of whether we have anything to log.
-    if not introduced and not resolved:
+    # §0 (C6): verified import regions; §7 (C7): cross-file lineage. Both are
+    # deduped against the cache so a re-run on an unchanged file does not
+    # re-log them.
+    all_imported = _scan_imported(source_text, abs_file_path)
+    all_lineage = _scan_lineage(source_text, ftype)
+    cur_imported_keys = {f"{r['from']}@{r['lines'][0]}-{r['lines'][1]}"
+                         for r in all_imported}
+    cur_lineage_keys = {f"{lg['src']}:{lg['src_n']}->{lg['dest_n']}"
+                        for lg in all_lineage}
+    imported = [r for r in all_imported
+                if f"{r['from']}@{r['lines'][0]}-{r['lines'][1]}"
+                not in prior_imported_keys]
+    lineage = [lg for lg in all_lineage
+               if f"{lg['src']}:{lg['src_n']}->{lg['dest_n']}"
+               not in prior_lineage_keys]
+    result['imported'] = imported
+    result['lineage'] = lineage
+
+    def _write_cache():
         try:
             os.makedirs(os.path.dirname(cache_path), exist_ok=True)
             with open(cache_path, 'w', encoding='utf-8') as f:
-                json.dump({'file': abs_file_path, 'marks': current_marks}, f)
+                json.dump({'file': abs_file_path, 'marks': current_marks,
+                           'imported_keys': sorted(cur_imported_keys),
+                           'lineage_keys': sorted(cur_lineage_keys)}, f)
         except IOError:
             pass
+
+    # Update cache regardless of whether we have anything to log.
+    if not introduced and not resolved and not imported and not lineage:
+        _write_cache()
         return result
 
     # Build entry.
@@ -260,6 +367,21 @@ def record(source_text, tool_name, ftype, abs_file_path, log_path,
                 lines.append(f"    was_old: {_fmt_str(m['old'])}")
             if m.get('new', ''):
                 lines.append(f"    was_new: {_fmt_str(m['new'])}")
+    if imported:
+        lines.append("imported:")
+        for r in imported:
+            a, b = r['lines']
+            lines.append(f"  - lines: {a}-{b}")
+            lines.append(f"    from: {r['from']}")
+            lines.append(f"    verified: {'true' if r['verified'] else 'false'}")
+            lines.append(f"    normalization: {r['normalization']}")
+    if lineage:
+        lines.append("lineage:")
+        for lg in lineage:
+            lines.append(f"  - from-file: {lg['src']}:{lg['src_n']}")
+            lines.append(f"    dest: {rel_path_for_log}:{lg['dest_n']}")
+            lines.append(f"    mapping: {lg['src']}:{lg['src_n']} -> "
+                         f"{lg['dest_n']}")
     entry = '\n'.join(lines) + '\n'
 
     # Append to log (create with header if needed).
@@ -285,11 +407,6 @@ def record(source_text, tool_name, ftype, abs_file_path, log_path,
         pass
 
     # Update cache.
-    try:
-        os.makedirs(os.path.dirname(cache_path), exist_ok=True)
-        with open(cache_path, 'w', encoding='utf-8') as f:
-            json.dump({'file': abs_file_path, 'marks': current_marks}, f)
-    except IOError:
-        pass
+    _write_cache()
 
     return result

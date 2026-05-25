@@ -36,12 +36,32 @@ def _log(msg):
 
 
 def _read_payload():
+    # Read stdin as raw bytes and decode UTF-8 explicitly. The CLI emits the
+    # tool payload as UTF-8 JSON; relying on sys.stdin's text decoding mangles
+    # multibyte chars (e.g. smart quotes in §0 import wrappers) on platforms
+    # whose default stdin codec is not UTF-8 (Windows cp1252).
     try:
-        data = sys.stdin.read()
+        raw = sys.stdin.buffer.read()
     except Exception:
+        try:
+            data = sys.stdin.read()
+        except Exception:
+            return None
+        if not data:
+            return None
+        try:
+            return json.loads(data)
+        except ValueError:
+            return None
+    if not raw:
         return None
-    if not data:
-        return None
+    try:
+        data = raw.decode('utf-8')
+    except UnicodeDecodeError:
+        try:
+            data = raw.decode('utf-8', errors='replace')
+        except Exception:
+            return None
     try:
         return json.loads(data)
     except ValueError:
@@ -62,7 +82,94 @@ def _emit_block(tool_name, file_path, violations, ftype, suggest_draft, subagent
     if subagent_detected:
         out.append('Detected subagent context — if this is intentional drafting from a PCV builder, '
                    'the user can invoke /draft then retry.')
-    sys.stderr.write('\n'.join(out) + '\n')
+    msg = '\n'.join(out) + '\n'
+    # Write UTF-8 explicitly so non-ASCII (section signs, smart quotes quoted
+    # from a §0 source) survive on platforms whose stderr codec isn't UTF-8.
+    try:
+        sys.stderr.buffer.write(msg.encode('utf-8'))
+        sys.stderr.buffer.flush()
+    except Exception:
+        try:
+            sys.stderr.write(msg)
+        except Exception:
+            sys.stderr.write(msg.encode('utf-8', 'replace').decode('ascii', 'replace'))
+
+
+def _project_root_for(file_path):
+    """§0 (C2) root resolution: reuse tc_audit.find_project_root (.git walk),
+    then fall back to the nearest .tc-tracked marker dir, then the edited
+    file's own directory."""
+    try:
+        import tc_audit
+        root = tc_audit.find_project_root(file_path)
+        if root:
+            return root
+    except Exception:
+        pass
+    # Fallback: walk up looking for a .tc-tracked marker.
+    d = os.path.dirname(os.path.abspath(file_path))
+    cur = d
+    for _ in range(100):
+        if os.path.isfile(os.path.join(cur, '.tc-tracked')):
+            return cur
+        parent = os.path.dirname(cur)
+        if parent == cur:
+            break
+        cur = parent
+    # Last resort: the edited file's own directory.
+    return d
+
+
+def _resolve_sources(source_text, payload, tool_name, file_path):
+    """§0 (C2): when the proposed text contains import wrappers, read + slice
+    each named source and return {from_spec: sliced_text}. Returns None when
+    there are no wrappers (so the analyzer takes its byte-identical v1 path).
+
+    FAIL-CLOSED: a missing/unreadable source maps its from_spec to None, which
+    the analyzer treats as an unverified wrapper (block). Any unexpected error
+    in resolution leaves that entry None (fail-closed) rather than skipping the
+    wrapper.
+    """
+    try:
+        import tc_analyzer
+        import tc_provenance
+    except Exception:
+        return None
+    try:
+        proposed_text = tc_analyzer._build_proposed(source_text, payload, tool_name)
+    except Exception:
+        proposed_text = None
+    if proposed_text is None:
+        return None
+    proposed_text = proposed_text.replace('\r\n', '\n')
+    try:
+        wrappers = tc_provenance.scan_wrappers(proposed_text)
+    except Exception:
+        return None
+    if not wrappers:
+        return None  # no wrappers -> analyzer stays on the v1 path
+
+    root = _project_root_for(file_path)
+    sources = {}
+    for w in wrappers:
+        if w.from_spec in sources:
+            continue
+        # Resolve the source path relative to the project root. An absolute
+        # from= path is honored as-is.
+        if os.path.isabs(w.path):
+            src_path = w.path
+        else:
+            src_path = os.path.join(root, w.path)
+        try:
+            with open(src_path, 'r', encoding='utf-8', newline='') as f:
+                src_text = f.read()
+            sources[w.from_spec] = tc_provenance.slice_fragment(src_text, w.frag)
+        except (IOError, OSError, UnicodeDecodeError):
+            # Fail-closed: unverified.
+            sources[w.from_spec] = None
+        except Exception:
+            sources[w.from_spec] = None
+    return sources
 
 
 def main():
@@ -107,22 +214,37 @@ def main():
         _log(f'cannot read source {file_path}; failing open')
         return 0
 
-    # Try daemon first.
+    # §0 (C2): resolve import-wrapper sources. Only do the disk I/O when the
+    # proposed text actually contains wrappers, so ordinary edits keep their
+    # current performance. `sources` stays None for the common no-wrapper case
+    # (analyzer is then byte-identical to v1). FAIL-CLOSED: a missing/unreadable
+    # source maps to None in the sources dict -> the wrapper is treated as
+    # unverified new content (block).
+    sources = _resolve_sources(source_text, payload, tool_name, file_path)
+
+    # Try daemon first (unless disabled — TC_DISABLE_DAEMON forces the
+    # in-process fallback path, used by tests to exercise both code paths).
     result = None
     try:
+        if os.environ.get('TC_DISABLE_DAEMON'):
+            raise RuntimeError('daemon disabled via TC_DISABLE_DAEMON')
         import tc_daemon
         sock = tc_daemon.connect()
         if sock is None:
             tc_daemon.spawn_if_needed()
             sock = tc_daemon.connect()
         if sock is not None:
-            resp = tc_daemon.send_request(sock, {
+            req = {
                 'op': 'analyze',
+                'protocol_version': 2,
                 'source_text': source_text,
                 'payload': payload,
                 'tool_name': tool_name,
                 'ftype': ftype,
-            })
+            }
+            if sources is not None:
+                req['sources'] = sources
+            resp = tc_daemon.send_request(sock, req)
             if resp and resp.get('ok'):
                 result = {
                     'violations': [tuple(v) for v in resp.get('violations', [])],
@@ -133,10 +255,12 @@ def main():
         _log(f'daemon path failed: {e}; falling back to in-process')
 
     if result is None:
-        # Fallback: in-process analyzer.
+        # Fallback: in-process analyzer. Pass `sources` on this path too so
+        # neither path degrades (D1 both-paths requirement).
         try:
             import tc_analyzer
-            result = tc_analyzer.analyze(source_text, payload, tool_name, ftype)
+            result = tc_analyzer.analyze(source_text, payload, tool_name, ftype,
+                                         sources=sources)
         except Exception as e:
             _log(f'in-process analyzer failed: {e}; failing open')
             return 0

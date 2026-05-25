@@ -36,4 +36,14 @@ if [ -n "$SENTINEL" ]; then
   tc_log "user-prompt-submit.sh: cleared sentinel $SENTINEL"
 fi
 
+# §1 (C11): also clear the shared default.draft fallback. draft-on.sh writes
+# there when $CLAUDE_SESSION_ID is unset, so a /draft activated via the
+# fallback must be cleared at the next user turn just like a session sentinel.
+# rm -f is idempotent; clearing both paths is harmless when only one exists.
+SENTINEL_DEFAULT="$(tc_sentinel_path_draft_default 2>/dev/null || true)"
+if [ -n "$SENTINEL_DEFAULT" ] && [ "$SENTINEL_DEFAULT" != "$SENTINEL" ]; then
+  rm -f "$SENTINEL_DEFAULT" 2>/dev/null || true
+  tc_log "user-prompt-submit.sh: cleared fallback sentinel $SENTINEL_DEFAULT"
+fi
+
 exit 0

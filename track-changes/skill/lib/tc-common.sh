@@ -59,14 +59,29 @@ tc_sentinel_path_draft() {
   printf '%s/%s.draft' "$dir" "$(tc_session_id)"
 }
 
+# §1 (C11): the shared fallback sentinel path. draft-on.sh writes here when
+# $CLAUDE_SESSION_ID is unset (the common Windows / cross-shell case). Hooks
+# that check/clear the sentinel must honor this path in addition to the
+# session-specific one. Concurrency limitation: default.draft is shared by
+# any concurrent sessions that also lack a distinct session id.
+tc_sentinel_path_draft_default() {
+  local dir
+  dir="$(tc_state_dir)" || return 1
+  printf '%s/default.draft' "$dir"
+}
+
 # Backwards-compatible alias: callers expecting "the" sentinel get .draft.
 tc_sentinel_path() {
   tc_sentinel_path_draft
 }
 
-# Existence check: return 0 if .draft sentinel is present.
+# Existence check: return 0 if the session .draft sentinel OR the shared
+# default.draft fallback is present (§1 C11 dual-path honoring).
 tc_sentinel_active_draft() {
-  local p; p="$(tc_sentinel_path_draft)" || return 2; [ -f "$p" ]
+  local p; p="$(tc_sentinel_path_draft)" || return 2
+  if [ -f "$p" ]; then return 0; fi
+  local d; d="$(tc_sentinel_path_draft_default)" || return 2
+  [ -f "$d" ]
 }
 
 # Backwards-compatible: tc_sentinel_active == draft sentinel check.

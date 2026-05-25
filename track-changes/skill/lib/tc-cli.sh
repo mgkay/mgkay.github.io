@@ -21,6 +21,12 @@
 #   /tc migrate <dir>              — run v1 → v2 migration on <dir>
 #   /tc status [<file>]            — print activation chain for <file>
 #                                    (or CWD)
+#   /tc list <file>                — list each mark with N + content preview
+#   /tc accept <file> <ranges>     — accept marks (keep new; strip wrapper)
+#   /tc reject <file> <ranges>     — reject marks (restore old; strip wrapper)
+#                                    ranges syntax: 1-25,!7,!11
+#   /tc accept-all <file>          — accept every mark in <file>
+#   /tc reject-all <file>          — reject every mark in <file>
 #   /tc help                       — print this usage
 #
 # Fix #6 removed /tc on and /tc off — session-scope toggles reintroduced
@@ -65,10 +71,49 @@ Per-folder activation:
 Migration:
   /tc migrate <dir>       Convert v1 marks to v2 in all .md/.qmd/.tex files
 
+Batch resolution (edits the file; writes explicit audit attribution):
+  /tc list <file>                 List each mark with its N + content preview
+  /tc accept <file> <ranges>      Accept marks: keep the new text, strip the
+                                  <mark>...</mark><sup>N</sup> wrapper
+  /tc reject <file> <ranges>      Reject marks: restore the old text, strip
+                                  the wrapper
+                                  ranges: comma-separated, e.g. 1-25,!7,!11
+                                  (inclusive ranges; !N excludes N)
+  /tc accept-all <file>           Accept every mark in <file>
+  /tc reject-all <file>           Reject every mark in <file>
+
 Diagnostics:
   /tc status [<file>]     Show the activation chain for <file> (or CWD)
   /tc help                This message
 USAGE
+}
+
+# ---------------------------------------------------------------------------
+# tc_resolve_python — resolve a working Python 3 command (echoes it) or
+# returns non-zero. Mirrors the probe used by tc_enable_disable.
+# ---------------------------------------------------------------------------
+tc_resolve_python() {
+  local cand
+  for cand in python3 python "py -3" py; do
+    if ${cand} -c "import sys; sys.exit(0 if sys.version_info[0] >= 3 else 49)" >/dev/null 2>&1; then
+      printf '%s' "${cand}"
+      return 0
+    fi
+  done
+  return 1
+}
+
+# ---------------------------------------------------------------------------
+# tc_run_resolve <subcommand> <file> [<ranges>]
+# Dispatch §5 batch resolution to lib/tc_resolve.py.
+# ---------------------------------------------------------------------------
+tc_run_resolve() {
+  local py
+  if ! py="$(tc_resolve_python)"; then
+    echo "tc: ERROR — Python 3 not found" >&2
+    return 2
+  fi
+  ${py} "${SCRIPT_DIR}/tc_resolve.py" "$@"
 }
 
 # ---------------------------------------------------------------------------
@@ -316,6 +361,30 @@ case "${sub}" in
     ;;
   status)
     tc_status "${1:-.}"
+    ;;
+  list)
+    if [ $# -lt 1 ]; then
+      echo "tc list: missing file argument" >&2
+      echo "usage: /tc list <file>" >&2
+      exit 1
+    fi
+    tc_run_resolve list "$1"
+    ;;
+  accept|reject)
+    if [ $# -lt 2 ]; then
+      echo "tc ${sub}: missing arguments" >&2
+      echo "usage: /tc ${sub} <file> <ranges>   (e.g. 1-25,!7,!11)" >&2
+      exit 1
+    fi
+    tc_run_resolve "${sub}" "$1" "$2"
+    ;;
+  accept-all|reject-all)
+    if [ $# -lt 1 ]; then
+      echo "tc ${sub}: missing file argument" >&2
+      echo "usage: /tc ${sub} <file>" >&2
+      exit 1
+    fi
+    tc_run_resolve "${sub}" "$1"
     ;;
   help|--help|-h)
     print_usage

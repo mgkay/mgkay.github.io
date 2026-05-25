@@ -1,3 +1,14 @@
-1.13
+2.0.0
 2026-05-24
-Native Python hooks (Fix #11/#13) + walk-based coverage (Fix #10) + resolution-mode pre-pass (Fix #8) + <s> strikethrough encoding (Fix #7); per-tracked-edit overhead 154ms; 198/198 tests pass.
+track-changes v2 — source-provenance + authoring UX + docs/safety net.
+Wave 1 (§0/§7): comment-based import wrappers (<!-- track-changes: from=PATH#L..-L.. -->)
+  with strict|normalized|fuzzy matching, fail-closed source resolution, `imported:`
+  audit entries, daemon `sources` protocol (v2), and cross-file lineage comments
+  (<!-- from-file=basename:N -->). Wave 2 (§1/§3/§4/§5): block-sibling form for new
+  headings/fences/divs, /tc accept|reject|list|accept-all|reject-all batch resolution
+  with explicit audit attribution, Windows /draft default.draft fallback, and
+  render-time mark hiding (reference/tc-clean.css|js, ?clean=1). Wave 3 (§2/§6/§8/§9):
+  §7 user-authorized-vs-autonomous clarification, reference/quarto-notes.md, SKILL.md
+  author-workflow recipe + /draft composition + Quarto pitfalls, and an OPT-IN git
+  pre-commit advisory (hooks/pre-commit.sh; never auto-wired; --no-verify bypass).
+  install.sh deploys all new files and stops a stale daemon on upgrade.

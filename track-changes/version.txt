@@ -1,3 +1,3 @@
-1.13
+2.0.0
 2026-05-24
-Native Python hooks (validator + audit) with shared daemon; walk-based per-region coverage; resolution-mode pre-pass (AI can accept/reject on instruction); HTML <s> strikethrough encoding. Per-tracked-edit overhead 154ms; 198/198 tests pass.
+Source-provenance import wrappers let AI build a document ~90% from vetted sources with marks only on the AI-authored glue (comment wrappers validated against the named source in strict/normalized/fuzzy modes; mismatches block). Plus cross-file lineage, a block-sibling mark form for new headings/fences/divs, batch /tc accept|reject|list with range syntax, a Windows /draft fallback, render-time mark hiding (?clean=1), Quarto interaction notes, and an opt-in git pre-commit advisory. Fully backward compatible: the 198-test v1 regression passes byte-identically; 298/298 tests pass overall.

@@ -13,10 +13,17 @@ Lifecycle:
   - Stop hook (or kill_daemon) sends a graceful shutdown command.
 
 Wire protocol (newline-delimited JSON):
-  client -> daemon: {"op": "analyze", "source_text": "...", "payload": {...}, "tool_name": "Edit", "ftype": "md"}
-  daemon -> client: {"ok": true, "violations": [[ln, reason], ...], "suggest_draft": false, "proposed_text": "..."}
+  client -> daemon: {"op": "analyze", "protocol_version": 2, "source_text": "...",
+                     "payload": {...}, "tool_name": "Edit", "ftype": "md",
+                     "sources": {"src.txt#L1-L4": "...sliced source..."}}
+  daemon -> client: {"ok": true, "protocol_version": 2, "violations": [[ln, reason], ...],
+                     "suggest_draft": false, "proposed_text": "...", "imported": [...]}
   client -> daemon: {"op": "ping"}                 -> {"ok": true, "pong": true}
   client -> daemon: {"op": "shutdown"}             -> {"ok": true}; daemon exits
+
+Schema evolution (C5): `protocol_version` is advisory; the daemon parses
+tolerantly — unknown fields are ignored, and a missing `sources` field maps
+to None (the analyzer's byte-identical v1 behavior).
 
 Each request/response is a single JSON object terminated by a newline.
 """
@@ -218,17 +225,23 @@ def _serve():
                 running = False
             elif op == 'analyze':
                 try:
+                    # Tolerant parse: unknown fields ignored; missing `sources`
+                    # -> None (the analyzer's byte-identical v1 path). C5.
+                    sources = req.get('sources', None)
                     result = tc_analyzer.analyze(
                         req.get('source_text', ''),
                         req.get('payload', {}),
                         req.get('tool_name', ''),
                         req.get('ftype', ''),
+                        sources=sources,
                     )
                     resp = {
                         'ok': True,
+                        'protocol_version': 2,
                         'violations': [list(v) for v in result['violations']],
                         'suggest_draft': bool(result['suggest_draft']),
                         'proposed_text': result.get('proposed_text', ''),
+                        'imported': result.get('imported', []),
                     }
                     conn.sendall((json.dumps(resp) + '\n').encode('utf-8'))
                 except Exception as e:
@@ -249,6 +262,8 @@ def _serve():
                         'ok': True,
                         'introduced': len(result.get('introduced', [])),
                         'resolved': len(result.get('resolved', [])),
+                        'imported': len(result.get('imported', [])),
+                        'lineage': len(result.get('lineage', [])),
                         'wrote_log': bool(result.get('wrote_log', False)),
                     }
                     conn.sendall((json.dumps(resp) + '\n').encode('utf-8'))

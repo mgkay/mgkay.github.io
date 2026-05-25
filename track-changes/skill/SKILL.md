@@ -13,6 +13,17 @@ the PreToolUse hook blocks any write that adds or removes content without
 an appropriate numbered highlight wrapper. When inactive, the hook is
 silent and passes through.
 
+## Quick Install
+
+Remote install via the bootstrap (Fix #14): from any Claude Code session,
+say `Read https://mgkay.github.io/track-changes/bootstrap.md and follow
+the installation instructions inside it.` Claude Code downloads the skill
+files, merges five hook registrations into `~/.claude/settings.json`, and
+reports success. See <https://mgkay.github.io/track-changes/> for the
+landing page and version history.
+
+Local install (developer path): `bash install.sh` from the project root.
+
 ## 1. Protocol
 
 **Disposition.** The human is the author. You are the copy-editor. Vetted
@@ -233,6 +244,28 @@ marks consume their accept-or-reject chars on the proposed side. The
 edit is still recognised as a resolution provided every byte is
 accounted for.
 
+### Batch resolution via `/tc` (§5)
+
+For a file with many marks, the user can resolve them in bulk through the
+canonical commands rather than conversational batches:
+
+- `/tc list <file>` — print every mark with its number, type, and a short
+  content preview.
+- `/tc accept <file> <ranges>` / `/tc reject <file> <ranges>` — resolve a
+  set of marks. The range syntax is `1-25,!7,!11`: comma-separated inclusive
+  ranges, with `!N` excluding `N`.
+- `/tc accept-all <file>` / `/tc reject-all <file>` — resolve every mark.
+
+Batch resolution edits the file directly (accept ⇒ keep the new text and
+strip the `<mark>…</mark><sup>N</sup>` wrapper; reject ⇒ restore the old text
+and strip the wrapper) and works for `.md` / `.qmd` (`<mark>`) and `.tex`
+(`\tc{}\tcn{}`). Each decision is recorded in `.tc-history.md` with
+`decision: explicit`, which the best-effort Fix #8 inference never overwrites.
+
+When the **user explicitly** asks to accept/reject marks, prefer these
+commands — that is user-authorized execution through the documented surface,
+not the prohibited autonomous self-invocation (see §7).
+
 ## 4. Highlight Syntax (LaTeX)
 
 For files with extension `.tex`, the highlight wrapper is the `\tc{}`
@@ -298,6 +331,29 @@ exactly; only the number changes. The scan target is the **proposed**
 Doc B, so a fresh edit you make at the same time as the paste continues
 the numbering past the just-pasted inherited marks.
 
+#### Cross-file lineage comment (§7)
+
+When a mark is **renumbered** on a cross-file paste, append a lineage
+comment to the renumbered destination mark recording where it came from:
+
+```markdown
+... <mark>pasted text</mark><sup>14</sup><!-- from-file=doc-A:7 -->
+```
+
+```latex
+... \tc{pasted text}\tcn{14}<!-- from-file=notes:4 -->
+```
+
+Grammar: `<!-- from-file=<basename>:<N> -->`, where `<basename>` is the
+source file's basename with spaces replaced by `_` (e.g.
+`Freight_Transport`), `:<N>` is the source mark number, and the comment
+immediately follows the destination mark. For a `.tex` source, `<N>` is
+the source's `\tcn{N}` number. The comment is an HTML comment that
+renders as nothing in Quarto/Pandoc/GitHub, so the lineage stays in the
+source as a permanent audit trail. The analyzer does **not** treat this
+comment as content needing its own mark. The PostToolUse hook records the
+mapping (`<basename>:<src> -> <dest>`) in an audit `lineage:` block.
+
 ## 6. Non-Rendering Contexts
 
 Some constructs do not render `<mark>` or `\tc{}` inside them — fenced
@@ -339,10 +395,37 @@ front matter (top-of-file `---`), GFM pipe tables.
 align/align*, gather/gather*, multline/multline*, `\[...\]` display
 math, tabular.
 
+### New block-level elements (block-sibling form)
+
+Adding a **brand-new** block-level element — an ATX heading, a fenced
+code block, or a `::: {...}` Quarto div — would otherwise break the
+protocol: `### Foo` must sit at column 0 to parse (so `<mark>### Foo</mark>`
+breaks the heading), and wrapping a ```` ``` ```` / `:::` delimiter line in
+`<mark>` breaks the fence/div. The **block-sibling form** covers this case:
+put one `<mark>…</mark><sup>N</sup>` on the line immediately above the new
+block, then write the block normally. The hook accepts the new block's
+delimiter lines (and the heading line) as covered by that sibling mark — no
+`/draft` needed.
+
+```markdown
+<mark>New subsection: Wider tables demo</mark><sup>1</sup>
+### Wider tables
+
+<mark>New column-body-outset breakout</mark><sup>2</sup>
+::: {.column-body-outset}
+| ... wide table ... |
+:::
+```
+
+This applies only to a *newly added* heading/block. Editing the text of an
+*existing* heading follows the normal inline rule (wrap the changed
+characters: `## <mark><s>Old</s>New</mark><sup>N</sup> Section`). A new
+heading or block inside a verified `<!-- track-changes: from=… -->` import
+wrapper is already exempt and is not separately flagged.
+
 ### Outside-enumerated → `/draft`
 
-Constructs outside the enumerated list (Quarto fenced divs with
-attributes like `::: callout-note`, custom LaTeX environments, complex
+Constructs outside the enumerated list (custom LaTeX environments, complex
 tabularx/longtable, nested fenced code) are documented v2 limitations.
 When you must edit inside one of these:
 
@@ -408,6 +491,19 @@ is creating friction (the hook blocks an edit you believe should land,
 or the user is editing a file that would benefit from tracking),
 surface the problem in your reply and suggest the appropriate command.
 Wait for the user's next prompt.
+
+The rule prohibits **autonomous** self-invocation — Claude deciding *on
+its own* to run `/tc enable`, `/draft`, `/tc accept`, etc. without the
+user asking. It does **not** prohibit **user-authorized** execution. When
+the user explicitly directs the action — e.g. "enable tracking on all the
+`.qmd` files in this folder", "accept marks 1–10 and reject 11", or
+"suspend tracking for this edit" — routing through the canonical `/tc`
+commands (`/tc enable`, `/tc mark`, `/tc accept|reject`, `/tc draft`) is
+the correct path. It exercises the documented surface, keeps the audit log
+honest (batch resolution records `decision: explicit`), and is preferable
+to hand-editing YAML frontmatter or `.tc-tracked` markers directly. In
+short: never self-invoke unprompted; always prefer the canonical command
+when the user has asked for the operation it performs.
 
 ## 8. Composition with PCV
 
@@ -636,3 +732,126 @@ Delete `.tc-history.md` to start fresh. The hook will create a new one
 with the header on the next tracked edit. This is destructive — the
 prior history is lost from the file but remains in git if the file was
 committed.
+
+## 12. Render-time visibility of marks
+
+Marks render as visible yellow highlights with superscript numbers in the
+output HTML. If a document is shared before its marks are resolved (faculty
+meeting, student preview, PR review by a non-author), everyone sees the
+marks — not always desired. The skill ships two optional render-time assets
+that hide marks at *view* time without mutating the source:
+
+- `reference/tc-clean.css` — when `<body>` carries the `no-marks` class,
+  `<mark>` highlights become transparent (text reads as plain prose) and the
+  trailing `<sup>N</sup>` is hidden.
+- `reference/tc-clean.js` — adds the `no-marks` class to `<body>` when the
+  URL carries `?clean=1` (or a bare `?clean`).
+
+Include both in the rendered HTML, then append `?clean=1` to the URL when
+sharing mid-review. For a Quarto HTML document:
+
+```yaml
+format:
+  html:
+    css: tc-clean.css
+    include-after-body:
+      text: |
+        <script src="tc-clean.js"></script>
+```
+
+(Copy the two files from `~/.claude/skills/track-changes/reference/` into the
+project, or reference them by path.) Removing `?clean=1` — or loading the
+page without it — restores the marks unchanged. This is purely a viewing
+concern; the source file and its marks are never altered.
+
+## 13. Common pitfalls
+
+- **Windows `/draft` sentinel (concurrency).** `/draft` writes a sentinel via
+  the skill's own bash (`lib/draft-on.sh`), so activation no longer depends on
+  a user-supplied shell snippet. When `$CLAUDE_SESSION_ID` is unset (common on
+  Windows / cross-shell), it falls back to a shared `state/default.draft`
+  sentinel; both the activation gate and the clearing hooks (UserPromptSubmit,
+  SessionStart TTL) honor that path in addition to the session-specific one.
+  **Limitation:** `default.draft` is shared across any concurrent sessions
+  that also lack a distinct `$CLAUDE_SESSION_ID` — in that rare case one
+  session's `/draft` suspends tracking for the others until the next user turn
+  clears it (or the 1-hour SessionStart TTL sweep removes a stale sentinel).
+  Sessions that expose a distinct session id are unaffected.
+- **New block-level elements.** Adding a brand-new heading, fenced code block,
+  or `:::` div uses the block-sibling form (§6), not inline wrapping or
+  `/draft`.
+- **Quarto feature interactions.** Code annotations don't combine with
+  `lst-cap`; annotations mis-pair with executable chunks that print to stdout;
+  hover previews / lightbox / code-annotation require serving over `http://`
+  (not `file://`). The skill's own `?clean=1` toggle has no `file://`
+  restriction. Full diagnostics in `reference/quarto-notes.md`.
+- **Render-time sharing.** Use `?clean=1` (§12) to hide marks when sharing a
+  document mid-review, instead of resolving prematurely. The CSS/JS assets are
+  `reference/tc-clean.css` / `reference/tc-clean.js`.
+
+## 14. Author workflow recipe
+
+The protocol (§3–§6) and the audit log (§11) are well documented; the
+workflow *around* them is implicit. A typical tracked-revision session runs:
+
+1. **Author asks for a revision.** The author opts the file in (folder
+   `.tc-tracked` marker via `/tc mark`, or per-file `/tc enable <file>`), then
+   asks Claude for the edit in plain language — "tighten the intro", "modernize
+   this example", "import the Periodic Shipments section from the source".
+2. **Claude lands marks.** Claude edits the file, wrapping only the changed
+   characters in `<mark>…</mark><sup>N</sup>` (`.md`/`.qmd`) or
+   `\tc{}\tcn{N}` (`.tex`). Verbatim-from-source blocks are wrapped in import
+   wrappers (§0 provenance) and stay bare; new AI-authored glue gets marks. The
+   PreToolUse hook blocks any unmarked change. Each landed mark is recorded as
+   `introduced` in `.tc-history.md`.
+3. **Author batch-resolves.** The author reviews the highlighted output and
+   resolves in bulk through the canonical commands rather than a conversational
+   batch:
+
+   ```
+   /tc list   lec-3.qmd            # see every mark + a content preview
+   /tc accept lec-3.qmd 1-25,!7,!11 # accept 1–25 except 7 and 11
+   /tc reject lec-3.qmd 7,11        # reject the rest
+   ```
+
+   Accept keeps the new text and strips the wrapper; reject restores the old
+   text and strips the wrapper. (See §3 "Batch resolution via `/tc`".)
+4. **Audit entry.** Each resolution appends a `resolved:` block with
+   `decision: explicit` to `.tc-history.md` — an explicit human choice the
+   best-effort Fix #8 inference will never overwrite.
+5. **Commit.** The resolved file and the updated `.tc-history.md` are committed
+   together, so the audit trail rides along in git history. The optional
+   pre-commit hook (`hooks/pre-commit.sh`, §16) can warn if marks are still
+   outstanding at commit time.
+
+To share a document **before** marks are resolved (faculty meeting, student
+preview, non-author PR review), use `?clean=1` (§12) instead of resolving
+prematurely.
+
+## 15. Composition with `/draft`
+
+`/draft` (and its alias `/tc draft`) suspends tracking for **the current user
+turn only**. While suspended, the PreToolUse hook passes edits through without
+requiring any `<mark>` wrapper — so any new content Claude adds during that turn
+lands as **plain text with no marks and no audit `introduced:` entries**.
+Tracking **auto-resumes at the start of the next user prompt** (the
+UserPromptSubmit hook clears the sentinel; SessionStart's 1-hour TTL sweep is
+the crash-recovery fallback).
+
+Decide between `/draft` and in-place tracking by intent:
+
+- **Use `/draft`** when the author is **drafting / constructing** — adding large
+  amounts of new content where mark-by-mark review would be noise (a first-pass
+  lecture build, scaffolding new sections). Marks on 90% of a fresh file defeat
+  the attention-budget purpose.
+- **Prefer in-place tracking** when the author is **refining** vetted content —
+  the incremental-edit case the skill is built for, where each change should be
+  individually reviewable.
+- **Reach for the §0 import wrapper, not `/draft`**, when content is being
+  imported verbatim from a vetted source: the wrapper keeps the imported bytes
+  bare *and* preserves marks on the surrounding AI-authored glue, whereas
+  `/draft` suspends checking for the whole turn and loses provenance for the
+  glue too.
+- **Reach for the block-sibling form (§6), not `/draft`**, when adding a single
+  new heading, fenced block, or `:::` div — that case no longer requires
+  suspending tracking.

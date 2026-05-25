@@ -65,6 +65,43 @@ PreToolUse hook refuses any edit to a tracked file that doesn&rsquo;t wrap the d
 characters in a numbered mark. The PostToolUse hook appends every mark (and every later
 resolution) to a project-local <code>.tc-history.md</code> audit log that lives in git.</p>
 
+<h2>New in v2</h2>
+
+<p>v1 was excellent for <em>refining</em> a vetted document but painful for <em>building</em>
+one: importing 70&ndash;90% of a lecture from a trusted source flooded the file with marks
+on content the author already trusted. v2 closes that gap and ships the rest of the friction
+backlog. It is <strong>fully backward compatible</strong> &mdash; the v1 mark grammar,
+activation, and audit log are unchanged, and the 198-test v1 regression suite passes
+byte-identically.</p>
+
+<ul>
+  <li><strong>Source-provenance import wrappers.</strong> Wrap imported material in
+    <code>&lt;!-- track-changes: from=PATH#L10-L42 --&gt;</code> &hellip;
+    <code>&lt;!-- /track-changes --&gt;</code>. The hook slices the named plain-text source
+    and matches the block (<code>strict</code> / <code>normalized</code> default /
+    <code>fuzzy</code>). A verbatim import <strong>verifies and stays unmarked</strong>
+    (reads as bare prose); an undisclosed paraphrase <strong>blocks</strong> with a
+    discrepancy message; an unreadable source fails <strong>closed</strong> (marks
+    required). Imports are logged with source, line range, and normalization mode.</li>
+  <li><strong>Batch resolution.</strong> <code>/tc list|accept|reject|accept-all|reject-all
+    &lt;file&gt;</code> with range syntax (<code>1-25,!7,!11</code>); resolutions edit the
+    file directly with explicit per-mark audit attribution.</li>
+  <li><strong>New-block sibling marks.</strong> A brand-new heading, fenced code block, or
+    <code>:::</code> div lands via a single sibling mark on the line above &mdash; no
+    <code>/draft</code>, no parse-breaking inline wrapper.</li>
+  <li><strong>Cross-file lineage.</strong> A renumbered cross-file paste keeps a
+    <code>&lt;!-- from-file=basename:N --&gt;</code> comment and an audit mapping back to the
+    source mark.</li>
+  <li><strong>Render-time hiding.</strong> Append <code>?clean=1</code> to a shared doc URL
+    to hide marks and superscripts at render, without altering source.</li>
+  <li><strong>Reliable Windows <code>/draft</code></strong> via a <code>default.draft</code>
+    fallback, plus an <strong>opt-in</strong> git pre-commit advisory that warns on
+    unresolved marks in staged tracked files.</li>
+</ul>
+
+<p>Upgrading from v1? Re-run the install command, then <code>/tc migrate &lt;dir&gt;</code>
+to convert any existing v1 marks in place.</p>
+
 <h2>Prerequisites</h2>
 
 <p><strong>Claude Code</strong> must be installed and working.
@@ -180,6 +217,9 @@ changes naturally.</p>
       <li><code>/tc enable &lt;file&gt;</code> / <code>/tc disable &lt;file&gt;</code>
         &mdash; per-file YAML frontmatter writer.</li>
       <li><code>/tc mark [&lt;dir&gt;]</code> &mdash; drop a <code>.tc-tracked</code> marker.</li>
+      <li><code>/tc accept</code> / <code>/tc reject</code> / <code>/tc list</code>
+        &mdash; batch-resolve marks by range (<code>1-25,!7</code>), with explicit
+        audit attribution.</li>
       <li><code>/tc status [&lt;file&gt;]</code> &mdash; inspect the activation chain.</li>
       <li><code>/tc migrate &lt;dir&gt;</code> &mdash; convert v1 marks to v2 in place.</li>
     </ul>
@@ -192,7 +232,9 @@ changes naturally.</p>
 between the validator hook (~75ms) and the audit-log hook (~79ms). Both are written in
 native Python and share an optional persistent daemon (<code>lib/tc_daemon.py</code>)
 that auto-spawns on first call and keeps analyzer state warm for the rest of the
-session. Test suite: 198 tests in ~7s under parallel mode.</p>
+session. Test suite: <strong>298 tests pass</strong> &mdash; the 198-test v1 regression
+runs byte-identically (proving backward compatibility) plus 100 new tests covering the
+v2 features.</p>
 
 <h2>Design</h2>
 
@@ -205,9 +247,10 @@ session. Test suite: 198 tests in ~7s under parallel mode.</p>
     <tr><td>Audit trail</td><td>Append-only <code>.tc-history.md</code> at git repo root</td></tr>
     <tr><td>Editor surface</td><td>Any &mdash; renders in VS Code preview, GitHub, Quarto, Chrome markdown extensions</td></tr>
     <tr><td>Activation</td><td>Folder marker (<code>.tc-tracked</code>), per-file YAML, or per-turn <code>/draft</code></td></tr>
-    <tr><td>Coverage rule</td><td>Per-region: every diff character must be inside a mark or be a resolution of an existing mark</td></tr>
+    <tr><td>Coverage rule</td><td>Per-region: every diff character must be inside a mark, be a resolution of an existing mark, or fall inside a verified <code>from=</code> import wrapper</td></tr>
+    <tr><td>Source provenance</td><td>Comment wrappers <code>&lt;!-- track-changes: from=PATH#L&lt;a&gt;-L&lt;b&gt; --&gt;</code> validated against the named source (strict / normalized / fuzzy); verbatim imports stay unmarked, paraphrase blocks, unreadable sources fail closed</td></tr>
     <tr><td>Mark encoding</td><td><code>&lt;mark&gt;&lt;s&gt;old&lt;/s&gt;new&lt;/mark&gt;&lt;sup&gt;N&lt;/sup&gt;</code> for Markdown; <code>\tc{\sout{old}new}\tcn{N}</code> for LaTeX</td></tr>
-    <tr><td>Resolution</td><td>AI can accept/reject on user instruction without <code>/draft</code></td></tr>
+    <tr><td>Resolution</td><td>AI accepts/rejects on user instruction without <code>/draft</code>; or batch via <code>/tc accept|reject|list</code> with range syntax</td></tr>
     <tr><td>Default</td><td>OFF &mdash; per-folder or per-file opt-in</td></tr>
   </tbody>
 </table>
@@ -215,7 +258,7 @@ session. Test suite: 198 tests in ~7s under parallel mode.</p>
 </main>
 
 <footer>
-  <p>track-changes v1.13 &middot; M. G. Kay &middot; NC State ISE<br>
+  <p>track-changes v2.0.0 &middot; M. G. Kay &middot; NC State ISE<br>
   <a href="bootstrap.md" download>Download bootstrap.md</a></p>
 </footer>
 
