@@ -240,24 +240,27 @@ when you build documents with an AI&rsquo;s help.</p>
 <p>Most of a new lecture or chapter is usually lifted from things you&rsquo;ve already written and
 vetted: a section of a Word document, an old notebook, a prior manuscript. Only a little is genuinely
 new AI writing. If every imported paragraph were highlighted, the handful of lines that actually need
-your attention would be buried in yellow. So you can tell track-changes that a block was imported
-verbatim from a specific source file:</p>
+your attention would be buried in yellow. So when you ask Claude to bring in a passage from a source
+you trust, it doesn&rsquo;t highlight that passage &mdash; instead it wraps the block in a small
+comment naming exactly where the text came from:</p>
 
 <pre class="snippet">&lt;!-- track-changes: from=chapter3.md#L10-L42 --&gt;
-...the imported material, pasted in as-is...
+...the imported passage, copied in as-is...
 &lt;!-- /track-changes --&gt;</pre>
 
-<p>track-changes opens <code>chapter3.md</code>, compares lines 10&ndash;42 against what was pasted,
-and &mdash; if it really matches &mdash; leaves the block <strong>unmarked</strong>, so it reads as
-ordinary prose. Only the AI&rsquo;s own additions around it get highlighted. And if the AI quietly
-reworded the imported text instead of copying it faithfully, the comparison <strong>fails and the
-save is blocked</strong>, so you can&rsquo;t be misled into trusting altered material.</p>
+<p>track-changes then opens <code>chapter3.md</code>, compares lines 10&ndash;42 against what was
+pasted, and &mdash; if it really matches &mdash; leaves the block <strong>unmarked</strong>, so it
+reads as ordinary prose. Only Claude&rsquo;s own additions around it get highlighted. And if Claude
+had quietly reworded the imported text instead of copying it faithfully, the comparison
+<strong>fails and the save is blocked</strong>, so you can&rsquo;t be misled into trusting altered
+material.</p>
 
-<p>track-changes itself only ever reads plain text &mdash; it never opens binary files. So when your
-source is a Word, PowerPoint, or notebook file, you ask Claude to convert it to a plain-text copy
-(kept alongside the document) as part of the import, and the <code>from=</code> wrapper points at that
-copy. The conversion is Claude&rsquo;s job, done before any comparison happens; the skill simply
-compares text against text.</p>
+<p>This works even when your source is a Word, PowerPoint, PDF, or notebook file &mdash; and you
+don&rsquo;t have to convert anything or even think about it. You just ask for the import. track-changes
+itself only ever reads plain text (it never opens binary files), so its instructions tell Claude to
+produce a plain-text copy of the source &mdash; saved alongside it as a reusable project file &mdash;
+and point the wrapper at that copy, all as a side-effect of the import. The skill only ever compares
+text against text; producing that text is handled for you.</p>
 
 <h3>Resolve a whole review pass in seconds</h3>
 <p>A heavy editing session can leave dozens of highlights. Rather than clicking through them one at a
