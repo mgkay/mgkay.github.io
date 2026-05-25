@@ -251,9 +251,13 @@ verbatim from a specific source file:</p>
 and &mdash; if it really matches &mdash; leaves the block <strong>unmarked</strong>, so it reads as
 ordinary prose. Only the AI&rsquo;s own additions around it get highlighted. And if the AI quietly
 reworded the imported text instead of copying it faithfully, the comparison <strong>fails and the
-save is blocked</strong>, so you can&rsquo;t be misled into trusting altered material. (Sources in
-binary formats like Word or PowerPoint are first converted to a plain-text copy kept alongside the
-document, so the comparison has something to read.)</p>
+save is blocked</strong>, so you can&rsquo;t be misled into trusting altered material.</p>
+
+<p>track-changes itself only ever reads plain text &mdash; it never opens binary files. So when your
+source is a Word, PowerPoint, or notebook file, you ask Claude to convert it to a plain-text copy
+(kept alongside the document) as part of the import, and the <code>from=</code> wrapper points at that
+copy. The conversion is Claude&rsquo;s job, done before any comparison happens; the skill simply
+compares text against text.</p>
 
 <h3>Resolve a whole review pass in seconds</h3>
 <p>A heavy editing session can leave dozens of highlights. Rather than clicking through them one at a
