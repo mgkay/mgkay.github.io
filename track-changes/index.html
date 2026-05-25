@@ -22,6 +22,14 @@
       color: #555;
       margin-left: 1px;
     }
+    /* command reference: hanging-indent list with the command on its own line */
+    .cmds { list-style: none; padding-left: 0; }
+    .cmds > li { margin: 0.55em 0; }
+    .cmds code:first-child { font-weight: 600; }
+    pre.snippet {
+      background: #f4f4f4; border: 1px solid #ddd; border-radius: 4px;
+      padding: 0.6em 0.8em; overflow-x: auto; font-size: 0.92em;
+    }
   </style>
 </head>
 <body>
@@ -40,12 +48,13 @@
 
 <h2>What is track-changes?</h2>
 
-<p>track-changes is a <strong>skill for Claude Code</strong> that intercepts every Write
-/ Edit / MultiEdit on tracked <code>.md</code>, <code>.qmd</code>, and <code>.tex</code> files.
-Each AI-introduced change is wrapped in a <code>&lt;mark&gt;</code> highlight followed by
-<code>&lt;sup&gt;N&lt;/sup&gt;</code> &mdash; rendered yellow with strikethrough overlay in any
-markdown viewer &mdash; so you can review every change individually and accept or reject it
-the way you would in Word or Google Docs.</p>
+<p>track-changes is a <strong>skill for Claude Code</strong>. Once installed, it watches every
+change Claude makes to your tracked <code>.md</code>, <code>.qmd</code>, and <code>.tex</code>
+files. Each change Claude introduces is wrapped in a <code>&lt;mark&gt;</code> highlight followed
+by a small reference number &mdash; rendered as a yellow span (with a strikethrough overlay for
+anything deleted) in any markdown viewer &mdash; so you can review every change individually and
+accept or reject it, the way you would with Track Changes in Word or Suggesting mode in Google
+Docs.</p>
 
 <div class="phases">
   <div class="phase-box">Block<small>Unmarked AI edit</small></div>
@@ -59,201 +68,241 @@ the way you would in Word or Google Docs.</p>
 
 <h2>Why it exists</h2>
 
-<p>Vetted source documents &mdash; lecture notes, exams, manuscripts &mdash; have often been
-reviewed by their author for years. Silent AI-introduced changes destroy that trust. The
-PreToolUse hook refuses any edit to a tracked file that doesn&rsquo;t wrap the differing
-characters in a numbered mark. The PostToolUse hook appends every mark (and every later
-resolution) to a project-local <code>.tc-history.md</code> audit log that lives in git.</p>
+<p>Vetted documents &mdash; lecture notes, exams, manuscripts &mdash; have often been refined by
+their author over years. When an AI assistant rewrites part of one, the changes are invisible:
+they blend into text you already trust, and you have no easy way to tell what the AI touched. A
+single quiet, wrong change can undermine confidence in the whole file.</p>
 
-<h2>New in v2</h2>
-
-<p>v1 was excellent for <em>refining</em> a vetted document but painful for <em>building</em>
-one: importing 70&ndash;90% of a lecture from a trusted source flooded the file with marks
-on content the author already trusted. v2 closes that gap and ships the rest of the friction
-backlog. It is <strong>fully backward compatible</strong> &mdash; the v1 mark grammar,
-activation, and audit log are unchanged, and the 198-test v1 regression suite passes
-byte-identically.</p>
-
-<ul>
-  <li><strong>Source-provenance import wrappers.</strong> Wrap imported material in
-    <code>&lt;!-- track-changes: from=PATH#L10-L42 --&gt;</code> &hellip;
-    <code>&lt;!-- /track-changes --&gt;</code>. The hook slices the named plain-text source
-    and matches the block (<code>strict</code> / <code>normalized</code> default /
-    <code>fuzzy</code>). A verbatim import <strong>verifies and stays unmarked</strong>
-    (reads as bare prose); an undisclosed paraphrase <strong>blocks</strong> with a
-    discrepancy message; an unreadable source fails <strong>closed</strong> (marks
-    required). Imports are logged with source, line range, and normalization mode.</li>
-  <li><strong>Batch resolution.</strong> <code>/tc list|accept|reject|accept-all|reject-all
-    &lt;file&gt;</code> with range syntax (<code>1-25,!7,!11</code>); resolutions edit the
-    file directly with explicit per-mark audit attribution.</li>
-  <li><strong>New-block sibling marks.</strong> A brand-new heading, fenced code block, or
-    <code>:::</code> div lands via a single sibling mark on the line above &mdash; no
-    <code>/draft</code>, no parse-breaking inline wrapper.</li>
-  <li><strong>Cross-file lineage.</strong> A renumbered cross-file paste keeps a
-    <code>&lt;!-- from-file=basename:N --&gt;</code> comment and an audit mapping back to the
-    source mark.</li>
-  <li><strong>Render-time hiding.</strong> Append <code>?clean=1</code> to a shared doc URL
-    to hide marks and superscripts at render, without altering source.</li>
-  <li><strong>Reliable Windows <code>/draft</code></strong> via a <code>default.draft</code>
-    fallback, plus an <strong>opt-in</strong> git pre-commit advisory that warns on
-    unresolved marks in staged tracked files.</li>
-</ul>
-
-<p>Upgrading from v1? Re-run the install command, then <code>/tc migrate &lt;dir&gt;</code>
-to convert any existing v1 marks in place.</p>
+<p>track-changes makes every AI change <strong>visible and reversible</strong>. It refuses to let
+Claude save an edit to a tracked file unless the changed characters are wrapped in a highlight you
+can see, and it records each highlight &mdash; and every later accept-or-reject decision &mdash; in
+a plain-text log kept alongside the document. You stay the author; the AI is a copy-editor whose
+work you sign off on, change by change.</p>
 
 <h2>Prerequisites</h2>
 
-<p><strong>Claude Code</strong> must be installed and working.
-track-changes is a Claude Code skill &mdash; it runs inside Claude Code, not separately.
+<p><strong>Claude Code</strong> must be installed and working. track-changes is a Claude Code skill
+&mdash; it runs inside Claude Code, not separately.
 <a href="https://docs.anthropic.com/en/docs/claude-code/overview">Install Claude Code first</a>
-if you haven&rsquo;t already. The skill also needs <strong>Python 3</strong> and
-<strong>curl</strong> (both default on most setups).</p>
+if you haven&rsquo;t already. The skill also needs <strong>Python&nbsp;3</strong> and
+<strong>curl</strong> available on your system (both are present on most setups by default).</p>
 
 <h2>Installation</h2>
 
 <ol class="steps">
   <li>
-    <strong>Start a Claude Code session</strong> &mdash; anywhere; track-changes installs to
-    your user profile, not a specific project.
+    <strong>Start a Claude Code session</strong> &mdash; anywhere; track-changes installs into your
+    user profile, not a specific project.
   </li>
   <li>
-    <strong>Give the bootstrap URL to Claude Code.</strong> Type:<br>
+    <strong>Give the install link to Claude Code.</strong> Type:<br>
     <code>Read <a href="bootstrap.md">https://mgkay.github.io/track-changes/bootstrap.md</a> and follow the installation instructions inside it.</code>
   </li>
   <li>
-    <strong>Confirm the installation.</strong> Claude Code downloads the skill files, merges
-    five hook registrations into your <code>~/.claude/settings.json</code>, and reports
-    success.
+    <strong>Confirm.</strong> Claude Code downloads the skill, wires it into your configuration, and
+    reports success.
   </li>
   <li>
-    <strong>Open a new Claude Code session</strong> so the registered hooks take effect.
+    <strong>Open a new Claude Code session</strong> so the skill takes effect.
   </li>
 </ol>
 
 <div class="callout">
-  <p><strong>Updating.</strong> Run the same install command again. The installer reads the
-  current <code>~/.claude/skills/track-changes/VERSION</code> and only overwrites if the
-  remote version is higher. The settings.json merge is idempotent.</p>
+  <p><strong>Updating later.</strong> Run the same install command again. It checks the installed
+  version and only replaces files if the published version is newer, so re-running is always safe.</p>
 </div>
 
-<h2>Activate tracking on a folder</h2>
+<h2>Turn it on for your files</h2>
 
-<p>The skill is OFF by default &mdash; it ignores every file until you explicitly opt in.
-The most common activation: <strong>you create an empty file named <code>.tc-tracked</code>
-in the folder containing your source files</strong>. There is no such file anywhere by
-default; the skill checks the file&rsquo;s own folder at edit time and only activates if
-this marker is present.</p>
+<p>track-changes is <strong>off by default</strong> &mdash; it ignores every file until you
+explicitly opt in. Nothing is tracked until you say so, and you opt in per folder or per file.</p>
 
-<p>Three ways to create the marker:</p>
+<p>The usual way is to mark a whole folder of source files at once. From inside Claude Code:</p>
 
-<ul>
-  <li>From any shell: <code>touch /path/to/lectures/.tc-tracked</code></li>
-  <li>From Claude Code: <code>/tc mark /path/to/lectures</code> (writes a self-documenting marker)</li>
-  <li>Without a folder marker, per-file: add <code>track-changes: true</code> to a
-  <code>.md</code> / <code>.qmd</code> file&rsquo;s YAML frontmatter, or invoke
-  <code>/tc enable &lt;file&gt;</code></li>
-</ul>
+<pre class="snippet">/tc mark /path/to/your/lectures</pre>
 
-<p>The marker is checked in the file&rsquo;s <em>own folder only</em> &mdash; no walk-up,
-no descent into subfolders. To track files in a subfolder, drop a separate marker there.
-Hidden files (basenames starting with <code>.</code>) are excluded by default.</p>
+<p>That drops a small marker file named <code>.tc-tracked</code> in the folder. From then on, every
+<code>.md</code> / <code>.qmd</code> / <code>.tex</code> file <em>in that folder</em> is tracked.
+The marker only covers its own folder &mdash; it does not reach up to parent folders or down into
+subfolders, so you stay in control of exactly what is watched. To track a subfolder too, mark it
+separately. To track just one file instead of a whole folder, use <code>/tc enable &lt;file&gt;</code>
+(explained under <a href="#commands">Commands</a> below).</p>
 
-<h2>Example: AI edit &rarr; review &rarr; result</h2>
+<h2>Example: an AI edit, reviewed</h2>
 
-<p>The boxes below render the actual <code>&lt;mark&gt;</code> + <code>&lt;sup&gt;</code>
-HTML &mdash; what you&rsquo;ll see in VS Code&rsquo;s built-in markdown preview
-(<kbd>Ctrl+Shift+V</kbd>) or any markdown viewer that renders HTML.</p>
+<p>The boxes below render the actual highlight markup &mdash; this is what you see in VS Code&rsquo;s
+built-in markdown preview (<kbd>Ctrl+Shift+V</kbd>) or any viewer that displays markdown.</p>
 
-<h4>1. Original (on disk)</h4>
+<h4>1. Your original sentence (on disk)</h4>
 <div class="example">The greedy algorithm finds the optimal solution.</div>
 
-<h4>2. AI proposes two edits (file rewritten by Claude)</h4>
+<h4>2. Claude proposes two changes</h4>
 <div class="example">The greedy algorithm<mark> often</mark><sup>1</sup> finds <mark><s>the optimal</s>a near-optimal</mark><sup>2</sup> solution.</div>
 
-<p>Mark 1 is an insertion (adds " often"). Mark 2 is a replacement (strikes through "the
-optimal", proposes "a near-optimal"). The PreToolUse hook accepted this write because
-every changed character is inside a <code>&lt;mark&gt;</code> wrapper. Each
-<code>&lt;sup&gt;N&lt;/sup&gt;</code> is a unique reference number for the next step.</p>
+<p>Change&nbsp;1 inserts the word &ldquo;often.&rdquo; Change&nbsp;2 strikes through &ldquo;the
+optimal&rdquo; and proposes &ldquo;a near-optimal&rdquo; in its place. Claude was <em>allowed</em> to
+save this only because every altered character sits inside a highlight; an unmarked edit would have
+been refused. Each small number is a handle you use in the next step.</p>
 
-<h4>3. You review and decide: accept #1, reject #2</h4>
+<h4>3. You decide: keep #1, drop #2</h4>
 
-<p>Tell Claude in plain English: <em>&ldquo;accept 1, reject 2.&rdquo;</em> The
-resolution-mode pre-pass recognizes this kind of cleanup and lets the wrappers come off
-without disabling tracking. (You can also delete the wrappers yourself in any text
-editor.)</p>
+<p>Just tell Claude in plain English &mdash; <em>&ldquo;accept 1, reject 2&rdquo;</em> &mdash; or run
+<code>/tc accept &lt;file&gt; 1</code> and <code>/tc reject &lt;file&gt; 2</code>. (You can also delete
+the highlight wrappers by hand in any editor; nothing is locked.)</p>
 
-<h4>4. Final result (on disk)</h4>
+<h4>4. The result (on disk)</h4>
 <div class="example">The greedy algorithm often finds the optimal solution.</div>
 
-<p>Mark 1 was accepted &mdash; "often" survives. Mark 2 was rejected &mdash; the original
-"the optimal" survives, the proposed "a near-optimal" is dropped. Both decisions, with
-timestamps and old/new strings, are appended to
-<code>&lt;git-repo-root&gt;/.tc-history.md</code> &mdash; the audit log lives in git, so
-<code>git diff</code>, <code>git blame</code>, and PR review all surface AI-attributed
-changes naturally.</p>
+<p>The accepted change stayed; the rejected one was rolled back to your original wording. Both
+decisions &mdash; with timestamps and the old and new text &mdash; were appended to a log file named
+<code>.tc-history.md</code> in your project. Because that log is plain text kept in version control,
+tools like <code>git diff</code> and <code>git blame</code> surface AI-attributed changes naturally,
+even months later.</p>
 
-<h2>What you get</h2>
+<h2>How it works</h2>
 
-<div class="cols">
-  <div class="col">
-    <h4>Hooks (registered in settings.json)</h4>
-    <ul>
-      <li><strong>PreToolUse</strong> validates every Write / Edit / MultiEdit on a tracked
-        file. Blocks if any diff region isn&rsquo;t inside a <code>&lt;mark&gt;</code>.</li>
-      <li><strong>PostToolUse</strong> diffs current marks vs prior cache; appends
-        introduced + resolved entries to <code>.tc-history.md</code>.</li>
-      <li><strong>SessionStart</strong> surfaces a LaTeX-preamble advisory when editing
-        <code>.tex</code> files.</li>
-      <li><strong>Stop / UserPromptSubmit</strong> manage the <code>/draft</code> per-turn
-        sentinel.</li>
-    </ul>
-  </div>
-  <div class="col">
-    <h4>Slash commands</h4>
-    <ul>
-      <li><code>/draft</code> &mdash; suspend tracking for the next turn (e.g., for a
-        large refactor that&rsquo;s too noisy to mark).</li>
-      <li><code>/tc enable &lt;file&gt;</code> / <code>/tc disable &lt;file&gt;</code>
-        &mdash; per-file YAML frontmatter writer.</li>
-      <li><code>/tc mark [&lt;dir&gt;]</code> &mdash; drop a <code>.tc-tracked</code> marker.</li>
-      <li><code>/tc accept</code> / <code>/tc reject</code> / <code>/tc list</code>
-        &mdash; batch-resolve marks by range (<code>1-25,!7</code>), with explicit
-        audit attribution.</li>
-      <li><code>/tc status [&lt;file&gt;]</code> &mdash; inspect the activation chain.</li>
-      <li><code>/tc migrate &lt;dir&gt;</code> &mdash; convert v1 marks to v2 in place.</li>
-    </ul>
-  </div>
+<p>You don&rsquo;t run track-changes during normal work &mdash; once installed, it watches for edits
+on its own. Three things happen automatically behind the scenes:</p>
+
+<ul>
+  <li><strong>It checks every save before it happens.</strong> Whenever Claude is about to write to a
+    tracked file, track-changes first inspects what would change. If any new or altered text
+    isn&rsquo;t wrapped in a highlight, the save is refused and Claude is told to mark it. (This kind
+    of automatic, behind-the-scenes check is called a <em>hook</em> &mdash; Claude Code triggers it
+    for you; you never invoke it yourself.) The practical effect: an AI edit can never land in your
+    document unhighlighted.</li>
+  <li><strong>It keeps a running log.</strong> Every highlight Claude adds, and every accept-or-reject
+    decision you make afterward, is appended to the plain-text <code>.tc-history.md</code> file next
+    to your document. Since the log travels with your project, you &mdash; or a co-author, or a
+    reviewer &mdash; can always see what the AI touched and what you decided.</li>
+  <li><strong>It stays out of the way otherwise.</strong> On files you haven&rsquo;t opted in, and in
+    any turn where you&rsquo;ve paused it, the checks do nothing at all. There is no separate app or
+    window; it lives entirely inside your normal Claude Code session.</li>
+</ul>
+
+<h2 id="commands">Commands</h2>
+
+<p>track-changes adds two slash commands to Claude Code: <code>/draft</code> and <code>/tc</code>.
+<code>/tc</code> takes a subcommand. Here is the full set, grouped by what you&rsquo;re trying to do.</p>
+
+<h3>Turning tracking on and off</h3>
+<ul class="cmds">
+  <li><code>/tc mark [&lt;dir&gt;]</code> &mdash; Turn tracking on for an entire folder by dropping a
+    <code>.tc-tracked</code> marker in it. This is the usual way to start. With no folder given, it
+    marks the current one.</li>
+  <li><code>/tc enable &lt;file&gt;</code> &mdash; Turn tracking on for a <em>single</em> file (it adds
+    <code>track-changes: true</code> to the file&rsquo;s header). Use this when you want just one file
+    watched rather than its whole folder.</li>
+  <li><code>/tc disable &lt;file&gt;</code> &mdash; The opposite: explicitly exclude one file from
+    tracking, even if its folder is marked.</li>
+  <li><code>/tc on</code> / <code>/tc off</code> &mdash; Force tracking on (or off) for the rest of the
+    current session, ignoring the folder and file rules. Useful for a one-off session when you
+    don&rsquo;t want to change any markers.</li>
+  <li><code>/tc status [&lt;file&gt;]</code> &mdash; Show whether a file is currently being tracked and
+    <em>why</em> (which rule turned it on or off). Use it when you&rsquo;re not sure a file is being
+    watched.</li>
+</ul>
+
+<h3>Pausing for one request</h3>
+<ul class="cmds">
+  <li><code>/draft</code> &mdash; Suspend tracking for just your next message to Claude, then it
+    switches back on by itself. Use it when you&rsquo;re asking for a large rewrite or a brand-new
+    draft that would be too noisy to highlight line by line &mdash; you want the writing for that one
+    step, not the marks. (<code>/tc draft</code> does the same thing.)</li>
+</ul>
+
+<h3>Reviewing and resolving changes</h3>
+<p>After Claude has marked up a file, these let you work through the highlights quickly instead of
+editing each wrapper by hand.</p>
+<ul class="cmds">
+  <li><code>/tc list &lt;file&gt;</code> &mdash; List every highlight in the file by number, each with a
+    short preview of what changed. The natural starting point for a review pass.</li>
+  <li><code>/tc accept &lt;file&gt; &lt;ranges&gt;</code> &mdash; Keep Claude&rsquo;s version for the
+    listed highlights and remove the wrappers, making the text final. Ranges are flexible:
+    <code>1-25,!7,!11</code> means &ldquo;marks 1 through 25, except 7 and 11.&rdquo;</li>
+  <li><code>/tc reject &lt;file&gt; &lt;ranges&gt;</code> &mdash; The opposite: discard
+    Claude&rsquo;s version, restore your original text, and remove the wrappers. Same range syntax.</li>
+  <li><code>/tc accept-all &lt;file&gt;</code> / <code>/tc reject-all &lt;file&gt;</code> &mdash;
+    Resolve every highlight in the file at once, when you&rsquo;ve decided wholesale.</li>
+</ul>
+
+<div class="callout">
+  <p>Every accept or reject is recorded in the audit log as a deliberate decision, so the skill will
+  never silently undo a choice you made &mdash; even if Claude edits the same passage again later.</p>
 </div>
 
-<h2>Performance</h2>
+<h2>What else it can do</h2>
 
-<p>Per-tracked-edit overhead is <strong>~154ms</strong> on Windows + Git Bash, split
-between the validator hook (~75ms) and the audit-log hook (~79ms). Both are written in
-native Python and share an optional persistent daemon (<code>lib/tc_daemon.py</code>)
-that auto-spawns on first call and keeps analyzer state warm for the rest of the
-session. Test suite: <strong>298 tests pass</strong> &mdash; the 198-test v1 regression
-runs byte-identically (proving backward compatibility) plus 100 new tests covering the
-v2 features.</p>
+<p>Beyond the basic mark-and-review loop, track-changes handles the situations that actually come up
+when you build documents with an AI&rsquo;s help.</p>
 
-<h2>Design</h2>
+<h3>Build from material you already trust &mdash; without drowning in highlights</h3>
+<p>Most of a new lecture or chapter is usually lifted from things you&rsquo;ve already written and
+vetted: a section of a Word document, an old notebook, a prior manuscript. Only a little is genuinely
+new AI writing. If every imported paragraph were highlighted, the handful of lines that actually need
+your attention would be buried in yellow. So you can tell track-changes that a block was imported
+verbatim from a specific source file:</p>
 
-<table>
-  <thead>
-    <tr><th>Property</th><th>Value</th></tr>
-  </thead>
-  <tbody>
-    <tr><td>Storage format</td><td>Inline <code>&lt;mark&gt;</code>+<code>&lt;sup&gt;</code> wrappers in the source file</td></tr>
-    <tr><td>Audit trail</td><td>Append-only <code>.tc-history.md</code> at git repo root</td></tr>
-    <tr><td>Editor surface</td><td>Any &mdash; renders in VS Code preview, GitHub, Quarto, Chrome markdown extensions</td></tr>
-    <tr><td>Activation</td><td>Folder marker (<code>.tc-tracked</code>), per-file YAML, or per-turn <code>/draft</code></td></tr>
-    <tr><td>Coverage rule</td><td>Per-region: every diff character must be inside a mark, be a resolution of an existing mark, or fall inside a verified <code>from=</code> import wrapper</td></tr>
-    <tr><td>Source provenance</td><td>Comment wrappers <code>&lt;!-- track-changes: from=PATH#L&lt;a&gt;-L&lt;b&gt; --&gt;</code> validated against the named source (strict / normalized / fuzzy); verbatim imports stay unmarked, paraphrase blocks, unreadable sources fail closed</td></tr>
-    <tr><td>Mark encoding</td><td><code>&lt;mark&gt;&lt;s&gt;old&lt;/s&gt;new&lt;/mark&gt;&lt;sup&gt;N&lt;/sup&gt;</code> for Markdown; <code>\tc{\sout{old}new}\tcn{N}</code> for LaTeX</td></tr>
-    <tr><td>Resolution</td><td>AI accepts/rejects on user instruction without <code>/draft</code>; or batch via <code>/tc accept|reject|list</code> with range syntax</td></tr>
-    <tr><td>Default</td><td>OFF &mdash; per-folder or per-file opt-in</td></tr>
-  </tbody>
-</table>
+<pre class="snippet">&lt;!-- track-changes: from=chapter3.md#L10-L42 --&gt;
+...the imported material, pasted in as-is...
+&lt;!-- /track-changes --&gt;</pre>
+
+<p>track-changes opens <code>chapter3.md</code>, compares lines 10&ndash;42 against what was pasted,
+and &mdash; if it really matches &mdash; leaves the block <strong>unmarked</strong>, so it reads as
+ordinary prose. Only the AI&rsquo;s own additions around it get highlighted. And if the AI quietly
+reworded the imported text instead of copying it faithfully, the comparison <strong>fails and the
+save is blocked</strong>, so you can&rsquo;t be misled into trusting altered material. (Sources in
+binary formats like Word or PowerPoint are first converted to a plain-text copy kept alongside the
+document, so the comparison has something to read.)</p>
+
+<h3>Resolve a whole review pass in seconds</h3>
+<p>A heavy editing session can leave dozens of highlights. Rather than clicking through them one at a
+time, list them and then accept or reject in ranges &mdash; for example, keep everything except the
+two changes you disagree with. See <code>/tc list</code>, <code>/tc accept</code>, and
+<code>/tc reject</code> above.</p>
+
+<h3>Add brand-new sections without breaking the page</h3>
+<p>Wrapping a brand-new heading or code block in an inline highlight would break how the document
+displays. Instead, a new heading, fenced code block, or callout is flagged with a single marker on
+the line just above it &mdash; you still see at a glance that it&rsquo;s new, and the document still
+renders correctly.</p>
+
+<h3>Hand the document to a reader, cleanly</h3>
+<p>When you share the document for someone to <em>read</em> rather than review, you don&rsquo;t want
+yellow highlights all over it. Add <code>?clean=1</code> to the end of the shared link and the
+rendered page hides every mark and reference number. The underlying file is untouched, so your review
+state is fully preserved &mdash; the clean view is just for the reader.</p>
+
+<h3>Catch half-finished edits before they&rsquo;re committed</h3>
+<p>If you keep your documents in git, track-changes can optionally warn you at commit time when a file
+still has unresolved highlights in it &mdash; a safety net so partly-reviewed AI edits don&rsquo;t
+slip into your project&rsquo;s history by accident. It&rsquo;s off until you switch it on, and you can
+always override it for a single commit.</p>
+
+<h3>Keep the trail when you move text between files</h3>
+<p>If you copy a highlighted passage from one document into another, track-changes records where it
+came from, so the history of who-changed-what isn&rsquo;t lost when content travels across files.</p>
+
+<h2>Good to know</h2>
+
+<ul>
+  <li><strong>It shows up wherever you already read.</strong> Highlights are stored as small standard
+    HTML tags right inside your document, so they appear in VS Code&rsquo;s preview, on GitHub, in
+    Quarto output, and in common markdown viewers &mdash; no special tool required to see them.</li>
+  <li><strong>The record lives in your project.</strong> The audit log is plain text in your
+    project folder and is meant to be committed to version control, so the AI&rsquo;s edit history is
+    part of your normal project history.</li>
+  <li><strong>It supports <code>.md</code>, <code>.qmd</code>, and <code>.tex</code>.</strong> LaTeX
+    files use an equivalent <code>\tc{...}</code> markup instead of <code>&lt;mark&gt;</code>, so
+    highlighted changes survive a PDF build.</li>
+  <li><strong>It&rsquo;s light and quiet.</strong> The background checks add only a fraction of a
+    second per edit, and do nothing at all on files you haven&rsquo;t opted in.</li>
+</ul>
+
+<h2>Learn more</h2>
+<p>The full installer manifest is in
+<a href="bootstrap.md">bootstrap.md</a>. Source files and the complete file list live in the
+<a href="https://github.com/mgkay/mgkay.github.io/tree/main/track-changes">project repository</a>.</p>
 
 </main>
 
