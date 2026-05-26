@@ -1,6 +1,6 @@
 # track-changes Bootstrap — Source-preserving AI edit protocol (two-skill suite)
 
-**Version:** 3.0.0
+**Version:** 3.0.1
 **Date:** 2026-05-26
 
 ## What This File Does
@@ -36,16 +36,16 @@ When Claude Code follows the instructions below, it downloads both skills — ho
 
 ## Instructions for Claude Code
 
-You are reading the track-changes v3.0.0 bootstrap manifest. Follow these steps precisely.
+You are reading the track-changes v3.0.1 bootstrap manifest. Follow these steps precisely.
 
 ### Step 1: Check for existing installation
 
-Read `~/.claude/skills/track-changes/VERSION`. If the file exists, parse the first line as a version number. Compare it to `3.0.0` using semantic-version ordering (compare major, then minor, then patch as integers; treat a missing component as 0, so a two-part `2.0` is `2.0.0`).
+Read `~/.claude/skills/track-changes/VERSION`. If the file exists, parse the first line as a version number. Compare it to `3.0.1` using semantic-version ordering (compare major, then minor, then patch as integers; treat a missing component as 0, so a two-part `2.0` is `2.0.0`).
 
-- **Equal to 3.0.0** → "track-changes v3.0.0 is already installed. No update needed." **STOP.**
-- **Higher than 3.0.0** → "track-changes v[installed] is newer than this bootstrap (3.0.0). Aborting — will not downgrade." **STOP.**
-- **Lower than 3.0.0** (e.g. any v1.x or v2.x) → "Updating track-changes from v[installed] to v3.0.0." Proceed to Step 2. The download in Step 2 overwrites every skill file in place, so the upgrade is a clean replacement; existing `<mark>…</mark><sup>N</sup>` content in your documents is fully backward-compatible and is left untouched (the v3 mark grammar is unchanged — no document migration is needed).
-- **Does not exist** → "Installing track-changes v3.0.0." Proceed to Step 2.
+- **Equal to 3.0.1** → "track-changes v3.0.1 is already installed. No update needed." **STOP.**
+- **Higher than 3.0.1** → "track-changes v[installed] is newer than this bootstrap (3.0.1). Aborting — will not downgrade." **STOP.**
+- **Lower than 3.0.1** (e.g. v3.0.0, or any v1.x or v2.x) → "Updating track-changes from v[installed] to v3.0.1." Proceed to Step 2. The download in Step 2 overwrites every skill file in place, so the upgrade is a clean replacement; existing `<mark>…</mark><sup>N</sup>` content in your documents is fully backward-compatible and is left untouched (the v3 mark grammar is unchanged — no document migration is needed).
+- **Does not exist** → "Installing track-changes v3.0.1." Proceed to Step 2.
 
 ### Step 2: Download all files (curl-based)
 
@@ -95,7 +95,7 @@ If the command exits non-zero, report the error to the user and stop.
 
 ### Step 4: Verify installation
 
-1. Read `~/.claude/skills/track-changes/VERSION` → first line must be `3.0.0`.
+1. Read `~/.claude/skills/track-changes/VERSION` → first line must be `3.0.1`.
 2. Read `~/.claude/skills/track-changes/SKILL.md` → must begin with `---` (YAML frontmatter).
 3. Read `~/.claude/skills/track-changes/hooks/pre_tool_use.py` → must begin with `"""` (Python docstring).
 4. Read `~/.claude/skills/track-changes/lib/tc_core/grammar.py` → must exist (shared mark-grammar package).
@@ -112,7 +112,7 @@ Any verification failure → report to user and do not claim success.
 
 On success, tell the user:
 
-> **track-changes v3.0.0 installed successfully — two skills + shared `tc_core`.**
+> **track-changes v3.0.1 installed successfully — two skills + shared `tc_core`.**
 >
 > **`track-changes`** (`~/.claude/skills/track-changes/`): always-on mark-tracking. SKILL.md, VERSION, settings-patch.json, hooks/ (5 sh + 2 py), lib/ (4 py + 6 sh + 1 sty + the shared `tc_core` package), reference/ (highlight-syntax.md, latex.md, quarto-notes.md, **digest.md**, tc-clean.css, tc-clean.js).
 >
@@ -192,7 +192,9 @@ Each entry lists source-URL → destination-path. Base URL: `https://raw.githubu
 
 ---
 
-## v3.0.0 Changelog Summary
+## v3.0.1 Changelog Summary
+
+**v3.0.1 patch.** `/tc mark` on a non-directory first argument is now a hard error (exit 1, no marker written) instead of silently writing a broken, full-path list-mode marker in CWD — consistent with `/tc migrate`'s directory check. Regression test TC-M-11 added.
 
 v3 decomposes the single v2 skill into a **two-skill suite** and trims the always-on footprint, driven by real ISE 754 authoring friction (SessionStart latency + scope creep).
 
@@ -204,7 +206,7 @@ v3 decomposes the single v2 skill into a **two-skill suite** and trims the alway
 - **Mechanical fixes #4–#7.** `/tc` resolution + `status` default to the most-recently-modified tracked working file (echoed); bare `/tc` prints the compact menu; resolving a whole-line mark to empty drops the orphaned blank line; `datetime.utcnow()` deprecation removed.
 - **Clean break — no document migration (Q2).** The v3 `<mark>…</mark><sup>N</sup>` mark grammar, per-file YAML activation, `.tc-tracked` markers, token-minimal wrapping, and the native-Python in-process hook architecture are **unchanged**. Existing tracked documents need **no conversion**; an upgrade from v2 only re-installs files and replaces the single v2 hook registration with the v3 two-skill set (verified-import before track-changes on PreToolUse). `/tc migrate <dir>` is retained for converting any legacy **v1** marks.
 
-The 325-test v3 suite (categories A–V) passes green. See `https://mgkay.github.io/track-changes/` for project details.
+The 329-test v3 suite (categories A–V) passes green. See `https://mgkay.github.io/track-changes/` for project details.
 
 ## Troubleshooting
 

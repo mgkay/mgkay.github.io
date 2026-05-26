@@ -1,6 +1,11 @@
-3.0.0
+3.0.1
 2026-05-26
 track-changes v3 — two-skill split + leaner always-on footprint.
+3.0.1 patch: `/tc mark <file>` (any non-directory first argument) is now a hard
+  error (exit 1, no marker written) instead of silently writing a broken,
+  full-path list-mode marker in CWD — consistent with `/tc migrate`'s directory
+  check. The other subcommands were audited; `mark` was the only one with this
+  silent-fallback defect. Regression test TC-M-11 added.
 The single v2 skill is decomposed into two: a narrowed always-on `track-changes`
   mark-gate and a NEW opt-in `verified-import` skill (`/import`) for inserting a
   vetted source into a tracked document. The skills share one tc_core package
@@ -27,4 +32,4 @@ The single v2 skill is decomposed into two: a narrowed always-on `track-changes`
   NO conversion; upgrading from v2 only re-installs files and replaces the single v2
   hook registration with the v3 two-skill set (verified-import before track-changes on
   PreToolUse). /tc migrate (v1→v2 marks) is retained for legacy v1 marks.
-- 325-test v3 suite (A–V) green.
+- 329-test v3 suite (A–V) green.

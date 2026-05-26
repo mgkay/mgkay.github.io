@@ -420,16 +420,27 @@ case "${sub}" in
     ;;
   mark)
     # /tc mark [<dir>] [<file1> ...]
-    # No args         → drop presence-only marker in CWD
-    # One arg (dir)   → drop presence-only marker in <dir>
-    # One arg (file)  → if it's a file (not dir), treat as: mark CWD with this file listed
-    # Multi-args      → first arg is dir, remainder are listed basenames
-    dir="${1:-.}"
-    if [ $# -ge 1 ] && [ -d "$1" ]; then
+    # No args             → drop presence-only marker in CWD
+    # <dir>               → drop presence-only marker in <dir>
+    # <dir> <file1> ...   → drop list-mode marker in <dir> listing those basenames
+    #
+    # The first positional is ALWAYS the target DIRECTORY. If it is supplied but
+    # is not an existing directory (a file, or a path that doesn't exist), that
+    # is a hard error: `mark` writes a folder marker and never silently retargets
+    # to CWD (mirrors `migrate`, the other directory operation). To opt a single
+    # file in, use `/tc enable <file>`; to list a file under a folder marker,
+    # name its directory first: `/tc mark <dir> <basename>`.
+    dir="."
+    if [ $# -ge 1 ]; then
+      if [ ! -d "$1" ]; then
+        echo "tc mark: '$1' is not a directory" >&2
+        echo "  'mark' writes a folder marker; its first argument must be an existing directory." >&2
+        echo "  To track a single file:         /tc enable <file>" >&2
+        echo "  To list files under a folder:   /tc mark <dir> <file> [<file>...]" >&2
+        exit 1
+      fi
+      dir="$1"
       shift  # consume dir arg; remaining args are listed basenames
-    elif [ $# -ge 1 ] && [ ! -d "$1" ]; then
-      # First arg isn't a directory — assume CWD and treat args as basenames.
-      dir="."
     fi
     # Write the marker directly via the shared lib (install.sh is NOT deployed
     # into the skill dir post-split, so the old `bash install.sh --mark` path
