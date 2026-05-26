@@ -1,6 +1,16 @@
-3.0.1
+3.0.2
 2026-05-26
 track-changes v3 — two-skill split + leaner always-on footprint.
+3.0.2 patch: the `verified-import` and `track-changes` PreToolUse hooks are now
+  stacked in a SINGLE `Write|Edit|MultiEdit` matcher group (verified-import first)
+  instead of two separate matcher groups. Hooks in separate matcher groups run in
+  PARALLEL, which raced the F2 exemption-sentinel handoff (verified-import writes
+  the one-shot sentinel that track-changes consumes) — so a verified `/import` was
+  blocked on its first attempt and only landed clean on an identical retry.
+  Stacking in one group makes the two hooks run SEQUENTIALLY, so the import lands
+  clean on the first attempt. No hook code changed; the sha-bound sentinel contract
+  is unchanged. Regression test added (structural invariant + sha-contract identity
+  + broken-v3 two-group upgrade). Planning trail: pcvplans/fixes/.
 3.0.1 patch: `/tc mark <file>` (any non-directory first argument) is now a hard
   error (exit 1, no marker written) instead of silently writing a broken,
   full-path list-mode marker in CWD — consistent with `/tc migrate`'s directory
@@ -30,6 +40,7 @@ The single v2 skill is decomposed into two: a narrowed always-on `track-changes`
   whole-line mark to empty drops the orphaned blank line; utcnow() deprecation removed.
 - Clean break (Q2): the v3 mark grammar is UNCHANGED — existing tracked documents need
   NO conversion; upgrading from v2 only re-installs files and replaces the single v2
-  hook registration with the v3 two-skill set (verified-import before track-changes on
-  PreToolUse). /tc migrate (v1→v2 marks) is retained for legacy v1 marks.
-- 329-test v3 suite (A–V) green.
+  hook registration with the v3 two-skill set (verified-import and track-changes
+  stacked in one PreToolUse matcher group — see the 3.0.2 patch). /tc migrate
+  (v1→v2 marks) is retained for legacy v1 marks.
+- 339-test v3 suite (A–V) green.

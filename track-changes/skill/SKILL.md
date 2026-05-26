@@ -30,14 +30,14 @@ mark protocol) and **verified-import** (opt-in `/import`, loaded only when
 invoked). track-changes is the dependency — verified-import imports its
 shared `tc_core`.
 
-Remote install via the bootstrap (3.0.1): from any Claude Code session,
+Remote install via the bootstrap (3.0.2): from any Claude Code session,
 say `Read https://mgkay.github.io/track-changes/bootstrap.md and follow
 the installation instructions inside it.` Claude Code downloads both
 skills' files and merges **six hook registrations** into
 `~/.claude/settings.json` — five for track-changes plus one PreToolUse for
-verified-import, registered **before** track-changes' so a verified import
-lands clean. The merge strips both hook signatures before re-adding, so a
-re-run is idempotent. See <https://mgkay.github.io/track-changes/> for the
+verified-import, stacked **before** track-changes' in a single matcher group
+so the two run sequentially and a verified import lands clean. The merge strips
+both hook signatures before re-adding, so a re-run is idempotent. See <https://mgkay.github.io/track-changes/> for the
 landing page and version history.
 
 Local install (developer path): `bash install.sh` from the project root
