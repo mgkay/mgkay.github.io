@@ -5,8 +5,13 @@
 # Purpose: Three responsibilities on every session start (MakePlan Rev 3 §3
 #          Pattern 1; ConstructionPlan §2; Decision Log E5 / E6):
 #
-#   R1. Load the deployed SKILL.md content into `additionalContext` so the
-#       fresh session sees the track-changes protocol immediately.
+#   R1. Load the compact DIGEST (reference/digest.md) into `additionalContext`
+#       so the fresh session sees the track-changes activation rules + mark
+#       grammar + /tc commands immediately, WITHOUT injecting the full ~40 KB
+#       SKILL.md (which exceeded the inline cap and forced a persist + re-read;
+#       idea.md root-cause A / Decision Log C3). The full SKILL.md stays on
+#       disk and is lazy-loaded on demand via the digest's "see SKILL.md §N"
+#       pointers.
 #
 #   R2. Scan the CWD (single-level, non-recursive — bounded cost per
 #       MakePlan D6) for *.tex files; for each, inspect the first 50 lines
@@ -23,7 +28,7 @@
 #          resolved via tc_session_id from $CLAUDE_SESSION_ID).
 # Stdout:  Single hookSpecificOutput JSON envelope:
 #          {"hookSpecificOutput":{"hookEventName":"SessionStart",
-#           "additionalContext":"<SKILL.md content [+ advisory]>"}}
+#           "additionalContext":"<digest.md content [+ advisory]>"}}
 # Stderr:  (none under normal operation; best-effort logging to tc.log)
 # Exit:    0 on success; 1 only on catastrophic failure (cannot create
 #          state dir AND cannot emit any JSON). Soft-fail throughout so a
@@ -85,36 +90,41 @@ tc_json_escape() {
 }
 
 # ---------------------------------------------------------------------------
-# R1 — Load SKILL.md content.
+# R1 — Load the compact DIGEST (reference/digest.md), not the full SKILL.md.
 #
-# Resolution order (first hit wins):
-#   1. $HOME/.claude/skills/track-changes/SKILL.md (the deployed location)
-#   2. $SCRIPT_DIR/../SKILL.md (project-root layout — pre-install fixtures
-#      and the construction-time test harness)
+# The digest carries the activation rules + mark grammar + /tc command list +
+# lazy-load pointers in a few KB, so additionalContext stays well under the
+# inline cap (no persist/re-read). The full SKILL.md remains on disk and is
+# pulled in on demand via the digest's "see SKILL.md §N" pointers.
+#
+# Resolution order (first hit wins), mirroring the prior SKILL.md discipline:
+#   1. $HOME/.claude/skills/track-changes/reference/digest.md (deployed)
+#   2. $SCRIPT_DIR/../reference/digest.md (project-root layout — pre-install
+#      fixtures and the construction-time test harness)
 #
 # If neither exists, emit a minimal advisory string so fixture tests see a
 # non-empty additionalContext (rather than silent failure).
 # ---------------------------------------------------------------------------
 SKILL_CONTENT=""
-SKILL_PATH=""
+DIGEST_PATH=""
 
-CANDIDATE_DEPLOYED="${HOME}/.claude/skills/track-changes/SKILL.md"
-CANDIDATE_PROJECT="${SCRIPT_DIR}/../SKILL.md"
+CANDIDATE_DEPLOYED="${HOME}/.claude/skills/track-changes/reference/digest.md"
+CANDIDATE_PROJECT="${SCRIPT_DIR}/../reference/digest.md"
 
 if [ -f "${CANDIDATE_DEPLOYED}" ]; then
-  SKILL_PATH="${CANDIDATE_DEPLOYED}"
+  DIGEST_PATH="${CANDIDATE_DEPLOYED}"
 elif [ -f "${CANDIDATE_PROJECT}" ]; then
-  SKILL_PATH="${CANDIDATE_PROJECT}"
+  DIGEST_PATH="${CANDIDATE_PROJECT}"
 fi
 
-if [ -n "${SKILL_PATH}" ]; then
-  # Read the full file. cat is the simplest portable reader; failure to read
+if [ -n "${DIGEST_PATH}" ]; then
+  # Read the digest. cat is the simplest portable reader; failure to read
   # (permissions, race) falls through to the missing-file advisory below.
-  SKILL_CONTENT="$(cat "${SKILL_PATH}" 2>/dev/null || true)"
+  SKILL_CONTENT="$(cat "${DIGEST_PATH}" 2>/dev/null || true)"
 fi
 
 if [ -z "${SKILL_CONTENT}" ]; then
-  SKILL_CONTENT="Track-changes notice: SKILL.md could not be located at \$HOME/.claude/skills/track-changes/SKILL.md or relative to the hook script. The track-changes protocol is not in context for this session — install the skill or check the deployment path."
+  SKILL_CONTENT="Track-changes notice: the session digest could not be located at \$HOME/.claude/skills/track-changes/reference/digest.md or relative to the hook script. The track-changes protocol is not in context for this session — install the skill or read SKILL.md directly."
 fi
 
 # ---------------------------------------------------------------------------
@@ -204,6 +214,11 @@ if [ -n "${STATE_DIR}" ] && [ -d "${STATE_DIR}" ]; then
     shopt -u nullglob 2>/dev/null || true
   fi
 fi
+
+# R3b — sweep stale verified-import exemption sentinels once per session
+# (tc_core.exempt; crash recovery, F2 / Q4). Best-effort + fail-silent; never
+# breaks the SessionStart contract.
+tc_sweep_exempt_sentinels 2>/dev/null || true
 
 # ---------------------------------------------------------------------------
 # Emit the SessionStart hook output JSON.

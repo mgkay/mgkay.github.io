@@ -48,13 +48,15 @@
 
 <h2>What is track-changes?</h2>
 
-<p>track-changes is a <strong>skill for Claude Code</strong>. Once installed, it watches every
-change Claude makes to your tracked <code>.md</code>, <code>.qmd</code>, and <code>.tex</code>
-files. Each change Claude introduces is wrapped in a <code>&lt;mark&gt;</code> highlight followed
-by a small reference number &mdash; rendered as a yellow span (with a strikethrough overlay for
-anything deleted) in any markdown viewer &mdash; so you can review every change individually and
-accept or reject it, the way you would with Track Changes in Word or Suggesting mode in Google
-Docs.</p>
+<p>track-changes is a <strong>two-skill suite for Claude Code</strong>. The core
+<code>track-changes</code> skill watches every change Claude makes to your tracked <code>.md</code>,
+<code>.qmd</code>, and <code>.tex</code> files: each AI-introduced edit is wrapped in a
+<code>&lt;mark&gt;</code> highlight followed by a small reference number &mdash; rendered as a yellow
+span (with a strikethrough overlay for anything deleted) in any markdown viewer &mdash; so you can
+review every change individually and accept or reject it, the way you would with Track Changes in
+Word or Suggesting mode in Google Docs. The companion <code>verified-import</code> skill (installed
+alongside) adds the <code>/import</code> command for bringing in vetted source material without
+unnecessary highlights.</p>
 
 <div class="phases">
   <div class="phase-box">Block<small>Unmarked AI edit</small></div>
@@ -99,8 +101,8 @@ if you haven&rsquo;t already. The skill also needs <strong>Python&nbsp;3</strong
     <code>Read <a href="bootstrap.md">https://mgkay.github.io/track-changes/bootstrap.md</a> and follow the installation instructions inside it.</code>
   </li>
   <li>
-    <strong>Confirm.</strong> Claude Code downloads the skill, wires it into your configuration, and
-    reports success.
+    <strong>Confirm.</strong> Claude Code downloads both skills (<code>track-changes</code> and
+    <code>verified-import</code>), wires them into your configuration, and reports success.
   </li>
   <li>
     <strong>Open a new Claude Code session</strong> so the skill takes effect.
@@ -195,9 +197,6 @@ on its own. Three things happen automatically behind the scenes:</p>
     watched rather than its whole folder.</li>
   <li><code>/tc disable &lt;file&gt;</code> &mdash; The opposite: explicitly exclude one file from
     tracking, even if its folder is marked.</li>
-  <li><code>/tc on</code> / <code>/tc off</code> &mdash; Force tracking on (or off) for the rest of the
-    current session, ignoring the folder and file rules. Useful for a one-off session when you
-    don&rsquo;t want to change any markers.</li>
   <li><code>/tc status [&lt;file&gt;]</code> &mdash; Show whether a file is currently being tracked and
     <em>why</em> (which rule turned it on or off). Use it when you&rsquo;re not sure a file is being
     watched.</li>
@@ -237,30 +236,22 @@ editing each wrapper by hand.</p>
 when you build documents with an AI&rsquo;s help.</p>
 
 <h3>Build from material you already trust &mdash; without drowning in highlights</h3>
-<p>Most of a new lecture or chapter is usually lifted from things you&rsquo;ve already written and
-vetted: a section of a Word document, an old notebook, a prior manuscript. Only a little is genuinely
-new AI writing. If every imported paragraph were highlighted, the handful of lines that actually need
-your attention would be buried in yellow. So when you ask Claude to bring in a passage from a source
-you trust, it doesn&rsquo;t highlight that passage &mdash; instead it wraps the block in a small
-comment naming exactly where the text came from:</p>
+<p>Most of a new lecture or chapter is assembled from things you&rsquo;ve already written and
+vetted: a section of an old notebook, a prior manuscript, a trusted reference. Only a little is
+genuinely new AI writing. If every imported paragraph were highlighted, the handful of lines that
+actually need your attention would be buried in yellow. The companion <code>verified-import</code>
+skill handles this with the <code>/import</code> command:</p>
 
-<pre class="snippet">&lt;!-- track-changes: from=chapter3.md#L10-L42 --&gt;
-...the imported passage, copied in as-is...
-&lt;!-- /track-changes --&gt;</pre>
+<pre class="snippet">/import chapter3.md#L10-L42 lecture-notes.md</pre>
 
-<p>track-changes then opens <code>chapter3.md</code>, compares lines 10&ndash;42 against what was
-pasted, and &mdash; if it really matches &mdash; leaves the block <strong>unmarked</strong>, so it
-reads as ordinary prose. Only Claude&rsquo;s own additions around it get highlighted. And if Claude
-had quietly reworded the imported text instead of copying it faithfully, the comparison
-<strong>fails and the save is blocked</strong>, so you can&rsquo;t be misled into trusting altered
-material.</p>
-
-<p>This works even when your source is a Word, PowerPoint, PDF, or notebook file &mdash; and you
-don&rsquo;t have to convert anything or even think about it. You just ask for the import. track-changes
-itself only ever reads plain text (it never opens binary files), so its instructions tell Claude to
-produce a plain-text copy of the source &mdash; saved alongside it as a reusable project file &mdash;
-and point the wrapper at that copy, all as a side-effect of the import. The skill only ever compares
-text against text; producing that text is handled for you.</p>
+<p>Claude converts the source into the target document&rsquo;s format and inserts it. The
+<code>verified-import</code> hook then checks that the inserted text is
+<strong>content-faithful</strong> to the named source &mdash; same content words; markup and
+formatting may differ. If it is faithful, the block lands <strong>clean (no highlights)</strong>,
+so it reads as ordinary prose and only Claude&rsquo;s genuinely new additions around it get
+highlighted. If Claude added or dropped content, the <strong>save is blocked</strong> and the
+difference is named, so you can&rsquo;t be misled into trusting altered material. The command
+works on text sources; binary formats require a plain-text copy to import from.</p>
 
 <h3>Resolve a whole review pass in seconds</h3>
 <p>A heavy editing session can leave dozens of highlights. Rather than clicking through them one at a
@@ -270,9 +261,11 @@ two changes you disagree with. See <code>/tc list</code>, <code>/tc accept</code
 
 <h3>Add brand-new sections without breaking the page</h3>
 <p>Wrapping a brand-new heading or code block in an inline highlight would break how the document
-displays. Instead, a new heading, fenced code block, or callout is flagged with a single marker on
-the line just above it &mdash; you still see at a glance that it&rsquo;s new, and the document still
-renders correctly.</p>
+displays. In Markdown and Quarto, a new heading, fenced code block, or callout is flagged with a
+single marker on the line just above it &mdash; you still see at a glance that it&rsquo;s new, and
+the document still renders correctly. For LaTeX, a brand-new <code>\section</code> or environment
+uses <code>/draft</code> instead (write the structure first, then let track-changes mark any content
+Claude adds inside it).</p>
 
 <h3>Hand the document to a reader, cleanly</h3>
 <p>When you share the document for someone to <em>read</em> rather than review, you don&rsquo;t want
@@ -285,10 +278,6 @@ state is fully preserved &mdash; the clean view is just for the reader.</p>
 still has unresolved highlights in it &mdash; a safety net so partly-reviewed AI edits don&rsquo;t
 slip into your project&rsquo;s history by accident. It&rsquo;s off until you switch it on, and you can
 always override it for a single commit.</p>
-
-<h3>Keep the trail when you move text between files</h3>
-<p>If you copy a highlighted passage from one document into another, track-changes records where it
-came from, so the history of who-changed-what isn&rsquo;t lost when content travels across files.</p>
 
 <h2>Good to know</h2>
 
@@ -314,7 +303,7 @@ came from, so the history of who-changed-what isn&rsquo;t lost when content trav
 </main>
 
 <footer>
-  <p>track-changes v2.0.1 &middot; M. G. Kay &middot; NC State ISE<br>
+  <p>track-changes v3.0.0 &middot; M. G. Kay &middot; NC State ISE<br>
   <a href="bootstrap.md" download>Download bootstrap.md</a></p>
 </footer>
 

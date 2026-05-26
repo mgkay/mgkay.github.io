@@ -127,7 +127,7 @@ def md_migrate(text):
 TEX_V1_HEAD = re.compile(r'\\tc\{(\d+)\}\{')
 
 def tex_extract_body(text, body_start):
-    """From position right after the opening { of the body, return (body_end_excl, body_text).
+    r"""From position right after the opening { of the body, return (body_end_excl, body_text).
     body_end_excl is the index of the matching closing brace (exclusive).
     Handles \{ \} \\ escapes and nested {...}.
     """
@@ -150,7 +150,7 @@ def tex_extract_body(text, body_start):
     return L, text[body_start:L]
 
 def tex_rewrite_body(body):
-    """Convert a v1 body to v2 inner content.
+    r"""Convert a v1 body to v2 inner content.
     Strips 'Edit to following block:' prefix. Detects \st{...} → patterns
     for replacement, lone \st{...} for deletion. Converts \st → \sout.
     Returns the new inner content (what goes inside \tc{...}).
@@ -247,7 +247,7 @@ for root, dirs, files in os.walk(target):
 
 print(f"track-changes migration: scanned {scanned_count} file(s), modified {modified_count}")
 for rel, n in modified_files:
-    print(f"  {rel}: {n} mark(s) migrated v1 → v2")
+    print(f"  {rel}: {n} mark(s) migrated v1 -> v2")
 PYEOF
 
 exit $?

@@ -2,9 +2,11 @@
 # lib/tc-cli.sh — unified dispatcher for the /tc slash command.
 #
 # Invoked from commands/tc.md with the user-supplied arguments. Dispatches
-# to the appropriate backend script (lib/draft-on.sh, lib/track-on.sh,
-# lib/track-off.sh, lib/migrate-v1-to-v2.sh, install.sh --mark) or to an
-# inline implementation (enable, disable, status, help).
+# to the appropriate backend script (lib/draft-on.sh, lib/migrate-v1-to-v2.sh)
+# or to an inline implementation (enable, disable, mark, status, help). The
+# `mark` case writes the .tc-tracked marker directly via lib/tc-mark.sh — it
+# does NOT shell out to install.sh (install.sh is not deployed into the skill
+# dir post-split; see the C8-fix dispatch entry in the decision log).
 #
 # Subcommands:
 #   /tc draft                      — per-turn suspend tracking (= /draft)
@@ -100,6 +102,81 @@ tc_resolve_python() {
       return 0
     fi
   done
+  return 1
+}
+
+# ---------------------------------------------------------------------------
+# tc_resolve_working_file — resolve the "working file" when a resolution
+# subcommand is given no <file> argument (Fix #4).
+#
+# Design decision (dispatch log, honored exactly): no IDE-open env var is
+# exposed to a bash slash command in this harness (only $CLAUDE_SESSION_ID),
+# and no "last-edited file" state exists. So the working file is defined as
+# the MOST-RECENTLY-MODIFIED tracked-active .md/.qmd/.tex file under the
+# project scope:
+#   - Scope:      the git root of the CWD if resolvable, else the CWD.
+#   - Candidates: .md/.qmd/.tex files under scope whose tc_should_track
+#                 returns 0 (tracking active). Skip .git/, node_modules/,
+#                 and hidden directories.
+#   - Pick:       the newest by mtime.
+#
+# Echoes the chosen path and returns 0; returns non-zero (no output) when
+# there is no candidate.
+# ---------------------------------------------------------------------------
+tc_resolve_working_file() {
+  local scope
+  scope="$(git -C . rev-parse --show-toplevel 2>/dev/null || true)"
+  if [ -z "${scope}" ]; then
+    scope="$(pwd)"
+  fi
+
+  # Collect candidate files (bounded, portable). Prune .git, node_modules,
+  # and any hidden directory; match the three tracked extensions.
+  local best="" best_mtime=-1
+  local f mtime reason
+  while IFS= read -r f; do
+    [ -z "${f}" ] && continue
+    # Activation gate: tracking must be ON for this file.
+    reason="$(tc_should_track "${f}" 2>/dev/null || true)"
+    case "${reason}" in
+      on-*) ;;
+      *) continue ;;
+    esac
+    # mtime in epoch seconds (GNU stat then BSD stat fallback).
+    mtime="$(stat -c %Y "${f}" 2>/dev/null || stat -f %m "${f}" 2>/dev/null || echo 0)"
+    if [ "${mtime}" -gt "${best_mtime}" ]; then
+      best_mtime="${mtime}"
+      best="${f}"
+    fi
+  done <<EOF
+$(find "${scope}" \
+    \( -name .git -o -name node_modules -o -name '.*' \) -prune -o \
+    -type f \( -name '*.md' -o -name '*.qmd' -o -name '*.tex' \) -print \
+    2>/dev/null)
+EOF
+
+  if [ -z "${best}" ]; then
+    return 1
+  fi
+  printf '%s' "${best}"
+  return 0
+}
+
+# ---------------------------------------------------------------------------
+# tc_default_working_file <subcommand> — echo the working file (Fix #4),
+# emitting the informational/error lines on stderr. Returns 0 with the path
+# on stdout, or 1 (after printing the clear error) when no candidate exists.
+# ---------------------------------------------------------------------------
+tc_default_working_file() {
+  local sub="$1"
+  local scope wf
+  scope="$(git -C . rev-parse --show-toplevel 2>/dev/null || pwd)"
+  if wf="$(tc_resolve_working_file)"; then
+    echo "tc ${sub}: no <file> given — using ${wf} (most-recently-modified tracked file)." >&2
+    printf '%s' "${wf}"
+    return 0
+  fi
+  echo "tc ${sub}: no tracked file found under ${scope}; specify <file> explicitly." >&2
   return 1
 }
 
@@ -303,7 +380,17 @@ tc_status() {
 # ---------------------------------------------------------------------------
 # Dispatch
 # ---------------------------------------------------------------------------
+# Fix #5: bare `/tc` prints the compact menu. tc.md runs `bash tc-cli.sh
+# $ARGUMENTS`; with no input $ARGUMENTS may expand to nothing (no positional
+# args) OR to a single empty/whitespace-only argument. Treat both the same:
+# print the menu and exit 0.
 if [ $# -lt 1 ]; then
+  print_usage
+  exit 0
+fi
+# Whitespace-only first arg (e.g. `$ARGUMENTS` expanding to "") → treat as
+# no args: print the menu and exit 0.
+if [ $# -eq 1 ] && [ -z "${1//[[:space:]]/}" ]; then
   print_usage
   exit 0
 fi
@@ -344,11 +431,18 @@ case "${sub}" in
       # First arg isn't a directory — assume CWD and treat args as basenames.
       dir="."
     fi
+    # Write the marker directly via the shared lib (install.sh is NOT deployed
+    # into the skill dir post-split, so the old `bash install.sh --mark` path
+    # would fail). /tc mark has no --force, so pass force=0 (idempotent).
+    if ! source "${SCRIPT_DIR}/tc-mark.sh" 2>/dev/null; then
+      echo "tc: ERROR — cannot source ${SCRIPT_DIR}/tc-mark.sh" >&2
+      exit 2
+    fi
     if [ $# -ge 1 ]; then
       # List-mode marker.
-      bash "${SKILL_DIR}/install.sh" --mark-files "${dir}" "$@"
+      tc_mark_list "${dir}" 0 "$@"
     else
-      bash "${SKILL_DIR}/install.sh" --mark "${dir}"
+      tc_mark_presence "${dir}" 0
     fi
     ;;
   migrate)
@@ -360,31 +454,62 @@ case "${sub}" in
     bash "${SCRIPT_DIR}/migrate-v1-to-v2.sh" "$1"
     ;;
   status)
-    tc_status "${1:-.}"
+    # Fix #4: a missing target resolves to the working file (when one
+    # exists); otherwise fall back to CWD (status of "." is meaningful).
+    if [ $# -lt 1 ]; then
+      if wf="$(tc_default_working_file status)"; then
+        tc_status "${wf}"
+      else
+        tc_status "."
+      fi
+    else
+      tc_status "$1"
+    fi
     ;;
   list)
+    # Fix #4: missing <file> → working file (zero args, no ranges).
     if [ $# -lt 1 ]; then
-      echo "tc list: missing file argument" >&2
-      echo "usage: /tc list <file>" >&2
-      exit 1
+      if ! wf="$(tc_default_working_file list)"; then
+        exit 1
+      fi
+      tc_run_resolve list "${wf}"
+    else
+      tc_run_resolve list "$1"
     fi
-    tc_run_resolve list "$1"
     ;;
   accept|reject)
-    if [ $# -lt 2 ]; then
+    # Arg shapes:
+    #   /tc accept <file> <ranges>   (explicit file)
+    #   /tc accept <ranges>          (file omitted; first positional is RANGES)
+    # Disambiguation: a single argument that looks like a ranges spec
+    # (matches ^!?\d, e.g. "1-5" or "!7,11") is treated as ranges and the
+    # working file is resolved (Fix #4). A single argument that does NOT look
+    # like ranges is treated as a file with missing ranges (usage error).
+    if [ $# -ge 2 ]; then
+      tc_run_resolve "${sub}" "$1" "$2"
+    elif [ $# -eq 1 ] && printf '%s' "$1" | grep -qE '^!?[0-9]'; then
+      # Ranges-only form: resolve the working file.
+      if ! wf="$(tc_default_working_file "${sub}")"; then
+        exit 1
+      fi
+      tc_run_resolve "${sub}" "${wf}" "$1"
+    else
       echo "tc ${sub}: missing arguments" >&2
       echo "usage: /tc ${sub} <file> <ranges>   (e.g. 1-25,!7,!11)" >&2
+      echo "   or: /tc ${sub} <ranges>          (uses the working file)" >&2
       exit 1
     fi
-    tc_run_resolve "${sub}" "$1" "$2"
     ;;
   accept-all|reject-all)
+    # Fix #4: missing <file> → working file (these take no ranges).
     if [ $# -lt 1 ]; then
-      echo "tc ${sub}: missing file argument" >&2
-      echo "usage: /tc ${sub} <file>" >&2
-      exit 1
+      if ! wf="$(tc_default_working_file "${sub}")"; then
+        exit 1
+      fi
+      tc_run_resolve "${sub}" "${wf}"
+    else
+      tc_run_resolve "${sub}" "$1"
     fi
-    tc_run_resolve "${sub}" "$1"
     ;;
   help|--help|-h)
     print_usage

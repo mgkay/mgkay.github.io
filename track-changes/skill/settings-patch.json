@@ -16,6 +16,15 @@
         "hooks": [
           {
             "type": "command",
+            "command": "python ~/.claude/skills/verified-import/hooks/pre_tool_use.py"
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
             "command": "python ~/.claude/skills/track-changes/hooks/pre_tool_use.py"
           }
         ]

@@ -352,6 +352,38 @@ tc_max_n() {
 }
 
 # ---------------------------------------------------------------------------
+# tc_resolve_python — echo a working Python 3 command, or return non-zero.
+# Mirrors the probe in tc-cli.sh / pre_tool_use.py. Used by the lifecycle
+# hooks to sweep stale tc_core.exempt sentinels (verified-import F2 / Q4).
+# ---------------------------------------------------------------------------
+tc_resolve_python() {
+  local cand
+  for cand in python3 python "py -3" py; do
+    if ${cand} -c "import sys; sys.exit(0 if sys.version_info[0] >= 3 else 49)" >/dev/null 2>&1; then
+      printf '%s' "${cand}"
+      return 0
+    fi
+  done
+  return 1
+}
+
+# ---------------------------------------------------------------------------
+# tc_sweep_exempt_sentinels — remove expired tc_core.exempt write-exemption
+# sentinels (verified-import F2). Best-effort + fail-silent: a missing Python,
+# absent tc_core, or any error must never break the calling hook. The state
+# subdir (state/exempt) is created on demand by tc_core.exempt; if it does not
+# exist yet there is nothing to sweep. The lib dir is put on sys.path so
+# tc_core resolves whether running from the project tree or the deployed skill.
+# ---------------------------------------------------------------------------
+tc_sweep_exempt_sentinels() {
+  local py
+  py="$(tc_resolve_python 2>/dev/null)" || return 0
+  local lib_dir="${SCRIPT_DIR}/../lib"
+  ${py} -c "import sys; sys.path.insert(0, sys.argv[1]); \
+import tc_core.exempt as e; e.sweep()" "${lib_dir}" >/dev/null 2>&1 || true
+}
+
+# ---------------------------------------------------------------------------
 # tc_log <msg> — append a timestamped log line to the state-directory log
 # file. Best-effort; failure to write is silently swallowed so logging
 # cannot break a hook.

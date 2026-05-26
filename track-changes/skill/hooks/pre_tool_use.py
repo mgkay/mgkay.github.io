@@ -1,9 +1,10 @@
 """hooks/pre_tool_use.py — track-changes PreToolUse hook (Fix #11 native).
 
 Replaces hooks/pre-tool-use.sh. Reads the JSON payload from stdin, runs
-the activation gate in-process (no bash subshells), dispatches the
-analyzer either via the persistent daemon (fast path) or in-process
-(fallback when daemon is unreachable).
+the activation gate in-process (no bash subshells), and dispatches the
+analyzer in-process (tc_analyzer.analyze). The v2 persistent-daemon
+fast-path was dropped in v3 (C5): the measured in-process latency is well
+under the budget, so the daemon's complexity bought no meaningful saving.
 
 Exit codes:
   0  allow (no violations, off-scope, or activation off)
@@ -38,8 +39,8 @@ def _log(msg):
 def _read_payload():
     # Read stdin as raw bytes and decode UTF-8 explicitly. The CLI emits the
     # tool payload as UTF-8 JSON; relying on sys.stdin's text decoding mangles
-    # multibyte chars (e.g. smart quotes in §0 import wrappers) on platforms
-    # whose default stdin codec is not UTF-8 (Windows cp1252).
+    # multibyte chars (e.g. smart quotes) on platforms whose default stdin
+    # codec is not UTF-8 (Windows cp1252).
     try:
         raw = sys.stdin.buffer.read()
     except Exception:
@@ -69,22 +70,23 @@ def _read_payload():
 
 
 def _emit_block(tool_name, file_path, violations, ftype, suggest_draft, subagent_detected):
-    section_ref = ('SKILL.md §3 Highlight Syntax (Markdown), §6 Non-Rendering Contexts'
+    section_ref = ('SKILL.md Highlight Syntax (Markdown)'
                    if ftype in ('md', 'qmd')
-                   else 'SKILL.md §4 Highlight Syntax (LaTeX), §6 Non-Rendering Contexts')
+                   else 'SKILL.md Highlight Syntax (LaTeX)')
     out = [f'track-changes: blocked {tool_name} to {file_path}']
     for ln, reason in violations:
         out.append(f'- line {ln}: {reason}')
     out.append(f'See {section_ref}.')
     if suggest_draft:
-        out.append('This appears to involve an off-enumerated construct. If intentional, '
-                   'invoke /draft for this turn or /track-off for the session; see SKILL.md §6, §7.')
+        out.append('This edit lands inside a non-rendering construct (code/math/table/div), '
+                   'which cannot carry an inline mark. If intentional, invoke /draft for this '
+                   'turn; see SKILL.md.')
     if subagent_detected:
         out.append('Detected subagent context — if this is intentional drafting from a PCV builder, '
                    'the user can invoke /draft then retry.')
     msg = '\n'.join(out) + '\n'
-    # Write UTF-8 explicitly so non-ASCII (section signs, smart quotes quoted
-    # from a §0 source) survive on platforms whose stderr codec isn't UTF-8.
+    # Write UTF-8 explicitly so non-ASCII (section signs, smart quotes) survive
+    # on platforms whose stderr codec isn't UTF-8.
     try:
         sys.stderr.buffer.write(msg.encode('utf-8'))
         sys.stderr.buffer.flush()
@@ -93,114 +95,6 @@ def _emit_block(tool_name, file_path, violations, ftype, suggest_draft, subagent
             sys.stderr.write(msg)
         except Exception:
             sys.stderr.write(msg.encode('utf-8', 'replace').decode('ascii', 'replace'))
-
-
-def _resolve_sources(source_text, payload, tool_name, file_path):
-    """§0: when the proposed text contains import wrappers, resolve + slice
-    each named source and return a {from_spec: value} map. Returns None when
-    there are no wrappers (so the analyzer takes its byte-identical v1 path).
-
-    Each map value is one of:
-      - the resolved slice STRING (verified path),
-      - None (generic unverified — missing/unreadable past the sniff),
-      - an unresolved-with-reason marker (tc_provenance.unresolved(...)) with a
-        SPECIFIC actionable reason: not-found+did-you-mean (C4) or a binary /
-        non-text rejection (C5). The marker is JSON-serializable so it survives
-        the daemon socket round-trip; tc_analyzer surfaces its reason verbatim.
-
-    FAIL-CLOSED: any unexpected error in resolution leaves that entry None (or a
-    specific marker) rather than skipping the wrapper. Resolution order (C4):
-    edited-file dir -> nearest .tc-tracked dir -> git root; absolute honored.
-    """
-    try:
-        import tc_analyzer
-        import tc_provenance
-    except Exception:
-        return None
-    try:
-        proposed_text = tc_analyzer._build_proposed(source_text, payload, tool_name)
-    except Exception:
-        proposed_text = None
-    if proposed_text is None:
-        return None
-    proposed_text = proposed_text.replace('\r\n', '\n')
-    try:
-        wrappers = tc_provenance.scan_wrappers(proposed_text)
-    except Exception:
-        return None
-    if not wrappers:
-        return None  # no wrappers -> analyzer stays on the v1 path
-
-    find_root = None
-    try:
-        import tc_audit
-        find_root = tc_audit.find_project_root
-    except Exception:
-        find_root = None
-
-    sources = {}
-    for w in wrappers:
-        if w.from_spec in sources:
-            continue
-        # C4: ordered resolution (file-dir, nearest .tc-tracked, git root);
-        # absolute from= honored as-is. First existing file wins.
-        src_path, tried = tc_provenance.resolve_source_path(
-            w.path, file_path, find_root)
-        if src_path is None:
-            # C4: not-found -> unresolved-with-reason (did-you-mean).
-            sources[w.from_spec] = tc_provenance.unresolved(
-                _not_found_reason(w.path, file_path, tried))
-            continue
-        # C5: reject binary / non-text BEFORE opening/decoding the file.
-        ok, why = tc_provenance.is_text_source(src_path)
-        if not ok:
-            sources[w.from_spec] = tc_provenance.unresolved(
-                _binary_reason(w.path, why))
-            continue
-        try:
-            with open(src_path, 'r', encoding='utf-8', newline='') as f:
-                src_text = f.read()
-            sources[w.from_spec] = tc_provenance.slice_fragment(src_text, w.frag)
-        except (IOError, OSError, UnicodeDecodeError):
-            # Fail-closed: generic unverified (e.g. a TOCTOU disappearance or a
-            # latent decode issue past the sniff head).
-            sources[w.from_spec] = None
-        except Exception:
-            sources[w.from_spec] = None
-    return sources
-
-
-def _not_found_reason(path, file_path, tried):
-    """C4 — actionable not-found message: tried dirs + a did-you-mean hint."""
-    tried_disp = ', '.join(tried) if tried else '(no candidate roots)'
-    base = os.path.basename(path) or path
-    suggestion = "write the path relative to the edited file (e.g. from=%s)" % base
-    # If a git root is known, also suggest a repo-root-relative path.
-    try:
-        import tc_audit
-        root = tc_audit.find_project_root(file_path)
-    except Exception:
-        root = None
-    if root:
-        try:
-            rel = os.path.relpath(os.path.join(
-                os.path.dirname(os.path.abspath(file_path)), path), root)
-            rel = rel.replace(os.sep, '/')
-            suggestion += " or to the repo root (e.g. from=%s)" % rel
-        except Exception:
-            pass
-    return ("from=%s not found. Tried: %s. If the source is in the repo, %s."
-            % (path, tried_disp, suggestion))
-
-
-def _binary_reason(path, why):
-    """C5 — actionable binary/non-text rejection message (names the format,
-    points to SKILL.md §0; explicitly no decode/convert is attempted)."""
-    base = os.path.basename(path) or path
-    return ("track-changes §0 imports from text sources only "
-            "(.md/.markdown/.qmd/.rmd/.tex/.txt). '%s' %s. Convert it to a "
-            "vetted text source in a separate step, then import from that. "
-            "See SKILL.md §0." % (base, why))
 
 
 def main():
@@ -215,7 +109,7 @@ def main():
     if not file_path:
         return 0
 
-    import tc_activation
+    from tc_core import activation as tc_activation
     ftype = tc_activation.tc_file_type(file_path)
     if ftype not in ('md', 'qmd', 'tex'):
         return 0
@@ -229,14 +123,6 @@ def main():
         return 0
     _log(f'ACTIVE ({reason}) for {file_path}')
 
-    # Subagent detection (best-effort).
-    payload_str = json.dumps(payload)
-    import re
-    subagent_detected = bool(re.search(
-        r'"(?:subagent|sub_agent|subagent_id|subagent_type|agent_id|agent_type|'
-        r'is_subagent|delegated_from|parent_session_id|parent_agent|spawned_by)"',
-        payload_str))
-
     # Read source.
     try:
         with open(file_path, 'r', encoding='utf-8', newline='') as f:
@@ -245,56 +131,45 @@ def main():
         _log(f'cannot read source {file_path}; failing open')
         return 0
 
-    # §0 (C2): resolve import-wrapper sources. Only do the disk I/O when the
-    # proposed text actually contains wrappers, so ordinary edits keep their
-    # current performance. `sources` stays None for the common no-wrapper case
-    # (analyzer is then byte-identical to v1). FAIL-CLOSED: a missing/unreadable
-    # source maps to None in the sources dict -> the wrapper is treated as
-    # unverified new content (block).
-    sources = _resolve_sources(source_text, payload, tool_name, file_path)
-
-    # Try daemon first (unless disabled — TC_DISABLE_DAEMON forces the
-    # in-process fallback path, used by tests to exercise both code paths).
-    result = None
+    # F2 exemption pass-through (C2). verified-import names the exact bytes it
+    # is about to write to this tracked file via a one-shot, sha-bound sentinel
+    # (tc_core.exempt). If the proposed write matches a live sentinel, this is a
+    # verified clean import — allow it silently with no <mark> requirement.
+    # The sentinel is consumed (one-shot) regardless of match, so a second write
+    # is no longer exempt. Computed over the raw proposed bytes (the same
+    # convention tc_core.exempt.content_sha uses, which verified-import records).
     try:
-        if os.environ.get('TC_DISABLE_DAEMON'):
-            raise RuntimeError('daemon disabled via TC_DISABLE_DAEMON')
-        import tc_daemon
-        sock = tc_daemon.connect()
-        if sock is None:
-            tc_daemon.spawn_if_needed()
-            sock = tc_daemon.connect()
-        if sock is not None:
-            req = {
-                'op': 'analyze',
-                'protocol_version': 2,
-                'source_text': source_text,
-                'payload': payload,
-                'tool_name': tool_name,
-                'ftype': ftype,
-            }
-            if sources is not None:
-                req['sources'] = sources
-            resp = tc_daemon.send_request(sock, req)
-            if resp and resp.get('ok'):
-                result = {
-                    'violations': [tuple(v) for v in resp.get('violations', [])],
-                    'suggest_draft': bool(resp.get('suggest_draft', False)),
-                    'proposed_text': resp.get('proposed_text', ''),
-                }
-    except Exception as e:
-        _log(f'daemon path failed: {e}; falling back to in-process')
-
-    if result is None:
-        # Fallback: in-process analyzer. Pass `sources` on this path too so
-        # neither path degrades (D1 both-paths requirement).
+        import tc_analyzer
+        proposed_for_exempt = tc_analyzer._build_proposed(
+            source_text, payload, tool_name)
+    except Exception:
+        proposed_for_exempt = None
+    if proposed_for_exempt is not None:
         try:
-            import tc_analyzer
-            result = tc_analyzer.analyze(source_text, payload, tool_name, ftype,
-                                         sources=sources)
+            from tc_core import exempt as tc_exempt
+            content_sha = tc_exempt.content_sha(proposed_for_exempt)
+            if tc_exempt.consume(file_path, content_sha):
+                _log(f'EXEMPT (verified import) {tool_name} {file_path}')
+                return 0
         except Exception as e:
-            _log(f'in-process analyzer failed: {e}; failing open')
-            return 0
+            _log(f'exemption check failed: {e}; proceeding to analyzer')
+
+    # Subagent detection (best-effort).
+    payload_str = json.dumps(payload)
+    import re
+    subagent_detected = bool(re.search(
+        r'"(?:subagent|sub_agent|subagent_id|subagent_type|agent_id|agent_type|'
+        r'is_subagent|delegated_from|parent_session_id|parent_agent|spawned_by)"',
+        payload_str))
+
+    # In-process analyzer (the only path — the v2 daemon fast-path was dropped
+    # in v3 C5; in-process latency measured well under budget).
+    try:
+        import tc_analyzer
+        result = tc_analyzer.analyze(source_text, payload, tool_name, ftype)
+    except Exception as e:
+        _log(f'in-process analyzer failed: {e}; failing open')
+        return 0
 
     violations = result['violations']
     if not violations:

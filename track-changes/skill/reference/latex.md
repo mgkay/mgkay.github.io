@@ -31,10 +31,9 @@ The bound holds for all $n\ge 1$\tc{\sout{, as we will see in Chapter 4}}\tcn{5}
 ```
 
 The PreToolUse hook validates that any added or removed characters in
-the diff are covered by `\tc{...}\tcn{N}` (or fall in a non-rendering
-region with a sibling). It does not validate the semantic distinction
-between insertion / deletion / replacement — that is for downstream
-review tooling.
+the diff are covered by `\tc{...}\tcn{N}`. It does not validate the
+semantic distinction between insertion / deletion / replacement — that
+is for downstream review tooling.
 
 ## Preamble — recommended
 
@@ -106,13 +105,23 @@ or:
 This overrides any project-level `.tc-tracked` marker for that single
 file. See `SKILL.md` §2 for the full precedence chain.
 
-## Sibling rule (non-rendering environments)
+## Non-rendering environments and brand-new blocks → `/draft`
 
-When a change falls inside one of the LaTeX non-rendering environments
-(verbatim, lstlisting, minted, equation/align/gather/multline and
-starred variants, `\[...\]`, tabular), emit one sibling
-`\tc{...}\tcn{N}` per change on the lines immediately above the
-environment opener. See `reference/highlight-syntax.md` for examples.
+v3 has **no sibling mechanism for LaTeX.** The brand-new-block sibling
+form (a `<mark>` line above the construct) is **Markdown/Quarto only**;
+it does not apply to `.tex`. So both of these LaTeX cases route to
+`/draft` (the per-turn override), not to a sibling mark:
+
+- **Editing inside a non-rendering environment** — verbatim, lstlisting,
+  minted, equation/align/gather/multline and starred variants, `\[...\]`,
+  tabular. A change inside one of these can't be inline-wrapped without
+  breaking the environment, and v3 dropped the in-construct sibling form.
+- **Adding a brand-new LaTeX block** — `\section{}`, or a new
+  `equation`/`align`/`tabular`/`verbatim` environment.
+
+In either case the hook blocks the unwrapped change and suggests
+`/draft`; make the edit under `/draft` and note it in your reply for
+review. This is a documented v3 limitation. See `SKILL.md` §6.
 
 ## Compatibility notes
 
@@ -133,6 +142,6 @@ environment opener. See `reference/highlight-syntax.md` for examples.
 - LaTeX encoding: `SKILL.md` §4
 - Activation mechanisms: `SKILL.md` §2
 - Numbering: `SKILL.md` §5
-- Non-rendering contexts: `SKILL.md` §6
+- Non-rendering contexts (LaTeX → `/draft`): `SKILL.md` §6
 - Slash commands: `SKILL.md` §7
 - v1 → v2 migration: `bash install.sh --migrate <dir>`

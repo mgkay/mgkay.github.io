@@ -1,8 +1,7 @@
-"""tc_activation — pure-Python port of the activation gate (Fix #11).
+"""tc_core.activation — activation gate (relocated from v2 tc_activation, v3 C1).
 
-Replaces the bash subshells in lib/tc-common.sh::tc_should_track. Used by
-hooks/pre_tool_use.py (native Python hook) so the activation decision is
-made in-process without invoking bash.
+Pure-Python activation resolution used by the native PreToolUse hook so the
+decision is made in-process without invoking bash.
 
 Activation precedence (most-local wins):
   1. /draft per-turn sentinel
@@ -50,20 +49,9 @@ def tc_session_id():
 def tc_sentinel_active_draft():
     """True if a /draft sentinel exists for the current session.
 
-    §1 (C11) Windows fallback: honor BOTH the session-specific sentinel
-    (state/<session>.draft) AND the shared fallback (state/default.draft).
-    draft-on.sh writes to default.draft whenever $CLAUDE_SESSION_ID is unset
-    (the common Windows / cross-shell case where the slash command runs in a
-    bash environment that does not inherit the session id). The activation
-    gate must therefore accept the fallback path even when a session id IS
-    present in this process's environment, or a /draft written under an empty
-    session id would be silently ignored.
-
-    Concurrency limitation: default.draft is shared across any concurrent
-    sessions that also lack a distinct $CLAUDE_SESSION_ID. In that (rare)
-    case one session's /draft suspends tracking for the others until the
-    next UserPromptSubmit clear or the SessionStart 1h TTL sweep. Sessions
-    with a distinct session id are unaffected.
+    Honors BOTH the session-specific sentinel (state/<session>.draft) AND the
+    shared fallback (state/default.draft) for the Windows / cross-shell case
+    where $CLAUDE_SESSION_ID is unset.
     """
     sd = tc_state_dir()
     if not sd:
@@ -164,16 +152,13 @@ def tc_should_track(file_path):
     Tracking is active iff the result starts with 'on-'."""
     if not file_path:
         return 'off-default'
-    # 1. /draft sentinel.
     if tc_sentinel_active_draft():
         return 'draft'
-    # 2. Per-file YAML / magic-comment override.
     yaml_val = tc_check_yaml_override(file_path)
     if yaml_val == 'on':
         return 'on-file'
     if yaml_val == 'off':
         return 'off-file'
-    # 3. Folder-local marker.
     marker = tc_find_marker(file_path)
     if marker:
         if tc_is_hidden_file(file_path):

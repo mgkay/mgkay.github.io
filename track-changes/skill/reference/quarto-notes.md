@@ -7,6 +7,12 @@ lecture-authoring sessions. A concentrated note here saves the next user
 the same diagnostic cycle. Complements `SKILL.md` §3 (Markdown encoding),
 §6 (non-rendering contexts), and §12 (render-time visibility).
 
+**Note on editing inside code blocks.** v3 has no sibling mechanism for
+editing *inside* an existing fenced-code block (or any non-rendering
+construct); such edits route to `/draft` (`SKILL.md` §6). The
+brand-new-block sibling form applies only when you *add a whole new*
+heading / fenced block / `:::` div in a `.md`/`.qmd` file.
+
 The `<mark>…</mark><sup>N</sup>` wrapper renders natively in Quarto HTML
 (it is raw HTML passed straight through to the output), so the skill works
 in `.qmd` exactly as it does in `.md`. The interactions below concern
@@ -22,11 +28,11 @@ caption), the annotation list that Quarto would normally emit below the
 code is not paired with the annotated lines — the caption wrapper changes
 the DOM structure the annotation JavaScript walks.
 
-**Practical effect for track-changes.** If you are editing inside a
-`lst-cap` listing, use the **sibling-mark form** (`SKILL.md` §6) above the
-block rather than trying to attach a track-changes note as a code
-annotation. The two mechanisms are independent; do not expect a mark to
-ride along inside Quarto's annotation gutter.
+**Practical effect for track-changes.** Do not try to attach a
+track-changes note as a Quarto code annotation — the two mechanisms are
+independent, and a mark does not ride along inside the annotation gutter.
+Editing the contents of a `lst-cap` listing is editing inside a
+non-rendering construct, so it routes to `/draft` (`SKILL.md` §6).
 
 ## 2. Annotations do not combine with executable chunks that print to stdout
 
@@ -39,12 +45,11 @@ block and the annotation list** in the DOM. That ordering breaks the
 pairing — the annotation numbers no longer line up with the source lines,
 and the callout interaction silently degrades.
 
-**Practical effect for track-changes.** When you edit inside an executable
-chunk whose output is shown, keep track-changes marks on the **sibling
-lines above the chunk** (§6). Do not interleave them with Quarto
-annotations, and be aware that the chunk's own annotations (if any) may
-mis-pair once output is present — this is a Quarto behavior, independent of
-the skill.
+**Practical effect for track-changes.** Editing inside an executable
+chunk is editing inside a non-rendering construct → use `/draft` (§6);
+v3 does not sibling-mark in-construct edits. Independently, be aware that
+the chunk's own Quarto annotations (if any) may mis-pair once captured
+output is present — this is a Quarto behavior, not a skill behavior.
 
 ## 3. Hover previews, lightbox, and code annotation require serving over `http://`
 

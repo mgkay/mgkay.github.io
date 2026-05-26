@@ -1,27 +1,30 @@
-2.0.1
-2026-05-25
-track-changes v2.0.1 (§0 Import & Hook Fixes) — registration/merge repair
-  (Option-A update-on-upgrade in tc_settings_merge.py + install.sh jq path: a
-  stale v1-era `bash …/pre-tool-use.sh` registration is replaced by the
-  `python …/pre_tool_use.py` command, third-party hooks preserved); file-dir-first
-  `from=` resolution (edited-file dir → nearest .tc-tracked → git root; absolute
-  honored; did-you-mean on miss); text-source-only import (extension allowlist +
-  NUL/UTF-8 content sniff; binary sources e.g. .docx rejected with no decode);
-  self-contained SKILL.md §0; legacy bash hooks (pre-tool-use.sh, post-tool-use.sh)
-  removed. New test category W (run-W.sh) gates all the above on both daemon and
-  in-process paths.
-
-2.0.0
-2026-05-24
-track-changes v2 — source-provenance + authoring UX + docs/safety net.
-Wave 1 (§0/§7): comment-based import wrappers (<!-- track-changes: from=PATH#L..-L.. -->)
-  with strict|normalized|fuzzy matching, fail-closed source resolution, `imported:`
-  audit entries, daemon `sources` protocol (v2), and cross-file lineage comments
-  (<!-- from-file=basename:N -->). Wave 2 (§1/§3/§4/§5): block-sibling form for new
-  headings/fences/divs, /tc accept|reject|list|accept-all|reject-all batch resolution
-  with explicit audit attribution, Windows /draft default.draft fallback, and
-  render-time mark hiding (reference/tc-clean.css|js, ?clean=1). Wave 3 (§2/§6/§8/§9):
-  §7 user-authorized-vs-autonomous clarification, reference/quarto-notes.md, SKILL.md
-  author-workflow recipe + /draft composition + Quarto pitfalls, and an OPT-IN git
-  pre-commit advisory (hooks/pre-commit.sh; never auto-wired; --no-verify bypass).
-  install.sh deploys all new files and stops a stale daemon on upgrade.
+3.0.0
+2026-05-26
+track-changes v3 — two-skill split + leaner always-on footprint.
+The single v2 skill is decomposed into two: a narrowed always-on `track-changes`
+  mark-gate and a NEW opt-in `verified-import` skill (`/import`) for inserting a
+  vetted source into a tracked document. The skills share one tc_core package
+  (track-changes/lib/tc_core — not duplicated); verified-import imports it.
+- SessionStart now injects a compact reference/digest.md (~2.9 KB) instead of the
+  full SKILL.md — ~93.5% smaller, well under the 40 KB inline cap; full SKILL.md is
+  lazy-loaded on demand via "see SKILL.md §N" pointers.
+- Always-on surface narrowed (idea.md scope-decomposition thrust): §0 import wrappers
+  moved out to verified-import (convert-on-import faithfulness, fail-closed); §5
+  cross-file mark renumbering removed; §6 edit-inside-non-rendering-construct sibling
+  removed (such edits now route to /draft). Brand-new-block sibling (mechanism-1,
+  md/qmd) is kept; a brand-new LaTeX \section/env routes to /draft.
+- Persistent daemon DROPPED after measurement (in-process pre_tool_use p50 ~41.5 ms,
+  ~6x under the keep threshold; the daemon's ~13.5 ms/edit saving did not justify a
+  294-line localhost-TCP subsystem). In-process is now the sole hook path.
+- /import stages a target-keyed pending-import, verifies the AI-converted block is
+  content-faithful to the named source (markup-agnostic content-word compare), and on
+  pass writes a one-shot exemption sentinel that the track-changes gate consumes — a
+  verified import lands clean (no marks); a discrepancy blocks fail-closed.
+- Mechanical fixes #4–#7: /tc resolution + status default to the most-recently-modified
+  tracked working file (echoed); bare /tc prints the compact menu; resolving a
+  whole-line mark to empty drops the orphaned blank line; utcnow() deprecation removed.
+- Clean break (Q2): the v3 mark grammar is UNCHANGED — existing tracked documents need
+  NO conversion; upgrading from v2 only re-installs files and replaces the single v2
+  hook registration with the v3 two-skill set (verified-import before track-changes on
+  PreToolUse). /tc migrate (v1→v2 marks) is retained for legacy v1 marks.
+- 325-test v3 suite (A–V) green.

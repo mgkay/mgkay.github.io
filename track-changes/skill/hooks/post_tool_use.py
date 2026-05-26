@@ -1,9 +1,9 @@
 """hooks/post_tool_use.py — track-changes PostToolUse hook (Fix #13 native).
 
 Replaces hooks/post-tool-use.sh. Reads the JSON payload from stdin, runs
-the activation gate in-process, resolves cache + log paths, dispatches
-the audit logic either via the persistent daemon (fast path) or
-in-process (fallback).
+the activation gate in-process, resolves cache + log paths, and runs the
+audit logic in-process (tc_core.audit.record). The v2 persistent-daemon
+fast-path was dropped in v3 (C5).
 
 Always exits 0 — the audit log is best-effort and must not block the
 user's workflow.
@@ -52,7 +52,7 @@ def main():
     if not file_path:
         return 0
 
-    import tc_activation
+    from tc_core import activation as tc_activation
     ftype = tc_activation.tc_file_type(file_path)
     if ftype not in ('md', 'qmd', 'tex'):
         return 0
@@ -66,7 +66,7 @@ def main():
 
     abs_file = os.path.abspath(file_path)
 
-    import tc_audit
+    from tc_core import audit as tc_audit
     cache_path = tc_audit.cache_path_for(abs_file)
     if cache_path is None:
         _log('cannot resolve cache path; skip')
@@ -88,36 +88,13 @@ def main():
         _log(f'cannot read {abs_file}; skip')
         return 0
 
-    # Try daemon first.
-    used_daemon = False
+    # In-process audit (the only path — the v2 daemon fast-path was dropped
+    # in v3 C5).
     try:
-        import tc_daemon
-        sock = tc_daemon.connect()
-        if sock is None:
-            tc_daemon.spawn_if_needed()
-            sock = tc_daemon.connect()
-        if sock is not None:
-            resp = tc_daemon.send_request(sock, {
-                'op': 'audit',
-                'source_text': source_text,
-                'tool_name': tool_name,
-                'ftype': ftype,
-                'abs_file_path': abs_file,
-                'log_path': log_path,
-                'cache_path': cache_path,
-                'rel_path_for_log': rel_for_log,
-            })
-            if resp and resp.get('ok'):
-                used_daemon = True
+        tc_audit.record(source_text, tool_name, ftype, abs_file,
+                        log_path, cache_path, rel_for_log)
     except Exception as e:
-        _log(f'daemon path failed: {e}; falling back to in-process')
-
-    if not used_daemon:
-        try:
-            tc_audit.record(source_text, tool_name, ftype, abs_file,
-                            log_path, cache_path, rel_for_log)
-        except Exception as e:
-            _log(f'in-process record failed: {e}')
+        _log(f'in-process record failed: {e}')
 
     return 0
 

@@ -16,9 +16,11 @@ overwrites the human's recorded choice. The mark cache is also updated to
 the post-resolution mark set, so a subsequent edit diffs against the
 already-resolved state and does not re-infer these marks.
 
-Reuses the mark-classification + extraction logic already present in
-tc_analyzer (`_md_extract_marks` / `_tex_extract_marks`, which return
-character offsets) and the path/cache/log helpers in tc_audit.
+Reuses the offset-bearing mark extractors in tc_analyzer
+(`_md_extract_marks` / `_tex_extract_marks`, which return character offsets)
+and the path/cache/log helpers in tc_core.audit (single source of truth; the
+v2 `tc_audit` shim was removed in v3 C2). The line-based mark extractor for
+the cache comes from tc_core.grammar.
 
 Module-level regexes compiled once at import (matches house style).
 Best-effort, fail-open I/O for the audit side effects: a logging failure
@@ -40,8 +42,9 @@ _HERE = os.path.dirname(os.path.abspath(__file__))
 if _HERE not in sys.path:
     sys.path.insert(0, _HERE)
 
-import tc_analyzer  # offset-bearing mark extractors + classification
-import tc_audit     # path/cache/log helpers + _extract_marks for the cache
+import tc_analyzer            # offset-bearing mark extractors + classification
+from tc_core import audit as tc_audit      # path/cache/log helpers
+from tc_core import grammar as tc_grammar  # line-based mark extractor (cache)
 
 
 def file_type(path):
@@ -152,6 +155,69 @@ def _resolved_replacement(mark, decision):
     return mark['old']
 
 
+def _owned_line_empty_span(text, start, end, repl):
+    """Fix #6: detect a resolved mark that OWNED its own line and whose
+    replacement collapses the line to empty, returning the span to remove so
+    no orphan blank line remains.
+
+    The mark owns its line when, on the ORIGINAL `text`:
+      - the chars from the line start (after the preceding '\\n' or BOF) up to
+        `start` are all whitespace, AND
+      - the chars from `end` to the line end (next '\\n' or EOF) are all
+        whitespace, AND
+      - `repl` (the resolution text) is empty or whitespace-only.
+
+    Returns a (seg_start, seg_end) pair to remove instead of [start:end]:
+      - Base case: remove the mark line through its trailing '\\n' (inclusive),
+        dropping the empty line that an '' replacement would otherwise leave.
+        At EOF (no trailing '\\n') the span stops at end-of-text.
+      - Block-paragraph case: when the owned line is flanked by blank-line
+        separators on BOTH sides (a brand-new-block / deleted-paragraph
+        sibling), the two separators would collapse to two adjacent blank
+        lines (triple-spacing). Consume ONE following blank line too so a
+        single separator remains.
+
+    Returns None when the mark is mid-line (inline) or leaves non-empty
+    content on the line — those keep the ordinary [start:end] splice.
+    """
+    if repl.strip() != '':
+        return None
+    # Line start: just after the previous '\n' (or beginning of file).
+    nl_before = text.rfind('\n', 0, start)
+    line_start = 0 if nl_before == -1 else nl_before + 1
+    # Leading chars on the line before the mark must be whitespace.
+    if text[line_start:start].strip() != '':
+        return None
+    # Line end: the next '\n' at or after `end` (or EOF).
+    nl_after = text.find('\n', end)
+    at_eof = nl_after == -1
+    line_end = len(text) if at_eof else nl_after
+    # Trailing chars on the line after the mark must be whitespace.
+    if text[end:line_end].strip() != '':
+        return None
+    if at_eof:
+        return (line_start, line_end)
+    swallow_end = nl_after + 1  # swallow the mark line's own trailing newline
+
+    # Block-paragraph collapse: only when the owned line is flanked by blank
+    # lines on BOTH sides. "Preceded by a blank line" => the char before
+    # line_start is a '\n' that terminates an empty line (line_start-1 is '\n'
+    # and the line before it is also empty/BOF). Practically: line_start >= 1
+    # and text[line_start-1] == '\n'. "Followed by a blank line" => the line
+    # starting at swallow_end is empty (next char is '\n' or EOF-with-no-text).
+    preceded_blank = line_start >= 1 and text[line_start - 1] == '\n'
+    next_nl = text.find('\n', swallow_end)
+    if next_nl == -1:
+        followed_blank = text[swallow_end:].strip() == '' and swallow_end < len(text)
+        follow_end = len(text)
+    else:
+        followed_blank = text[swallow_end:next_nl].strip() == ''
+        follow_end = next_nl + 1
+    if preceded_blank and followed_blank:
+        swallow_end = follow_end
+    return (line_start, swallow_end)
+
+
 def resolve(path, decision, ns):
     """Apply `decision` ('accept' | 'reject') to the marks whose N is in
     `ns` (a collection of string or int values). Edits the file in place,
@@ -184,7 +250,17 @@ def resolve(path, decision, ns):
     resolved_marks = []
     for m in targets:
         repl = _resolved_replacement(m, decision)
-        new_text = new_text[:m['start']] + repl + new_text[m['end']:]
+        # Fix #6: if the mark owned its own line and the replacement collapses
+        # that line to empty, swallow the whole line (incl. its trailing '\n')
+        # so no orphan blank line remains. Detection uses the ORIGINAL `text`
+        # (offsets are valid there); the splice into `new_text` is safe under
+        # the right-to-left order because an owned line carries no other mark.
+        span = _owned_line_empty_span(text, m['start'], m['end'], repl)
+        if span is not None:
+            seg_start, seg_end = span
+            new_text = new_text[:seg_start] + repl + new_text[seg_end:]
+        else:
+            new_text = new_text[:m['start']] + repl + new_text[m['end']:]
         resolved.append(m['N'])
         resolved_marks.append(m)
     resolved = sorted(set(resolved), key=_n_key)
@@ -239,7 +315,7 @@ def _write_explicit_audit(path, ftype, decision, resolved_marks, post_text):
     else:
         rel = os.path.basename(abs_path)
 
-    ts = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
+    ts = datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
     lines = [f"\n## {ts} -- {rel}  (/tc {decision})"]
     lines.append("resolved:")
     for m in sorted(resolved_marks, key=lambda mm: _n_key(mm['N'])):
@@ -282,7 +358,7 @@ def _update_cache(path, ftype, post_text):
     cache_path = tc_audit.cache_path_for(abs_path)
     if not cache_path:
         return
-    current_marks = tc_audit._extract_marks(post_text, ftype)
+    current_marks = tc_grammar.extract_marks(post_text, ftype)
     prior = {}
     if os.path.exists(cache_path):
         try:

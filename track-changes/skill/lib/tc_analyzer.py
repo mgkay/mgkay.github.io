@@ -1,38 +1,50 @@
-"""tc_analyzer — track-changes PreToolUse analyzer (Fix #11).
+"""tc_analyzer — track-changes PreToolUse analyzer (Fix #11; v3 narrowed).
 
 Extracted from the bash-embedded PYEOF heredoc in hooks/pre-tool-use.sh.
-Both the native Python hook (hooks/pre_tool_use.py) and the daemon
-(lib/tc_daemon.py) import this module.
+The native Python hook (hooks/pre_tool_use.py) imports this module and
+calls analyze() in-process. (The v2 persistent daemon that also imported
+this module was dropped in v3 C5.)
 
-Module-level regex patterns are compiled once at import time. When the
-daemon is in use, imports + compilations happen exactly once per session
-instead of per-hook-invocation.
+Module-level regex patterns are compiled once at import time.
+
+v3 narrowing (C2): the §0 source-provenance stage-0 pass left track-changes
+entirely (that machinery is reborn in the verified-import skill), and the §6
+"edit-inside-a-non-rendering-construct needs a sibling mark" escape hatch was
+cut (Option B): such edits now block as ordinary unwrapped content and route
+to /draft. The brand-new-block sibling mechanism (_block_sibling_covered_lines)
+is KEPT. The mark grammar (regexes + classification) is sourced from
+tc_core.grammar (single source of truth); the offset-bearing extractors
+(_md_extract_marks/_tex_extract_marks) stay local because they return
+character offsets that tc_core.grammar's line-based extractor does not.
 
 Public API:
     analyze(source_text, payload, tool_name, ftype) -> {
         'proposed_text': str,
         'violations': [(line_no, reason)],
         'suggest_draft': bool,
+        'imported': [],   # constant empty (back-compat; §0 left the skill)
     }
 
-Behavior matches the prior bash+heredoc analyzer byte-for-byte (Fix #7
-strikethrough encoding, Fix #8 resolution pre-pass, Fix #10 walk-based
-coverage with sibling-form support).
+Behavior matches the prior analyzer byte-for-byte for everything the v3
+test-spec A-O categories cover (Fix #7 strikethrough encoding, Fix #8
+resolution pre-pass, Fix #10 walk-based coverage, brand-new-block siblings).
 """
 import re
 import difflib
-import tc_provenance  # §0 source-provenance wrappers (C1/C3).
 
-# Pre-compiled regex patterns (compiled once at module import).
-_MD_MARK_RE = re.compile(r'<mark>(.*?)</mark><sup>(\d+)</sup>', re.DOTALL)
-_MD_S_REP_RE = re.compile(r'^<s>(.*?)</s>(.+)$', re.DOTALL)
-_MD_S_DEL_RE = re.compile(r'^<s>(.*?)</s>\s*$', re.DOTALL)
-_MD_TILDE_REP_RE = re.compile(r'^~~(.*?)~~(.+)$', re.DOTALL)
-_MD_TILDE_DEL_RE = re.compile(r'^~~(.*?)~~\s*$', re.DOTALL)
-_TEX_SOUT_REP_RE = re.compile(r'^\\sout\{(.*?)\}(.+)$', re.DOTALL)
-_TEX_SOUT_DEL_RE = re.compile(r'^\\sout\{(.*?)\}\s*$', re.DOTALL)
-_TEX_HEAD_RE = re.compile(r'\\tc\{')
-_TEX_TCN_AFTER_RE = re.compile(r'\\tcn\{(\d+)\}')
+import tc_core.grammar as _grammar  # single source of truth for the mark grammar
+
+# Pre-compiled regex patterns — sourced from tc_core.grammar (single source of
+# truth) where shared, kept local only for analyzer-specific scans.
+_MD_MARK_RE = _grammar.MD_MARK_RE
+_MD_S_REP_RE = _grammar._MD_S_REP_RE
+_MD_S_DEL_RE = _grammar._MD_S_DEL_RE
+_MD_TILDE_REP_RE = _grammar._MD_TILDE_REP_RE
+_MD_TILDE_DEL_RE = _grammar._MD_TILDE_DEL_RE
+_TEX_SOUT_REP_RE = _grammar._TEX_SOUT_REP_RE
+_TEX_SOUT_DEL_RE = _grammar._TEX_SOUT_DEL_RE
+_TEX_HEAD_RE = _grammar.TEX_HEAD_RE
+_TEX_TCN_AFTER_RE = _grammar.TEX_TCN_AFTER_RE
 _TEX_TCN_AFTER_ANCHOR_RE = re.compile(r'\A\\tcn\{\d+\}')
 _FENCE_OPEN_RE = re.compile(r'^\s{0,3}(```|~~~)([^`~].*)?$')
 _DISPLAY_MATH_RE = re.compile(r'^\s*\$\$\s*$')
@@ -44,8 +56,7 @@ _QFD_CLOSE_RE = re.compile(r'^\s*:::+\s*$')
 _HUNK_RE = re.compile(r'^@@\s+-\d+(?:,\d+)?\s+\+(\d+)(?:,(\d+))?\s+@@')
 _MD_SIBLING_RE = re.compile(r'<mark>.*?</mark><sup>\d+</sup>')
 _MD_SIBLING_PRE_RE = re.compile(r'^\s*<mark>.*?</mark><sup>\d+</sup>\s*$')
-_TEX_SIBLING_RE = re.compile(r'\\tc\{[^}]*\}\\tcn\{\d+\}')
-# §3 (C9): ATX heading line (must be at column 0 to parse; up to 6 #).
+# Brand-new-block sibling (Option B mechanism 1): ATX heading at column 0.
 _MD_ATX_HEADING_RE = re.compile(r'^#{1,6}(\s.*)?$')
 _SUP_AFTER_CLOSE_RE = re.compile(r'\A<sup>\d+</sup>')
 _TEX_ENVS = ('verbatim', 'lstlisting', 'minted', 'equation', 'equation*',
@@ -53,32 +64,21 @@ _TEX_ENVS = ('verbatim', 'lstlisting', 'minted', 'equation', 'equation*',
              'tabular')
 _TEX_BEGIN_RE = re.compile(r'\\begin\{(' + '|'.join(re.escape(e) for e in _TEX_ENVS) + r')\}')
 _TEX_END_RE = re.compile(r'\\end\{(' + '|'.join(re.escape(e) for e in _TEX_ENVS) + r')\}')
-_MD_NUMS_RE = re.compile(r'</mark><sup>(\d+)</sup>')
-_TEX_NUMS_RE = re.compile(r'\\tcn\{(\d+)\}')
-# §0 wrapper comment lines (opening or closing) — never content needing a mark.
-_TC_WRAPPER_LINE_RE = re.compile(r'^\s*<!--\s*/?track-changes:?.*?-->\s*$')
-# §7 cross-file lineage comment — never content needing a mark (C7 note).
-_TC_FROMFILE_LINE_RE = re.compile(r'<!--\s*from-file=')
+_MD_NUMS_RE = _grammar.MD_NUMS_RE
+_TEX_NUMS_RE = _grammar.TEX_NUMS_RE
 
 
 def _md_classify(body):
-    m = _MD_S_REP_RE.match(body)
-    if m: return ('replacement', m.group(1), m.group(2))
-    m = _MD_S_DEL_RE.match(body)
-    if m: return ('deletion', m.group(1), '')
-    m = _MD_TILDE_REP_RE.match(body)
-    if m: return ('replacement', m.group(1), m.group(2))
-    m = _MD_TILDE_DEL_RE.match(body)
-    if m: return ('deletion', m.group(1), '')
-    return ('insertion', '', body)
+    """Thin adapter over tc_core.grammar.classify_md, returning the
+    (type, old, new) tuple shape the offset-bearing extractors expect."""
+    c = _grammar.classify_md(body)
+    return (c['type'], c['old'], c['new'])
 
 
 def _tex_classify(body):
-    m = _TEX_SOUT_REP_RE.match(body)
-    if m: return ('replacement', m.group(1), m.group(2))
-    m = _TEX_SOUT_DEL_RE.match(body)
-    if m: return ('deletion', m.group(1), '')
-    return ('insertion', '', body)
+    """Thin adapter over tc_core.grammar.classify_tex (tuple shape)."""
+    c = _grammar.classify_tex(body)
+    return (c['type'], c['old'], c['new'])
 
 
 def _md_extract_marks(text):
@@ -182,120 +182,16 @@ def _tex_extract_marks(text):
     return marks
 
 
-def _detect_regions_for_walk(text, ftype):
-    """Return (body_start, body_end, opener_line_idx, kind) tuples for
-    non-rendering regions, used by the walk's sibling-pair detection."""
-    regions = []
-    lines = text.split('\n')
-    n = len(lines)
-    line_starts = [0]
-    for ln in lines:
-        line_starts.append(line_starts[-1] + len(ln) + 1)
-    if ftype in ('md', 'qmd'):
-        i = 0
-        while i < n:
-            mo = _FENCE_OPEN_RE.match(lines[i])
-            if mo:
-                fc = mo.group(1)
-                close_re = re.compile(r'^\s{0,3}' + re.escape(fc) + r'\s*$')
-                opener_line = i
-                j = i + 1
-                while j < n:
-                    if close_re.match(lines[j]):
-                        regions.append((line_starts[i + 1], line_starts[j], opener_line, 'fenced-code'))
-                        i = j + 1
-                        break
-                    j += 1
-                else:
-                    regions.append((line_starts[i + 1], len(text), opener_line, 'fenced-code'))
-                    i = n
-                continue
-            i += 1
-        i = 0
-        while i < n:
-            if _DISPLAY_MATH_RE.match(lines[i]):
-                opener_line = i
-                j = i + 1
-                while j < n:
-                    if _DISPLAY_MATH_RE.match(lines[j]):
-                        regions.append((line_starts[i + 1], line_starts[j], opener_line, 'display-math'))
-                        i = j + 1
-                        break
-                    j += 1
-                else:
-                    regions.append((line_starts[i + 1], len(text), opener_line, 'display-math'))
-                    i = n
-                continue
-            i += 1
-        for i in range(min(n, 8)):
-            if _YAML_DELIM_RE.match(lines[i]):
-                opener_line = i
-                j = i + 1
-                while j < n:
-                    if _YAML_DELIM_RE.match(lines[j]):
-                        regions.append((line_starts[i + 1], line_starts[j], opener_line, 'yaml-frontmatter'))
-                        break
-                    j += 1
-                break
-            if lines[i].strip() == '':
-                continue
-            if _MD_SIBLING_RE.search(lines[i]):
-                continue
-            break
-        i = 0
-        while i < n:
-            if _GFM_SEP_RE.match(lines[i]) and i > 0 and _GFM_PIPE_RE.match(lines[i - 1]):
-                opener_line = i - 1
-                k = i + 1
-                while k < n and _GFM_PIPE_RE.match(lines[k]):
-                    k += 1
-                regions.append((line_starts[i + 1], line_starts[k], opener_line, 'gfm-table'))
-                i = k
-                continue
-            i += 1
-    elif ftype == 'tex':
-        i = 0
-        while i < n:
-            mb = _TEX_BEGIN_RE.search(lines[i])
-            if mb:
-                kind = mb.group(1)
-                opener_line = i
-                j = i + 1
-                while j < n:
-                    me = _TEX_END_RE.search(lines[j])
-                    if me and me.group(1) == kind:
-                        regions.append((line_starts[i + 1], line_starts[j], opener_line, 'latex-' + kind))
-                        i = j + 1
-                        break
-                    j += 1
-                else:
-                    regions.append((line_starts[i + 1], len(text), opener_line, 'latex-' + kind))
-                    i = n
-                continue
-            i += 1
-    regions.sort()
-    return regions
-
-
-def _region_has_sibling(text, opener_line_idx, ftype):
-    if opener_line_idx <= 0:
-        return False
-    lines = text.split('\n')
-    sib_idx = opener_line_idx - 1
-    if sib_idx >= len(lines):
-        return False
-    sib_line = lines[sib_idx]
-    if ftype in ('md', 'qmd'):
-        return bool(_MD_SIBLING_RE.search(sib_line))
-    elif ftype == 'tex':
-        return bool(_TEX_SIBLING_RE.search(sib_line))
-    return False
-
-
 def _check_pure_resolution(src_text, prop_text, ftype):
     """Walk source and proposed in parallel; accept the edit if every byte
     is accounted for by a preserved mark, resolved source mark, introduced
-    mark, paired sibling-marked region body, or identical plain text."""
+    mark, or identical plain text.
+
+    v3 (C2): the §6 mechanism-2 sibling-marked-region pairing was removed;
+    the walk now handles plain marks only. Editing inside a non-rendering
+    construct no longer resolves cleanly via a sibling and instead falls
+    through to the ordinary unwrapped-content path.
+    """
     if ftype in ('md', 'qmd'):
         s_marks = _md_extract_marks(src_text)
         p_marks = _md_extract_marks(prop_text)
@@ -306,37 +202,11 @@ def _check_pure_resolution(src_text, prop_text, ftype):
         return False
     s_n_set = {m['N'] for m in s_marks}
     p_n_set = {m['N'] for m in p_marks}
-    s_regions = _detect_regions_for_walk(src_text, ftype)
-    p_regions = _detect_regions_for_walk(prop_text, ftype)
-    s_by_kind = {}
-    p_by_kind = {}
-    for r in s_regions:
-        s_by_kind.setdefault(r[3], []).append(r)
-    for r in p_regions:
-        p_by_kind.setdefault(r[3], []).append(r)
-    region_pairs = []
-    for kind, p_list in p_by_kind.items():
-        s_list = s_by_kind.get(kind, [])
-        for idx, p_r in enumerate(p_list):
-            if not _region_has_sibling(prop_text, p_r[2], ftype):
-                continue
-            if idx < len(s_list):
-                s_r = s_list[idx]
-                region_pairs.append((s_r[0], s_r[1], p_r[0], p_r[1]))
-    region_pairs.sort()
     s_pos = p_pos = 0
     s_idx = p_idx = 0
     s_len = len(src_text)
     p_len = len(prop_text)
     while s_pos < s_len or p_pos < p_len:
-        skipped_pair = False
-        for (ss, se, ps, pe) in region_pairs:
-            if s_pos == ss and p_pos == ps:
-                s_pos = se; p_pos = pe
-                skipped_pair = True
-                break
-        if skipped_pair:
-            continue
         s_m = s_marks[s_idx] if s_idx < len(s_marks) else None
         p_m = p_marks[p_idx] if p_idx < len(p_marks) else None
         s_next = s_m['start'] if s_m else s_len
@@ -404,13 +274,6 @@ def _check_pure_resolution(src_text, prop_text, ftype):
                         s_pos = s_next
                         continue
             return False
-        for (ss, se, ps, pe) in region_pairs:
-            if s_pos < ss and ss <= s_pos + chunk_len:
-                chunk_len = min(chunk_len, ss - s_pos)
-            if p_pos < ps and ps <= p_pos + chunk_len:
-                chunk_len = min(chunk_len, ps - p_pos)
-        if chunk_len <= 0:
-            return False
         if src_text[s_pos:s_pos + chunk_len] != prop_text[p_pos:p_pos + chunk_len]:
             return False
         s_pos += chunk_len
@@ -448,96 +311,8 @@ def _build_proposed(source_text, payload, tool_name):
     return None
 
 
-def _stage0_provenance(proposed_text, sources):
-    """§0 stage-0 pass (C4). Scan the proposed text for import wrappers and
-    validate each against its resolved source slice in `sources`.
-
-    `sources` maps from_spec -> resolved source slice text, OR None when the
-    hook could not read/slice the source (generic fail-closed: treated as
-    mismatch), OR an unresolved-with-reason marker (a tagged dict carrying a
-    SPECIFIC actionable reason: binary-source rejection C5 / not-found C4).
-    The specific reason is surfaced in the discrepancy text when present;
-    plain None keeps the generic "source missing or unreadable" wording
-    (back-compat).
-
-    Returns (exempt_lines, imported_regions, discrepancies):
-      exempt_lines      : set of 1-indexed proposed line numbers that are
-                          inside a VERIFIED wrapper body (skip in the walk).
-      imported_regions  : list of dicts for verified wrappers, for the audit
-                          `imported:` entry — {lines:(a,b), from, verified,
-                          normalization}.
-      discrepancies     : list of (line_no, reason) for MISMATCHED wrappers
-                          (C8 block message). The mismatched wrapper bodies
-                          still fall through to normal new-content handling.
-    """
-    exempt_lines = set()
-    imported_regions = []
-    discrepancies = []
-    try:
-        wrappers = tc_provenance.scan_wrappers(proposed_text)
-    except Exception:
-        return exempt_lines, imported_regions, discrepancies
-    for w in wrappers:
-        src_slice = sources.get(w.from_spec) if sources else None
-        # An unresolved-with-reason marker (binary C5 / not-found C4) carries a
-        # specific, actionable message. It is never a verifiable slice.
-        specific_reason = tc_provenance.unresolved_reason(src_slice)
-        verified = False
-        if specific_reason is None and src_slice is not None:
-            try:
-                verified = tc_provenance.matches(w.body, src_slice, w.mode)
-            except Exception:
-                verified = False
-        body_a = w.body_start_line
-        body_b = w.line_end - 1  # last body line is just above the closer
-        if verified:
-            for ln in range(body_a, body_b + 1):
-                exempt_lines.add(ln)
-            imported_regions.append({
-                'lines': (body_a, body_b),
-                'from': w.from_spec,
-                'verified': True,
-                'normalization': w.mode,
-            })
-        else:
-            # Fall through to normal handling AND surface a discrepancy.
-            if specific_reason is not None:
-                # C4/C5: surface the specific reason. Keep the word
-                # "unverified" so back-compat assertions still match, and keep
-                # the same remediation tail as the generic path.
-                reason = (f"wrapped import from '{w.from_spec}' could not be "
-                          f"verified: {specific_reason}; treated as unverified "
-                          f"new content. Either fix the source reference, "
-                          f"correct the paraphrase, wrap the deviation in <mark>, "
-                          f"or drop the import wrapper")
-            elif src_slice is None:
-                reason = (f"wrapped import from '{w.from_spec}' could not be "
-                          f"verified (source missing or unreadable); treated as "
-                          f"unverified new content. Either fix the source reference, "
-                          f"correct the paraphrase, wrap the deviation in <mark>, "
-                          f"or drop the import wrapper")
-            else:
-                src_q = _trim_quote(src_slice)
-                prop_q = _trim_quote(w.body)
-                reason = (f"wrapped import does not match source "
-                          f"({w.from_spec}); source has \"{src_q}\", proposed has "
-                          f"\"{prop_q}\". Either correct the paraphrase, wrap the "
-                          f"change in <mark>, fix the source reference, or drop the "
-                          f"import wrapper")
-            discrepancies.append((w.body_start_line, reason))
-    return exempt_lines, imported_regions, discrepancies
-
-
-def _trim_quote(s, limit=80):
-    """Condense a span to a single-line, length-bounded quote for messages."""
-    one = ' '.join(s.split())
-    if len(one) > limit:
-        one = one[:limit - 3] + '...'
-    return one
-
-
-def _block_sibling_covered_lines(proposed_lines, added_set, ftype, exempt_lines):
-    """§3 (C9): block-sibling extension.
+def _block_sibling_covered_lines(proposed_lines, added_set, ftype):
+    """Block-sibling mechanism (KEPT in v3 — Option B "mechanism 1").
 
     A brand-new (added) ATX heading line and a brand-new block's DELIMITER
     lines (fenced-code opener+closer, `:::` div opener+closer) are
@@ -556,11 +331,11 @@ def _block_sibling_covered_lines(proposed_lines, added_set, ftype, exempt_lines)
         A MODIFIED existing heading therefore does not qualify (it follows the
         normal inline-edit rule).
       - The line immediately above the block start must carry a sibling mark.
-      - F2 precedence: a block whose start line is already inside a verified
-        import wrapper (in `exempt_lines`) is left to the import-wrapper logic
-        and not separately processed here.
-      - Markdown / Quarto only (md, qmd). LaTeX block envs already have full
-        sibling support in the existing region walk.
+      - Markdown / Quarto only (md, qmd). A brand-new LaTeX construct (a lone
+        `\\section{}` or a fresh `\\begin{env}`) is NOT covered by this
+        mechanism — it blocks and routes to /draft. (The mechanism-2
+        region-walk sibling that once covered LaTeX was removed in C2; the
+        function returns early below for any non-md/qmd ftype.)
     """
     covered = set()
     if ftype not in ('md', 'qmd'):
@@ -583,9 +358,6 @@ def _block_sibling_covered_lines(proposed_lines, added_set, ftype, exempt_lines)
     i = 0
     while i < n:
         ln1 = i + 1  # 1-indexed
-        if ln1 in exempt_lines:
-            i += 1
-            continue
         line = proposed_lines[i]
         # --- Fenced code block (opener .. matching closer) ---
         mo = _FENCE_OPEN_RE.match(line)
@@ -635,21 +407,18 @@ def _block_sibling_covered_lines(proposed_lines, added_set, ftype, exempt_lines)
     return covered
 
 
-def analyze(source_text, payload, tool_name, ftype, sources=None):
+def analyze(source_text, payload, tool_name, ftype):
     """Run the full analyzer pipeline.
 
     Returns a dict with:
       'proposed_text': str — the constructed proposed file content (with CRLF normalised)
       'violations': list of (line_no, reason) tuples, sorted
       'suggest_draft': bool
-      'imported': list of verified-wrapper dicts (only populated when sources
-                  is supplied and at least one wrapper verifies) — for the
-                  PostToolUse `imported:` audit entry (C6).
+      'imported': [] — constant empty (the §0 import machinery left
+                  track-changes in v3; verified-import owns imports now).
+                  Kept so any caller reading this key still works.
     On unsupported tool or unparseable payload, returns proposed_text=source_text,
     violations=[], suggest_draft=False (caller exits 0).
-
-    Backward-compat (C4): when `sources is None`, the §0 stage-0 pass is
-    skipped entirely and behavior is byte-identical to the v1 analyzer.
     """
     result = {'proposed_text': source_text, 'violations': [],
               'suggest_draft': False, 'imported': []}
@@ -661,14 +430,6 @@ def analyze(source_text, payload, tool_name, ftype, sources=None):
     result['proposed_text'] = proposed_text
     if source_text == proposed_text:
         return result
-
-    # Stage 0 (§0): only when the hook supplied resolved sources.
-    exempt_lines = set()
-    discrepancies = []
-    if sources is not None:
-        exempt_lines, imported_regions, discrepancies = _stage0_provenance(
-            proposed_text, sources)
-        result['imported'] = imported_regions
 
     violations = []
     suggest_draft = False
@@ -868,83 +629,50 @@ def analyze(source_text, payload, tool_name, ftype, sources=None):
                 continue
             i += 1
 
-    def has_sibling(opener_1idx):
-        if opener_1idx <= 1:
-            return False
-        sib_line = proposed_lines[opener_1idx - 2]
-        if ftype in ('md', 'qmd'):
-            return bool(_MD_SIBLING_RE.search(sib_line))
-        elif ftype == 'tex':
-            return bool(_TEX_SIBLING_RE.search(sib_line))
-        return False
-
-    def find_region_for_line(ln):
-        best = None
+    def line_in_region(ln):
+        """True if 1-indexed proposed line `ln` falls inside any detected
+        non-rendering region body. v3 (C2): used ONLY to set the /draft hint —
+        such an edit no longer gets a sibling escape hatch (mechanism 2 cut)."""
         for (bs, be, op, kind) in regions:
             if bs <= ln <= be:
-                if best is None or (op > best[2]):
-                    best = (bs, be, op, kind)
-        return best
+                return True
+        return False
 
-    reported_regions = set()
-
-    # §3 (C9): block-sibling coverage for brand-new headings / fenced blocks /
-    # `:::` divs. A sibling mark on the line immediately above a new block
-    # covers the block's delimiter lines (and heading line) so the author need
-    # not inline-wrap them (which would break parsing) nor reach for /draft.
+    # Block-sibling coverage for brand-new headings / fenced blocks / `:::`
+    # divs (Option B mechanism 1, KEPT). A sibling mark on the line immediately
+    # above a new block covers the block's delimiter lines (and heading line)
+    # so the author need not inline-wrap them (which would break parsing) nor
+    # reach for /draft.
     block_sibling_lines = _block_sibling_covered_lines(
-        proposed_lines, set(added_line_nums), ftype, exempt_lines)
+        proposed_lines, set(added_line_nums), ftype)
 
     if not is_pure_resolution:
         inline_violation_added = False
         for ln in added_line_nums:
             line_text = proposed_lines[ln - 1] if 1 <= ln <= n_lines else ''
-            # §0: a verified import-wrapper body line is exempt from the
-            # <mark> coverage requirement (stage-0 marked it).
-            if ln in exempt_lines:
-                continue
-            # §3 (C9): a line covered by a new-block sibling mark is exempt.
+            # A line covered by a new-block sibling mark (mechanism 1) is exempt.
             if ln in block_sibling_lines:
                 continue
-            # §0/§7: wrapper comment lines and cross-file lineage comments are
-            # bookkeeping, never content that needs a mark.
-            if _TC_WRAPPER_LINE_RE.match(line_text) or _TC_FROMFILE_LINE_RE.search(line_text):
+            if line_text.strip() == '':
                 continue
-            region = find_region_for_line(ln)
-            if region is None:
-                if line_text.strip() == '':
-                    continue
-                if not inline_violation_added:
-                    if ftype in ('md', 'qmd'):
-                        add_v(ln, "added content not wrapped in <mark>...</mark><sup>N</sup> highlight (Fix #10: per-region coverage; every diff char must be inside a mark or be a resolution of an existing mark)")
-                    else:
-                        add_v(ln, "added content not wrapped in \\tc{...}\\tcn{N} highlight (Fix #10: per-region coverage)")
-                    inline_violation_added = True
-            else:
-                bs, be, op, kind = region
-                key = (op, kind)
-                if key in reported_regions:
-                    continue
-                if not has_sibling(op):
-                    if ftype in ('md', 'qmd'):
-                        add_v(op, f"change inside non-rendering construct ({kind}) starting at this line lacks sibling <mark>...</mark><sup>N</sup> on the line immediately above")
-                    else:
-                        add_v(op, f"change inside non-rendering construct ({kind}) starting at this line lacks sibling \\tc{{...}}\\tcn{{N}} on the line immediately above")
-                    reported_regions.add(key)
-                    if kind == 'quarto-div':
-                        suggest_draft = True
+            # v3 (C2): an added line inside an existing non-rendering construct
+            # no longer has a sibling escape hatch (mechanism 2 cut) — it blocks
+            # as ordinary unwrapped content. Hint /draft so the author can route
+            # an in-construct edit through drafting mode.
+            if line_in_region(ln):
+                suggest_draft = True
+            if not inline_violation_added:
+                if ftype in ('md', 'qmd'):
+                    add_v(ln, "added content not wrapped in <mark>...</mark><sup>N</sup> highlight (Fix #10: per-region coverage; every diff char must be inside a mark or be a resolution of an existing mark)")
+                else:
+                    add_v(ln, "added content not wrapped in \\tc{...}\\tcn{N} highlight (Fix #10: per-region coverage)")
+                inline_violation_added = True
 
     if not is_pure_resolution and has_minus_only and not added_line_nums:
         if ftype in ('md', 'qmd'):
             add_v(1, "deletion(s) detected with no <mark><s>...</s></mark><sup>N</sup> deletion marker")
         else:
             add_v(1, "deletion(s) detected with no \\tc{\\sout{...}}\\tcn{N} deletion marker")
-
-    # §0: import-wrapper discrepancies (C8). A mismatched wrapper both falls
-    # through to the normal walk above (its body lines need a <mark>) AND
-    # surfaces this explicit block message naming the deviation.
-    for ln, reason in discrepancies:
-        add_v(ln, reason)
 
     # Mask non-rendering content + backticks for structural and uniqueness scans.
     mask_chars = list(proposed_text)

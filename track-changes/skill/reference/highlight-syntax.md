@@ -1,12 +1,11 @@
-# Highlight Syntax Reference (v2)
+# Highlight Syntax Reference
 
 Lookup reference for the `track-changes` skill. Use this document when
-you need to confirm exact syntax for a specific change type, language,
-or non-rendering construct. The full protocol lives in `SKILL.md`; this
-file supplements §3 (markdown), §4 (LaTeX), and §6 (non-rendering
-contexts).
+you need to confirm exact syntax for a specific change type or language.
+The full protocol lives in `SKILL.md`; this file supplements §3
+(markdown), §4 (LaTeX), and §6 (the brand-new-block sibling form).
 
-The v2 encoding is **token-minimal**: each highlight wraps only the
+The mark encoding is **token-minimal**: each highlight wraps only the
 characters that differ from the on-disk source, followed immediately by
 a `<sup>N</sup>` (markdown) or `\tcn{N}` (LaTeX) reference number that
 sits *outside* the mark.
@@ -218,23 +217,32 @@ introduced marks as new content that must be wrapped, and treats
 resolutions as accept-or-reject of existing marks — both can co-occur
 in the same edit.
 
-## Sibling-element form (non-rendering contexts)
+## Brand-new block sibling form (Markdown/Quarto only)
 
-The sibling-element rule applies when a change falls inside a
-non-rendering construct (see SKILL.md §6 for the enumerated list). Each
-individual change inside the block gets its own sibling line above the
-block opener, encoded the same way as an inline mark.
+A **brand-new** block-level element — an ATX heading, a fenced code
+block, or a `::: {...}` Quarto div — cannot be inline-wrapped (wrapping
+the delimiter or the `### ` line breaks the construct). The
+block-sibling form covers this: put one `<mark>…</mark><sup>N</sup>` on
+the line *immediately above* the new block, then write the block
+normally. The hook treats the new block's delimiter/heading lines as
+covered by that sibling. See `SKILL.md` §6.
 
-> **Important — no blank line.** The sibling marks must sit on the
-> lines *immediately* above the construct's opener — no blank line
-> between the last sibling and the opener. The PreToolUse hook looks at
-> exactly the prior lines; inserting an empty line breaks the
-> association and the hook reports a missing-sibling violation.
+> **Important — no blank line.** The sibling mark must sit on the line
+> *immediately* above the new block's opener — no blank line between the
+> sibling and the opener. The PreToolUse hook looks at exactly the prior
+> line; inserting an empty line breaks the association.
 
-### Markdown sibling — fenced code block (single change)
+### New heading
 
 ```markdown
-<mark><s>0</s>1</mark><sup>4</sup>
+<mark>New subsection: Wider tables demo</mark><sup>1</sup>
+### Wider tables
+```
+
+### New fenced code block
+
+```markdown
+<mark>New helper: factorial</mark><sup>4</sup>
 ` ``python
 def factorial(n):
     if n <= 1:
@@ -243,99 +251,20 @@ def factorial(n):
 ` ``
 ```
 
-The sibling renders as a yellow note above the code block; the code
-block renders as a normal monospace listing below. The sibling encodes
-the change (base case `0` → `1`) using the same v2 form as an inline
-mark.
-
-### Markdown sibling — fenced code block (multiple changes)
+### New `:::` div
 
 ```markdown
-<mark><s>import sys</s>import os</mark><sup>7</sup>
-<mark>def foo(): pass</mark><sup>8</sup>
-` ``python
-import os
-print("hi")
-def foo(): pass
-` ``
+<mark>New column-body-outset breakout</mark><sup>2</sup>
+::: {.column-body-outset}
+| ... wide table ... |
+:::
 ```
 
-Each change inside the block gets its own sibling line, stacked
-immediately above the block opener with no blank lines.
-
-### Markdown sibling — display math
-
-```markdown
-<mark><s>\le</s>&lt;</mark><sup>5</sup>
-$$
-|f(x) - f(y)| < L \cdot |x - y|
-$$
-```
-
-### Markdown sibling — YAML front matter
-
-```markdown
-<mark><s>2026-05-22</s>2026-06-01</mark><sup>6</sup>
----
-title: "Stability of Numerical Methods"
-author: "Kay, Michael G."
-date: "2026-06-01"
----
-```
-
-### Markdown sibling — GFM pipe table
-
-```markdown
-<mark><s>5</s>7</mark><sup>7</sup>
-| Line | Slope | Intercept |
-|------|-------|-----------|
-| $\ell_1$ | 2 | 0 |
-| $\ell_2$ | -1 | 3 |
-| $\ell_3$ | 0 | 7 |
-```
-
-### LaTeX sibling — verbatim
-
-```latex
-\tc{\sout{tabs}spaces}\tcn{8}
-\begin{verbatim}
-def harmonic_mean(xs):
-    if not xs:
-        return 0
-    return len(xs) / sum(1/x for x in xs)
-\end{verbatim}
-```
-
-### LaTeX sibling — equation
-
-```latex
-\tc{added zero-case}\tcn{10}
-\begin{equation}
-  H(x_1, \ldots, x_n) = \begin{cases}
-    0 & \text{if } x_i = 0 \text{ for some } i,\\
-    \frac{n}{\sum_{i=1}^n 1/x_i} & \text{otherwise.}
-  \end{cases}
-\end{equation}
-```
-
-When a single sibling describes a structural change too large for
-strict token-minimality (a new `\begin{cases}` block), the sibling
-content is a short prose hint of what changed.
-
-### LaTeX sibling — tabular
-
-```latex
-\tc{added cubic row}\tcn{12}
-\begin{tabular}{|c|c|c|}
-\hline
-Order & Method & Error \\
-\hline
-1 & Euler & $O(h)$ \\
-2 & Heun & $O(h^2)$ \\
-3 & RK3 & $O(h^3)$ \\
-\hline
-\end{tabular}
-```
+**Markdown/Quarto only.** This form does **not** cover a brand-new LaTeX
+block (`\section{}`, `equation`/`align`/`tabular`/`verbatim`
+environments), nor *editing inside* an existing non-rendering construct
+in any language. Those route to `/draft` — a documented v3 limitation
+(the v2 in-construct sibling form was removed). See `SKILL.md` §6.
 
 ## `soul`-package fallback
 
@@ -355,35 +284,6 @@ source-side syntax is unchanged; only the preamble definition differs.
 The PreToolUse hook does not distinguish `\hl`-backed from
 `\colorbox`-backed definitions; both register as valid `\tc{...}`
 wrappers.
-
-## Lineage workaround for cross-file paste
-
-When pasting content from a source file into a destination file,
-inherited marks renumber on collision (SKILL.md §5). Cross-file
-lineage is not preserved automatically. The optional workaround is a
-leading comment recording the mapping.
-
-### Markdown
-
-```markdown
-<!-- pasted from lecture-01.md: marks 3→8, 5→9 -->
-<mark>foo</mark><sup>8</sup>
-... rest of pasted region ...
-<mark>bar</mark><sup>9</sup>
-```
-
-### LaTeX
-
-```latex
-% pasted from notes-ch3.tex: marks 3→8, 5→9
-\tc{foo}\tcn{8}
-... rest of pasted region ...
-\tc{bar}\tcn{9}
-```
-
-The comment is documentation only — neither the PreToolUse hook nor
-the review tooling parses it. It exists so a reviewer can trace any
-inherited mark back to its source.
 
 ## Quick-reference regex patterns
 
@@ -434,9 +334,11 @@ The output is one number per line in file order. Pipe through
 - Full protocol: `SKILL.md`
 - Markdown syntax discussion: `SKILL.md` §3
 - LaTeX syntax discussion: `SKILL.md` §4 and `reference/latex.md`
-- Numbering rules: `SKILL.md` §5
-- Non-rendering constructs (full enumeration): `SKILL.md` §6
+- Numbering rules (per-file uniqueness): `SKILL.md` §5
+- Non-rendering contexts (brand-new-block sibling + in-construct → `/draft`):
+  `SKILL.md` §6
 - Activation mechanisms: `SKILL.md` §2
 - Slash commands: `SKILL.md` §7
+- Importing from a source (separate skill): `verified-import` `/import`
 - LaTeX preamble setup: `SKILL.md` §10
 - v1 → v2 migration: `bash install.sh --migrate <dir>`

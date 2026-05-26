@@ -1,11 +1,15 @@
 ---
 name: track-changes
-description: Source-preserving edit protocol. Tracks Claude-introduced changes to existing .md, .qmd, and .tex files by wrapping only the changed characters in a <mark> highlight followed by a <sup>N</sup> reference number, so the human author can accept or reject each change individually. Default-OFF; opt in per folder via .tc-tracked marker, per file via YAML frontmatter (or `% track-changes: true` for .tex). Per-turn override via /draft. Unified /tc command for all operations (/tc mark, /tc enable, /tc disable, /tc migrate, /tc status, /tc draft). Edits to tracked files append to a project-local .tc-history.md audit log.
+description: Source-preserving edit protocol. Tracks Claude-introduced changes to existing .md, .qmd, and .tex files by wrapping only the changed characters in a <mark> highlight followed by a <sup>N</sup> reference number, so the human author can accept or reject each change individually. Default-OFF; opt in per folder via .tc-tracked marker, per file via YAML frontmatter (or `% track-changes: true` for .tex). Per-turn override via /draft. Unified /tc command for all operations (/tc mark, /tc enable, /tc disable, /tc migrate, /tc status, /tc list, /tc accept, /tc reject, /tc draft). Edits to tracked files append to a project-local .tc-history.md audit log. Verbatim/converted source import is the separate opt-in verified-import skill (/import).
 ---
 
 # track-changes
 
-You are reading this because the SessionStart hook loaded it into context.
+The SessionStart hook injects a small **digest** (`reference/digest.md`:
+activation rules + mark grammar + `/tc` commands) into context; the full
+spec in this `SKILL.md` is lazy-loaded on demand from the digest's
+`SKILL.md §N` pointers.
+
 The track-changes skill is **default-off**. It activates for Write, Edit,
 and MultiEdit on existing files with extension `.md`, `.qmd`, or `.tex`
 only when one of the opt-in mechanisms in §2 is in effect. When active,
@@ -13,90 +17,60 @@ the PreToolUse hook blocks any write that adds or removes content without
 an appropriate numbered highlight wrapper. When inactive, the hook is
 silent and passes through.
 
+track-changes is one of **two co-installed skills**. The always-on
+track-changes skill (this file) gates ordinary edits with marks; its
+opt-in counterpart **`verified-import`** handles the one deliberate
+operation that should *not* be mark-wrapped — pulling content from a
+source file into a tracked document via `/import` (see §0).
+
 ## Quick Install
 
-Remote install via the bootstrap (Fix #14): from any Claude Code session,
+Two skills install together as one suite: **track-changes** (always-on
+mark protocol) and **verified-import** (opt-in `/import`, loaded only when
+invoked). track-changes is the dependency — verified-import imports its
+shared `tc_core`.
+
+Remote install via the bootstrap (3.0.0): from any Claude Code session,
 say `Read https://mgkay.github.io/track-changes/bootstrap.md and follow
-the installation instructions inside it.` Claude Code downloads the skill
-files, merges five hook registrations into `~/.claude/settings.json`, and
-reports success. See <https://mgkay.github.io/track-changes/> for the
+the installation instructions inside it.` Claude Code downloads both
+skills' files and merges **six hook registrations** into
+`~/.claude/settings.json` — five for track-changes plus one PreToolUse for
+verified-import, registered **before** track-changes' so a verified import
+lands clean. The merge strips both hook signatures before re-adding, so a
+re-run is idempotent. See <https://mgkay.github.io/track-changes/> for the
 landing page and version history.
 
-Local install (developer path): `bash install.sh` from the project root.
+Local install (developer path): `bash install.sh` from the project root
+installs both skills and merges the same six hooks.
 
-## 0. Importing from a source (provenance wrappers)
+## 0. Importing from a source (the verified-import skill)
 
-When the author asks you to **import** a passage **verbatim from a vetted
-source** into a tracked file — rather than write or edit prose yourself —
-wrap it so the hook can confirm the bytes really came from that source. A
-verified wrapped block is exempt from per-character marks (it is a faithful
-copy, not your change), while any AI-authored glue around it still gets
-normal marks.
-
-**Grammar.**
+When the author asks you to **import** a passage **from a source file**
+into a tracked document — rather than write or edit prose yourself — that
+is the job of the separate, opt-in **`verified-import`** skill, not the
+mark protocol. Invoke it with:
 
 ```
-<!-- track-changes: from=PATH[#L<a>-L<b>] [mode=MODE] -->
-…the imported body, verbatim from the source slice…
-<!-- /track-changes -->
+/import <source>[#L<a>-L<b>] [<target>]
 ```
 
-- `from=PATH` — required; may contain spaces. See **Path resolution** below.
-- `#L<a>-L<b>` — optional 1-indexed inclusive line range; omit for whole file.
-- `mode=` — `normalized` (default), `strict`, or `fuzzy`:
-  - **normalized** — ASCII-folds smart punctuation and collapses whitespace
-    runs (tolerates reflow/indentation); still rejects added/removed words.
-  - **strict** — byte-exact after EOL normalization.
-  - **fuzzy** — normalized, then accept at Levenshtein ratio ≥ 0.85 (opt-in).
+`/import` reads the source (a whole text file or a `#L<a>-L<b>` line
+range), prints it with an instruction to convert it to the target
+document's format, and you write the converted block. A `verified-import`
+PreToolUse hook then checks that the inserted block's **content words**
+match the source — formatting may differ freely (`\section{Methods}` ↔
+`## Methods`), but a faithful import adds and removes no content. On a
+pass the block lands **clean (no `<mark>`)** via an exemption signal this
+track-changes skill honors, and an `imported:` entry is appended to
+`.tc-history.md` (§11). On a mismatch the write is **blocked, fail-closed**,
+naming the added/removed words for a faithful retry.
 
-The PreToolUse hook reads the source, slices the range, and checks the body
-against it under `mode`. Match → the wrapped lines are exempt and a verified
-`imported:` entry is appended to `.tc-history.md` (§11). Mismatch or an
-unresolved source → the write is **blocked** (fail-closed) with a specific
-reason.
-
-**Text sources only.** `from=` must resolve to a **text** file — `.md`,
-`.markdown`, `.qmd`, `.rmd`, `.tex`, or `.txt`. A binary/non-text source
-(`.docx`, `.pdf`, slides, spreadsheets, …) is **rejected before any read**
-with an actionable message: §0 verifies by text comparison, and a binary
-cannot be compared.
-
-**Path resolution.** A relative `from=PATH` is resolved in order, first
-existing file wins:
-1. the directory of the file being edited (the intuitive "next to mine"),
-2. the nearest ancestor directory holding a `.tc-tracked` marker,
-3. the repository root (nearest `.git`).
-An absolute path is honored as-is. On a miss, the block message lists the
-directories tried and suggests a relative path. *Example:* editing
-`book/ch3.md` with the source `book/figs.md` beside it → `from=figs.md`
-resolves in step 1 even when `.git` is several levels up.
-
-### Non-goal: track-changes does not convert binary documents
-
-Converting a Word/PDF/slide original into text is an **upstream, separately
-reviewed activity** — not part of this skill. §0 imports only from an
-already-vetted text source. Conversion is lossy (equations, figures, and
-cross-references degrade) and so requires human judgement, not a silent hook
-transform. LaTeX is a better conversion *target* than Markdown, because
-equations survive as text — where the §0 match is meaningful.
-
-**When the contract applies (scoping).** track-changes is a *write-time gate
-on tracked text files*, never a converter. The text-source rule governs
-exactly one situation: **an import whose final write lands in a tracked
-file.** Activation being on does not turn unrelated work into track-changes
-work — a conversion done on the side (new/untracked output, or just printed)
-is invisible to the skill. The deciding test is *structural, not linguistic*:
-"does this write go into a tracked file?", not a guess about the prompt's
-wording.
-
-**Behavioral guidance — sequence, don't refuse.** If the author asks to
-import a section from a **binary** into a tracked file, do **not** refuse the
-goal and do **not** feed the binary to `from=`. Instead **sequence** it:
-convert the binary to a vetted text source as a separate, reviewed step, then
-§0-import from that text. Decline the binary only as a `from=` provenance
-source. When the destination is ambiguous (e.g. "put the methods section from
-`paper.docx` into `ch3.tex`"), ask one question — tracked §0 import vs. a
-plain drop — rather than assume.
+**Text sources only.** `/import` accepts only text sources (`.md`,
+`.markdown`, `.qmd`, `.rmd`, `.tex`, `.txt`); a binary/non-text source is
+rejected. Converting a Word/PDF/slide original into text is an upstream,
+separately reviewed activity — do that conversion first (to a vetted text
+file), then `/import` from it. See the **verified-import** skill's
+`SKILL.md` for the full contract.
 
 ## 1. Protocol
 
@@ -112,6 +86,15 @@ visual goal is a yellow span that lines up exactly with the change, so a
 reviewer scanning a document can see at a glance what changed. A
 phrase-level wrapper that includes unchanged words defeats the purpose
 of the skill.
+
+**Two skills, one suite.** track-changes is the always-on mark-gate for
+in-place edits to vetted prose (and any AI-authored glue). Importing
+content *from a source file* is the separate opt-in **`verified-import`**
+skill (§0), which lands its verified output clean via an exemption this
+skill honors. SessionStart injects a compact `reference/digest.md` (mark
+rules + `/tc` commands + lazy-load pointers); this full `SKILL.md` is
+loaded on demand, so keep its §-numbering stable for the digest's
+`SKILL.md §N` references.
 
 ## 2. Activation
 
@@ -318,7 +301,7 @@ marks consume their accept-or-reject chars on the proposed side. The
 edit is still recognised as a resolution provided every byte is
 accounted for.
 
-### Batch resolution via `/tc` (§5)
+### Batch resolution via `/tc` (§7)
 
 For a file with many marks, the user can resolve them in bulk through the
 canonical commands rather than conversational batches:
@@ -395,81 +378,16 @@ The hook validates the chosen N is unique. Non-contiguous numbering
 (e.g., `1, 2, 7` after the user removed `3`–`6`) is allowed — the rule
 is uniqueness, not contiguity.
 
-### Cross-file paste renumbering
-
-When pasting content from one file (Doc A) into another (Doc B), each
-inherited mark whose N collides with an existing N in Doc B is
-renumbered to `max(Doc B existing) + 1, +2, ...` in order of appearance.
-The mark content (chars wrapped, strikethrough, new chars) carries over
-exactly; only the number changes. The scan target is the **proposed**
-Doc B, so a fresh edit you make at the same time as the paste continues
-the numbering past the just-pasted inherited marks.
-
-#### Cross-file lineage comment (§7)
-
-When a mark is **renumbered** on a cross-file paste, append a lineage
-comment to the renumbered destination mark recording where it came from:
-
-```markdown
-... <mark>pasted text</mark><sup>14</sup><!-- from-file=doc-A:7 -->
-```
-
-```latex
-... \tc{pasted text}\tcn{14}<!-- from-file=notes:4 -->
-```
-
-Grammar: `<!-- from-file=<basename>:<N> -->`, where `<basename>` is the
-source file's basename with spaces replaced by `_` (e.g.
-`Freight_Transport`), `:<N>` is the source mark number, and the comment
-immediately follows the destination mark. For a `.tex` source, `<N>` is
-the source's `\tcn{N}` number. The comment is an HTML comment that
-renders as nothing in Quarto/Pandoc/GitHub, so the lineage stays in the
-source as a permanent audit trail. The analyzer does **not** treat this
-comment as content needing its own mark. The PostToolUse hook records the
-mapping (`<basename>:<src> -> <dest>`) in an audit `lineage:` block.
-
 ## 6. Non-Rendering Contexts
 
 Some constructs do not render `<mark>` or `\tc{}` inside them — fenced
 code, display math, YAML front matter, GFM tables, LaTeX verbatim, math
-environments, tabular. When a change falls inside one of these, the
-**sibling-element rule** applies: emit one sibling mark per change on
-the lines immediately above the block, using the same v2 encoding as
-inline marks. Then make the actual edit inside the block.
+environments, tabular. v3 handles them in exactly two ways: a sibling
+mark for a **brand-new** Markdown/Quarto block, and `/draft` for
+everything else (editing *inside* an existing construct, or adding a
+brand-new LaTeX block).
 
-### Markdown sibling form
-
-```markdown
-<mark><s>old</s>new</mark><sup>N</sup>
-` ``python
-... edited content ...
-` ``
-```
-
-Multiple changes within a single block → multiple sibling lines, each
-with its own `<sup>N</sup>`, stacked immediately above the block opener.
-
-### LaTeX sibling form
-
-```latex
-\tc{\sout{old}new}\tcn{N}
-\begin{equation}
-  ... edited content ...
-\end{equation}
-```
-
-### Enumerated supported constructs
-
-The PreToolUse hook recognises these as non-rendering:
-
-**Markdown / Quarto:** fenced code blocks, display math `$$...$$`, YAML
-front matter (top-of-file `---`), GFM pipe tables.
-
-**LaTeX:** verbatim, lstlisting, minted, equation/equation*,
-align/align*, gather/gather*, multline/multline*, `\[...\]` display
-math, tabular.
-
-### New block-level elements (block-sibling form)
+### Brand-new Markdown/Quarto block (block-sibling form)
 
 Adding a **brand-new** block-level element — an ATX heading, a fenced
 code block, or a `::: {...}` Quarto div — would otherwise break the
@@ -491,22 +409,36 @@ delimiter lines (and the heading line) as covered by that sibling mark — no
 :::
 ```
 
+Multiple new blocks → one sibling line each, no blank line between the
+sibling and the opener it covers.
+
+**Markdown/Quarto only.** The block-sibling form covers brand-new
+`.md`/`.qmd` headings, fenced-code blocks, and `:::` divs. A brand-new
+LaTeX block — `\section{}`, an `equation`/`align`/`tabular`/`verbatim`
+environment — is **not** auto-covered; route it to `/draft` (see below).
+
 This applies only to a *newly added* heading/block. Editing the text of an
 *existing* heading follows the normal inline rule (wrap the changed
-characters: `## <mark><s>Old</s>New</mark><sup>N</sup> Section`). A new
-heading or block inside a verified `<!-- track-changes: from=… -->` import
-wrapper is already exempt and is not separately flagged.
+characters: `## <mark><s>Old</s>New</mark><sup>N</sup> Section`).
 
-### Outside-enumerated → `/draft`
+### Editing inside a construct, or a new LaTeX block → `/draft`
 
-Constructs outside the enumerated list (custom LaTeX environments, complex
-tabularx/longtable, nested fenced code) are documented v2 limitations.
-When you must edit inside one of these:
+v3 has **no sibling escape hatch for editing inside an existing
+non-rendering construct.** A change inside a fenced-code block, display
+math, GFM table, YAML front matter, or any LaTeX environment — and any
+brand-new LaTeX block (`\section{}`, environments) — cannot be inline-
+wrapped without breaking the construct, and the in-construct sibling
+mechanism was removed in v3. The hook blocks such an unwrapped change as
+ordinary unwrapped content and suggests `/draft`. When you must make one
+of these edits:
 
 1. Ask the user to invoke `/draft` for the current turn.
 2. Make the edit without a highlight wrapper.
 3. Note the edit in your reply so the user can review it without the
    numbered-mark scaffolding.
+
+This is a documented v3 limitation (the v2 in-construct sibling form was
+dropped to simplify the analyzer).
 
 ## 7. Slash Commands
 
@@ -523,8 +455,27 @@ The skill installs a single unified `/tc` command with subcommands, plus
 | `/tc mark [<dir>]` | drop a presence-only `.tc-tracked` marker in `<dir>` (tracks ALL files in that folder; default `<dir>` = current directory) |
 | `/tc mark <dir> <file1> [<file2>...]` | drop a list-mode `.tc-tracked` marker that tracks only the listed basenames in `<dir>` |
 | `/tc migrate <dir>` | run v1 → v2 mark migration on all `.md`/`.qmd`/`.tex` files under `<dir>` |
-| `/tc status [<file>]` | print the activation chain for `<file>` (or current directory) |
+| `/tc status [<file>]` | print the activation chain for `<file>` (or the working file / current directory) |
+| `/tc list [<file>]` | list every mark in `<file>` with its number, type, and a short content preview |
+| `/tc accept [<file>] <ranges>` | accept the listed marks (keep new text, strip the wrapper); range syntax `1-25,!7,!11` |
+| `/tc reject [<file>] <ranges>` | reject the listed marks (restore old text, strip the wrapper) |
+| `/tc accept-all [<file>]` / `/tc reject-all [<file>]` | resolve every mark |
 | `/tc help` | show the subcommand list |
+
+For the resolution subcommands (`list`/`accept`/`reject`/`accept-all`/
+`reject-all`) and `status`, omitting `<file>` resolves the **working
+file** — the most-recently-modified tracked file under the project (git
+root, else current directory) — and the command echoes the chosen file.
+`/tc enable` and `/tc disable` always require an explicit `<file>`. See §3
+"Batch resolution via `/tc`" for the resolution behavior and `commands/tc.md`
+for the full surface.
+
+### Importing — a separate skill
+
+`/import` is **not** a `/tc` subcommand. Importing content from a source
+file into a tracked document is the opt-in **`verified-import`** skill
+(`/import <source>[#L<a>-L<b>] [<target>]`, §0). Its verified output lands
+clean (no marks) via an exemption this skill honors.
 
 ### Legacy alias
 
@@ -554,7 +505,9 @@ same value is a no-op.
 
 `/tc mark` (no filename args) drops a presence-only marker. `/tc mark`
 with one or more filename args after `<dir>` drops a list-mode marker
-naming only those basenames.
+naming only those basenames. The marker-writing logic lives in
+`lib/tc-mark.sh`, which the `/tc mark` CLI sources and runs directly (it
+no longer shells out to `install.sh`).
 
 ### How to use these as Claude
 
@@ -587,9 +540,11 @@ disk; hook skips).
 
 When the user delegates to a Builder that will modify existing
 `.md`, `.qmd`, or `.tex` files in a tracked project, the user prefixes
-the delegation with `/draft` (for one builder turn) or invokes
-`/track-off` (for the duration of the PCV cycle). The Builder operates
-without highlight requirements; subsequent turns restore the default.
+the delegation with `/draft` (suspends tracking for that one turn). The
+Builder operates without highlight requirements; the next user turn
+restores the default. (There is no session-scope toggle — `/track-on`/
+`/track-off` were removed in Fix #6; use `/draft` per turn, or `/tc
+disable <file>` for a durable per-file opt-out.)
 
 ## 9. The `.tc-tracked` Marker
 
@@ -769,6 +724,11 @@ resolved:
 - `decision` is a best-effort inference based on whether the prior
   `new` or `old` chars still appear in the file. `accepted` /
   `rejected` / `ambiguous` are the possible values.
+- `imported` entries (a clean, unmarked source import) are **not**
+  produced by this skill's edit gate — they are appended by the
+  **`verified-import`** hook when a `/import` write passes verification
+  (§0). They share the same `.tc-history.md` log so the import trail
+  rides alongside the mark trail in git history.
 
 ### Diffable + queryable
 
@@ -851,9 +811,21 @@ concern; the source file and its marks are never altered.
   session's `/draft` suspends tracking for the others until the next user turn
   clears it (or the 1-hour SessionStart TTL sweep removes a stale sentinel).
   Sessions that expose a distinct session id are unaffected.
-- **New block-level elements.** Adding a brand-new heading, fenced code block,
-  or `:::` div uses the block-sibling form (§6), not inline wrapping or
-  `/draft`.
+- **New Markdown/Quarto block-level elements.** Adding a brand-new heading,
+  fenced code block, or `:::` div in a `.md`/`.qmd` file uses the block-sibling
+  form (§6), not inline wrapping or `/draft`. (A brand-new LaTeX block is
+  different — see below.)
+- **Editing inside a construct, or a new LaTeX block → `/draft`.** v3 has no
+  sibling escape hatch for editing *inside* an existing non-rendering construct
+  (fenced code, display math, GFM table, YAML, any LaTeX environment), nor for
+  a brand-new LaTeX `\section{}`/environment. Those edits route to `/draft`
+  (§6) — the hook blocks an unwrapped change and suggests it. This is a
+  documented v3 limitation (the v2 in-construct sibling form was removed).
+- **Importing from a source → `/import`, not a mark.** Pulling content from a
+  source file into a tracked document is the separate **`verified-import`**
+  skill (§0), which lands the verified block clean. Do not hand-wrap an import
+  in marks, and do not `/draft` it (that loses verification and marks on the
+  surrounding glue).
 - **Quarto feature interactions.** Code annotations don't combine with
   `lst-cap`; annotations mis-pair with executable chunks that print to stdout;
   hover previews / lightbox / code-annotation require serving over `http://`
@@ -871,13 +843,14 @@ workflow *around* them is implicit. A typical tracked-revision session runs:
 1. **Author asks for a revision.** The author opts the file in (folder
    `.tc-tracked` marker via `/tc mark`, or per-file `/tc enable <file>`), then
    asks Claude for the edit in plain language — "tighten the intro", "modernize
-   this example", "import the Periodic Shipments section from the source *text* document (§0)".
+   this example". To pull a passage *from a source file*, the author uses the
+   separate `/import` command (§0, the verified-import skill).
 2. **Claude lands marks.** Claude edits the file, wrapping only the changed
    characters in `<mark>…</mark><sup>N</sup>` (`.md`/`.qmd`) or
-   `\tc{}\tcn{N}` (`.tex`). Verbatim-from-source blocks are wrapped in import
-   wrappers (§0 provenance) and stay bare; new AI-authored glue gets marks. The
-   PreToolUse hook blocks any unmarked change. Each landed mark is recorded as
-   `introduced` in `.tc-history.md`.
+   `\tc{}\tcn{N}` (`.tex`). The PreToolUse hook blocks any unmarked change.
+   Each landed mark is recorded as `introduced` in `.tc-history.md`. A verified
+   `/import` (§0) is the exception: that block lands clean (no marks) and is
+   recorded as `imported`.
 3. **Author batch-resolves.** The author reviews the highlighted output and
    resolves in bulk through the canonical commands rather than a conversational
    batch:
@@ -895,7 +868,7 @@ workflow *around* them is implicit. A typical tracked-revision session runs:
    best-effort Fix #8 inference will never overwrite.
 5. **Commit.** The resolved file and the updated `.tc-history.md` are committed
    together, so the audit trail rides along in git history. The optional
-   pre-commit hook (`hooks/pre-commit.sh`, §16) can warn if marks are still
+   pre-commit hook (`hooks/pre-commit.sh`) can warn if marks are still
    outstanding at commit time.
 
 To share a document **before** marks are resolved (faculty meeting, student
@@ -921,11 +894,12 @@ Decide between `/draft` and in-place tracking by intent:
 - **Prefer in-place tracking** when the author is **refining** vetted content —
   the incremental-edit case the skill is built for, where each change should be
   individually reviewable.
-- **Reach for the §0 import wrapper, not `/draft`**, when content is being
-  imported verbatim from a vetted source: the wrapper keeps the imported bytes
-  bare *and* preserves marks on the surrounding AI-authored glue, whereas
-  `/draft` suspends checking for the whole turn and loses provenance for the
-  glue too.
+- **Reach for `/import` (the verified-import skill, §0), not `/draft`**, when
+  content is being imported from a source file: `/import` verifies the inserted
+  block against the source and lands it clean (no marks) via an exemption this
+  skill honors, while still requiring marks on any surrounding AI-authored glue
+  — whereas `/draft` suspends checking for the whole turn and verifies nothing.
 - **Reach for the block-sibling form (§6), not `/draft`**, when adding a single
-  new heading, fenced block, or `:::` div — that case no longer requires
-  suspending tracking.
+  brand-new heading, fenced block, or `:::` div in a `.md`/`.qmd` file — that
+  case no longer requires suspending tracking. (A brand-new LaTeX block still
+  routes to `/draft`.)

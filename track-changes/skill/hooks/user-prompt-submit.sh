@@ -46,4 +46,9 @@ if [ -n "$SENTINEL_DEFAULT" ] && [ "$SENTINEL_DEFAULT" != "$SENTINEL" ]; then
   tc_log "user-prompt-submit.sh: cleared fallback sentinel $SENTINEL_DEFAULT"
 fi
 
+# C6 / Q4: also clear stale verified-import exemption sentinels (tc_core.exempt;
+# F2). The MakePlan assigns "clears /draft + stale exemption sentinels" to this
+# hook. Best-effort + fail-silent — must never break the user turn.
+tc_sweep_exempt_sentinels 2>/dev/null || true
+
 exit 0
