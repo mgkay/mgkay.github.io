@@ -1,21 +1,25 @@
-3.0.2
+4.0.0
 2026-05-26
-track-changes v3 — two-skill split + leaner always-on footprint.
-3.0.2 patch: the `verified-import` and `track-changes` PreToolUse hooks are now
-  stacked in a SINGLE `Write|Edit|MultiEdit` matcher group (verified-import first)
-  instead of two separate matcher groups. Hooks in separate matcher groups run in
-  PARALLEL, which raced the F2 exemption-sentinel handoff (verified-import writes
-  the one-shot sentinel that track-changes consumes) — so a verified `/import` was
-  blocked on its first attempt and only landed clean on an identical retry.
-  Stacking in one group makes the two hooks run SEQUENTIALLY, so the import lands
-  clean on the first attempt. No hook code changed; the sha-bound sentinel contract
-  is unchanged. Regression test added (structural invariant + sha-contract identity
-  + broken-v3 two-group upgrade). Planning trail: pcvplans/fixes/.
-3.0.1 patch: `/tc mark <file>` (any non-directory first argument) is now a hard
-  error (exit 1, no marker written) instead of silently writing a broken,
-  full-path list-mode marker in CWD — consistent with `/tc migrate`'s directory
-  check. The other subcommands were audited; `mark` was the only one with this
-  silent-fallback defect. Regression test TC-M-11 added.
+track-changes v4 — import-verification paradigm change (LLM-judgment).
+4.0.0 major: the `verified-import` mechanical content gate is REMOVED. v3 verified an
+  AI-converted block against the named source by a content-word multiset compare and
+  blocked fail-closed on any discrepancy — too strict in practice, repeatedly tripping
+  faithful math/code imports (the EOQ false-reject). v4 trusts the LLM to import
+  faithfully: a live pending-import makes the `verified-import` PreToolUse hook write the
+  sha-bound exemption sentinel UNCONDITIONALLY (no comparison), so the converted block
+  lands CLEAN by default via the exemption the always-on `track-changes` skill honors.
+  The model SELF-MARKS only genuinely significant changes (altered meaning — added/removed
+  sentence or clause, changed quantity/term/formula) in track-changes marks; minor diffs
+  (reflow, reformatting, equivalent notation) land clean with no mark. "Verified" is
+  redefined from "mechanically content-word-equal" to "LLM-asserted faithful, with
+  significant changes marked for review." The dead gate code
+  (`normalized_equal`/`strip_markup`/`_content_words`) is deleted; the pending record is
+  slimmed to `{target, source_path, range, expires}`; the pending TTL default is 120→300 s
+  (user-overridable); the `/import` CLI now strips a leading `@` file-reference prefix from
+  the source and target args. No change to the track-changes mark grammar, the F2
+  single-group PreToolUse hook order (verified-import before track-changes), or the
+  two-skill install. Existing tracked documents need NO conversion. R-category tests
+  rewritten for the LLM-judgment model (the v3 gate-behavior fixtures retired).
 The single v2 skill is decomposed into two: a narrowed always-on `track-changes`
   mark-gate and a NEW opt-in `verified-import` skill (`/import`) for inserting a
   vetted source into a tracked document. The skills share one tc_core package
@@ -24,23 +28,18 @@ The single v2 skill is decomposed into two: a narrowed always-on `track-changes`
   full SKILL.md — ~93.5% smaller, well under the 40 KB inline cap; full SKILL.md is
   lazy-loaded on demand via "see SKILL.md §N" pointers.
 - Always-on surface narrowed (idea.md scope-decomposition thrust): §0 import wrappers
-  moved out to verified-import (convert-on-import faithfulness, fail-closed); §5
-  cross-file mark renumbering removed; §6 edit-inside-non-rendering-construct sibling
-  removed (such edits now route to /draft). Brand-new-block sibling (mechanism-1,
-  md/qmd) is kept; a brand-new LaTeX \section/env routes to /draft.
+  moved out to verified-import; §5 cross-file mark renumbering removed; §6
+  edit-inside-non-rendering-construct sibling removed (such edits now route to /draft).
+  Brand-new-block sibling (mechanism-1, md/qmd) is kept; a brand-new LaTeX \section/env
+  routes to /draft.
 - Persistent daemon DROPPED after measurement (in-process pre_tool_use p50 ~41.5 ms,
   ~6x under the keep threshold; the daemon's ~13.5 ms/edit saving did not justify a
   294-line localhost-TCP subsystem). In-process is now the sole hook path.
-- /import stages a target-keyed pending-import, verifies the AI-converted block is
-  content-faithful to the named source (markup-agnostic content-word compare), and on
-  pass writes a one-shot exemption sentinel that the track-changes gate consumes — a
-  verified import lands clean (no marks); a discrepancy blocks fail-closed.
-- Mechanical fixes #4–#7: /tc resolution + status default to the most-recently-modified
-  tracked working file (echoed); bare /tc prints the compact menu; resolving a
-  whole-line mark to empty drops the orphaned blank line; utcnow() deprecation removed.
+- /import stages a target-keyed pending-import; on a live pending-import the
+  verified-import hook writes a one-shot exemption sentinel that the track-changes gate
+  consumes — a verified import lands clean (no marks). The v3 content gate is removed
+  (see the 4.0.0 entry above).
 - Clean break (Q2): the v3 mark grammar is UNCHANGED — existing tracked documents need
-  NO conversion; upgrading from v2 only re-installs files and replaces the single v2
-  hook registration with the v3 two-skill set (verified-import and track-changes
-  stacked in one PreToolUse matcher group — see the 3.0.2 patch). /tc migrate
-  (v1→v2 marks) is retained for legacy v1 marks.
-- 339-test v3 suite (A–V) green.
+  NO conversion; upgrading only re-installs files and registers the two-skill hook set
+  (verified-import and track-changes stacked in one PreToolUse matcher group). /tc migrate
+  (v1->v2 marks) is retained for legacy v1 marks.

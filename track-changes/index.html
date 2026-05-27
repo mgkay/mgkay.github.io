@@ -244,14 +244,14 @@ skill handles this with the <code>/import</code> command:</p>
 
 <pre class="snippet">/import chapter3.md#L10-L42 lecture-notes.md</pre>
 
-<p>Claude converts the source into the target document&rsquo;s format and inserts it. The
-<code>verified-import</code> hook then checks that the inserted text is
-<strong>content-faithful</strong> to the named source &mdash; same content words; markup and
-formatting may differ. If it is faithful, the block lands <strong>clean (no highlights)</strong>,
-so it reads as ordinary prose and only Claude&rsquo;s genuinely new additions around it get
-highlighted. If Claude added or dropped content, the <strong>save is blocked</strong> and the
-difference is named, so you can&rsquo;t be misled into trusting altered material. The command
-works on text sources; binary formats require a plain-text copy to import from.</p>
+<p>Claude converts the source into the target document&rsquo;s format and inserts it, reproducing
+the content faithfully. A verified import lands <strong>clean (no highlights)</strong> by default,
+so it reads as ordinary prose and only Claude&rsquo;s genuinely new writing around it gets
+highlighted. Claude uses its judgment: if a conversion introduces a genuinely
+<strong>significant</strong> change &mdash; an added or removed sentence or clause, or a changed
+quantity, term, or formula &mdash; it highlights just that change for your review; minor
+differences (reflow, formatting, equivalent notation) stay clean. The command works on text
+sources; binary formats require a plain-text copy to import from.</p>
 
 <h3>Resolve a whole review pass in seconds</h3>
 <p>A heavy editing session can leave dozens of highlights. Rather than clicking through them one at a
@@ -303,7 +303,7 @@ always override it for a single commit.</p>
 </main>
 
 <footer>
-  <p>track-changes v3.0.2 &middot; M. G. Kay &middot; NC State ISE<br>
+  <p>track-changes v4.0.0 &middot; M. G. Kay &middot; NC State ISE<br>
   <a href="bootstrap.md" download>Download bootstrap.md</a></p>
 </footer>
 

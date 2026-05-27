@@ -1,23 +1,23 @@
 # track-changes Bootstrap — Source-preserving AI edit protocol (two-skill suite)
 
-**Version:** 3.0.2
+**Version:** 4.0.0
 **Date:** 2026-05-26
 
 ## What This File Does
 
-Installer manifest for the **track-changes** suite for Claude Code. v3 ships **two skills** that share a single `tc_core` package:
+Installer manifest for the **track-changes** suite for Claude Code. The suite ships **two skills** that share a single `tc_core` package:
 
 - **`track-changes`** (always-on, opt-in per file/folder) — every Claude edit to a tracked `.md` / `.qmd` / `.tex` file is wrapped in a `<mark>…</mark><sup>N</sup>` highlight you can review and accept/reject. This is the mark-gate.
-- **`verified-import`** (opt-in, invoked via `/import`) — insert a vetted source (a Word chapter, a prior notebook, a manuscript section) into a tracked document. Claude converts the source to the document's format; the hook verifies the result is **content-faithful** to the named source and, on pass, lets the import land **clean** (no marks). A discrepancy blocks fail-closed.
+- **`verified-import`** (opt-in, invoked via `/import`) — insert a vetted source (a Word chapter, a prior notebook, a manuscript section) into a tracked document. Claude converts the source to the document's format and lands it **clean** (no marks): there is **no mechanical content gate** — the LLM imports faithfully and self-marks only genuinely significant changes (altered meaning) in track-changes marks; minor diffs land clean. A PreToolUse hook writes a one-shot, sha-bound exemption that the always-on `track-changes` skill honors, so the faithful block is not mark-wrapped.
 
 When Claude Code follows the instructions below, it downloads both skills — hooks, library modules, the shared `tc_core` package, slash commands, and reference docs — and merges **six** hook registrations across the two skills into your `~/.claude/settings.json`.
 
-**The v3 thrusts:**
+**The suite design:**
 - **Leaner always-on footprint.** The `track-changes` skill is narrowed: source-provenance import wrappers moved out into the separate opt-in `verified-import` skill; cross-file mark renumbering and edit-inside-non-rendering-construct sibling handling were removed (such edits now route to `/draft`).
 - **SessionStart digest.** The session-start hook now injects a compact `reference/digest.md` (~2.9 KB) instead of the full `SKILL.md` — ~93.5% smaller, well under the 40 KB inline cap. The full `SKILL.md` is lazy-loaded on demand.
-- **Convert-on-import.** `verified-import` verifies the AI-converted block against the source by content words (markup-agnostic), then exempts the verified import from the mark requirement via a one-shot sentinel the `track-changes` gate consumes.
+- **Convert-on-import (LLM-judgment).** `verified-import` trusts the LLM to import the AI-converted block faithfully — there is **no mechanical content gate**. On a live pending-import the hook writes a one-shot, sha-bound exemption that the `track-changes` gate consumes, so the converted block lands clean; the model self-marks only genuinely significant changes (altered meaning) for the author to review.
 
-**Backward compatibility / clean break:** the v3 `<mark>…</mark><sup>N</sup>` mark grammar is **unchanged**. Existing tracked documents need **no conversion** — upgrading from v2 only re-installs the skill files and re-registers the hooks. See the v3 changelog at the bottom.
+**Backward compatibility / clean break:** the `<mark>…</mark><sup>N</sup>` mark grammar is **unchanged**. Existing tracked documents need **no conversion** — upgrading only re-installs the skill files and re-registers the hooks. See the changelog at the bottom.
 
 ## Prerequisites
 
@@ -36,16 +36,16 @@ When Claude Code follows the instructions below, it downloads both skills — ho
 
 ## Instructions for Claude Code
 
-You are reading the track-changes v3.0.2 bootstrap manifest. Follow these steps precisely.
+You are reading the track-changes v4.0.0 bootstrap manifest. Follow these steps precisely.
 
 ### Step 1: Check for existing installation
 
-Read `~/.claude/skills/track-changes/VERSION`. If the file exists, parse the first line as a version number. Compare it to `3.0.2` using semantic-version ordering (compare major, then minor, then patch as integers; treat a missing component as 0, so a two-part `2.0` is `2.0.0`).
+Read `~/.claude/skills/track-changes/VERSION`. If the file exists, parse the first line as a version number. Compare it to `4.0.0` using semantic-version ordering (compare major, then minor, then patch as integers; treat a missing component as 0, so a two-part `2.0` is `2.0.0`).
 
-- **Equal to 3.0.2** → "track-changes v3.0.2 is already installed. No update needed." **STOP.**
-- **Higher than 3.0.2** → "track-changes v[installed] is newer than this bootstrap (3.0.2). Aborting — will not downgrade." **STOP.**
-- **Lower than 3.0.2** (e.g. v3.0.0, v3.0.1, or any v1.x or v2.x) → "Updating track-changes from v[installed] to v3.0.2." Proceed to Step 2. The download in Step 2 overwrites every skill file in place, so the upgrade is a clean replacement (a 3.0.0/3.0.1 upgrade also re-merges settings.json, collapsing the pre-3.0.2 two-group PreToolUse registration into the single combined group); existing `<mark>…</mark><sup>N</sup>` content in your documents is fully backward-compatible and is left untouched (the v3 mark grammar is unchanged — no document migration is needed).
-- **Does not exist** → "Installing track-changes v3.0.2." Proceed to Step 2.
+- **Equal to 4.0.0** → "track-changes v4.0.0 is already installed. No update needed." **STOP.**
+- **Higher than 4.0.0** → "track-changes v[installed] is newer than this bootstrap (4.0.0). Aborting — will not downgrade." **STOP.**
+- **Lower than 4.0.0** (e.g. v3.0.x, or any v1.x or v2.x) → "Updating track-changes from v[installed] to v4.0.0." Proceed to Step 2. The download in Step 2 overwrites every skill file in place, so the upgrade is a clean replacement (the upgrade also re-merges settings.json, laying down the single combined PreToolUse matcher group); existing `<mark>…</mark><sup>N</sup>` content in your documents is fully backward-compatible and is left untouched (the mark grammar is unchanged — no document migration is needed).
+- **Does not exist** → "Installing track-changes v4.0.0." Proceed to Step 2.
 
 ### Step 2: Download all files (curl-based)
 
@@ -95,14 +95,14 @@ If the command exits non-zero, report the error to the user and stop.
 
 ### Step 4: Verify installation
 
-1. Read `~/.claude/skills/track-changes/VERSION` → first line must be `3.0.2`.
+1. Read `~/.claude/skills/track-changes/VERSION` → first line must be `4.0.0`.
 2. Read `~/.claude/skills/track-changes/SKILL.md` → must begin with `---` (YAML frontmatter).
 3. Read `~/.claude/skills/track-changes/hooks/pre_tool_use.py` → must begin with `"""` (Python docstring).
 4. Read `~/.claude/skills/track-changes/lib/tc_core/grammar.py` → must exist (shared mark-grammar package).
 5. Read `~/.claude/skills/track-changes/reference/digest.md` → must exist (SessionStart digest).
 6. Read `~/.claude/skills/verified-import/SKILL.md` → must begin with `---` (YAML frontmatter).
-7. Read `~/.claude/skills/verified-import/hooks/pre_tool_use.py` → must exist (import verification gate).
-8. Read `~/.claude/skills/verified-import/lib/vi_verify.py` → must exist (content-faithfulness engine).
+7. Read `~/.claude/skills/verified-import/hooks/pre_tool_use.py` → must exist (import exemption hook).
+8. Read `~/.claude/skills/verified-import/lib/vi_verify.py` → must exist (import resolution/staging engine).
 9. Read `~/.claude/commands/draft.md`, `~/.claude/commands/tc.md`, `~/.claude/commands/import.md` → all three must exist.
 10. Read `~/.claude/settings.json`, parse as JSON, confirm `.hooks.PreToolUse` contains a **single matcher group** whose `hooks` array holds BOTH a command containing `verified-import/hooks/pre_tool_use.py` AND a command containing `track-changes/hooks/pre_tool_use.py`, with the **verified-import entry stacked before** the track-changes entry (same group → sequential execution; not two separate groups).
 
@@ -112,7 +112,7 @@ Any verification failure → report to user and do not claim success.
 
 On success, tell the user:
 
-> **track-changes v3.0.2 installed successfully — two skills + shared `tc_core`.**
+> **track-changes v4.0.0 installed successfully — two skills + shared `tc_core`.**
 >
 > **`track-changes`** (`~/.claude/skills/track-changes/`): always-on mark-tracking. SKILL.md, VERSION, settings-patch.json, hooks/ (5 sh + 2 py), lib/ (4 py + 6 sh + 1 sty + the shared `tc_core` package), reference/ (highlight-syntax.md, latex.md, quarto-notes.md, **digest.md**, tc-clean.css, tc-clean.js).
 >
@@ -124,7 +124,7 @@ On success, tell the user:
 >
 > **Always-on mark-tracking:** once a file is tracked, every AI edit to a `.md` / `.qmd` / `.tex` file is wrapped in `<mark>…</mark><sup>N</sup>` highlights you can review and accept/reject. Batch-resolve with `/tc accept|reject|list [<file>] <ranges>` (e.g. `1-25,!7`).
 >
-> **Verified import:** `/import <source>[#L<a>-L<b>] [<target>]` inserts a vetted source into a tracked document. Claude converts it to the document's format; the hook verifies content faithfulness and lets a verified import land clean (no marks). A discrepancy blocks with the differing content words named.
+> **Verified import:** `/import <source>[#L<a>-L<b>] [<target>]` inserts a vetted source into a tracked document. Claude converts it faithfully to the document's format and the import lands clean (no marks) — there is no mechanical content gate. Claude self-marks only genuinely significant changes (altered meaning) for you to review.
 >
 > **`/draft`:** temporarily suspend the highlight requirement for one user turn (e.g. for brand-new, from-scratch content).
 >
@@ -192,23 +192,25 @@ Each entry lists source-URL → destination-path. Base URL: `https://raw.githubu
 
 ---
 
-## v3.0.2 Changelog Summary
+## v4.0.0 Changelog Summary
 
-v3 decomposes the single v2 skill into a **two-skill suite** and trims the always-on footprint, driven by real ISE 754 authoring friction (SessionStart latency + scope creep).
+v4 changes the **import-verification paradigm** of the two-skill suite (introduced in v3, which decomposed the single v2 skill and trimmed the always-on footprint, driven by real ISE 754 authoring friction — SessionStart latency + scope creep).
+
+**v4.0.0 (import-verification paradigm change).** The `verified-import` **mechanical content gate is removed.** v3 ran a mechanical token-multiset comparison of the AI-converted block against the named source and refused any discrepancy — too strict in practice, repeatedly tripping faithful math/code imports (e.g. an EOQ `\sqrt{\frac{2KD}{h}}` rendering). The whole point of using a large language model is that it can judge which differences matter, so v4 trusts the model to import faithfully: on a live pending-import, `verified-import/hooks/pre_tool_use.py` writes the one-shot, sha-bound exemption sentinel **unconditionally** (no comparison) plus an `imported:` audit entry, so the converted block lands clean via the exemption the `track-changes` gate honors. The model **self-marks only genuinely significant changes** — a change that *alters meaning* (an added or removed sentence or clause, or a changed quantity, term, or formula) — in track-changes marks; minor diffs (reflow, reformatting, equivalent notation such as `\section{X}` → `## X` or an `equation` environment → `$$…$$`) land clean with no mark. The dead gate code is deleted; the pending record is slimmed to `{target, source_path, range, expires}`; the pending TTL default is 120 → 300 s (user-overridable); and the `/import` CLI now strips a leading `@` file-reference prefix from the source and target args. No change to the mark grammar, the single-group PreToolUse hook order (verified-import before track-changes), or the two-skill install.
 
 **v3.0.2 patch.** The `verified-import` and `track-changes` PreToolUse hooks are now stacked in a **single** `Write|Edit|MultiEdit` matcher group (verified-import first) instead of two separate matcher groups. Hooks in *separate* matcher groups run in parallel, which raced the exemption-sentinel handoff (verified-import writes the one-shot sentinel that track-changes consumes) — so a verified `/import` was blocked on its first attempt and only landed clean on an identical retry. Stacking them in one group makes the two run **sequentially**, so a verified import lands clean on the first attempt. No hook code changed; the sha-bound sentinel contract is unchanged.
 
 **v3.0.1 patch.** `/tc mark` on a non-directory first argument is now a hard error (exit 1, no marker written) instead of silently writing a broken, full-path list-mode marker in CWD — consistent with `/tc migrate`'s directory check. Regression test TC-M-11 added.
 
-- **Two-skill split (headline).** The narrowed always-on **`track-changes`** mark-gate and the new opt-in **`verified-import`** skill (`/import`) share one `tc_core` package (`track-changes/lib/tc_core` — not duplicated; verified-import imports it). The v2 source-provenance import wrappers (`<!-- track-changes: from=… -->`) are retired in favor of `/import`'s convert-then-verify flow.
+- **Two-skill split (headline).** The narrowed always-on **`track-changes`** mark-gate and the new opt-in **`verified-import`** skill (`/import`) share one `tc_core` package (`track-changes/lib/tc_core` — not duplicated; verified-import imports it). The v2 source-provenance import wrappers (`<!-- track-changes: from=… -->`) are retired in favor of `/import`'s convert-and-land-clean flow.
 - **SessionStart digest.** The session-start hook injects a compact `reference/digest.md` (~2.9 KB — activation rules, mark-grammar table, the `/tc` command list, and "see `SKILL.md §N`" lazy-load pointers) instead of `cat`-ing the full `SKILL.md`. **~93.5% smaller** than the v2 ~41.7 KB injection, comfortably under the 40 KB inline cap; the full `SKILL.md` is lazy-loaded on demand.
 - **Narrowed always-on surface.** §0 import wrappers → moved to `verified-import`; §5 cross-file mark renumbering → removed; §6 edit-inside-non-rendering-construct sibling → removed (such edits now route to `/draft`). The brand-new-block sibling (mechanism-1) is kept for `.md`/`.qmd`; a brand-new LaTeX `\section`/environment routes to `/draft`.
 - **Daemon dropped.** After measurement (in-process `pre_tool_use` p50 ≈ 41.5 ms, ~6× under the keep threshold), the v2 persistent localhost-TCP daemon was removed; the ~13.5 ms/edit it saved did not justify the 294-line subsystem. In-process is now the sole hook path. A plain install removes any stale deployed `tc_daemon.py`.
-- **Convert-on-import faithfulness.** `/import` stages a target-keyed pending-import, then `verified-import/hooks/pre_tool_use.py` verifies the AI-converted block is content-faithful to the named source (markup-agnostic content-word multiset compare — tolerates reflow and `\section{X}`↔`## X` translation, rejects an injected sentence or a dropped clause). On **pass** it writes a one-shot exemption sentinel (sha-bound to the proposed bytes, byte-identical to what the track-changes gate consumes) plus an `imported:` audit entry, so a verified import lands clean. On **fail** it blocks fail-closed, naming the differing content words.
+- **Convert-on-import (LLM-judgment).** `/import` stages a target-keyed pending-import; on a live pending-import `verified-import/hooks/pre_tool_use.py` writes a one-shot exemption sentinel (sha-bound to the proposed bytes, byte-identical to what the track-changes gate consumes) plus an `imported:` audit entry, so the converted block lands clean. There is **no mechanical content gate** (the v3 token-multiset comparison and its EOQ false-reject are gone): the LLM imports faithfully — preserving every sentence and clause, only reformatting to the target format — and self-marks only a genuinely significant change (one that alters meaning) in a track-changes mark for the author. Author responsibility: keep the import write to only the converted block, since the exemption is keyed to the whole written file.
 - **Mechanical fixes #4–#7.** `/tc` resolution + `status` default to the most-recently-modified tracked working file (echoed); bare `/tc` prints the compact menu; resolving a whole-line mark to empty drops the orphaned blank line; `datetime.utcnow()` deprecation removed.
-- **Clean break — no document migration (Q2).** The v3 `<mark>…</mark><sup>N</sup>` mark grammar, per-file YAML activation, `.tc-tracked` markers, token-minimal wrapping, and the native-Python in-process hook architecture are **unchanged**. Existing tracked documents need **no conversion**; an upgrade from v2 only re-installs files and replaces the single v2 hook registration with the v3 two-skill set (verified-import and track-changes stacked in one PreToolUse matcher group, so they run sequentially). `/tc migrate <dir>` is retained for converting any legacy **v1** marks.
+- **Clean break — no document migration.** The `<mark>…</mark><sup>N</sup>` mark grammar, per-file YAML activation, `.tc-tracked` markers, token-minimal wrapping, and the native-Python in-process hook architecture are **unchanged** across v4. Existing tracked documents need **no conversion**; an upgrade only re-installs files and lays down the two-skill hook set (verified-import and track-changes stacked in one PreToolUse matcher group, so they run sequentially). `/tc migrate <dir>` is retained for converting any legacy **v1** marks.
 
-The 339-test v3 suite (categories A–V) passes green. See `https://mgkay.github.io/track-changes/` for project details.
+The v4 test suite (categories A–V) passes green. See `https://mgkay.github.io/track-changes/` for project details.
 
 ## Troubleshooting
 

@@ -1,13 +1,12 @@
-"""vi_verify — verified-import source resolution, faithfulness check, and
-pending-import staging (v3, D4/F2).
+"""vi_verify — verified-import source resolution and pending-import staging
+(v4, LLM-judgment model).
 
 This module is the engine for the `verified-import` skill's `/import`
 command and its PreToolUse hook. It is a simplified, prose-normalized rebirth
 of v2's `tc_provenance` (which left track-changes in v3 C2): the source-path
-resolution + fragment-slice + text-source gate are ported here, the §0 inline
-wrapper-scanning machinery (`scan_wrappers` / `Wrapper` / strict/fuzzy
-`matches`) is dropped, and a markup-stripping content-word faithfulness check
-is added.
+resolution + fragment-slice + text-source gate are ported here; the §0 inline
+wrapper-scanning machinery and the v3 markup-stripping content-word
+faithfulness gate are both dropped.
 
 Two roles:
 
@@ -16,21 +15,19 @@ Two roles:
    target-keyed pending-import record under the track-changes state tree, and
    prints the resolved slice + a conversion instruction for Claude.
 
-2. Library — the verified-import PreToolUse hook imports `normalized_equal`,
-   `strip_markup`, `load_pending`, and `clear_pending` to verify a proposed
-   import write against its staged source slice.
+2. Library — the verified-import PreToolUse hook imports `load_pending` and
+   `clear_pending` to detect and consume a live pending-import.
 
-Faithfulness model (D4):
-  - Both the inserted block and the source slice are stripped of *formatting*
-    markup (Markdown / LaTeX), folded for whitespace + smart punctuation
-    (reusing v2's `_normalize` rules), and reduced to lowercase content-word
-    token streams.
-  - The import is faithful iff the two content-word MULTISETS are equal — no
-    content word added (in the block, not the source) and none removed (in the
-    source, not the block). Multiset (order-insensitive) compare tolerates
-    paragraph reflow and reordering from format conversion; D4 accepts the
-    certainty loss from markup stripping.
-  - `strict` mode (optional) requires exact normalized-string equality.
+Verification model (v4, Q1/Q3):
+  - There is NO mechanical content gate. The LLM does a best-effort faithful
+    import and self-judges significant-vs-minor. A clean import lands clean
+    (the hook writes a sha-bound exemption sentinel unconditionally when a
+    pending-import is live); if the conversion introduced a genuinely
+    significant content change, the LLM wraps that part in a track-changes
+    mark for the author. "Verified" is redefined from "mechanically proven
+    content-word-equal" to "LLM-asserted faithful, with significant changes
+    marked for review." The v3 `normalized_equal` / `strip_markup` /
+    `_content_words` machinery is removed as dead code.
 """
 import os
 import re
@@ -41,38 +38,12 @@ import hashlib
 
 
 # ---------------------------------------------------------------------------
-# Normalization helpers (ported from v2 tc_provenance).
-# ---------------------------------------------------------------------------
-
-# Smart-quote / dash variants folded to ASCII (v2 normalized mode).
-_SMART_MAP = {
-    '‘': "'", '’': "'", '‚': "'", '‛': "'",
-    '“': '"', '”': '"', '„': '"', '‟': '"',
-    '–': '-', '—': '-', '‒': '-', '―': '-',
-    '…': '...', ' ': ' ',
-}
-_SMART_TRANS = {ord(k): v for k, v in _SMART_MAP.items()}
-
-_WS_RUN_RE = re.compile(r'\s+')
-
-DEFAULT_MODE = 'normalized'
-
 # Text-source allowlist (v2 FIX-3). Case-insensitive extension gate; only
 # these formats are eligible to be imported from. A binary/non-text format
 # (e.g. .docx, .pdf) is rejected without any read/decode attempt.
+# ---------------------------------------------------------------------------
 TEXT_SOURCE_EXTS = frozenset({'.md', '.markdown', '.qmd', '.rmd', '.tex', '.txt'})
 _SNIFF_BYTES = 8192
-
-
-def _normalize(s):
-    """Normalized-mode canonical form: ASCII-fold smart punctuation,
-    normalize EOL, collapse all whitespace runs (incl. newlines) to a single
-    space, and strip. Tolerates paragraph reflow + indentation drift while
-    still surfacing added/removed words."""
-    s = s.replace('\r\n', '\n').replace('\r', '\n')
-    s = s.translate(_SMART_TRANS)
-    s = _WS_RUN_RE.sub(' ', s)
-    return s.strip()
 
 
 # ---------------------------------------------------------------------------
@@ -245,116 +216,6 @@ def parse_source_arg(arg):
     return (arg, None)
 
 
-# ---------------------------------------------------------------------------
-# Markup stripping (D4 — neutralize FORMAT differences, keep CONTENT words).
-# ---------------------------------------------------------------------------
-
-# Markdown.
-_MD_TC_MARK_RE = re.compile(r'<mark>(.*?)</mark>', re.DOTALL)  # keep inner text
-_MD_SUP_RE = re.compile(r'<sup>\d+</sup>')
-_MD_S_TAG_RE = re.compile(r'</?s>')                            # <s>...</s>
-_MD_TAG_RE = re.compile(r'</?[a-zA-Z][^>]*>')                  # any other tag
-_MD_IMAGE_RE = re.compile(r'!\[([^\]]*)\]\([^)]*\)')           # ![alt](url)->alt
-_MD_LINK_RE = re.compile(r'\[([^\]]*)\]\([^)]*\)')             # [txt](url)->txt
-_MD_CODE_SPAN_RE = re.compile(r'`+([^`]*)`+')                  # `code`->code
-_MD_EMPH_RE = re.compile(r'(\*\*\*|\*\*|\*|___|__|_)')         # *, **, _, __ ...
-_MD_HEADING_RE = re.compile(r'^\s{0,3}#{1,6}\s*', re.MULTILINE)
-_MD_BLOCKQUOTE_RE = re.compile(r'^\s{0,3}>\s?', re.MULTILINE)
-_MD_BULLET_RE = re.compile(r'^\s*(?:[-*+]|\d+\.)\s+', re.MULTILINE)
-_MD_HR_RE = re.compile(r'^\s*(?:[-*_]\s*){3,}$', re.MULTILINE)
-_MD_FENCE_RE = re.compile(r'^\s*(?:```|~~~).*$', re.MULTILINE)
-
-# LaTeX.
-_TEX_COMMENT_RE = re.compile(r'(?<!\\)%.*$', re.MULTILINE)     # % comment (not \%)
-_TEX_LABELREF_RE = re.compile(r'\\(?:label|ref|eqref|cite|pageref)\{[^}]*\}')
-_TEX_TCN_RE = re.compile(r'\\tcn\{\d+\}')
-_TEX_SECTIONING_RE = re.compile(
-    r'\\(?:section|subsection|subsubsection|chapter|paragraph|subparagraph)'
-    r'\*?\{([^}]*)\}')
-_TEX_INLINE_TEXT_RE = re.compile(
-    r'\\(?:textbf|textit|emph|texttt|textsf|textrm|underline|sout|tc)\{([^}]*)\}')
-_TEX_ITEM_RE = re.compile(r'\\item\b')
-_TEX_LINEBREAK_RE = re.compile(r'\\\\')
-_TEX_ENV_RE = re.compile(r'\\(?:begin|end)\{[^}]*\}')
-_TEX_BARE_CMD_RE = re.compile(r'\\[a-zA-Z]+\*?')               # leftover commands
-
-
-def strip_markup(text, ftype):
-    """Reduce markup-bearing text to plain content words.
-
-    Markdown (ftype 'md'/'qmd' or anything not 'tex'):
-      - `<mark>...</mark>` -> inner text; `<sup>N</sup>` dropped; `<s>` and any
-        other HTML-ish tags dropped (their text content kept).
-      - ATX headings (`#`..`######`), blockquote `>`, list bullets (`-`/`*`/`+`/
-        `1.`), thematic breaks, code-fence delimiter lines dropped.
-      - `![alt](url)` -> alt; `[txt](url)` -> txt; `` `code` `` -> code;
-        emphasis runs (`*`/`**`/`_`/`__`/`***`) dropped.
-    LaTeX (ftype 'tex'):
-      - `% comment` dropped; `\\label/\\ref/\\eqref/\\cite/\\pageref{..}` dropped;
-        `\\tcn{N}` dropped.
-      - `\\section{X}` (and sub*/chapter/paragraph variants) -> X;
-        `\\textbf/\\textit/\\emph/\\texttt/\\textsf/\\textrm/\\underline/\\sout/
-        \\tc{X}` -> X; `\\item` and `\\\\` dropped; `\\begin/\\end{..}` dropped;
-        any remaining bare `\\command` dropped.
-
-    Not exhaustive (D4 accepts the residual certainty loss): the aim is to
-    neutralize *formatting* tokens while preserving *content words*, so a
-    format-only translation does not read as added/removed content.
-    """
-    if text is None:
-        return ''
-    if ftype == 'tex':
-        text = _TEX_COMMENT_RE.sub('', text)
-        text = _TEX_TCN_RE.sub('', text)
-        text = _TEX_LABELREF_RE.sub('', text)
-        # Repeatedly unwrap inner-text commands so nested wraps resolve.
-        for _ in range(5):
-            new = _TEX_SECTIONING_RE.sub(r'\1', text)
-            new = _TEX_INLINE_TEXT_RE.sub(r'\1', new)
-            if new == text:
-                break
-            text = new
-        text = _TEX_ENV_RE.sub(' ', text)
-        text = _TEX_ITEM_RE.sub(' ', text)
-        text = _TEX_LINEBREAK_RE.sub(' ', text)
-        text = _TEX_BARE_CMD_RE.sub(' ', text)
-        text = text.replace('{', ' ').replace('}', ' ')
-        return text
-    # Markdown / Quarto / default.
-    text = _MD_FENCE_RE.sub('', text)
-    text = _MD_TC_MARK_RE.sub(r'\1', text)
-    text = _MD_SUP_RE.sub('', text)
-    text = _MD_S_TAG_RE.sub('', text)
-    text = _MD_IMAGE_RE.sub(r'\1', text)
-    text = _MD_LINK_RE.sub(r'\1', text)
-    text = _MD_TAG_RE.sub('', text)
-    text = _MD_CODE_SPAN_RE.sub(r'\1', text)
-    text = _MD_HR_RE.sub('', text)
-    text = _MD_HEADING_RE.sub('', text)
-    text = _MD_BLOCKQUOTE_RE.sub('', text)
-    text = _MD_BULLET_RE.sub('', text)
-    text = _MD_EMPH_RE.sub('', text)
-    return text
-
-
-# Tokenize into lowercase content words. Strip leading/trailing punctuation off
-# each whitespace-split token; drop tokens that become empty (pure punctuation).
-_PUNCT_STRIP = ".,;:!?\"'()[]{}<>`*_~#=+/\\|@$%^&"
-
-
-def _content_words(text, ftype):
-    stripped = strip_markup(text, ftype)
-    norm = _normalize(stripped).lower()
-    words = []
-    for tok in norm.split(' '):
-        if not tok:
-            continue
-        w = tok.strip(_PUNCT_STRIP)
-        if w:
-            words.append(w)
-    return words
-
-
 def _ftype_of(path):
     ext = os.path.splitext(path or '')[1].lower()
     if ext == '.tex':
@@ -362,47 +223,6 @@ def _ftype_of(path):
     if ext == '.qmd':
         return 'qmd'
     return 'md'
-
-
-def normalized_equal(block, source_slice, mode='normalized',
-                     block_ftype=None, source_ftype=None):
-    """Compare an inserted block against a source slice for faithfulness.
-
-    Returns (equal, added_words, removed_words):
-      - equal=True iff the content-word MULTISETS match.
-      - added_words   : sorted content words in the block but not the source
-                        (with multiplicity surplus).
-      - removed_words : sorted content words in the source but not the block.
-
-    `block_ftype` / `source_ftype` ('md'/'qmd'/'tex') select the markup
-    stripper for each side; both default to Markdown when unspecified (the
-    common conversion target). `mode='strict'` requires exact normalized-string
-    equality of the stripped text instead (then added/removed are [] / the
-    whole-string pair).
-    """
-    bft = block_ftype or 'md'
-    sft = source_ftype or 'md'
-    if mode == 'strict':
-        nb = _normalize(strip_markup(block, bft))
-        ns = _normalize(strip_markup(source_slice, sft))
-        if nb == ns:
-            return (True, [], [])
-        return (False, [nb] if nb else [], [ns] if ns else [])
-
-    b_words = _content_words(block, bft)
-    s_words = _content_words(source_slice, sft)
-
-    from collections import Counter
-    bc = Counter(b_words)
-    sc = Counter(s_words)
-    added = []
-    for w, c in (bc - sc).items():
-        added.extend([w] * c)
-    removed = []
-    for w, c in (sc - bc).items():
-        removed.extend([w] * c)
-    equal = (not added and not removed)
-    return (equal, sorted(added), sorted(removed))
 
 
 # ---------------------------------------------------------------------------
@@ -414,7 +234,8 @@ def normalized_equal(block, source_slice, mode='normalized',
 # single install owns all verified-import state.
 # ---------------------------------------------------------------------------
 
-_PENDING_TTL_DEFAULT = 120  # seconds (matches tc_core.exempt _TTL_DEFAULT)
+_PENDING_TTL_DEFAULT = 300  # seconds (v4 F3 — wider window for conversion;
+                            # user-overridable via the ttl param)
 
 
 def _pending_dir():
@@ -447,12 +268,16 @@ def _safe_unlink(p):
         pass
 
 
-def stage_pending(target_path, source_path, source_slice_text, frag,
-                  mode=DEFAULT_MODE, ttl=_PENDING_TTL_DEFAULT):
+def stage_pending(target_path, source_path, frag, ttl=_PENDING_TTL_DEFAULT):
     """Write a one-shot pending-import record keyed on the target file.
 
-    Record: {target, source_path, source_slice_text, range, mode, source_ftype,
-             expires}. Returns the record on success, None on I/O failure."""
+    Record (v4 — slimmed per F5): EXACTLY {target, source_path, range, expires}.
+    The v3 fields `source_slice_text`, `mode`, and `source_ftype` are dropped —
+    with no mechanical content gate the hook no longer compares against a stored
+    slice; the CLI prints the slice at stage time and the LLM converts it.
+
+    Returns the record on success, None on I/O failure (truthy on success — the
+    CLI uses the returned `range`)."""
     p = _pending_path(target_path)
     if not p:
         return None
@@ -460,10 +285,7 @@ def stage_pending(target_path, source_path, source_slice_text, frag,
     rec = {
         'target': os.path.abspath(target_path),
         'source_path': source_path,
-        'source_slice_text': source_slice_text,
         'range': rng,
-        'mode': mode,
-        'source_ftype': _ftype_of(source_path),
         'expires': time.time() + ttl,
     }
     try:
@@ -477,10 +299,10 @@ def stage_pending(target_path, source_path, source_slice_text, frag,
 def load_pending(target_path):
     """Return the live pending-import record for `target_path`, or None.
 
-    Returns None (and unlinks) when the record is missing, unparseable, for a
-    different path, or expired. Does NOT consume a live record — the hook
-    clears it explicitly on a successful import (so a failed verify can be
-    retried within the TTL)."""
+    Record shape (v4): {target, source_path, range, expires}. Returns None (and
+    unlinks) when the record is missing, unparseable, for a different path, or
+    expired. Does NOT consume a live record — the hook clears it explicitly once
+    it has written the clean-import exemption sentinel."""
     p = _pending_path(target_path)
     if not p or not os.path.isfile(p):
         return None
@@ -638,6 +460,15 @@ def cmd_import(argv):
     source_arg = argv[0]
     target_arg = argv[1] if len(argv) > 1 else None
 
+    # C2 (E3): strip a single leading `@` — Claude's file-reference prefix —
+    # from BOTH args before resolution, so `/import @src#L1-L2 @target` resolves
+    # identically to the un-prefixed form. Only a leading `@` is stripped; an `@`
+    # elsewhere in the path (e.g. a directory literally named `@foo`) is kept.
+    if source_arg.startswith('@'):
+        source_arg = source_arg[1:]
+    if target_arg and target_arg.startswith('@'):
+        target_arg = target_arg[1:]
+
     src_path_arg, frag = parse_source_arg(source_arg)
 
     # Resolve the target first so source resolution can use its directory as a
@@ -688,7 +519,7 @@ def cmd_import(argv):
              % (frag[0], frag[1], resolved))
         return 1
 
-    rec = stage_pending(target, resolved, source_slice, frag)
+    rec = stage_pending(target, resolved, frag)
     if rec is None:
         _err('could not stage the pending-import record (state dir '
              'unwritable). Is track-changes installed?')
@@ -696,6 +527,8 @@ def cmd_import(argv):
 
     rng = rec['range']
     tgt_ftype = _ftype_of(target)
+    target_fmt = {'tex': 'LaTeX', 'qmd': 'Quarto Markdown'}.get(
+        tgt_ftype, 'Markdown')
     out = []
     out.append('verified-import: staged import of %s (%s) -> %s'
                % (os.path.basename(resolved), rng, target))
@@ -704,15 +537,32 @@ def cmd_import(argv):
     out.append(source_slice)
     out.append('--- END SOURCE SLICE ---')
     out.append('')
-    out.append('Convert the source slice above to %s format and insert it into '
-               '%s. Emit FAITHFUL content only: do not add, drop, paraphrase, '
-               'or reorder away any sentences or clauses — only the formatting '
-               'may change to match the target. The verified-import hook will '
-               'check the inserted block\'s content words against the source '
-               'and BLOCK the write (fail-closed) if any content word was '
-               'added or removed. The verified block lands clean (no <mark>).'
-               % (tgt_ftype, target))
-    sys.stdout.write('\n'.join(out) + '\n')
+    out.append(
+        'Convert the source slice above to %s and insert it into %s. Reproduce '
+        'the content faithfully — preserve every sentence and clause; only '
+        'formatting may change to match the target format. This is a verified '
+        'import: it lands clean (no `<mark>`) by default. If your conversion '
+        'introduces a SIGNIFICANT content change — an added or removed '
+        'sentence or clause, or a changed quantity, term, or formula — wrap '
+        'ONLY that change in a track-changes mark so the author reviews it '
+        '(Markdown: `<mark>NEW</mark><sup>N</sup>`; LaTeX: `\\tc{NEW}\\tcn{N}`). '
+        'A SIGNIFICANT change alters meaning; reflow, reformatting, and '
+        'equivalent notation (e.g. `\\section{X}` → `## X`, an `equation` '
+        'environment → `$$…$$`) are NOT significant and need no mark. '
+        'Example: dropping the clause "at optimal lot size" IS significant (mark '
+        'it); rewrapping lines or converting an equation environment to `$$…$$` '
+        'is NOT. Write ONLY the converted block in this edit — do not bundle '
+        'unrelated edits into the same write.'
+        % (target_fmt, target))
+    # Emit UTF-8 explicitly: the source slice and the instruction may contain
+    # non-ASCII (math symbols, em-dashes, Greek), and a Windows console codec
+    # (cp1252) would otherwise mangle or crash on them. Mirror the hooks' _emit.
+    text = '\n'.join(out) + '\n'
+    try:
+        sys.stdout.buffer.write(text.encode('utf-8'))
+        sys.stdout.buffer.flush()
+    except (AttributeError, ValueError):
+        sys.stdout.write(text)
     return 0
 
 

@@ -1,37 +1,38 @@
-"""hooks/pre_tool_use.py — verified-import PreToolUse gate (v3, D4/F2).
+"""hooks/pre_tool_use.py — verified-import PreToolUse gate (v4, LLM-judgment).
 
-This hook runs on Write/Edit/MultiEdit to an existing file. It is the verifier
+This hook runs on Write/Edit/MultiEdit to an existing file. It is the enabler
 for a `/import` operation: when a live, target-keyed pending-import exists for
-the file being written, it extracts the ADDED block (the lines the write
-introduces vs. the current file), checks the block's content words against the
-staged source slice (vi_verify.normalized_equal), and:
+the file being written, it writes a one-shot, sha-bound exemption sentinel via
+tc_core.exempt.write over the EXACT proposed file bytes the track-changes gate
+will hash (tc_analyzer._build_proposed + tc_core.exempt.content_sha —
+byte-for-byte mirror, see #LEARN in the decision log), appends an `imported:`
+audit entry, clears the pending-import, and ALLOWS the write (exit 0). The
+converted block lands clean (no <mark>) because track-changes consumes the
+sentinel.
 
-  - PASS  -> writes a one-shot, sha-bound exemption sentinel via
-             tc_core.exempt.write over the EXACT proposed file bytes the
-             track-changes gate will hash (tc_analyzer._build_proposed +
-             tc_core.exempt.content_sha — byte-for-byte mirror, see #LEARN in
-             the decision log), appends an `imported:` audit entry, clears the
-             pending-import, and ALLOWS the write (exit 0). The block lands
-             clean (no <mark>) because track-changes consumes the sentinel.
-  - FAIL  -> BLOCKS fail-closed (exit 2, D2) with a discrepancy message naming
-             the added/removed content words; the pending-import is left in
-             place so a corrected retry within the TTL can match.
+v4 paradigm shift (Q1/Q3): there is NO mechanical content gate. The LLM does a
+best-effort faithful import and self-judges significant-vs-minor; if it
+introduced a genuinely significant change it wraps that span in a track-changes
+mark itself (and that mark survives, since the exemption only suppresses the
+whole-file <mark>-requirement for this single write). The v3 normalized_equal
+content-word check + fail-closed FAIL branch are removed; the exemption write
+is now UNCONDITIONAL on a live pending-import.
 
 When there is NO live pending-import for the target, this is an ordinary edit:
 the hook is a no-op passthrough (exit 0) and track-changes handles it normally.
 
 F2 ordering: this hook MUST run BEFORE track-changes' PreToolUse on the same
 write (it writes the sentinel track-changes consumes). Registration/order is
-owned by the installer (C7); this hook is correct assuming it runs first.
+owned by the installer; this hook is correct assuming it runs first.
 
 T3/D3 (fail-closed dependency): verified-import depends on track-changes'
-tc_core. If tc_core cannot be imported, an import write must NOT silently
-bypass the mark gate — the hook emits a clear "install track-changes first"
-error and exits 2.
+tc_core. If tc_core cannot be imported while a pending-import is live, the
+import write must NOT silently bypass the mark gate — the hook emits a clear
+"install track-changes first" error and exits 2.
 
 Exit codes:
-  0  allow (no pending-import, off-scope, or a verified import)
-  2  block (faithfulness failure, or track-changes/tc_core unavailable)
+  0  allow (no pending-import, off-scope, or a clean verified import)
+  2  block (track-changes/tc_core unavailable while a pending-import is live)
 """
 import os
 import sys
@@ -119,7 +120,7 @@ def _emit(msg):
 def _added_block(source_text, proposed_text):
     """Return the inserted/changed content as a single string — the proposed
     lines tagged '+' by a unified diff against the current source. This is the
-    block whose content words are checked against the staged source slice."""
+    block recorded in the `imported:` audit entry (the content the write adds)."""
     src_lines = source_text.replace('\r\n', '\n').split('\n')
     prop_lines = proposed_text.replace('\r\n', '\n').split('\n')
     added = []
@@ -131,18 +132,7 @@ def _added_block(source_text, proposed_text):
     return '\n'.join(added)
 
 
-def _ftype(path):
-    ext = os.path.splitext(path or '')[1].lower()
-    if ext == '.tex':
-        return 'tex'
-    if ext == '.qmd':
-        return 'qmd'
-    if ext == '.md':
-        return 'md'
-    return 'other'
-
-
-def _write_import_audit(abs_file_path, rec, mode, added_block):
+def _write_import_audit(abs_file_path, rec, added_block):
     """Append an `imported:` audit entry (best-effort), mirroring the entry
     shape used by track-changes' tc_resolve._write_explicit_audit (timestamp,
     relative path, find_project_root, log_path_for)."""
@@ -168,7 +158,6 @@ def _write_import_audit(abs_file_path, rec, mode, added_block):
         lines.append(f"  - from: {tc_audit._fmt_str(src)}")
         lines.append(f"    range: {rng}")
         lines.append(f"    verified: true")
-        lines.append(f"    normalization: {mode}")
         lines.append(f"    new: {tc_audit._fmt_str(added_block)}")
         entry = '\n'.join(lines) + '\n'
         os.makedirs(os.path.dirname(log_path), exist_ok=True)
@@ -256,43 +245,19 @@ def main():
         # Unsupported tool shape — let it pass to track-changes.
         return 0
 
+    # v4: a live pending-import is sufficient — there is no content gate. The
+    # LLM converted faithfully and self-marked any significant change. Capture
+    # the added block only to populate the audit `new:` field (the slice is no
+    # longer stored on the record).
     added_block = _added_block(source_text, proposed_text)
-    mode = rec.get('mode', 'normalized')
-    source_slice = rec.get('source_slice_text', '')
-    source_ftype = rec.get('source_ftype') or 'md'
-    target_ftype = _ftype(file_path)
-    if target_ftype == 'other':
-        target_ftype = 'md'
 
-    equal, added_words, removed_words = vi_verify.normalized_equal(
-        added_block, source_slice, mode,
-        block_ftype=target_ftype, source_ftype=source_ftype)
-
-    if not equal:
-        # FAIL — fail-closed (D2). Name the discrepancy so Claude can retry
-        # faithfully. Keep the pending-import (the TTL still bounds it).
-        parts = ['verified-import: BLOCKED %s to %s — the converted block is '
-                 'not faithful to the source slice (%s).'
-                 % (tool_name, file_path, rec.get('range', 'whole-file'))]
-        if added_words:
-            parts.append('Content words ADDED (in your block, not the source): '
-                         + ', '.join(added_words))
-        if removed_words:
-            parts.append('Content words REMOVED (in the source, not your block): '
-                         + ', '.join(removed_words))
-        parts.append('Re-emit the block with EXACTLY the source content '
-                     '(formatting may differ; content words must match). The '
-                     'pending import is still live for a corrected retry.')
-        _emit('\n'.join(parts))
-        _log('FAIL import verify %s (+%d/-%d words)'
-             % (file_path, len(added_words), len(removed_words)))
-        return 2
-
-    # PASS — write the one-shot exemption sentinel over the proposed bytes, in
-    # the SAME way track-changes computes the sha it consumes (#LEARN): sha256
-    # over the proposed file bytes via tc_core.exempt.content_sha, no extra
+    # Write the one-shot exemption sentinel over the proposed bytes, in the SAME
+    # way track-changes computes the sha it consumes (#LEARN): sha256 over the
+    # proposed file bytes via tc_core.exempt.content_sha, no extra
     # normalization. track-changes' gate does the same _build_proposed and
-    # consumes this sentinel, so the import write lands clean (no <mark>).
+    # consumes this sentinel, so the import write lands clean (no <mark>). Any
+    # <mark> the LLM added for a significant change survives — the exemption
+    # only suppresses the unmarked-content block for this single write.
     try:
         content_sha = tc_exempt.content_sha(proposed_text)
         wrote = tc_exempt.write(file_path, content_sha)
@@ -306,9 +271,9 @@ def main():
               '(state dir unwritable). Aborting to avoid an unmarked write.')
         return 2
 
-    _write_import_audit(file_path, rec, mode, added_block)
+    _write_import_audit(file_path, rec, added_block)
     vi_verify.clear_pending(file_path)
-    _log('PASS verified import %s (exempt sha %s)' % (file_path, content_sha[:12]))
+    _log('verified import %s (exempt sha %s)' % (file_path, content_sha[:12]))
     return 0
 
 

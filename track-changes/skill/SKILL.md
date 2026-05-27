@@ -30,7 +30,7 @@ mark protocol) and **verified-import** (opt-in `/import`, loaded only when
 invoked). track-changes is the dependency — verified-import imports its
 shared `tc_core`.
 
-Remote install via the bootstrap (3.0.2): from any Claude Code session,
+Remote install via the bootstrap (4.0.0): from any Claude Code session,
 say `Read https://mgkay.github.io/track-changes/bootstrap.md and follow
 the installation instructions inside it.` Claude Code downloads both
 skills' files and merges **six hook registrations** into
@@ -56,14 +56,14 @@ mark protocol. Invoke it with:
 
 `/import` reads the source (a whole text file or a `#L<a>-L<b>` line
 range), prints it with an instruction to convert it to the target
-document's format, and you write the converted block. A `verified-import`
-PreToolUse hook then checks that the inserted block's **content words**
-match the source — formatting may differ freely (`\section{Methods}` ↔
-`## Methods`), but a faithful import adds and removes no content. On a
-pass the block lands **clean (no `<mark>`)** via an exemption signal this
-track-changes skill honors, and an `imported:` entry is appended to
-`.tc-history.md` (§11). On a mismatch the write is **blocked, fail-closed**,
-naming the added/removed words for a faithful retry.
+document's format, and you write the converted block. The block lands
+**clean (no `<mark>`)** by default — a `verified-import` PreToolUse hook
+writes a one-shot exemption signal this track-changes skill honors, and an
+`imported:` entry is appended to `.tc-history.md` (§11). There is **no
+mechanical content gate**: you import faithfully and, using your judgment,
+wrap only a genuinely *significant* change (an added or removed sentence or
+clause, or a changed quantity, term, or formula) in a mark for the author;
+pure formatting differences (`\section{Methods}` ↔ `## Methods`) need none.
 
 **Text sources only.** `/import` accepts only text sources (`.md`,
 `.markdown`, `.qmd`, `.rmd`, `.tex`, `.txt`); a binary/non-text source is
@@ -726,7 +726,7 @@ resolved:
   `rejected` / `ambiguous` are the possible values.
 - `imported` entries (a clean, unmarked source import) are **not**
   produced by this skill's edit gate — they are appended by the
-  **`verified-import`** hook when a `/import` write passes verification
+  **`verified-import`** hook when a `/import` write lands clean
   (§0). They share the same `.tc-history.md` log so the import trail
   rides alongside the mark trail in git history.
 
@@ -895,9 +895,9 @@ Decide between `/draft` and in-place tracking by intent:
   the incremental-edit case the skill is built for, where each change should be
   individually reviewable.
 - **Reach for `/import` (the verified-import skill, §0), not `/draft`**, when
-  content is being imported from a source file: `/import` verifies the inserted
-  block against the source and lands it clean (no marks) via an exemption this
-  skill honors, while still requiring marks on any surrounding AI-authored glue
+  content is being imported from a source file: `/import` lands the converted
+  block clean (no marks) via an exemption this skill honors — you self-mark
+  only significant changes — while still requiring marks on any surrounding AI-authored glue
   — whereas `/draft` suspends checking for the whole turn and verifies nothing.
 - **Reach for the block-sibling form (§6), not `/draft`**, when adding a single
   brand-new heading, fenced block, or `:::` div in a `.md`/`.qmd` file — that
