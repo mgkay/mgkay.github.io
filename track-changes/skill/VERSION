@@ -1,3 +1,21 @@
+4.1.0
+2026-05-31
+track-changes v4.1 — per-file activation key renamed `track-changes` -> `tc-track`.
+The per-file YAML / magic-comment opt-in key was `track-changes: true|false`, which
+COLLIDES with Quarto's reserved `track-changes` YAML field (Quarto accepts only
+accept/reject/all there and errors on true/false) — so it broke every .qmd/.md render
+with a YAML-validation error. The key is now `tc-track: true|false` (YAML) and
+`% tc-track: ...` (.tex magic comment): an unknown key Quarto passes through untouched.
+UNCHANGED: skill name/folder, the `/tc` command, the mark grammar, the hooks, and the
+folder `.tc-tracked` marker. BREAKING for any file using the old key — the gate no longer
+recognizes `track-changes` (swap it to `tc-track`). Files touched: tc_core/activation.py
+(gate regexes), tc-common.sh (bash reader), tc-cli.sh (`/tc enable|disable|status` now
+emit/show `tc-track`), tc-mark.sh marker template, and the SKILL.md / digest.md / latex.md
+/ bootstrap.md / commands/tc.md / index.html docs. Also hardened commands/draft.md: a
+Skill-tool (non-typed) `/draft` does NOT execute the `!bash` sentinel writer, so the
+command now tells the assistant to verify the sentinel and run draft-on.sh via Bash if
+absent (the old behavior silently failed safe — the edit was blocked).
+
 4.0.0
 2026-05-26
 track-changes v4 — import-verification paradigm change (LLM-judgment).

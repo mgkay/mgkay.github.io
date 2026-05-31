@@ -14,10 +14,14 @@ Activation precedence (most-local wins):
 import os
 import re
 
-_YAML_TRUE_RE = re.compile(r'^track-changes:.*true', re.IGNORECASE)
-_YAML_FALSE_RE = re.compile(r'^track-changes:.*false', re.IGNORECASE)
-_TEX_MAGIC_TRUE_RE = re.compile(r'^.*%.*track-changes:.*true', re.IGNORECASE)
-_TEX_MAGIC_FALSE_RE = re.compile(r'^.*%.*track-changes:.*false', re.IGNORECASE)
+# Per-file activation key is `tc-track`. It deliberately does NOT use
+# `track-changes`, which is a RESERVED Quarto YAML field (Quarto only accepts
+# accept/reject/all there and errors on true/false), so the old key broke every
+# .qmd/.md render. `tc-track` is an unknown key Quarto passes through untouched.
+_YAML_TRUE_RE = re.compile(r'^tc-track:.*true', re.IGNORECASE)
+_YAML_FALSE_RE = re.compile(r'^tc-track:.*false', re.IGNORECASE)
+_TEX_MAGIC_TRUE_RE = re.compile(r'^.*%.*tc-track:.*true', re.IGNORECASE)
+_TEX_MAGIC_FALSE_RE = re.compile(r'^.*%.*tc-track:.*false', re.IGNORECASE)
 
 
 def tc_file_type(path):

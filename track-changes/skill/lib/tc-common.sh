@@ -167,8 +167,8 @@ tc_is_hidden_file() {
 # tc_check_yaml_override <file_path> — inspect the file for per-file
 # activation override.
 #   .md / .qmd: look in YAML frontmatter (top-of-file --- ... ---) for
-#               `track-changes: true` or `track-changes: false`.
-#   .tex:       look in the first 10 lines for `% track-changes: true|false`.
+#               `tc-track: true` or `tc-track: false`.
+#   .tex:       look in the first 10 lines for `% tc-track: true|false`.
 # Echoes 'on' / 'off' / empty.
 # ---------------------------------------------------------------------------
 tc_check_yaml_override() {
@@ -193,21 +193,21 @@ tc_check_yaml_override() {
         fi
         if [ "$in_fm" = "1" ]; then
           case "$line" in
-            track-changes:*true*)  val="on" ;;
-            track-changes:*false*) val="off" ;;
+            tc-track:*true*)  val="on" ;;
+            tc-track:*false*) val="off" ;;
           esac
         fi
       done < "$file"
       printf '%s' "$val"
       ;;
     tex)
-      # Magic comment in the first 10 lines: % track-changes: true|false
+      # Magic comment in the first 10 lines: % tc-track: true|false
       local line_no=0 val=""
       while IFS= read -r line && [ "$line_no" -lt 10 ]; do
         line_no=$((line_no + 1))
         case "$line" in
-          *%*track-changes:*true*)  val="on"  ;;
-          *%*track-changes:*false*) val="off" ;;
+          *%*tc-track:*true*)  val="on"  ;;
+          *%*tc-track:*false*) val="off" ;;
         esac
       done < "$file"
       printf '%s' "$val"

@@ -128,7 +128,7 @@ On success, tell the user:
 >
 > **`/draft`:** temporarily suspend the highlight requirement for one user turn (e.g. for brand-new, from-scratch content).
 >
-> **Activation:** `track-changes` is OFF by default. To track a file, add `track-changes: true` to its YAML frontmatter (or `% track-changes: true` for `.tex`), drop a `.tc-tracked` marker in the file's folder (`/tc mark <dir>`), or invoke `/tc enable <file>`.
+> **Activation:** `track-changes` is OFF by default. To track a file, add `tc-track: true` to its YAML frontmatter (or `% tc-track: true` for `.tex`), drop a `.tc-tracked` marker in the file's folder (`/tc mark <dir>`), or invoke `/tc enable <file>`. (The per-file key is `tc-track`, not `track-changes`, because `track-changes` is a reserved Quarto YAML field that breaks `.qmd` renders.)
 >
 > **Open a new Claude Code session** to activate the suite hooks.
 

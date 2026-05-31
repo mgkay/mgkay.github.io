@@ -1,6 +1,6 @@
 ---
 name: track-changes
-description: Source-preserving edit protocol. Tracks Claude-introduced changes to existing .md, .qmd, and .tex files by wrapping only the changed characters in a <mark> highlight followed by a <sup>N</sup> reference number, so the human author can accept or reject each change individually. Default-OFF; opt in per folder via .tc-tracked marker, per file via YAML frontmatter (or `% track-changes: true` for .tex). Per-turn override via /draft. Unified /tc command for all operations (/tc mark, /tc enable, /tc disable, /tc migrate, /tc status, /tc list, /tc accept, /tc reject, /tc draft). Edits to tracked files append to a project-local .tc-history.md audit log. Verbatim/converted source import is the separate opt-in verified-import skill (/import).
+description: Source-preserving edit protocol. Tracks Claude-introduced changes to existing .md, .qmd, and .tex files by wrapping only the changed characters in a <mark> highlight followed by a <sup>N</sup> reference number, so the human author can accept or reject each change individually. Default-OFF; opt in per folder via .tc-tracked marker, per file via YAML frontmatter `tc-track: true` (or `% tc-track: true` for .tex). Per-turn override via /draft. Unified /tc command for all operations (/tc mark, /tc enable, /tc disable, /tc migrate, /tc status, /tc list, /tc accept, /tc reject, /tc draft). Edits to tracked files append to a project-local .tc-history.md audit log. Verbatim/converted source import is the separate opt-in verified-import skill (/import).
 ---
 
 # track-changes
@@ -108,13 +108,18 @@ wins):
    prompt.
 
 2. **Per-file YAML frontmatter or magic comment.** A file containing
-   `track-changes: true` in its YAML frontmatter is tracked. A file
-   containing `track-changes: false` is exempted (overrides folder
+   `tc-track: true` in its YAML frontmatter is tracked. A file
+   containing `tc-track: false` is exempted (overrides folder
    marker). For `.tex` files (no native frontmatter), the equivalent is
-   a magic comment in the first 10 lines: `% track-changes: true` or
-   `% track-changes: false`. The skill provides `/tc enable <file>` and
+   a magic comment in the first 10 lines: `% tc-track: true` or
+   `% tc-track: false`. The skill provides `/tc enable <file>` and
    `/tc disable <file>` slash commands so users do not need to hand-edit
    YAML — see §7.
+
+   > **Why `tc-track`, not `track-changes`?** `track-changes` is a
+   > reserved Quarto YAML field (Quarto accepts only `accept`/`reject`/`all`
+   > there and errors on `true`/`false`), so using it broke every `.qmd`/`.md`
+   > render. `tc-track` is an unknown key Quarto passes through untouched.
 
 3. **Folder-local marker (`.tc-tracked`).** A `.tc-tracked` file in the
    edited file's **own folder** (no walk-up, no descent into subfolders)
@@ -135,7 +140,7 @@ wins):
 Files whose basename starts with `.` (e.g., `.cache.md`, `.draft-notes.md`)
 are excluded from marker-based tracking by default. This avoids friction
 on auto-generated cache and scratch files inside an otherwise-tracked
-folder. To force-track a hidden file, add `track-changes: true` to its
+folder. To force-track a hidden file, add `tc-track: true` to its
 YAML frontmatter (per-file YAML overrides the hidden-file exclusion).
 
 ### Why folder-local (no walk-up)
@@ -450,8 +455,8 @@ The skill installs a single unified `/tc` command with subcommands, plus
 | Subcommand | Effect |
 |------------|--------|
 | `/tc draft` | suspend tracking for the current turn only |
-| `/tc enable <file>` | add `track-changes: true` to the file's YAML (or `% track-changes: true` magic comment for `.tex`) |
-| `/tc disable <file>` | add `track-changes: false` (per-file opt-out) |
+| `/tc enable <file>` | add `tc-track: true` to the file's YAML (or `% tc-track: true` magic comment for `.tex`) |
+| `/tc disable <file>` | add `tc-track: false` (per-file opt-out) |
 | `/tc mark [<dir>]` | drop a presence-only `.tc-tracked` marker in `<dir>` (tracks ALL files in that folder; default `<dir>` = current directory) |
 | `/tc mark <dir> <file1> [<file2>...]` | drop a list-mode `.tc-tracked` marker that tracks only the listed basenames in `<dir>` |
 | `/tc migrate <dir>` | run v1 → v2 mark migration on all `.md`/`.qmd`/`.tex` files under `<dir>` |
@@ -493,10 +498,10 @@ sweep for crashed sessions).
 
 `/tc enable` and `/tc disable` modify the target file directly:
 
-- For `.md` and `.qmd`: add or update the `track-changes:` key in the
+- For `.md` and `.qmd`: add or update the `tc-track:` key in the
   top-of-file YAML frontmatter. If no frontmatter block exists, prepend
   a fresh `---` ... `---` block containing only the `track-changes` key.
-- For `.tex`: add or update a `% track-changes: <value>` magic comment
+- For `.tex`: add or update a `% tc-track: <value>` magic comment
   in the first 10 lines. If none exists, prepend it as line 1.
 
 These are the only file modifications the skill performs outside of
@@ -578,8 +583,8 @@ folder. Comments (`#`) and blank lines are ignored.
 # (one per line). To track files in a subfolder, drop a separate
 # .tc-tracked there.
 #
-# Per-file opt-out:  add `track-changes: false` to YAML frontmatter
-#                    (or `% track-changes: false` near the top for .tex).
+# Per-file opt-out:  add `tc-track: false` to YAML frontmatter
+#                    (or `% tc-track: false` near the top for .tex).
 # Per-turn disable:  invoke /draft or /tc draft.
 # Hidden files:      basenames starting with `.` are excluded by default.
 # Remove tracking:   delete this file.

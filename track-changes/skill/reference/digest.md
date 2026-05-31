@@ -6,8 +6,8 @@ each change. Default-OFF. (Full spec lives in `SKILL.md`, lazy-loaded on demand.
 
 ## Activation (most-local rule wins)
 1. `/draft` (or `/tc draft`) sentinel → tracking **suspended this turn**.
-2. Per-file override (top of file): `track-changes: true`/`false` in YAML
-   frontmatter (`.md`/`.qmd`); `% track-changes: true`/`false` magic comment in
+2. Per-file override (top of file): `tc-track: true`/`false` in YAML
+   frontmatter (`.md`/`.qmd`); `% tc-track: true`/`false` magic comment in
    first 10 lines (`.tex`). Per-file `false` overrides a folder marker.
 3. Folder-local `.tc-tracked` marker in the file's OWN directory (no walk-up):
    empty/comments-only = **presence mode** (all `.md`/`.qmd`/`.tex` in that

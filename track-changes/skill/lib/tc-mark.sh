@@ -71,8 +71,8 @@ tc_mark_presence() {
 # by a <sup>N</sup> reference number, so the human author retains visual
 # review control over AI-introduced changes.
 #
-# Per-file opt-out:   add `track-changes: false` to YAML frontmatter
-#                     (or `% track-changes: false` near the top for .tex).
+# Per-file opt-out:   add `tc-track: false` to YAML frontmatter
+#                     (or `% tc-track: false` near the top for .tex).
 # Per-turn disable:   invoke /draft or /tc draft in Claude Code.
 # Hidden files:       basenames starting with `.` are excluded by default.
 # Remove tracking:    delete this file.
@@ -121,8 +121,8 @@ tc_mark_list() {
 # Files NOT listed here are NOT tracked, even though this marker exists.
 # Comments (#) and blank lines are ignored.
 #
-# Per-file opt-out (overrides this list): add `track-changes: false`
-#   to the file's YAML frontmatter or `% track-changes: false` in .tex.
+# Per-file opt-out (overrides this list): add `tc-track: false`
+#   to the file's YAML frontmatter or `% tc-track: false` in .tex.
 # Per-turn disable: /draft or /tc draft.
 # Hidden basenames (starting with `.`) are excluded by default.
 #

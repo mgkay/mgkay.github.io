@@ -10,10 +10,10 @@
 #
 # Subcommands:
 #   /tc draft                      — per-turn suspend tracking (= /draft)
-#   /tc enable <file>              — add `track-changes: true` to file's
-#                                    frontmatter (or `% track-changes: true`
+#   /tc enable <file>              — add `tc-track: true` to file's
+#                                    frontmatter (or `% tc-track: true`
 #                                    for .tex)
-#   /tc disable <file>             — add `track-changes: false`
+#   /tc disable <file>             — add `tc-track: false`
 #   /tc mark [<dir>] [<file> ...]  — drop .tc-tracked marker in <dir>
 #                                    (default CWD); with filename args, the
 #                                    marker lists ONLY those basenames as
@@ -59,8 +59,8 @@ Turn control:
   /tc draft               Suspend tracking for the current turn only
 
 Per-file opt-in / opt-out (adds YAML frontmatter or magic comment):
-  /tc enable <file>       Add `track-changes: true` to the file
-  /tc disable <file>      Add `track-changes: false` to the file
+  /tc enable <file>       Add `tc-track: true` to the file
+  /tc disable <file>      Add `tc-track: false` to the file
 
 Per-folder activation:
   /tc mark [<dir>]                    Drop presence-only .tc-tracked marker
@@ -195,9 +195,9 @@ tc_run_resolve() {
 
 # ---------------------------------------------------------------------------
 # tc_enable_disable <file> <true|false>
-# Add (or update) the per-file `track-changes` override.
-#   .md / .qmd : YAML frontmatter key `track-changes: <bool>`
-#   .tex       : magic comment `% track-changes: <bool>` (top of file)
+# Add (or update) the per-file `tc-track` override.
+#   .md / .qmd : YAML frontmatter key `tc-track: <bool>`
+#   .tex       : magic comment `% tc-track: <bool>` (top of file)
 # Idempotent: if the file already declares the same value, no-op.
 # ---------------------------------------------------------------------------
 tc_enable_disable() {
@@ -243,8 +243,8 @@ if ftype in ('md', 'qmd'):
     m = fm_re.match(text)
     if m:
         head, body, foot = m.group(1), m.group(2), m.group(3)
-        # Look for existing track-changes key in the YAML body.
-        key_re = re.compile(r'^(\s*track-changes\s*:\s*)(\S+)(.*)$', re.MULTILINE)
+        # Look for existing tc-track key in the YAML body.
+        key_re = re.compile(r'^(\s*tc-track\s*:\s*)(\S+)(.*)$', re.MULTILINE)
         if key_re.search(body):
             new_body = key_re.sub(lambda mm: f"{mm.group(1)}{value}{mm.group(3)}", body)
             text = head + new_body + foot + text[m.end():]
@@ -252,41 +252,41 @@ if ftype in ('md', 'qmd'):
             # Append the key to the frontmatter body.
             if body and not body.endswith('\n'):
                 body += '\n'
-            new_body = body + f"track-changes: {value}"
+            new_body = body + f"tc-track: {value}"
             text = head + new_body + foot + text[m.end():]
     else:
         # Prepend a fresh frontmatter block. Add a blank line after the
         # closing --- only if the file doesn't already start with a blank.
         first_line_blank = text.startswith('\n') or text == ''
         sep = '' if first_line_blank else '\n'
-        text = f"---\ntrack-changes: {value}\n---\n{sep}{text}"
+        text = f"---\ntc-track: {value}\n---\n{sep}{text}"
 
 elif ftype == 'tex':
-    # Look for an existing `% track-changes: ...` magic comment in the
+    # Look for an existing `% tc-track: ...` magic comment in the
     # first 10 lines.
     lines = text.split('\n', 10)
     found_idx = -1
     for i in range(min(len(lines), 10)):
-        if re.search(r'%\s*track-changes\s*:', lines[i]):
+        if re.search(r'%\s*tc-track\s*:', lines[i]):
             found_idx = i
             break
     if found_idx >= 0:
         lines[found_idx] = re.sub(
-            r'%\s*track-changes\s*:\s*\S+.*',
-            f'% track-changes: {value}',
+            r'%\s*tc-track\s*:\s*\S+.*',
+            f'% tc-track: {value}',
             lines[found_idx]
         )
         text = '\n'.join(lines)
     else:
         # Prepend as line 1.
-        text = f"% track-changes: {value}\n" + text
+        text = f"% tc-track: {value}\n" + text
 
 if text == orig:
-    print(f"tc: {path} already has track-changes: {value} (no change)")
+    print(f"tc: {path} already has tc-track: {value} (no change)")
 else:
     with open(path, 'w', encoding='utf-8', newline='') as f:
         f.write(text)
-    print(f"tc: wrote track-changes: {value} to {path}")
+    print(f"tc: wrote tc-track: {value} to {path}")
 PYEOF
   return $?
 }
@@ -322,9 +322,9 @@ tc_status() {
         local yaml_val
         yaml_val="$(tc_check_yaml_override "${target}")"
         if [ -z "${yaml_val}" ]; then
-          echo "    (no track-changes key in this file)"
+          echo "    (no tc-track key in this file)"
         else
-          echo "    track-changes: ${yaml_val}"
+          echo "    tc-track: ${yaml_val}"
         fi
         echo ""
         echo "  Folder marker (same directory only):"

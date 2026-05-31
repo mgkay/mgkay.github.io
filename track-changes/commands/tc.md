@@ -11,8 +11,8 @@ Run `/tc` with no arguments to print the compact menu.
 Subcommands:
 
 - `/tc draft` — suspend tracking for the current turn only
-- `/tc enable <file>` — add `track-changes: true` to the file's YAML frontmatter (or `% track-changes: true` magic comment for `.tex`)
-- `/tc disable <file>` — add `track-changes: false` to the file (per-file opt-out)
+- `/tc enable <file>` — add `tc-track: true` to the file's YAML frontmatter (or `% tc-track: true` magic comment for `.tex`)
+- `/tc disable <file>` — add `tc-track: false` to the file (per-file opt-out)
 - `/tc mark [<dir>]` — drop `.tc-tracked` marker in `<dir>` (default: current directory)
 - `/tc migrate <dir>` — convert v1 marks to v2 in all `.md`/`.qmd`/`.tex` files under `<dir>`
 - `/tc status [<file>]` — show the activation chain for `<file>` (or the working file / current directory)

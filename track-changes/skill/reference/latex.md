@@ -93,13 +93,13 @@ For `.tex` files (no native YAML frontmatter), the per-file activation
 override is a magic comment in the first 10 lines:
 
 ```latex
-% track-changes: true
+% tc-track: true
 ```
 
 or:
 
 ```latex
-% track-changes: false
+% tc-track: false
 ```
 
 This overrides any project-level `.tc-tracked` marker for that single
