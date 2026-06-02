@@ -183,6 +183,7 @@ tc_check_yaml_override() {
       local val=""
       while IFS= read -r line && [ "$line_no" -lt 50 ]; do
         line_no=$((line_no + 1))
+        line="${line%$'\r'}"   # strip trailing CR so CRLF files match (Windows checkout)
         if [ "$line_no" = "1" ]; then
           if [ "$line" = "---" ]; then in_fm=1; continue; fi
           # No frontmatter; bail.
@@ -205,6 +206,7 @@ tc_check_yaml_override() {
       local line_no=0 val=""
       while IFS= read -r line && [ "$line_no" -lt 10 ]; do
         line_no=$((line_no + 1))
+        line="${line%$'\r'}"   # strip trailing CR so CRLF files match (Windows checkout)
         case "$line" in
           *%*tc-track:*true*)  val="on"  ;;
           *%*tc-track:*false*) val="off" ;;
