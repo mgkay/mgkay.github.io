@@ -186,8 +186,10 @@ on its own. Three things happen automatically behind the scenes:</p>
 
 <h2 id="commands">Commands</h2>
 
-<p>track-changes adds two slash commands to Claude Code: <code>/draft</code> and <code>/tc</code>.
-<code>/tc</code> takes a subcommand. Here is the full set, grouped by what you&rsquo;re trying to do.</p>
+<p>The suite adds these slash commands to Claude Code: <code>/tc</code>, <code>/draft</code>,
+<code>/polish</code>, and <code>/import</code>. <code>/tc</code> takes a subcommand. Here is the full
+set, grouped by what you&rsquo;re trying to do (<code>/import</code> has its own
+<a href="#importing">section below</a>).</p>
 
 <h3>Turning tracking on and off</h3>
 <ul class="cmds">
@@ -210,6 +212,28 @@ on its own. Three things happen automatically behind the scenes:</p>
     switches back on by itself. Use it when you&rsquo;re asking for a large rewrite or a brand-new
     draft that would be too noisy to highlight line by line &mdash; you want the writing for that one
     step, not the marks. (<code>/tc draft</code> does the same thing.)</li>
+</ul>
+
+<h3>Cleaning up voice-dictated prose</h3>
+<ul class="cmds">
+  <li><code>/polish [&lt;file&gt;]</code> &mdash; Clean up <em>voice-dictated</em> prose &mdash;
+    speech-recognition slips, ordinary grammar, dropped words &mdash; in a tracked file. Every fix
+    lands as an ordinary highlight you review with <code>/tc accept</code> / <code>/tc reject</code>,
+    exactly like any other change. It never rewrites a token it can&rsquo;t recognize as plain prose
+    (jargon, code, math, a domain term): it leaves that untouched and flags it for you instead. On an
+    untracked file it offers a one-time direct cleanup (no marks) or to enable tracking first. (Part
+    of the <code>polish</code> skill.)</li>
+</ul>
+
+<h3>Bringing in trusted source material</h3>
+<ul class="cmds">
+  <li><code>/import &lt;source&gt;[#L&lt;a&gt;-L&lt;b&gt;] [&lt;target&gt;]</code> &mdash; Insert vetted
+    material &mdash; a section of an old notebook, a prior manuscript, a chapter &mdash; into a tracked
+    document. Claude converts it to the document&rsquo;s format and it lands <em>clean</em> (no
+    highlights), because faithfully reproduced source isn&rsquo;t an AI edit you need to review; Claude
+    marks only a genuinely significant change (one that alters meaning), while minor reformatting stays
+    clean. See <a href="#importing">the fuller walkthrough below</a>. (Part of the
+    <code>verified-import</code> skill.)</li>
 </ul>
 
 <h3>Reviewing and resolving changes</h3>
@@ -237,7 +261,7 @@ editing each wrapper by hand.</p>
 <p>Beyond the basic mark-and-review loop, track-changes handles the situations that actually come up
 when you build documents with an AI&rsquo;s help.</p>
 
-<h3>Build from material you already trust &mdash; without drowning in highlights</h3>
+<h3 id="importing">Build from material you already trust &mdash; without drowning in highlights</h3>
 <p>Most of a new lecture or chapter is assembled from things you&rsquo;ve already written and
 vetted: a section of an old notebook, a prior manuscript, a trusted reference. Only a little is
 genuinely new AI writing. If every imported paragraph were highlighted, the handful of lines that
@@ -305,7 +329,7 @@ always override it for a single commit.</p>
 </main>
 
 <footer>
-  <p>track-changes v4.0.0 &middot; M. G. Kay &middot; NC State ISE<br>
+  <p>track-changes v5.0.0 &middot; M. G. Kay &middot; NC State ISE<br>
   <a href="bootstrap.md" download>Download bootstrap.md</a></p>
 </footer>
 
