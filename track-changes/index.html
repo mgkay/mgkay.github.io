@@ -48,7 +48,7 @@
 
 <h2>What is track-changes?</h2>
 
-<p>track-changes is a <strong>two-skill suite for Claude Code</strong>. The core
+<p>track-changes is a <strong>three-skill suite for Claude Code</strong>. The core
 <code>track-changes</code> skill watches every change Claude makes to your tracked <code>.md</code>,
 <code>.qmd</code>, and <code>.tex</code> files: each AI-introduced edit is wrapped in a
 <code>&lt;mark&gt;</code> highlight followed by a small reference number &mdash; rendered as a yellow
@@ -56,7 +56,9 @@ span (with a strikethrough overlay for anything deleted) in any markdown viewer 
 review every change individually and accept or reject it, the way you would with Track Changes in
 Word or Suggesting mode in Google Docs. The companion <code>verified-import</code> skill (installed
 alongside) adds the <code>/import</code> command for bringing in vetted source material without
-unnecessary highlights.</p>
+unnecessary highlights. The <code>polish</code> skill adds the <code>/polish</code> command for
+cleaning up voice-dictated prose &mdash; speech-recognition errors, grammar, dropped words &mdash;
+surfacing every fix as an ordinary track-changes mark you review the same way.</p>
 
 <div class="phases">
   <div class="phase-box">Block<small>Unmarked AI edit</small></div>
@@ -101,8 +103,8 @@ if you haven&rsquo;t already. The skill also needs <strong>Python&nbsp;3</strong
     <code>Read <a href="bootstrap.md">https://mgkay.github.io/track-changes/bootstrap.md</a> and follow the installation instructions inside it.</code>
   </li>
   <li>
-    <strong>Confirm.</strong> Claude Code downloads both skills (<code>track-changes</code> and
-    <code>verified-import</code>), wires them into your configuration, and reports success.
+    <strong>Confirm.</strong> Claude Code downloads all three skills (<code>track-changes</code>,
+    <code>verified-import</code>, and <code>polish</code>), wires them into your configuration, and reports success.
   </li>
   <li>
     <strong>Open a new Claude Code session</strong> so the skill takes effect.

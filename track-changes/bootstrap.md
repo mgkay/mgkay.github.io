@@ -1,21 +1,23 @@
-# track-changes Bootstrap — Source-preserving AI edit protocol (two-skill suite)
+# track-changes Bootstrap — Source-preserving AI edit protocol (three-skill suite)
 
-**Version:** 4.0.0
-**Date:** 2026-05-26
+**Version:** 5.0.0
+**Date:** 2026-06-03
 
 ## What This File Does
 
-Installer manifest for the **track-changes** suite for Claude Code. The suite ships **two skills** that share a single `tc_core` package:
+Installer manifest for the **track-changes** suite for Claude Code. The suite ships **three skills** that share a single `tc_core` package:
 
 - **`track-changes`** (always-on, opt-in per file/folder) — every Claude edit to a tracked `.md` / `.qmd` / `.tex` file is wrapped in a `<mark>…</mark><sup>N</sup>` highlight you can review and accept/reject. This is the mark-gate.
 - **`verified-import`** (opt-in, invoked via `/import`) — insert a vetted source (a Word chapter, a prior notebook, a manuscript section) into a tracked document. Claude converts the source to the document's format and lands it **clean** (no marks): there is **no mechanical content gate** — the LLM imports faithfully and self-marks only genuinely significant changes (altered meaning) in track-changes marks; minor diffs land clean. A PreToolUse hook writes a one-shot, sha-bound exemption that the always-on `track-changes` skill honors, so the faithful block is not mark-wrapped.
+- **`polish`** (opt-in, invoked via `/polish [file]`) — clean up **voice-dictated** prose (speech-recognition errors, grammar, dropped words) in an existing tracked document. Every fix surfaces as an ordinary track-changes `<mark>` you review with `/tc accept|reject`. Bright line: it **never** auto-corrects an unrecognized token (jargon / code / math / domain term) — such a token is left and flagged, never silently changed; a meaning-affecting fix is surfaced as a mark, not applied silently. polish adds **no hook** — its fixes flow through the existing `track-changes` PreToolUse hook — and **no slash-command file** (the explicit `/polish` invocation is the opt-in). It reuses the shared `tc_core` for its tracked-check.
 
-When Claude Code follows the instructions below, it downloads both skills — hooks, library modules, the shared `tc_core` package, slash commands, and reference docs — and merges **six** hook registrations across the two skills into your `~/.claude/settings.json`.
+When Claude Code follows the instructions below, it downloads all three skills — hooks, library modules, the shared `tc_core` package, slash commands, and reference docs — and merges **six** hook registrations into your `~/.claude/settings.json` (five for `track-changes`, one for `verified-import`; `polish` owns no hook).
 
 **The suite design:**
 - **Leaner always-on footprint.** The `track-changes` skill is narrowed: source-provenance import wrappers moved out into the separate opt-in `verified-import` skill; cross-file mark renumbering and edit-inside-non-rendering-construct sibling handling were removed (such edits now route to `/draft`).
 - **SessionStart digest.** The session-start hook now injects a compact `reference/digest.md` (~2.9 KB) instead of the full `SKILL.md` — ~93.5% smaller, well under the 40 KB inline cap. The full `SKILL.md` is lazy-loaded on demand.
 - **Convert-on-import (LLM-judgment).** `verified-import` trusts the LLM to import the AI-converted block faithfully — there is **no mechanical content gate**. On a live pending-import the hook writes a one-shot, sha-bound exemption that the `track-changes` gate consumes, so the converted block lands clean; the model self-marks only genuinely significant changes (altered meaning) for the author to review.
+- **Dictation cleanup (v5).** `polish` (`/polish [file]`) cleans up voice-dictated prose, surfacing every fix as an ordinary track-changes mark. It adds no hook and no settings change — fixes flow through the existing `track-changes` PreToolUse hook — and never auto-corrects an unrecognized domain/code/math token (it leaves and flags it).
 
 **Backward compatibility / clean break:** the `<mark>…</mark><sup>N</sup>` mark grammar is **unchanged**. Existing tracked documents need **no conversion** — upgrading only re-installs the skill files and re-registers the hooks. See the changelog at the bottom.
 
@@ -30,22 +32,22 @@ When Claude Code follows the instructions below, it downloads both skills — ho
 
 1. Start a Claude Code session (anywhere — the suite installs to your user profile, not a specific project).
 2. Say: `Read https://mgkay.github.io/track-changes/bootstrap.md and follow the installation instructions inside it.`
-3. Claude Code will download both skills, merge the hook registrations, and confirm success.
+3. Claude Code will download all three skills, merge the hook registrations, and confirm success.
 
 ---
 
 ## Instructions for Claude Code
 
-You are reading the track-changes v4.0.0 bootstrap manifest. Follow these steps precisely.
+You are reading the track-changes v5.0.0 bootstrap manifest. Follow these steps precisely.
 
 ### Step 1: Check for existing installation
 
-Read `~/.claude/skills/track-changes/VERSION`. If the file exists, parse the first line as a version number. Compare it to `4.0.0` using semantic-version ordering (compare major, then minor, then patch as integers; treat a missing component as 0, so a two-part `2.0` is `2.0.0`).
+Read `~/.claude/skills/track-changes/VERSION`. If the file exists, parse the first line as a version number. Compare it to `5.0.0` using semantic-version ordering (compare major, then minor, then patch as integers; treat a missing component as 0, so a two-part `2.0` is `2.0.0`).
 
-- **Equal to 4.0.0** → "track-changes v4.0.0 is already installed. No update needed." **STOP.**
-- **Higher than 4.0.0** → "track-changes v[installed] is newer than this bootstrap (4.0.0). Aborting — will not downgrade." **STOP.**
-- **Lower than 4.0.0** (e.g. v3.0.x, or any v1.x or v2.x) → "Updating track-changes from v[installed] to v4.0.0." Proceed to Step 2. The download in Step 2 overwrites every skill file in place, so the upgrade is a clean replacement (the upgrade also re-merges settings.json, laying down the single combined PreToolUse matcher group); existing `<mark>…</mark><sup>N</sup>` content in your documents is fully backward-compatible and is left untouched (the mark grammar is unchanged — no document migration is needed).
-- **Does not exist** → "Installing track-changes v4.0.0." Proceed to Step 2.
+- **Equal to 5.0.0** → "track-changes v5.0.0 is already installed. No update needed." **STOP.**
+- **Higher than 5.0.0** → "track-changes v[installed] is newer than this bootstrap (5.0.0). Aborting — will not downgrade." **STOP.**
+- **Lower than 5.0.0** (e.g. v4.x, v3.0.x, or any v1.x or v2.x) → "Updating track-changes from v[installed] to v5.0.0." Proceed to Step 2. The download in Step 2 overwrites every skill file in place and adds the new `polish` skill, so the upgrade is a clean replacement (the upgrade also re-merges settings.json, laying down the single combined PreToolUse matcher group); existing `<mark>…</mark><sup>N</sup>` content in your documents is fully backward-compatible and is left untouched (the mark grammar is unchanged — no document migration is needed). **Upgrading from v4.0.x?** The per-file activation key was renamed `track-changes:` → `tc-track:` in v4.1 (the old key is a reserved Quarto YAML field that breaks `.qmd`/`.md` renders); swap any old keys to `tc-track:`.
+- **Does not exist** → "Installing track-changes v5.0.0." Proceed to Step 2.
 
 ### Step 2: Download all files (curl-based)
 
@@ -55,7 +57,7 @@ Read `~/.claude/skills/track-changes/VERSION`. If the file exists, parse the fir
 
 For each entry in the MANIFEST below:
 
-1. Ensure the destination's parent directory exists. Parent directories under `~/.claude/skills/track-changes/`, `~/.claude/skills/verified-import/`, and `~/.claude/commands/` will be created implicitly by most downloaders, but on some systems you may need `mkdir -p ~/.claude/skills/track-changes/hooks ~/.claude/skills/track-changes/lib/tc_core ~/.claude/skills/verified-import/hooks` (etc.) first.
+1. Ensure the destination's parent directory exists. Parent directories under `~/.claude/skills/track-changes/`, `~/.claude/skills/verified-import/`, `~/.claude/skills/polish/`, and `~/.claude/commands/` will be created implicitly by most downloaders, but on some systems you may need `mkdir -p ~/.claude/skills/track-changes/hooks ~/.claude/skills/track-changes/lib/tc_core ~/.claude/skills/verified-import/hooks ~/.claude/skills/polish/lib` (etc.) first.
 2. Run in Bash: `curl -fsSL "<source-url>" -o "<destination-path>"`
    - `-f` fails on HTTP errors (404, 500, etc.)
    - `-s` silent (no progress bar)
@@ -65,7 +67,7 @@ For each entry in the MANIFEST below:
 
 **After all files downloaded**, verify no file ended up empty (silent download failure) across BOTH skill directories and commands:
 ```bash
-find ~/.claude/skills/track-changes ~/.claude/skills/verified-import ~/.claude/commands -type f -empty -print
+find ~/.claude/skills/track-changes ~/.claude/skills/verified-import ~/.claude/skills/polish ~/.claude/commands -type f -empty -print
 ```
 If this prints nothing, all installed files are non-empty. If it prints any paths, those files failed to download correctly — report to the user and re-run the bootstrap (curl overwrites, so retrying is safe).
 
@@ -103,8 +105,10 @@ If the command exits non-zero, report the error to the user and stop.
 6. Read `~/.claude/skills/verified-import/SKILL.md` → must begin with `---` (YAML frontmatter).
 7. Read `~/.claude/skills/verified-import/hooks/pre_tool_use.py` → must exist (import exemption hook).
 8. Read `~/.claude/skills/verified-import/lib/vi_verify.py` → must exist (import resolution/staging engine).
-9. Read `~/.claude/commands/draft.md`, `~/.claude/commands/tc.md`, `~/.claude/commands/import.md` → all three must exist.
-10. Read `~/.claude/settings.json`, parse as JSON, confirm `.hooks.PreToolUse` contains a **single matcher group** whose `hooks` array holds BOTH a command containing `verified-import/hooks/pre_tool_use.py` AND a command containing `track-changes/hooks/pre_tool_use.py`, with the **verified-import entry stacked before** the track-changes entry (same group → sequential execution; not two separate groups).
+9. Read `~/.claude/skills/polish/SKILL.md` → must begin with `---` (YAML frontmatter).
+10. Read `~/.claude/skills/polish/lib/polish_engine.py` → must exist (dictation diff/scope + tracked-check engine; it imports `tc_core` from `track-changes/lib`).
+11. Read `~/.claude/commands/draft.md`, `~/.claude/commands/tc.md`, `~/.claude/commands/import.md` → all three must exist. (`polish` has no command file — `/polish` invokes the skill directly.)
+12. Read `~/.claude/settings.json`, parse as JSON, confirm `.hooks.PreToolUse` contains a **single matcher group** whose `hooks` array holds BOTH a command containing `verified-import/hooks/pre_tool_use.py` AND a command containing `track-changes/hooks/pre_tool_use.py`, with the **verified-import entry stacked before** the track-changes entry (same group → sequential execution; not two separate groups). (`polish` adds no hook, so the count stays six.)
 
 Any verification failure → report to user and do not claim success.
 
@@ -112,23 +116,27 @@ Any verification failure → report to user and do not claim success.
 
 On success, tell the user:
 
-> **track-changes v4.0.0 installed successfully — two skills + shared `tc_core`.**
+> **track-changes v5.0.0 installed successfully — three skills + shared `tc_core`.**
 >
 > **`track-changes`** (`~/.claude/skills/track-changes/`): always-on mark-tracking. SKILL.md, VERSION, settings-patch.json, hooks/ (5 sh + 2 py), lib/ (4 py + 6 sh + 1 sty + the shared `tc_core` package), reference/ (highlight-syntax.md, latex.md, quarto-notes.md, **digest.md**, tc-clean.css, tc-clean.js).
 >
 > **`verified-import`** (`~/.claude/skills/verified-import/`): opt-in `/import`. SKILL.md, hooks/pre_tool_use.py, lib/ (vi_verify.py, vi-cli.sh). It imports the shared `tc_core` from `track-changes/lib` — no duplicate copy.
 >
+> **`polish`** (`~/.claude/skills/polish/`): opt-in `/polish`. SKILL.md, lib/ (polish-cli.sh, polish_engine.py). No hook, no command file, no settings entry — it imports the shared `tc_core` from `track-changes/lib` and its fixes flow through the `track-changes` PreToolUse hook.
+>
 > **Slash commands** (`~/.claude/commands/`): draft.md, tc.md, import.md.
 >
-> **Settings** (`~/.claude/settings.json`): 6 hook registrations merged across both skills (verified-import's PreToolUse stacked before track-changes' in one matcher group).
+> **Settings** (`~/.claude/settings.json`): 6 hook registrations merged (verified-import's PreToolUse stacked before track-changes' in one matcher group; polish owns no hook).
 >
 > **Always-on mark-tracking:** once a file is tracked, every AI edit to a `.md` / `.qmd` / `.tex` file is wrapped in `<mark>…</mark><sup>N</sup>` highlights you can review and accept/reject. Batch-resolve with `/tc accept|reject|list [<file>] <ranges>` (e.g. `1-25,!7`).
 >
 > **Verified import:** `/import <source>[#L<a>-L<b>] [<target>]` inserts a vetted source into a tracked document. Claude converts it faithfully to the document's format and the import lands clean (no marks) — there is no mechanical content gate. Claude self-marks only genuinely significant changes (altered meaning) for you to review.
 >
+> **Dictation polish:** `/polish [file]` cleans up voice-dictated prose (speech-recognition errors, grammar, dropped words) in a tracked document, surfacing every fix as a reviewable `<mark>`. It never auto-corrects a domain/code/math token — it leaves and flags it. On an untracked file it offers a one-time direct polish (no marks) or to enable tracking first.
+>
 > **`/draft`:** temporarily suspend the highlight requirement for one user turn (e.g. for brand-new, from-scratch content).
 >
-> **Activation:** `track-changes` is OFF by default. To track a file, add `tc-track: true` to its YAML frontmatter (or `% tc-track: true` for `.tex`), drop a `.tc-tracked` marker in the file's folder (`/tc mark <dir>`), or invoke `/tc enable <file>`. (The per-file key is `tc-track`, not `track-changes`, because `track-changes` is a reserved Quarto YAML field that breaks `.qmd` renders.)
+> **Activation:** `track-changes` is OFF by default. To track a file, add `tc-track: true` to its YAML frontmatter (or `% tc-track: true` for `.tex`), drop a `.tc-tracked` marker in the file's folder (`/tc mark <dir>`), or invoke `/tc enable <file>`. (The per-file key is `tc-track`, **not** `track-changes` — `track-changes` is a reserved Quarto YAML field that breaks `.qmd`/`.md` renders.)
 >
 > **Open a new Claude Code session** to activate the suite hooks.
 
@@ -185,12 +193,27 @@ Each entry lists source-URL → destination-path. Base URL: `https://raw.githubu
 - `verified-import/lib/vi_verify.py` → `~/.claude/skills/verified-import/lib/vi_verify.py`
 - `verified-import/lib/vi-cli.sh` → `~/.claude/skills/verified-import/lib/vi-cli.sh`
 
+### polish — skill  (→ `~/.claude/skills/polish/`)
+*No `tc_core` copy — polish imports the shared package from `track-changes/lib`. No hook, no command file.*
+- `polish/SKILL.md` → `~/.claude/skills/polish/SKILL.md`
+- `polish/lib/polish-cli.sh` → `~/.claude/skills/polish/lib/polish-cli.sh`
+- `polish/lib/polish_engine.py` → `~/.claude/skills/polish/lib/polish_engine.py`
+
 ### Slash commands  (→ `~/.claude/commands/`)
 - `commands/draft.md` → `~/.claude/commands/draft.md`
 - `commands/tc.md` → `~/.claude/commands/tc.md`
 - `commands/import.md` → `~/.claude/commands/import.md`
+*(No `polish.md` — `/polish` invokes the skill directly.)*
 
 ---
+
+## v5.0.0 Changelog Summary
+
+v5 adds a **third cooperating skill, `polish`**, to the suite (track-changes + verified-import + polish), and reconciles the source-of-record up to the published v4.1 (the `tc-track` key rename, below) which had shipped to the site but not the source repo.
+
+**v5.0.0 (polish joins the suite).** `polish` (`/polish [file]`) cleans up **voice-dictated** prose — speech-recognition errors, grammar, dropped words — in an existing tracked `.md`/`.qmd` document, surfacing every fix as an ordinary track-changes `<mark>` (reviewable via `/tc accept|reject`). It is opt-in and default-OFF: the explicit `/polish` invocation **is** the opt-in (no marker file). Bright line — it **never** auto-corrects an unrecognized token (jargon / code / math / domain term): such a token is left and flagged, never silently changed; a meaning-affecting fix is surfaced as a mark, not applied silently. `polish` adds **no new hook** and **no settings change** — its prose fixes flow through the **existing** `track-changes` PreToolUse hook unchanged, so the suite hook count stays **six**; on a tracked file fixes become marks, on an untracked file it offers a one-time direct polish (no marks) or to enable tracking first. `polish_engine.py` reuses `track-changes`' own `tc_core.activation` for the authoritative tracked-check and imports `tc_core` from `track-changes/lib` (no duplicate copy — the same shared-core pattern as `verified-import`). There is **no view-time "dictated lens"** (an earlier build's render-time second color was retired after a source-vs-executed token-stream drift; `git diff` is the authoritative "what did I change" view). Existing tracked documents need **no conversion**; the mark grammar, the hooks, and the two prior skills are unchanged. The bootstrap version check is corrected to `5.0.0` (the published 4.x bootstrap still referenced `4.0.0` even after the 4.1 files shipped).
+
+**v4.1.0 (per-file key rename — rolled into the source-of-record here).** The per-file activation key was renamed `track-changes:` → `tc-track:` (YAML) / `% tc-track:` (`.tex` magic comment). The old `track-changes:` key is a **reserved Quarto YAML field** (Quarto accepts only `accept`/`reject`/`all` and errors on `true`/`false`), so it broke every `.qmd`/`.md` render; `tc-track` is an unknown key Quarto passes through untouched. **BREAKING** for files using the old key — swap them to `tc-track`. The skill name, the `/tc` command, the mark grammar, the hooks, and `.tc-tracked` folder markers are unchanged. (4.1 was published to the Pages site and installed locally on 2026-05-31 but was never committed back to the source repo; v5 reconciles `activation.py`, `tc-cli.sh`, `tc-common.sh`, `tc-mark.sh`, `SKILL.md`, `digest.md`, and `latex.md` to the published 4.1 content before adding polish.)
 
 ## v4.0.0 Changelog Summary
 
@@ -228,6 +251,7 @@ The v4 test suite (categories A–V) passes green. See `https://mgkay.github.io/
   "Bash(curl *)",
   "Read(~/.claude/skills/track-changes/**)", "Write(~/.claude/skills/track-changes/**)",
   "Read(~/.claude/skills/verified-import/**)", "Write(~/.claude/skills/verified-import/**)",
+  "Read(~/.claude/skills/polish/**)", "Write(~/.claude/skills/polish/**)",
   "Read(~/.claude/commands/**)", "Write(~/.claude/commands/**)"
 ]
 ```
@@ -239,4 +263,4 @@ The v4 test suite (categories A–V) passes green. See `https://mgkay.github.io/
 Raw files: <https://raw.githubusercontent.com/mgkay/mgkay.github.io/main/track-changes/>
 Repository: <https://github.com/mgkay/mgkay.github.io/tree/main/track-changes>
 
-For development or bulk install, `git clone https://github.com/mgkay/mgkay.github.io` then copy `track-changes/skill/*` to `~/.claude/skills/track-changes/`, `track-changes/verified-import/*` to `~/.claude/skills/verified-import/`, and `track-changes/commands/*` to `~/.claude/commands/`. The suite's source-of-truth repository (with tests and PCV history) is separately maintained.
+For development or bulk install, `git clone https://github.com/mgkay/mgkay.github.io` then copy `track-changes/skill/*` to `~/.claude/skills/track-changes/`, `track-changes/verified-import/*` to `~/.claude/skills/verified-import/`, `track-changes/polish/*` to `~/.claude/skills/polish/`, and `track-changes/commands/*` to `~/.claude/commands/`. The suite's source-of-truth repository (with tests and PCV history) is separately maintained.

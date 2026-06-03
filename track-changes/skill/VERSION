@@ -1,20 +1,40 @@
+5.0.0
+2026-06-03
+track-changes v5 — `polish` joins as the THIRD cooperating skill; the suite is now
+  track-changes + verified-import + polish, sharing one tc_core package.
+5.0.0 major: `polish` (`/polish [file]`) cleans up VOICE-DICTATED prose — speech-recognition
+  errors, grammar, dropped words — in an existing tracked .md/.qmd file, surfacing every fix
+  as an ordinary track-changes `<mark>` (reviewable via `/tc accept|reject`). It is opt-in and
+  default-OFF: the explicit `/polish` invocation IS the opt-in (no marker file). Bright line —
+  it NEVER auto-corrects an unrecognized token (jargon/code/math/domain term): such tokens are
+  left + flagged, never silently changed; a meaning-affecting fix is surfaced as a mark, not
+  applied silently. polish adds NO new hooks and NO settings change — its prose fixes flow
+  through the EXISTING track-changes PreToolUse hook unchanged; on a track-changes-tracked file
+  fixes become marks, on an untracked file it offers a one-time direct polish (no marks) or to
+  enable tracking first. polish_engine.py reuses track-changes' own `tc_core.activation` for the
+  authoritative tracked-check and imports tc_core from track-changes/lib (no duplicate copy —
+  same shared-core pattern as verified-import). Files: polish/SKILL.md, polish/lib/polish-cli.sh,
+  polish/lib/polish_engine.py → ~/.claude/skills/polish/. No view-time "dictated lens" (an earlier
+  build's render-time second color was retired after a source-vs-executed token-stream drift; `git
+  diff` is the authoritative "what did I change" view). Existing tracked documents need NO
+  conversion; the mark grammar, hooks, and two prior skills are UNCHANGED.
+- The hook count stays SIX (five track-changes + one verified-import); polish owns no hook.
+  settings-patch.json is byte-unchanged from v4. The bootstrap version check is corrected to
+  5.0.0 (the published 4.x bootstrap still referenced 4.0.0 — see the 4.1.0 note below).
+
 4.1.0
 2026-05-31
 track-changes v4.1 — per-file activation key renamed `track-changes` -> `tc-track`.
-The per-file YAML / magic-comment opt-in key was `track-changes: true|false`, which
-COLLIDES with Quarto's reserved `track-changes` YAML field (Quarto accepts only
-accept/reject/all there and errors on true/false) — so it broke every .qmd/.md render
-with a YAML-validation error. The key is now `tc-track: true|false` (YAML) and
-`% tc-track: ...` (.tex magic comment): an unknown key Quarto passes through untouched.
-UNCHANGED: skill name/folder, the `/tc` command, the mark grammar, the hooks, and the
-folder `.tc-tracked` marker. BREAKING for any file using the old key — the gate no longer
-recognizes `track-changes` (swap it to `tc-track`). Files touched: tc_core/activation.py
-(gate regexes), tc-common.sh (bash reader), tc-cli.sh (`/tc enable|disable|status` now
-emit/show `tc-track`), tc-mark.sh marker template, and the SKILL.md / digest.md / latex.md
-/ bootstrap.md / commands/tc.md / index.html docs. Also hardened commands/draft.md: a
-Skill-tool (non-typed) `/draft` does NOT execute the `!bash` sentinel writer, so the
-command now tells the assistant to verify the sentinel and run draft-on.sh via Bash if
-absent (the old behavior silently failed safe — the edit was blocked).
+  Rolled into the source-of-record HERE for the first time: 4.1.0 was published to the Pages
+  site and installed locally on 2026-05-31 but was never committed back to this source repo, so
+  the v4/ snapshot stayed at 4.0.0. v5 reconciles the source up to the published 4.1.0 content
+  (activation.py, tc-cli.sh, tc-common.sh, tc-mark.sh, SKILL.md, digest.md, latex.md) before
+  adding polish. The old `track-changes:` YAML key is a RESERVED Quarto field (Quarto accepts only
+  accept/reject/all and errors on true/false), so it broke every .qmd/.md render; `tc-track` is an
+  unknown key Quarto passes through untouched. BREAKING for files using the old key — swap them to
+  `tc-track`. Skill name, the `/tc` command, the mark grammar, the hooks, and `.tc-tracked` folder
+  markers are unchanged. Also hardened `/draft` so a Skill-tool invocation (which does not run the
+  `!bash` sentinel writer) self-verifies and falls back to running draft-on.sh via Bash.
 
 4.0.0
 2026-05-26

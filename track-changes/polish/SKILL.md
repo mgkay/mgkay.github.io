@@ -1,0 +1,287 @@
+---
+name: polish
+description: Opt-in, default-OFF skill for cleaning up VOICE-DICTATED document prose (speech-recognition errors, grammar, dropped words) in existing .md/.qmd files, WITHOUT destabilizing track-changes. AI fixes surface as ordinary track-changes <mark> marks (reviewable via /tc accept|reject). Bright line: NEVER auto-correct an unrecognized token (jargon/code/math/domain term) — leave it and flag it. Invoke explicitly with /polish [file] — the invocation is the opt-in (no marker). On a track-changes-tracked file, fixes surface as marks; on an untracked file, polish offers a one-time direct edit (no marks) or to enable tracking first. Sits on top of track-changes + verified-import; modifies neither.
+---
+
+# polish
+
+`polish` cleans up **voice-dictated** document input — speech-recognition errors,
+ordinary grammar, and dropped/missing words. On a track-changes-tracked document
+it surfaces every fix as an ordinary **track-changes `<mark>`**, so the existing
+review discipline stays fully intact (on an untracked throwaway it can instead
+apply fixes directly, with a full change summary — §1, §5a). It **orchestrates**
+track-changes; it does not invent a parallel marking system.
+
+One reviewable channel:
+
+- **AI polish** — surfaced as **ordinary track-changes `<mark>` marks**
+  (reviewable via `/tc accept|reject`). These go through track-changes' *existing*
+  PreToolUse hook, unchanged.
+
+`polish` adds **new files only**. It does not modify track-changes or
+verified-import source — the "don't destabilize the workflow" constraint is met
+by construction, not by discipline.
+
+> **No view-time "dictated lens."** An earlier version of polish also shaded the
+> author's *entire new dictation* a second color in the rendered HTML
+> (`?dictated=1`), via a positional manifest + a Quarto Lua filter. It was
+> **retired (2026-06-02)** after the first real-lecture test. The manifest is
+> built over the *source* token stream, but the filter runs over Quarto's
+> *executed* token stream, and in a real lecture those streams diverge (Quarto
+> injects caption / cross-reference text and code output as `Str` nodes the
+> source lacks) — so the positional lens silently mislanded or dropped spans: it
+> missed a dictated `## 2.` heading rename that was plainly in `git diff`. For
+> "what did I change," **`git diff` is the authoritative view** (§8). Do not
+> reintroduce the lens without first solving the diff at the *executed*
+> (post-render) token level — a positional source-side manifest cannot be trusted.
+
+---
+
+## 1. Activation (explicit invocation; tracked → marks, untracked → ask)
+
+`polish` never fires unbidden — it runs only when you **explicitly invoke**
+`/polish [file]`. The invocation itself is the opt-in; there is **no separate
+`.polish-on` marker or `polish-on:` key** (removed 2026-06-02 — superfluous for a
+manually-invoked command).
+
+What happens next depends on whether the file is **track-changes-tracked**.
+`analyze` reports this as `tracked: true|false`, computed via track-changes' own
+`tc_core.activation` (the module its hook uses) — so it always matches what the
+hook will enforce, and it is CRLF-safe (unlike the bash `/tc status`, which
+misreports Windows-CRLF files).
+
+- **`tracked: true`** → **mark mode**: fixes surface as track-changes marks (§4),
+  validated and logged by the existing hook. The default for any maintained
+  deliverable — for a tracked lecture `/polish <file>` just works.
+- **`tracked: false`** (or `null` — track-changes not importable) → **ask the
+  author** which they want:
+  - **(a) Enable tracking first** (`/tc enable <file>` / `/tc mark <dir>`), then
+    re-invoke for mark mode — for anything they will maintain and re-review; **or**
+  - **(b) One-time direct polish** — fixes applied straight into the file, **no
+    marks** (for a genuine throwaway; §5a).
+  **Lead with (a):** a forgotten-to-track deliverable must not silently lose its
+  review trail. Take (b) only on the author's explicit choice.
+
+---
+
+## 2. Scope — what polish fixes (M2 vs M1)
+
+Run `bash lib/polish-cli.sh analyze <file>` first. It reports the scope.
+
+### M2 — diff-scoped (the default, recommended path)
+A prior committed baseline exists (`git` HEAD, or `--baseline-ref`). The engine
+diffs baseline vs on-disk over pandoc `Str` tokens and reports the **dictated
+scope** — the prose newly dictated since the baseline.
+- **Polish ONLY the new (dictated) prose**, under the §3 safety rules, so an
+  already-vetted document is not re-polished.
+
+### M1 — whole-document / first-draft
+No baseline (untracked/new file, or the whole doc is new dictation). Scope = the
+whole document's prose. **Not recommended on a large, already-vetted doc** —
+commit a baseline first to get M2 scoping. The engine prints this note.
+
+The diff is source-level and git-authoritative; it only **scopes** the fixes —
+it is not a rendered overlay (§6, §8).
+
+---
+
+## 3. The safety rules (bright lines — non-negotiable)
+
+1. **Never auto-correct an unrecognized token.** If a token is not positively
+   identifiable as English prose — code-ish, symbol-ish, a known domain term,
+   inside `$…$`/code fence/`:::` — **leave it untouched and flag it** in your
+   reply; never silently change it. The engine pre-computes these as
+   `flagged_protected` (all-caps acronyms like `LTL`/`TLC`; digit+letter or
+   underscore tokens like `q0`/`q_max`/`totlogcost`; non-ASCII/Greek like `αvhq`;
+   and an extensible allowlist in `.polish-allowlist`). Inline math, code, and
+   raw spans are excluded from the prose token stream entirely. **When in doubt,
+   do not touch.**
+2. **Polish fixes errors; it does not rewrite meaning.** No hedge→absolute, no
+   tightening that shifts a claim. When a fix could change meaning, make it a
+   **reviewable mark** (so the author sees it) — or skip it. Never apply a
+   meaning-affecting change silently.
+3. **Fixes inside a non-rendering construct.** The engine reports
+   `nonrendering_regions` (fenced code, `$$…$$`, `:::` divs, YAML, tables). A
+   track-changes fix there would be **blocked by the hook and routed to /draft**.
+   Do NOT attempt such a fix: **skip it and report** "fix skipped: inside
+   <kind> at line N" so the author can handle it manually.
+4. **Opt-in, default-OFF** (see §1).
+
+---
+
+## 4. How AI fixes become marks (reuse, don't reinvent)
+
+When `polish` edits a tracked doc, each fix MUST be wrapped in the standard
+track-changes grammar — the existing hook enforces it:
+
+| Change | Markdown / Quarto |
+|--------|-------------------|
+| insertion (missing word) | `<mark>NEW</mark><sup>N</sup>` |
+| deletion | `<mark><s>OLD</s></mark><sup>N</sup>` |
+| replacement (recognition/grammar fix) | `<mark><s>OLD</s>NEW</mark><sup>N</sup>` |
+
+**Mark numbering (no collisions):** the engine reports `next_mark_n` (= max
+existing N + 1). Assign N sequentially from there across all fixes in the run.
+Prefer a single `MultiEdit` so all marks are validated together; if editing
+incrementally, re-read `next_mark_n` between edits. `/tc list` after polish must
+show no duplicate numbers.
+
+`/tc accept|reject` resolves polish's marks exactly as any other — polish changes
+nothing about resolution.
+
+---
+
+## 5. The `/polish` workflow
+
+`/polish` splits into a cheap **orchestrator** (this session) and a **Sonnet
+sub-agent** that does the actual fix-finding + marking in a **fresh, minimal
+context** — so the slow part (model reasoning) runs on a faster model and is not
+taxed by a long main-session context.
+
+1. **Analyze (orchestrator):** `bash lib/polish-cli.sh analyze <file>`. Read
+   `tracked`, scope (M1/M2), `dictated_tokens`, `flagged_protected`,
+   `nonrendering_summary`, `next_mark_n`, warnings. Also capture
+   `git diff HEAD -- <file>` — the readable dictated edit.
+2. **Branch on `tracked`** (§1): tracked → continue; `false`/`null` → ask the
+   author (enable tracking, then re-invoke; or one-time **direct** polish, §5a).
+3. **Dispatch (orchestrator → sub-agent):** spawn ONE sub-agent — **Agent tool,
+   `model: sonnet`** — with a CURATED prompt. Forward ONLY:
+   - the file path and the **`git diff HEAD`** (the prose to polish);
+   - `next_mark_n`, `flagged_protected`, and the **mode** (mark vs direct, §5a);
+   - a one-line non-rendering note from `nonrendering_summary` ("don't place a
+     fix inside `$…$`/`$$…$$`, code fences, or `:::` divs") — **not** the raw
+     region list;
+   - the §3 bright lines and the §4 mark grammar (paste them in).
+   Do NOT forward the main-session context. The sub-agent finds only
+   recognition/grammar/missing-word fixes in the dictated prose, leaves+flags
+   protected tokens, skips non-rendering-region fixes, and applies **all fixes in
+   a single `MultiEdit`** (marks numbered from `next_mark_n`; track-changes' hook
+   validates them). It returns a structured summary: fixed `old→new`,
+   left+flagged, skipped.
+   *Trivial runs* (empty scope, or 1–2 obvious fixes) MAY be done inline by the
+   orchestrator — a sub-agent isn't worth the spawn.
+4. **Audit (orchestrator):** `bash lib/polish-cli.sh audit <file> --runs N --mode
+   M2|M1 --flagged a,b` — appends a `dictated:` breadcrumb to `.tc-history.md`.
+5. **Report (orchestrator):** relay the sub-agent's summary to the author.
+6. The author reviews the marks via `/tc`, and consults **`git diff`** to re-read
+   their entire new input (the authoritative "what did I change").
+
+**Why this is fast:** the engine (`analyze` ≈ 0.4 s) and track-changes' hook
+(deterministic — no LLM/network call) are already fast; the latency is model
+inference, dominated by a long main-session context. A Sonnet sub-agent with a
+tiny fresh context attacks both — faster model, no session-context tax — and the
+single `MultiEdit` shrinks the window where a concurrent author edit forces a
+re-read/retry.
+
+### 5a. Direct mode (untracked, one-time, no marks)
+
+Chosen when the author opts for a one-time direct polish on an **untracked** file
+— a throwaway not maintained over time, which is exactly what the track-changes
+review discipline is *for*, so a non-maintained doc legitimately skips it.
+
+- **Apply only clear** recognition / grammar / missing-word fixes **directly** to
+  the file — no `<mark>` wrappers. (On an untracked file the track-changes hook
+  does not fire, so plain edits go straight through; no `/draft` needed.)
+- **The §3 bright lines still hold.** Protected tokens (jargon/code/math/domain)
+  are still **left + flagged**, never auto-corrected. And **never silently change
+  meaning**: with no mark to carry it, any meaning-affecting fix is **reported,
+  not applied** — surfaced as a suggestion for the author to make.
+- **The change summary is the only record** (no marks; maybe no `git diff` on a
+  non-git scratch file), so present a **complete** one, in three buckets:
+  1. **Applied** — every edit, as `old → new`.
+  2. **Flagged, not applied** — the meaning-affecting suggestions.
+  3. **Left untouched** — the protected tokens.
+- **No `dictated:` breadcrumb** is written (untracked ⇒ outside the track-changes
+  audit). Say so in the report.
+
+---
+
+## 6. The dictated scope (how it's computed)
+
+The engine computes the scope deterministically and **writes no files**:
+
+- Tokenize the baseline (git HEAD) and the on-disk file by pandoc `Str` node, in
+  document order; `Code`/`Math`/`RawInline` carry text in a string field (not
+  `Str` children), so they never enter the stream and are protected by
+  construction.
+- `difflib` over the two token streams → the inserted/replaced tokens are the
+  **dictated scope** (M2). No baseline → whole-document prose (M1).
+- Existing track-changes marks are reduced to their effective accepted text
+  before tokenizing, so prior unresolved marks don't pollute the scope.
+
+This is **advisory** — it tells the model which prose is new to fix. It never
+edits the document, and (unlike the retired lens) it writes no manifest and adds
+no render-time markup. The source-level diff is reliable; a rendered overlay
+derived from it positionally was not (see the intro callout and §8).
+
+---
+
+## 7. The `dictated:` audit breadcrumb
+
+`polish` appends a `dictated:` block to the project's `.tc-history.md` (additive,
+analogous to the retired `imported:` entry). track-changes **never reads
+`.tc-history.md` back** (it diffs its own `.marks` cache), so this cannot perturb
+the audit classifier. The block is keyed `dictated:` (distinct from
+`introduced:`/`resolved:`) and records: run count, mode, baseline, and flagged
+tokens. If `.tc-history.md` doesn't exist, polish writes the same canonical
+header track-changes would.
+
+---
+
+## 8. Baseline (M2) edge cases
+
+- **Baseline = last git commit** (`HEAD`) by default; override with
+  `--baseline-ref <ref>` (e.g. a git tag used as a named checkpoint).
+- **Dirty tree:** polish cannot distinguish prior uncommitted non-dictation edits
+  from this session's dictation; it warns and treats ALL changes since the
+  baseline as new. Commit a baseline first to scope precisely.
+- **Untracked / new file:** no baseline → M1 (whole-doc), with a note.
+- **Unresolved marks in the diff:** the engine strips track-changes mark wrappers
+  to their effective accepted text before tokenizing, so prior marks don't
+  pollute the dictated scope.
+- **"What did I change?"** Use `git diff` (or `git diff --word-diff`). It is
+  exact, complete, and needs no infrastructure — it is the authoritative view of
+  your dictated input. polish deliberately does **not** reimplement it as a
+  rendered overlay.
+
+---
+
+## 9. Why there is no view-time lens (the retired-feature decision)
+
+The original charge's "real prize" was a second color showing the author's
+*entire new dictated input* in the rendered document (`?dictated=1`). It shipped,
+passed its Pattern-1 verification, and was **retired on first real-lecture use**
+— recorded here so it is not rebuilt by reflex.
+
+- **Mechanism that failed:** the Python engine tokenized the *source* `.qmd`; the
+  Quarto Lua filter tokenized the *executed* document; a positional manifest
+  mapped one onto the other by `Str`-node index. The two streams are only equal
+  in plain markdown (the spike). A real lecture's executed AST contains `Str`
+  nodes the source lacks — figure/table caption prefixes, cross-reference
+  expansions, callout titles, and the output of every code chunk — so the indices
+  drift and the lens shades the wrong words or none.
+- **Evidence:** running `/polish` on a real dictated edit of a lecture, a
+  dictated `## 2.` heading rename that was unmistakably present in `git diff` did
+  **not** shade. An incomplete "see everything I changed" lens is worse than
+  none: you cannot trust it, so you re-read manually anyway.
+- **The verification gap:** the Pattern-1 subagent checked the lens on the spike
+  and controlled markup, never on an executed lecture — the same toy-vs-real gap
+  that hid two engine bugs (a `cp1252`/UTF-8 crash on `′`/`α`, and a manifest path
+  that didn't resolve under Quarto). Real-content acceptance testing is what
+  surfaced all three.
+- **The reliable alternative:** `git diff` already answers "what did I change,"
+  exactly and completely, at the source level — which is also all polish needs to
+  *scope* its fixes (§6). So the diff stays (internal scoping); the rendered lens
+  is gone.
+
+If a rendered overlay is ever wanted again, it must derive from the **executed**
+(post-render) token stream, not a source-side positional manifest. A source-side
+lens is a standing trust hazard; do not reintroduce it.
+
+---
+
+## 10. Relationship to `/import`
+
+Dictation is **not** an import. But a dictated *paraphrase of a source* is a
+fidelity event: when the author says "use the source wording," **defer to
+`/import`** (verified-import) rather than polishing a paraphrase into place.
