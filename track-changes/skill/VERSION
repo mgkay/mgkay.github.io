@@ -1,3 +1,25 @@
+5.1.0
+2026-06-04
+track-changes v5.1 — `polish` broadened from dictation cleanup to a FULL editorial pass.
+  polish now does the work a copy-editor does on newly dictated prose — split run-on
+  sentences, reorder clauses for flow, tighten wordiness, smooth awkward phrasing — in
+  addition to the recognition/grammar/dropped-word fixes. It stays meaning-preserving and
+  diff-scoped (it only ever touches prose newly dictated since the git baseline, never the
+  vetted/committed corpus), and every change is still an ordinary track-changes `<mark>`
+  reviewed via `/tc accept|reject`. Bright line #2 is split: the hard line is MEANING — never
+  drop or weaken a qualifier, hedge, scope phrase, or modal (a qualifier-preservation rule for
+  restructures), never alter a fact/number; and an OBVIOUS error (a broken/nonsensical sentence,
+  e.g. a stray question in declarative prose) is now MARKED with a best-guess fix, not demoted
+  to a prose-only suggestion. Restructure mark-UX: a restructure wraps the WHOLE sentence as one
+  replacement mark (not a scatter of char-diffs); the run reports four buckets (corrections /
+  restructures / left+flagged / suggested); sentence relocations across paragraphs are
+  suggested, not applied. Engine fix: smart-quote contractions/possessives (it's, they're,
+  item's) are no longer mis-flagged as protected tokens — typographic apostrophes/quotes/dashes
+  are folded to ASCII before the non-ASCII protected-token test, so genuine symbols/Greek (αvhq)
+  and the prime ′ stay protected while ordinary contractions remain polishable. No hook or
+  settings change; the mark grammar, the hooks, and track-changes + verified-import are
+  UNCHANGED. Backward-compatible — no document migration.
+
 5.0.0
 2026-06-03
 track-changes v5 — `polish` joins as the THIRD cooperating skill; the suite is now

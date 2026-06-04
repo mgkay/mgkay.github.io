@@ -1,7 +1,7 @@
 # track-changes Bootstrap — Source-preserving AI edit protocol (three-skill suite)
 
-**Version:** 5.0.0
-**Date:** 2026-06-03
+**Version:** 5.1.0
+**Date:** 2026-06-04
 
 ## What This File Does
 
@@ -9,7 +9,7 @@ Installer manifest for the **track-changes** suite for Claude Code. The suite sh
 
 - **`track-changes`** (always-on, opt-in per file/folder) — every Claude edit to a tracked `.md` / `.qmd` / `.tex` file is wrapped in a `<mark>…</mark><sup>N</sup>` highlight you can review and accept/reject. This is the mark-gate.
 - **`verified-import`** (opt-in, invoked via `/import`) — insert a vetted source (a Word chapter, a prior notebook, a manuscript section) into a tracked document. Claude converts the source to the document's format and lands it **clean** (no marks): there is **no mechanical content gate** — the LLM imports faithfully and self-marks only genuinely significant changes (altered meaning) in track-changes marks; minor diffs land clean. A PreToolUse hook writes a one-shot, sha-bound exemption that the always-on `track-changes` skill honors, so the faithful block is not mark-wrapped.
-- **`polish`** (opt-in, invoked via `/polish [file]`) — clean up **voice-dictated** prose (speech-recognition errors, grammar, dropped words) in an existing tracked document. Every fix surfaces as an ordinary track-changes `<mark>` you review with `/tc accept|reject`. Bright line: it **never** auto-corrects an unrecognized token (jargon / code / math / domain term) — such a token is left and flagged, never silently changed; a meaning-affecting fix is surfaced as a mark, not applied silently. polish adds **no hook** — its fixes flow through the existing `track-changes` PreToolUse hook — and **no slash-command file** (the explicit `/polish` invocation is the opt-in). It reuses the shared `tc_core` for its tracked-check.
+- **`polish`** (opt-in, invoked via `/polish [file]`) — clean up **and editorially improve voice-dictated** prose in an existing tracked document: recognition/grammar/dropped-word fixes **plus** meaning-preserving restructuring (split run-ons, reorder for flow, tighten wordiness). Every change surfaces as an ordinary track-changes `<mark>` you review with `/tc accept|reject`. Bright line: it **never** auto-corrects an unrecognized token (jargon / code / math / domain term) — such a token is left and flagged, never silently changed; a meaning-affecting fix is surfaced as a mark, not applied silently. polish adds **no hook** — its fixes flow through the existing `track-changes` PreToolUse hook — and **no slash-command file** (the explicit `/polish` invocation is the opt-in). It reuses the shared `tc_core` for its tracked-check.
 
 When Claude Code follows the instructions below, it downloads all three skills — hooks, library modules, the shared `tc_core` package, slash commands, and reference docs — and merges **six** hook registrations into your `~/.claude/settings.json` (five for `track-changes`, one for `verified-import`; `polish` owns no hook).
 
@@ -17,7 +17,7 @@ When Claude Code follows the instructions below, it downloads all three skills �
 - **Leaner always-on footprint.** The `track-changes` skill is narrowed: source-provenance import wrappers moved out into the separate opt-in `verified-import` skill; cross-file mark renumbering and edit-inside-non-rendering-construct sibling handling were removed (such edits now route to `/draft`).
 - **SessionStart digest.** The session-start hook now injects a compact `reference/digest.md` (~2.9 KB) instead of the full `SKILL.md` — ~93.5% smaller, well under the 40 KB inline cap. The full `SKILL.md` is lazy-loaded on demand.
 - **Convert-on-import (LLM-judgment).** `verified-import` trusts the LLM to import the AI-converted block faithfully — there is **no mechanical content gate**. On a live pending-import the hook writes a one-shot, sha-bound exemption that the `track-changes` gate consumes, so the converted block lands clean; the model self-marks only genuinely significant changes (altered meaning) for the author to review.
-- **Dictation cleanup (v5).** `polish` (`/polish [file]`) cleans up voice-dictated prose, surfacing every fix as an ordinary track-changes mark. It adds no hook and no settings change — fixes flow through the existing `track-changes` PreToolUse hook — and never auto-corrects an unrecognized domain/code/math token (it leaves and flags it).
+- **Editorial polish (v5; broadened in v5.1).** `polish` (`/polish [file]`) cleans up **and editorially improves** voice-dictated prose — recognition/grammar/dropped-word fixes plus meaning-preserving restructuring (split run-ons, reorder for flow, tighten wordiness) — surfacing every change as an ordinary track-changes mark. It adds no hook and no settings change — changes flow through the existing `track-changes` PreToolUse hook — and never auto-corrects an unrecognized domain/code/math token (it leaves and flags it), nor drops a qualifier or alters meaning.
 
 **Backward compatibility / clean break:** the `<mark>…</mark><sup>N</sup>` mark grammar is **unchanged**. Existing tracked documents need **no conversion** — upgrading only re-installs the skill files and re-registers the hooks. See the changelog at the bottom.
 
@@ -38,16 +38,16 @@ When Claude Code follows the instructions below, it downloads all three skills �
 
 ## Instructions for Claude Code
 
-You are reading the track-changes v5.0.0 bootstrap manifest. Follow these steps precisely.
+You are reading the track-changes v5.1.0 bootstrap manifest. Follow these steps precisely.
 
 ### Step 1: Check for existing installation
 
-Read `~/.claude/skills/track-changes/VERSION`. If the file exists, parse the first line as a version number. Compare it to `5.0.0` using semantic-version ordering (compare major, then minor, then patch as integers; treat a missing component as 0, so a two-part `2.0` is `2.0.0`).
+Read `~/.claude/skills/track-changes/VERSION`. If the file exists, parse the first line as a version number. Compare it to `5.1.0` using semantic-version ordering (compare major, then minor, then patch as integers; treat a missing component as 0, so a two-part `2.0` is `2.0.0`).
 
-- **Equal to 5.0.0** → "track-changes v5.0.0 is already installed. No update needed." **STOP.**
-- **Higher than 5.0.0** → "track-changes v[installed] is newer than this bootstrap (5.0.0). Aborting — will not downgrade." **STOP.**
-- **Lower than 5.0.0** (e.g. v4.x, v3.0.x, or any v1.x or v2.x) → "Updating track-changes from v[installed] to v5.0.0." Proceed to Step 2. The download in Step 2 overwrites every skill file in place and adds the new `polish` skill, so the upgrade is a clean replacement (the upgrade also re-merges settings.json, laying down the single combined PreToolUse matcher group); existing `<mark>…</mark><sup>N</sup>` content in your documents is fully backward-compatible and is left untouched (the mark grammar is unchanged — no document migration is needed). **Upgrading from v4.0.x?** The per-file activation key was renamed `track-changes:` → `tc-track:` in v4.1 (the old key is a reserved Quarto YAML field that breaks `.qmd`/`.md` renders); swap any old keys to `tc-track:`.
-- **Does not exist** → "Installing track-changes v5.0.0." Proceed to Step 2.
+- **Equal to 5.1.0** → "track-changes v5.1.0 is already installed. No update needed." **STOP.**
+- **Higher than 5.1.0** → "track-changes v[installed] is newer than this bootstrap (5.1.0). Aborting — will not downgrade." **STOP.**
+- **Lower than 5.1.0** (e.g. v5.0.x, v4.x, v3.0.x, or any v1.x or v2.x) → "Updating track-changes from v[installed] to v5.1.0." Proceed to Step 2. The download in Step 2 overwrites every skill file in place (and, from a pre-v5 install, adds the `polish` skill), so the upgrade is a clean replacement (the upgrade also re-merges settings.json, laying down the single combined PreToolUse matcher group); existing `<mark>…</mark><sup>N</sup>` content in your documents is fully backward-compatible and is left untouched (the mark grammar is unchanged — no document migration is needed). **Upgrading from v4.0.x?** The per-file activation key was renamed `track-changes:` → `tc-track:` in v4.1 (the old key is a reserved Quarto YAML field that breaks `.qmd`/`.md` renders); swap any old keys to `tc-track:`.
+- **Does not exist** → "Installing track-changes v5.1.0." Proceed to Step 2.
 
 ### Step 2: Download all files (curl-based)
 
@@ -97,7 +97,7 @@ If the command exits non-zero, report the error to the user and stop.
 
 ### Step 4: Verify installation
 
-1. Read `~/.claude/skills/track-changes/VERSION` → first line must be `4.0.0`.
+1. Read `~/.claude/skills/track-changes/VERSION` → first line must be `5.1.0`.
 2. Read `~/.claude/skills/track-changes/SKILL.md` → must begin with `---` (YAML frontmatter).
 3. Read `~/.claude/skills/track-changes/hooks/pre_tool_use.py` → must begin with `"""` (Python docstring).
 4. Read `~/.claude/skills/track-changes/lib/tc_core/grammar.py` → must exist (shared mark-grammar package).
@@ -116,7 +116,7 @@ Any verification failure → report to user and do not claim success.
 
 On success, tell the user:
 
-> **track-changes v5.0.0 installed successfully — three skills + shared `tc_core`.**
+> **track-changes v5.1.0 installed successfully — three skills + shared `tc_core`.**
 >
 > **`track-changes`** (`~/.claude/skills/track-changes/`): always-on mark-tracking. SKILL.md, VERSION, settings-patch.json, hooks/ (5 sh + 2 py), lib/ (4 py + 6 sh + 1 sty + the shared `tc_core` package), reference/ (highlight-syntax.md, latex.md, quarto-notes.md, **digest.md**, tc-clean.css, tc-clean.js).
 >
@@ -206,6 +206,10 @@ Each entry lists source-URL → destination-path. Base URL: `https://raw.githubu
 *(No `polish.md` — `/polish` invokes the skill directly.)*
 
 ---
+
+## Changelog Summary
+
+**v5.1.0 (polish broadened to a full editorial pass).** `polish` now does the work a copy-editor does on newly dictated prose — splitting run-on sentences, reordering clauses for flow, tightening wordiness, smoothing awkward phrasing — in addition to the recognition/grammar/dropped-word fixes, while staying **meaning-preserving** and **diff-scoped** (it only ever touches prose newly dictated since the git baseline, never the vetted/committed corpus); every change is still an ordinary track-changes `<mark>`. The bright line is split into one hard rule — **never change meaning**: never drop or weaken a qualifier, hedge, scope phrase, or modal (a qualifier-preservation rule for restructures), and never alter a fact or number — plus a fix to error-handling: an **obvious error** (a broken/nonsensical sentence, e.g. a stray question left in declarative prose) is now **marked** with a best-guess fix rather than demoted to a prose-only suggestion. A restructure wraps the **whole sentence** as one replacement mark (not a scatter of character diffs), and the run reports four buckets — corrections / restructures / left+flagged / suggested; sentence relocations across paragraphs are suggested, not applied. Engine fix: smart-quote contractions/possessives (`it's`, `they're`, `item's`) are no longer mis-flagged as protected tokens — typographic apostrophes/quotes/dashes are folded to ASCII before the non-ASCII protected-token test, so genuine symbols/Greek (`αvhq`) and the prime `′` stay protected while ordinary contractions remain polishable. **No hook or settings change**; the mark grammar, the hooks, and the two prior skills are unchanged.
 
 ## v5.0.0 Changelog Summary
 

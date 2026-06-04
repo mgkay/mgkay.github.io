@@ -183,6 +183,19 @@ _DIGIT_LETTER_MIX_RE = re.compile(r"(?=.*[A-Za-z])(?=.*\d)")
 _ALLCAPS_RE = re.compile(r"^[A-Z]{2,}$")
 _PUNCT_STRIP_RE = re.compile(r"^[^\w$\\]+|[^\w$\\]+$", re.UNICODE)
 
+# Typographic punctuation that is ordinary English prose, not a symbol/jargon
+# signal: smart single/double quotes, en/em dashes, ellipsis. These are folded
+# to ASCII before the non-ASCII test so contractions/possessives dictated with
+# a smart apostrophe (it's, they're, item's) stay eligible for polishing rather
+# than being mis-flagged as protected. Genuine symbols/Greek (αvhq) and units
+# like the prime ′ are intentionally NOT folded, so they remain protected.
+_TYPOGRAPHIC_TO_ASCII = str.maketrans({
+    "‘": "'", "’": "'", "‚": "'", "‛": "'",
+    "“": '"', "”": '"', "„": '"', "‟": '"',
+    "–": "-", "—": "-", "―": "-",
+    "…": "...",
+})
+
 
 def _load_allowlist(path):
     """Domain-term allowlist: project .polish-allowlist (one term per line) plus
@@ -216,8 +229,8 @@ def is_protected_token(tok, allowlist):
         return True                       # code-ish: total_cost, q_max
     if _DIGIT_LETTER_MIX_RE.match(core) and re.search(r"\d", core):
         return True                       # q0, x1, q0star
-    if _GREEK_OR_NONASCII_RE.search(core):
-        return True                       # αvhq, q₀
+    if _GREEK_OR_NONASCII_RE.search(core.translate(_TYPOGRAPHIC_TO_ASCII)):
+        return True                       # αvhq, q₀ (genuine symbols/Greek; not smart quotes)
     if "$" in tok or "\\" in tok:
         return True                       # stray math/tex remnant
     return False

@@ -1,16 +1,25 @@
 ---
 name: polish
-description: Opt-in, default-OFF skill for cleaning up VOICE-DICTATED document prose (speech-recognition errors, grammar, dropped words) in existing .md/.qmd files, WITHOUT destabilizing track-changes. AI fixes surface as ordinary track-changes <mark> marks (reviewable via /tc accept|reject). Bright line: NEVER auto-correct an unrecognized token (jargon/code/math/domain term) — leave it and flag it. Invoke explicitly with /polish [file] — the invocation is the opt-in (no marker). On a track-changes-tracked file, fixes surface as marks; on an untracked file, polish offers a one-time direct edit (no marks) or to enable tracking first. Sits on top of track-changes + verified-import; modifies neither.
+description: Opt-in, default-OFF skill for cleaning up AND editorially improving VOICE-DICTATED document prose in existing .md/.qmd files, WITHOUT destabilizing track-changes. Does the full copy-editor pass — speech-recognition errors, grammar, dropped words, PLUS meaning-preserving restructuring (split run-ons, reorder for flow, tighten wordiness, smooth awkward phrasing). AI changes surface as ordinary track-changes <mark> marks (reviewable via /tc accept|reject). Bright lines: improve freely but NEVER change meaning; and NEVER auto-correct an unrecognized token (jargon/code/math/domain term) — leave it and flag it. Invoke explicitly with /polish [file] — the invocation is the opt-in (no marker). On a track-changes-tracked file, fixes surface as marks; on an untracked file, polish offers a one-time direct edit (no marks) or to enable tracking first. Sits on top of track-changes + verified-import; modifies neither.
 ---
 
 # polish
 
-`polish` cleans up **voice-dictated** document input — speech-recognition errors,
-ordinary grammar, and dropped/missing words. On a track-changes-tracked document
-it surfaces every fix as an ordinary **track-changes `<mark>`**, so the existing
-review discipline stays fully intact (on an untracked throwaway it can instead
-apply fixes directly, with a full change summary — §1, §5a). It **orchestrates**
-track-changes; it does not invent a parallel marking system.
+`polish` cleans up and **editorially improves voice-dictated** document input. It
+does the full pass a good copy-editor would: the corrections — speech-recognition
+errors, ordinary grammar, dropped/missing words — **and** the editorial work —
+splitting over-long sentences, reordering clauses for flow, tightening wordiness,
+smoothing awkward phrasing — **all without changing meaning** (§3). On a
+track-changes-tracked document it surfaces every change as an ordinary
+**track-changes `<mark>`**, so the existing review discipline stays fully intact
+(on an untracked throwaway it can instead apply changes directly, with a full
+change summary — §1, §5a). It **orchestrates** track-changes; it does not invent a
+parallel marking system.
+
+This is safe to make aggressive because polish only ever sees the **dictated
+scope** — the prose you newly added since the baseline (§2, §6). Already-vetted,
+committed prose is out of scope and is never re-edited, so the editorial pass acts
+only on your own fresh words, never on the verified corpus.
 
 One reviewable channel:
 
@@ -96,10 +105,36 @@ it is not a rendered overlay (§6, §8).
    and an extensible allowlist in `.polish-allowlist`). Inline math, code, and
    raw spans are excluded from the prose token stream entirely. **When in doubt,
    do not touch.**
-2. **Polish fixes errors; it does not rewrite meaning.** No hedge→absolute, no
-   tightening that shifts a claim. When a fix could change meaning, make it a
-   **reviewable mark** (so the author sees it) — or skip it. Never apply a
-   meaning-affecting change silently.
+2. **Improve freely, but never change meaning.** Polish does the full editorial
+   pass — correct recognition/grammar/dropped-word errors **and** restructure for
+   quality (split run-on sentences, reorder clauses for flow, tighten wordiness,
+   smooth awkward phrasing). The one hard line is **meaning**: no hedge→absolute,
+   no tightening that shifts a claim, no "improvement" that adds, drops, or alters
+   a fact, number, or hedge. Every change is a **reviewable mark**, so the author
+   sees and approves it. Two cases to distinguish:
+   - **(a) A change that would alter the meaning of a sentence that is *correct as
+     written*** (e.g. dropping a qualifier, firming a hedge, supplying a fact the
+     author didn't state): do NOT apply it; leave the prose and raise it as a
+     suggestion in your report.
+   - **(b) A sentence that is *broken or nonsensical as written*** — an obvious
+     error such as a stray question in declarative prose, a garbled clause, a
+     non-sequitur, or a sentence whose subject/verb don't cohere: **MARK a proposed
+     fix.** Fixing obvious errors is squarely polish's job — do NOT demote one to a
+     prose-only suggestion. If the fix requires choosing among plausible intended
+     meanings, mark your best reading **and** note the assumption in your report so
+     the author scrutinizes that mark — but mark it. The mark is the safety net; an
+     obvious error left only in your output, unmarked, is a polish failure.
+   **Qualifier-preservation (hard rule for restructures).** When you restructure a
+   sentence, every qualifier, hedge, scope phrase, modal, and quantifier in the
+   original MUST survive *with the same force* in the replacement — temporal/scope
+   phrases ("over the long run", "in practice", "for a single item"), hedges
+   ("usually", "typically", "almost always"), and modals ("would", "may", "can").
+   If a cleaner structure would drop or weaken any of them, do NOT make the change
+   — keep the original. Dropping "over the long run", or softening
+   "usually"→"generally" or "would"→"will", is a meaning change, not a polish; the
+   value of a restructure is never worth a lost qualifier.
+   **Do not relocate** a sentence to a different paragraph: marks cannot legibly
+   show a move, so flag the relocation as a suggestion instead of applying it (W4).
 3. **Fixes inside a non-rendering construct.** The engine reports
    `nonrendering_regions` (fenced code, `$$…$$`, `:::` divs, YAML, tables). A
    track-changes fix there would be **blocked by the hook and routed to /draft**.
@@ -118,10 +153,20 @@ track-changes grammar — the existing hook enforces it:
 |--------|-------------------|
 | insertion (missing word) | `<mark>NEW</mark><sup>N</sup>` |
 | deletion | `<mark><s>OLD</s></mark><sup>N</sup>` |
-| replacement (recognition/grammar fix) | `<mark><s>OLD</s>NEW</mark><sup>N</sup>` |
+| replacement (correction or restructure) | `<mark><s>OLD</s>NEW</mark><sup>N</sup>` |
+
+**Granularity — corrections vs restructures (W1).** Wrap **only the changed
+characters** for a *correction* (a typo, a dropped word, a casing slip) — the
+minimal diff. For a *restructure* (splitting, reordering, or rephrasing a
+sentence), wrap the **whole affected sentence** as one replacement mark — the
+entire old sentence struck, the entire new sentence following — so the change
+reads as a legible one-mark-per-sentence unit instead of a scatter of
+disconnected fragments. **Never** represent a structural change as a minimized
+character diff; a reorder minimized token-by-token is unreadable. One restructured
+sentence = one mark.
 
 **Mark numbering (no collisions):** the engine reports `next_mark_n` (= max
-existing N + 1). Assign N sequentially from there across all fixes in the run.
+existing N + 1). Assign N sequentially from there across all changes in the run.
 Prefer a single `MultiEdit` so all marks are validated together; if editing
 incrementally, re-read `next_mark_n` between edits. `/tc list` after polish must
 show no duplicate numbers.
@@ -152,14 +197,31 @@ taxed by a long main-session context.
      fix inside `$…$`/`$$…$$`, code fences, or `:::` divs") — **not** the raw
      region list;
    - the §3 bright lines and the §4 mark grammar (paste them in).
-   Do NOT forward the main-session context. The sub-agent finds only
-   recognition/grammar/missing-word fixes in the dictated prose, leaves+flags
-   protected tokens, skips non-rendering-region fixes, and applies **all fixes in
-   a single `MultiEdit`** (marks numbered from `next_mark_n`; track-changes' hook
-   validates them). It returns a structured summary: fixed `old→new`,
-   left+flagged, skipped.
-   *Trivial runs* (empty scope, or 1–2 obvious fixes) MAY be done inline by the
-   orchestrator — a sub-agent isn't worth the spawn.
+   Do NOT forward the main-session context. The sub-agent does the **full
+   editorial pass** on the dictated prose — recognition/grammar/dropped-word
+   corrections **and** restructuring (split run-ons, reorder for flow, tighten
+   wordiness, smooth phrasing), **never changing meaning** (§3) — **preserving
+   every qualifier/hedge/scope-phrase/modal verbatim in force when restructuring;
+   if a cleaner structure would drop or weaken one, it does NOT make the change**
+   — leaves+flags
+   protected tokens, skips non-rendering-region fixes, does **not** relocate
+   sentences across paragraphs (flags those as suggestions), and applies **all
+   changes in a single `MultiEdit`** (corrections wrap the changed chars;
+   restructures wrap the whole sentence — §4; marks numbered from `next_mark_n`;
+   track-changes' hook validates them). It returns a structured summary in **four
+   buckets (W2 — this is the reviewer's triage)**:
+   - **Corrections** — `old → new`, one per typo/grammar/dropped-word fix.
+   - **Restructures** — one line each, naming the editorial move ("split the
+     run-on at 'and'", "led with the TLC definition, deferred the optimum"), so
+     the author knows which marks are heavy and reviews them with more care.
+   - **Left + flagged** — protected tokens left untouched.
+   - **Suggested (not applied)** — changes that would alter the meaning of an
+     *otherwise-correct* sentence, and sentence relocations, for the author to
+     make by hand. An **obvious error** (broken/nonsensical sentence) is NOT placed
+     here — it is **marked** with a best-guess fix per §3(b), with the assumption
+     noted.
+   *Trivial runs* (empty scope, or 1–2 obvious corrections with no restructuring)
+   MAY be done inline by the orchestrator — a sub-agent isn't worth the spawn.
 4. **Audit (orchestrator):** `bash lib/polish-cli.sh audit <file> --runs N --mode
    M2|M1 --flagged a,b` — appends a `dictated:` breadcrumb to `.tc-history.md`.
 5. **Report (orchestrator):** relay the sub-agent's summary to the author.
@@ -179,17 +241,20 @@ Chosen when the author opts for a one-time direct polish on an **untracked** fil
 — a throwaway not maintained over time, which is exactly what the track-changes
 review discipline is *for*, so a non-maintained doc legitimately skips it.
 
-- **Apply only clear** recognition / grammar / missing-word fixes **directly** to
-  the file — no `<mark>` wrappers. (On an untracked file the track-changes hook
-  does not fire, so plain edits go straight through; no `/draft` needed.)
+- **Apply the full editorial pass directly** — corrections **and** restructuring
+  (split/reorder/tighten/smooth) — straight into the file, no `<mark>` wrappers.
+  (On an untracked file the track-changes hook does not fire, so plain edits go
+  straight through; no `/draft` needed.)
 - **The §3 bright lines still hold.** Protected tokens (jargon/code/math/domain)
-  are still **left + flagged**, never auto-corrected. And **never silently change
-  meaning**: with no mark to carry it, any meaning-affecting fix is **reported,
-  not applied** — surfaced as a suggestion for the author to make.
+  are still **left + flagged**, never auto-corrected. And **never change meaning**:
+  with no mark to carry it, any meaning-affecting change is **reported, not
+  applied** — surfaced as a suggestion. Sentence relocations are likewise
+  suggested, not applied.
 - **The change summary is the only record** (no marks; maybe no `git diff` on a
   non-git scratch file), so present a **complete** one, in three buckets:
-  1. **Applied** — every edit, as `old → new`.
-  2. **Flagged, not applied** — the meaning-affecting suggestions.
+  1. **Applied** — corrections as `old → new`, and restructures as one line each
+     naming the move.
+  2. **Suggested, not applied** — meaning-level changes and relocations.
   3. **Left untouched** — the protected tokens.
 - **No `dictated:` breadcrumb** is written (untracked ⇒ outside the track-changes
   audit). Say so in the report.
