@@ -6,6 +6,9 @@ each change. Default-OFF. (Full spec lives in `SKILL.md`, lazy-loaded on demand.
 
 ## Activation (most-local rule wins)
 1. `/draft` (or `/tc draft`) sentinel → tracking **suspended this turn**.
+   **v6: USER-ONLY — the AI cannot self-invoke `/draft` or write the sentinel
+   (only the UserPromptSubmit hook does, on the human's prompt).** Everything the
+   AI writes to a tracked deliverable is tracked regardless of approval.
 2. Per-file override (top of file): `tc-track: true`/`false` in YAML
    frontmatter (`.md`/`.qmd`); `% tc-track: true`/`false` magic comment in
    first 10 lines (`.tex`). Per-file `false` overrides a folder marker.
@@ -25,10 +28,19 @@ each change. Default-OFF. (Full spec lives in `SKILL.md`, lazy-loaded on demand.
 
 `<sup>N</sup>` sits OUTSIDE the `</mark>`. Next N = highest existing mark + 1.
 
-**Brand-new block** (Markdown/Quarto only — a new heading, fenced-code block, or
-`:::` div) can't be inline-wrapped without breaking rendering: put a sibling
-`<mark>…</mark><sup>N</sup>` on the line ABOVE it. A brand-new LaTeX
-`\section{}` / `\begin{env}` is NOT auto-covered — use `/draft`.
+**Provenance (v6, optional):** `<mark tc-prov="imported">…` / `\tc[imported]{…}`
+for a verbatim `/import` slice; default (absent) = `authored`. Region numbers
+share the single mark-number space.
+
+**Whole-region insertion (v6, Fix D)** — a MULTI-block new region as ONE tracked
+unit (the path for large new content; no `/draft`):
+| | Markdown / Quarto | LaTeX |
+|---|---|---|
+| region | `::: {.tc-region tc-n="N" tc-prov="authored"}` … `:::` | `\begin{tcregion}{N}[authored]` … `\end{tcregion}` |
+One number N; `/tc accept|reject N` resolves it atomically; no inline marks
+inside. **Single brand-new block** (one heading/fenced/`:::`) → still a sibling
+`<mark>…</mark><sup>N</sup>` on the line ABOVE. A brand-new LaTeX block → use a
+`tcregion` (replaces the old `/draft` routing).
 
 ## `/tc` commands
 `/tc draft` · `/tc enable <file>` · `/tc disable <file>` · `/tc mark [<dir>]` ·
@@ -37,11 +49,11 @@ each change. Default-OFF. (Full spec lives in `SKILL.md`, lazy-loaded on demand.
 `/tc accept-all [<file>]` · `/tc reject-all [<file>]` · `/tc help`.
 Ranges use `1-25,!7` syntax. Omit `<file>` on a resolution command to use the
 working file (most-recently-modified tracked file). Bare `/tc` prints the menu.
-`/draft` = suspend this turn.
+`/draft` = suspend this turn — **USER-ONLY (v6); the AI cannot invoke it.**
 
 ## Limits & pointers
-- Editing INSIDE code/math/tables (non-rendering contexts): v3 does not sibling
-  these — use `/draft` and note the change in the audit log.
+- Editing INSIDE code/math/tables (non-rendering contexts): wrap the whole block
+  as a `tcregion` / `.tc-region` insertion (v6), or ask the user to `/draft`.
 - Verbatim/converted **source import** is a separate skill: `verified-import` `/import`.
 - Lazy-load from `SKILL.md` on demand: activation-precedence edge cases →
   `SKILL.md §2 (Activation)`; worked mark examples + resolution walk →

@@ -329,6 +329,50 @@ grep -oE '\\tcn\{[0-9]+\}' file.tex | grep -oE '[0-9]+'
 The output is one number per line in file order. Pipe through
 `sort -n | tail -1` to get the maximum (used for next-N computation).
 
+## v6: provenance + whole-region insertion
+
+**Provenance type (optional).** A mark or region may carry a provenance type so
+the reviewer can tell verbatim imports from authored text:
+
+```
+Markdown / Quarto:  <mark tc-prov="imported">NEW</mark><sup>N</sup>
+LaTeX:              \tc[imported]{NEW}\tcn{N}
+```
+
+Values: `authored` (default — anything written or paraphrased) or `imported` (a
+verbatim slice landed via `/import`). Absent ⇒ `authored`, so every pre-v6 mark
+is unchanged. The opening-tag attribute does not affect the closing
+`</mark><sup>N</sup>` (number extraction is unchanged).
+
+**Whole-region insertion (Fix D).** A multi-block new region (heading + prose +
+`:::` div + fenced code, or several paragraphs) is marked as ONE tracked
+insertion instead of one mark per line:
+
+```
+Markdown / Quarto:                    LaTeX:
+::: {.tc-region tc-n="N" tc-prov="authored"}   \begin{tcregion}{N}[authored]
+## New section                                 \section{New}
+new prose, code, math …                        new body, math, verbatim …
+:::                                            \end{tcregion}
+```
+
+- One number `N`, shared with the inline mark-number space (uniqueness enforced
+  across both). `/tc accept N` strips the delimiters and keeps the body;
+  `/tc reject N` removes the whole region.
+- The region is **atomic** — do not place inline marks inside it.
+- Rendering: md/qmd shows a tinted block with a colored left border
+  (`tc-clean.css`); LaTeX draws a colored left change-bar (`tcregion` in
+  `tc.sty`) — robust across math/verbatim/paragraph breaks where `\hl` is not.
+- This replaces the old "brand-new LaTeX block → `/draft`" routing.
+
+**Number extraction including regions (bash):**
+```
+# md/qmd region numbers:
+grep -E '\.tc-region' file.qmd | grep -oE 'tc-n="[0-9]+"' | grep -oE '[0-9]+'
+# LaTeX region numbers:
+grep -oE '\\begin\{tcregion\}\{[0-9]+\}' file.tex | grep -oE '[0-9]+'
+```
+
 ## Cross-references
 
 - Full protocol: `SKILL.md`

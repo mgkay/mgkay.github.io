@@ -524,18 +524,27 @@ or the user is editing a file that would benefit from tracking),
 surface the problem in your reply and suggest the appropriate command.
 Wait for the user's next prompt.
 
-The rule prohibits **autonomous** self-invocation — Claude deciding *on
-its own* to run `/tc enable`, `/draft`, `/tc accept`, etc. without the
-user asking. It does **not** prohibit **user-authorized** execution. When
-the user explicitly directs the action — e.g. "enable tracking on all the
-`.qmd` files in this folder", "accept marks 1–10 and reject 11", or
-"suspend tracking for this edit" — routing through the canonical `/tc`
-commands (`/tc enable`, `/tc mark`, `/tc accept|reject`, `/tc draft`) is
-the correct path. It exercises the documented surface, keeps the audit log
-honest (batch resolution records `decision: explicit`), and is preferable
-to hand-editing YAML frontmatter or `.tc-tracked` markers directly. In
-short: never self-invoke unprompted; always prefer the canonical command
-when the user has asked for the operation it performs.
+For most commands the rule prohibits **autonomous** self-invocation but
+not **user-authorized** execution: when the user explicitly directs an
+action — "enable tracking on all the `.qmd` files here", "accept marks
+1–10 and reject 11" — routing through the canonical `/tc` command
+(`/tc enable`, `/tc mark`, `/tc accept|reject`) is the correct path; it
+exercises the documented surface and keeps the audit honest.
+
+**`/draft` is the exception — it is USER-ONLY and you cannot invoke it at
+all (v6, Fix B).** Authorization and verification are two separate gates
+that BOTH always hold: being *authorized to act* ("go ahead, add the
+example") never means your output skips tracking. **Everything you write
+into a tracked deliverable is tracked, regardless of approval** — there is
+no "the approval is the audit trail." Suspension is the user's lever only:
+the `/draft` sentinel is written exclusively by the UserPromptSubmit hook
+when the *human's own prompt* requests it, and the gate honors only a
+sentinel carrying its authorized marker. Running `lib/draft-on.sh`
+yourself does nothing (it no longer writes a sentinel). If you believe
+some content should land untracked, **ask the user to `/draft`** — do not
+attempt to arrange it. For your own authored content the honest paths are
+a `<mark>` edit, a whole-region insertion (§Region), or `/import` for
+verbatim source.
 
 ## 8. Composition with PCV
 
@@ -543,13 +552,17 @@ PCV Builder subagents that modify existing tracked files are subject to
 the skill. New-file creation passes through (file doesn't exist on
 disk; hook skips).
 
-When the user delegates to a Builder that will modify existing
-`.md`, `.qmd`, or `.tex` files in a tracked project, the user prefixes
-the delegation with `/draft` (suspends tracking for that one turn). The
-Builder operates without highlight requirements; the next user turn
-restores the default. (There is no session-scope toggle — `/track-on`/
-`/track-off` were removed in Fix #6; use `/draft` per turn, or `/tc
-disable <file>` for a durable per-file opt-out.)
+When a Builder modifies existing `.md`, `.qmd`, or `.tex` files in a
+tracked project, its writes are tracked like any other — a Builder is the
+AI and **cannot suspend tracking for itself** (v6, Fix B). If the user
+wants a Builder turn to land untracked, the **user** types `/draft` as
+their own prompt (the per-turn suspension; the next user turn restores the
+default). The Builder should otherwise wrap new content as `<mark>` edits
+or a whole-region insertion (§Region) — the region mode exists precisely so
+a large new block lands as one tracked unit without anyone reaching for
+`/draft`. (There is no session-scope toggle — `/track-on`/`/track-off`
+were removed in Fix #6; `/tc disable <file>` gives a durable per-file
+opt-out, a user action.)
 
 ## 9. The `.tc-tracked` Marker
 
@@ -880,31 +893,50 @@ To share a document **before** marks are resolved (faculty meeting, student
 preview, non-author PR review), use `?clean=1` (§12) instead of resolving
 prematurely.
 
-## 15. Composition with `/draft`
+## 15. Region insertion, provenance, and `/draft` (v6)
 
-`/draft` (and its alias `/tc draft`) suspends tracking for **the current user
-turn only**. While suspended, the PreToolUse hook passes edits through without
-requiring any `<mark>` wrapper — so any new content Claude adds during that turn
-lands as **plain text with no marks and no audit `introduced:` entries**.
-Tracking **auto-resumes at the start of the next user prompt** (the
-UserPromptSubmit hook clears the sentinel; SessionStart's 1-hour TTL sweep is
-the crash-recovery fallback).
+**`/draft` is user-only and cannot be self-invoked (Fix B).** It suspends
+tracking for **the current user turn only** — but the suspension sentinel is
+written *exclusively* by the UserPromptSubmit hook when the **human's own
+prompt** requests it (and the gate honors only a sentinel carrying its
+authorized marker). The AI cannot suspend its own tracking; `lib/draft-on.sh`
+no longer writes anything. Tracking auto-resumes next user prompt.
 
-Decide between `/draft` and in-place tracking by intent:
+Authorization and verification are separate gates that both always hold: being
+told to do something never lets your output skip tracking. **Every change you
+write into a tracked deliverable lands as a mark, a whole-region insertion, or a
+verified `/import` — never plain untracked text.** Pick the path by what the
+content *is*, mechanically, not by whether you were "approved":
 
-- **Use `/draft`** when the author is **drafting / constructing** — adding large
-  amounts of new content where mark-by-mark review would be noise (a first-pass
-  lecture build, scaffolding new sections). Marks on 90% of a fresh file defeat
-  the attention-budget purpose.
-- **Prefer in-place tracking** when the author is **refining** vetted content —
-  the incremental-edit case the skill is built for, where each change should be
+- **Whole-region insertion (Fix D) — the path for a large new block.** A
+  multi-block new region (heading + prose + `:::` div + fenced code, or several
+  paragraphs) marks as **one** tracked insertion instead of a mark on every line.
+  - md/qmd: wrap it in a fenced div
+    `::: {.tc-region tc-n="N" tc-prov="authored"}` … `:::` — the whole region is
+    highlighted as one unit, `/tc accept|reject N` resolves it atomically.
+  - LaTeX: `\begin{tcregion}{N}[authored]` … `\end{tcregion}` — a colored left
+    change-bar spans the region (this replaces the old "new LaTeX block →
+    `/draft`" routing). Do **not** put inline marks inside a region — it is one
+    atomic unit.
+  This is what makes large first-pass content land tracked without anyone
+  reaching for `/draft`.
+- **Inline `<mark>` / `\tc{}`** when **refining** vetted content — each change
   individually reviewable.
-- **Reach for `/import` (the verified-import skill, §0), not `/draft`**, when
-  content is being imported from a source file: `/import` lands the converted
-  block clean (no marks) via an exemption this skill honors — you self-mark
-  only significant changes — while still requiring marks on any surrounding AI-authored glue
-  — whereas `/draft` suspends checking for the whole turn and verifies nothing.
-- **Reach for the block-sibling form (§6), not `/draft`**, when adding a single
-  brand-new heading, fenced block, or `:::` div in a `.md`/`.qmd` file — that
-  case no longer requires suspending tracking. (A brand-new LaTeX block still
-  routes to `/draft`.)
+- **`/import` (verified-import, §0)** for content lifted **verbatim from a source
+  file**: it lands clean (attributed, typed `imported`) via an exemption this
+  skill honors; you self-mark only significant changes. Verbatim is a mechanical
+  operation the tool proves — never hand-type content and call it "from your
+  material."
+
+**Provenance (Fix E).** A mark or region carries an optional provenance type:
+`tc-prov="authored"` (default — anything you wrote/paraphrased) or
+`tc-prov="imported"` (a verbatim `/import` slice). Imported marks/regions render
+in a distinct color so the reviewer can skim the verbatim parts and scrutinize
+the authored ones. Absent ⇒ authored (every pre-v6 mark reads as authored).
+
+**The corpus-example rule (standing convention).** Worked examples lifted from
+the spreadsheet/MATLAB corpus have mixed, predictable provenance: the
+**scenario / statement / data** is lifted → `/import` (clean, `imported`); the
+**Julia code is a re-implementation → new → tracked** (a region or marks,
+`authored`); **AI prose → new → tracked**. So by default: *import the scenario,
+track the Julia as new.* This is automatic — do not relitigate it per example.

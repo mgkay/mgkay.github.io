@@ -54,8 +54,11 @@ _GFM_PIPE_RE = re.compile(r'^\s*\|.*\|\s*$')
 _QFD_OPEN_RE = re.compile(r'^\s*:::+\s*\S.*$')
 _QFD_CLOSE_RE = re.compile(r'^\s*:::+\s*$')
 _HUNK_RE = re.compile(r'^@@\s+-\d+(?:,\d+)?\s+\+(\d+)(?:,(\d+))?\s+@@')
-_MD_SIBLING_RE = re.compile(r'<mark>.*?</mark><sup>\d+</sup>')
-_MD_SIBLING_PRE_RE = re.compile(r'^\s*<mark>.*?</mark><sup>\d+</sup>\s*$')
+# v6 (Critic F4): attribute-tolerant so a provenance-typed sibling
+# `<mark tc-prov="…">…</mark><sup>N</sup>` is recognized; still matches bare v5
+# `<mark>`. The `(?:\s+[^>]*?)?` optionally consumes attributes on the open tag.
+_MD_SIBLING_RE = re.compile(r'<mark(?:\s+[^>]*?)?>.*?</mark><sup>\d+</sup>')
+_MD_SIBLING_PRE_RE = re.compile(r'^\s*<mark(?:\s+[^>]*?)?>.*?</mark><sup>\d+</sup>\s*$')
 # Brand-new-block sibling (Option B mechanism 1): ATX heading at column 0.
 _MD_ATX_HEADING_RE = re.compile(r'^#{1,6}(\s.*)?$')
 _SUP_AFTER_CLOSE_RE = re.compile(r'\A<sup>\d+</sup>')
@@ -133,13 +136,15 @@ def _md_extract_marks(text):
     masked_text = ''.join(masked)
     marks = []
     for m in _MD_MARK_RE.finditer(masked_text):
-        n_val = m.group(2)
-        body_start = m.start() + 6
-        body_end = m.end() - 18 - len(n_val)
-        orig_body = text[body_start:body_end]
+        # v6: named groups + captured body span — no hardcoded `<mark>`==6 offset
+        # (which broke with a tc-prov attribute) and the number is group('n').
+        n_val = m.group('n')
+        orig_body = text[m.start('body'):m.end('body')]
         t, old, new = _md_classify(orig_body)
+        prov = _grammar.prov_from_attrs(m.group('attrs'))
         marks.append({'N': n_val, 'start': m.start(), 'end': m.end(),
-                      'body': orig_body, 'type': t, 'old': old, 'new': new})
+                      'body': orig_body, 'type': t, 'old': old, 'new': new,
+                      'prov': prov})
     return marks
 
 
@@ -175,7 +180,8 @@ def _tex_extract_marks(text):
         if not tm:
             pos = tail_start; continue
         t, old, new = _tex_classify(body)
-        marks.append({'N': tm.group(1), 'start': mh.start(),
+        prov = _grammar.norm_prov(mh.group('prov'))   # v6 provenance
+        marks.append({'N': tm.group(1), 'start': mh.start(), 'prov': prov,
                       'end': tail_start + len(tm.group(0)),
                       'body': body, 'type': t, 'old': old, 'new': new})
         pos = tail_start + len(tm.group(0))
@@ -646,12 +652,22 @@ def analyze(source_text, payload, tool_name, ftype):
     block_sibling_lines = _block_sibling_covered_lines(
         proposed_lines, set(added_line_nums), ftype)
 
+    # v6 Fix D: whole-region insertion. Lines enclosed by a well-formed region
+    # (md/qmd `.tc-region` div with tc-n="N"; LaTeX `\begin{tcregion}{N}` …
+    # `\end{tcregion}`) are ONE atomic tracked insertion — the region delimiters
+    # carry the mark number, so every enclosed line (delimiters inclusive) is
+    # covered and exempt from the inline-mark requirement.
+    region_insertion_lines = _grammar.region_covered_lines(proposed_text, ftype)
+
     if not is_pure_resolution:
         inline_violation_added = False
         for ln in added_line_nums:
             line_text = proposed_lines[ln - 1] if 1 <= ln <= n_lines else ''
             # A line covered by a new-block sibling mark (mechanism 1) is exempt.
             if ln in block_sibling_lines:
+                continue
+            # A line inside a whole-region insertion (Fix D) is exempt.
+            if ln in region_insertion_lines:
                 continue
             if line_text.strip() == '':
                 continue
@@ -783,11 +799,14 @@ def analyze(source_text, payload, tool_name, ftype):
                 add_v(start_ln, "\\tc{...} not immediately followed by \\tcn{N} reference number")
             pos = body_end_excl + 1
 
-    # Per-file uniqueness.
+    # Per-file uniqueness. v6: region numbers (tc-n / \begin{tcregion}{N}) share
+    # the single mark-number space, so include them — a region N that collides
+    # with an inline mark N is a duplicate. Region openers are not masked, so
+    # scan proposed_text for them.
     if ftype in ('md', 'qmd'):
-        nums = _MD_NUMS_RE.findall(masked_text)
+        nums = _MD_NUMS_RE.findall(masked_text) + _grammar.MD_REGION_NUMS_RE.findall(proposed_text)
     elif ftype == 'tex':
-        nums = _TEX_NUMS_RE.findall(masked_text)
+        nums = _TEX_NUMS_RE.findall(masked_text) + _grammar.TEX_REGION_NUMS_RE.findall(proposed_text)
     else:
         nums = []
     seen = {}

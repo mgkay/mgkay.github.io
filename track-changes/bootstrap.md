@@ -1,7 +1,7 @@
 # track-changes Bootstrap — Source-preserving AI edit protocol (three-skill suite)
 
-**Version:** 5.1.0
-**Date:** 2026-06-04
+**Version:** 6.0.0
+**Date:** 2026-06-09
 
 ## What This File Does
 
@@ -38,16 +38,16 @@ When Claude Code follows the instructions below, it downloads all three skills �
 
 ## Instructions for Claude Code
 
-You are reading the track-changes v5.1.0 bootstrap manifest. Follow these steps precisely.
+You are reading the track-changes v6.0.0 bootstrap manifest. Follow these steps precisely.
 
 ### Step 1: Check for existing installation
 
-Read `~/.claude/skills/track-changes/VERSION`. If the file exists, parse the first line as a version number. Compare it to `5.1.0` using semantic-version ordering (compare major, then minor, then patch as integers; treat a missing component as 0, so a two-part `2.0` is `2.0.0`).
+Read `~/.claude/skills/track-changes/VERSION`. If the file exists, parse the first line as a version number. Compare it to `6.0.0` using semantic-version ordering (compare major, then minor, then patch as integers; treat a missing component as 0, so a two-part `2.0` is `2.0.0`).
 
-- **Equal to 5.1.0** → "track-changes v5.1.0 is already installed. No update needed." **STOP.**
-- **Higher than 5.1.0** → "track-changes v[installed] is newer than this bootstrap (5.1.0). Aborting — will not downgrade." **STOP.**
-- **Lower than 5.1.0** (e.g. v5.0.x, v4.x, v3.0.x, or any v1.x or v2.x) → "Updating track-changes from v[installed] to v5.1.0." Proceed to Step 2. The download in Step 2 overwrites every skill file in place (and, from a pre-v5 install, adds the `polish` skill), so the upgrade is a clean replacement (the upgrade also re-merges settings.json, laying down the single combined PreToolUse matcher group); existing `<mark>…</mark><sup>N</sup>` content in your documents is fully backward-compatible and is left untouched (the mark grammar is unchanged — no document migration is needed). **Upgrading from v4.0.x?** The per-file activation key was renamed `track-changes:` → `tc-track:` in v4.1 (the old key is a reserved Quarto YAML field that breaks `.qmd`/`.md` renders); swap any old keys to `tc-track:`.
-- **Does not exist** → "Installing track-changes v5.1.0." Proceed to Step 2.
+- **Equal to 6.0.0** → "track-changes v6.0.0 is already installed. No update needed." **STOP.**
+- **Higher than 6.0.0** → "track-changes v[installed] is newer than this bootstrap (6.0.0). Aborting — will not downgrade." **STOP.**
+- **Lower than 6.0.0** (e.g. v5.0.x, v4.x, v3.0.x, or any v1.x or v2.x) → "Updating track-changes from v[installed] to v6.0.0." Proceed to Step 2. The download in Step 2 overwrites every skill file in place (and, from a pre-v5 install, adds the `polish` skill), so the upgrade is a clean replacement (the upgrade also re-merges settings.json, laying down the single combined PreToolUse matcher group); existing `<mark>…</mark><sup>N</sup>` content in your documents is fully backward-compatible and is left untouched (the mark grammar is unchanged — no document migration is needed). **Upgrading from v4.0.x?** The per-file activation key was renamed `track-changes:` → `tc-track:` in v4.1 (the old key is a reserved Quarto YAML field that breaks `.qmd`/`.md` renders); swap any old keys to `tc-track:`. **v6 is behavior-changing:** `/draft` is now **user-only** — the AI can no longer suspend its own tracking (the suspension sentinel is written solely by the `UserPromptSubmit` hook on *your* `/draft` prompt). Everything the AI writes into a tracked deliverable is tracked; large new blocks use the new whole-region insertion (`::: {.tc-region …}` / `\tcregion`). No document migration — the mark grammar is backward-compatible.
+- **Does not exist** → "Installing track-changes v6.0.0." Proceed to Step 2.
 
 ### Step 2: Download all files (curl-based)
 
@@ -97,7 +97,7 @@ If the command exits non-zero, report the error to the user and stop.
 
 ### Step 4: Verify installation
 
-1. Read `~/.claude/skills/track-changes/VERSION` → first line must be `5.1.0`.
+1. Read `~/.claude/skills/track-changes/VERSION` → first line must be `6.0.0`.
 2. Read `~/.claude/skills/track-changes/SKILL.md` → must begin with `---` (YAML frontmatter).
 3. Read `~/.claude/skills/track-changes/hooks/pre_tool_use.py` → must begin with `"""` (Python docstring).
 4. Read `~/.claude/skills/track-changes/lib/tc_core/grammar.py` → must exist (shared mark-grammar package).
@@ -116,7 +116,7 @@ Any verification failure → report to user and do not claim success.
 
 On success, tell the user:
 
-> **track-changes v5.1.0 installed successfully — three skills + shared `tc_core`.**
+> **track-changes v6.0.0 installed successfully — three skills + shared `tc_core`.**
 >
 > **`track-changes`** (`~/.claude/skills/track-changes/`): always-on mark-tracking. SKILL.md, VERSION, settings-patch.json, hooks/ (5 sh + 2 py), lib/ (4 py + 6 sh + 1 sty + the shared `tc_core` package), reference/ (highlight-syntax.md, latex.md, quarto-notes.md, **digest.md**, tc-clean.css, tc-clean.js).
 >
@@ -208,6 +208,10 @@ Each entry lists source-URL → destination-path. Base URL: `https://raw.githubu
 ---
 
 ## Changelog Summary
+
+**v6.0.0 (tracking-enforcement hardening — behavior-changing).** Closes the recurring hole where AI-authored content reached a tracked deliverable **untracked**. **(A)** Everything the AI writes into a tracked deliverable is now tracked regardless of approval — the "approval is the audit trail" rule is removed (authorization and verification are separate gates that both always hold). **(B) `/draft` is now mechanically USER-ONLY:** the per-turn suspension sentinel is written solely by the `UserPromptSubmit` hook when the human's own prompt requests it (carrying an authorized marker the PreToolUse gate requires); `lib/draft-on.sh` no longer writes it and a forged/bare sentinel is ignored, so the AI cannot suspend its own tracking. **(D) Whole-region insertion:** a multi-block new region marks as ONE tracked unit — a Quarto `::: {.tc-region tc-n="N" tc-prov="…"}` … `:::` div, or a LaTeX `tcregion` environment drawing a left **change-bar** (robust across display math and verbatim); `/tc accept|reject N` resolves it atomically. **(E) Provenance-typed marks:** `tc-prov="authored"` (default) vs `"imported"` (a verbatim `/import` slice), with distinct render colors — plus the corpus-example convention (import the lifted scenario; track the new Julia/prose as authored). The mark grammar is **backward-compatible**: every v1–v5 mark and document parses unchanged (absent provenance = authored); no migration. **No new hooks** (the suite stays at 6) and no settings change beyond the existing merge. The only breaking change is behavioral — the AI can no longer self-suspend tracking; only the user can.
+
+## v5.1.0 Changelog Summary
 
 **v5.1.0 (polish broadened to a full editorial pass).** `polish` now does the work a copy-editor does on newly dictated prose — splitting run-on sentences, reordering clauses for flow, tightening wordiness, smoothing awkward phrasing — in addition to the recognition/grammar/dropped-word fixes, while staying **meaning-preserving** and **diff-scoped** (it only ever touches prose newly dictated since the git baseline, never the vetted/committed corpus); every change is still an ordinary track-changes `<mark>`. The bright line is split into one hard rule — **never change meaning**: never drop or weaken a qualifier, hedge, scope phrase, or modal (a qualifier-preservation rule for restructures), and never alter a fact or number — plus a fix to error-handling: an **obvious error** (a broken/nonsensical sentence, e.g. a stray question left in declarative prose) is now **marked** with a best-guess fix rather than demoted to a prose-only suggestion. A restructure wraps the **whole sentence** as one replacement mark (not a scatter of character diffs), and the run reports four buckets — corrections / restructures / left+flagged / suggested; sentence relocations across paragraphs are suggested, not applied. Engine fix: smart-quote contractions/possessives (`it's`, `they're`, `item's`) are no longer mis-flagged as protected tokens — typographic apostrophes/quotes/dashes are folded to ASCII before the non-ASCII protected-token test, so genuine symbols/Greek (`αvhq`) and the prime `′` stay protected while ordinary contractions remain polishable. **No hook or settings change**; the mark grammar, the hooks, and the two prior skills are unchanged.
 

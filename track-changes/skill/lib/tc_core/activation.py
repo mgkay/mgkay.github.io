@@ -50,20 +50,40 @@ def tc_session_id():
     return os.environ.get('CLAUDE_SESSION_ID') or 'default'
 
 
+# v6 Fix B (mechanical user-only /draft): the draft sentinel is honored ONLY if
+# it carries this authorized marker, which is written EXCLUSIVELY by the
+# UserPromptSubmit hook (user-prompt-submit.sh) when the human's own prompt
+# requests drafting. UserPromptSubmit fires only on human input — the AI cannot
+# trigger it — so the AI cannot author an honored sentinel. A bare/forged file
+# (e.g. `touch …/<session>.draft`) lacks the marker and is ignored. This string
+# MUST stay byte-identical to DRAFT_AUTH_MARKER in lib/tc-common.sh.
+DRAFT_AUTH_MARKER = 'tc-draft-authorized-by=user-prompt-submit'
+
+
+def _sentinel_authorized(path):
+    """True iff `path` exists AND contains the authorized marker."""
+    try:
+        with open(path, 'r', encoding='utf-8', errors='replace') as f:
+            return DRAFT_AUTH_MARKER in f.read(4096)
+    except (IOError, OSError):
+        return False
+
+
 def tc_sentinel_active_draft():
-    """True if a /draft sentinel exists for the current session.
+    """True if an AUTHORIZED /draft sentinel exists for the current session.
 
     Honors BOTH the session-specific sentinel (state/<session>.draft) AND the
     shared fallback (state/default.draft) for the Windows / cross-shell case
-    where $CLAUDE_SESSION_ID is unset.
+    where $CLAUDE_SESSION_ID is unset. v6: existence alone is insufficient — the
+    sentinel must carry the authorized marker (see DRAFT_AUTH_MARKER).
     """
     sd = tc_state_dir()
     if not sd:
         return False
     sid = tc_session_id()
-    if os.path.isfile(os.path.join(sd, sid + '.draft')):
+    if _sentinel_authorized(os.path.join(sd, sid + '.draft')):
         return True
-    return os.path.isfile(os.path.join(sd, 'default.draft'))
+    return _sentinel_authorized(os.path.join(sd, 'default.draft'))
 
 
 def tc_check_yaml_override(file_path):

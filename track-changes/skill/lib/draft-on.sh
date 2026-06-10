@@ -1,46 +1,19 @@
 #!/usr/bin/env bash
-# lib/draft-on.sh — slash-command sentinel writer.
+# lib/draft-on.sh — DEPRECATED in v6 (Fix B: /draft is mechanically user-only).
 #
-# Invoked from commands/draft.md's `!` bash-prefix line. Encapsulates the
-# sentinel-write logic so the slash-command itself is a single, quote-safe
-# bash invocation (the prior inline `sh -c '...'` form had nested quoting
-# issues and inconsistent $HOME/$CLAUDE_SESSION_ID inheritance across
-# Windows shells / git-bash / WSL).
-#
-# Behavior:
-#   1. Resolve the state directory from $HOME; create if absent.
-#   2. Resolve the session id from $CLAUDE_SESSION_ID (fall back to "default"
-#      when unset or empty — matches lib/tc-common.sh::tc_session_id).
-#   3. Write a timestamped sentinel at $STATE_DIR/$SESSION.draft.
-#   4. Echo the sentinel path so the user (and Claude reading the slash
-#      command's output) can see exactly where it landed.
-#
-# Idempotent — re-running just overwrites the timestamp line.
+# In v1–v5 this script wrote the /draft suspension sentinel, and the AI could
+# invoke it (directly via the Bash tool, or via commands/draft.md's fallback) to
+# suspend its own tracking — the exact bypass v6 closes. The sentinel is now
+# written ONLY by the UserPromptSubmit hook (hooks/user-prompt-submit.sh) when
+# the HUMAN's own prompt requests drafting, and it carries an authorized marker
+# the PreToolUse gate checks. This script therefore NO LONGER writes a sentinel:
+# running it (by anyone) cannot suspend tracking. Retained as a clear no-op so
+# any lingering reference fails safe rather than silently re-opening the bypass.
 
 set -u
 
-if [ -z "${HOME:-}" ]; then
-  echo "track-changes: ERROR — \$HOME is unset; cannot resolve state directory" >&2
-  exit 1
-fi
-
-STATE_DIR="${HOME}/.claude/skills/track-changes/state"
-if ! mkdir -p "${STATE_DIR}" 2>/dev/null; then
-  echo "track-changes: ERROR — failed to create state directory ${STATE_DIR}" >&2
-  exit 1
-fi
-
-SESSION="${CLAUDE_SESSION_ID:-default}"
-SENTINEL="${STATE_DIR}/${SESSION}.draft"
-
-# Timestamp in ISO-8601 UTC. `date -u +<format>` works on GNU/BSD/MSYS;
-# fall back to plain `date -u` (locale-default) if the format string is
-# unsupported by the local date binary.
-TS="$(date -u +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u 2>/dev/null || echo unknown-time)"
-
-if ! printf '# created %s (slash command; session=%s)\n' "${TS}" "${SESSION}" > "${SENTINEL}"; then
-  echo "track-changes: ERROR — failed to write sentinel ${SENTINEL}" >&2
-  exit 1
-fi
-
-echo "track-changes: drafting mode active for this turn (sentinel: ${SENTINEL})"
+echo "track-changes: /draft is user-only (v6). This script no longer suspends" >&2
+echo "tracking. To draft, the USER types /draft (or /tc draft) as their prompt;" >&2
+echo "the UserPromptSubmit hook authorizes it. The AI cannot self-suspend —" >&2
+echo "author content as <mark> edits, a whole-region insertion, or via /import." >&2
+exit 0

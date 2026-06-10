@@ -109,6 +109,32 @@ def _extract_marks_with_offsets(text, ftype):
     return []
 
 
+def _extract_regions_with_offsets(text, ftype):
+    """v6 Fix D: whole-region insertions with character offsets for the opener
+    and closer delimiter LINES (each span includes its trailing newline), so the
+    resolver can splice them. Body lies between opener_end and closer_start.
+
+    Returns dicts {N, prov, opener_start, opener_end, closer_start, closer_end,
+    line}. Only well-formed regions (both delimiters present) are returned.
+    """
+    regions = tc_grammar.extract_regions(text, ftype)
+    lines = text.split('\n')
+    starts = [0]
+    for ln in lines:
+        starts.append(starts[-1] + len(ln) + 1)  # +1 for the '\n'
+    out = []
+    for r in regions:
+        s, e = r.get('start'), r.get('end')
+        if not s or not e or e > len(lines) or s < 1:
+            continue
+        out.append({
+            'N': r['N'], 'prov': r.get('prov', 'authored'), 'line': s,
+            'opener_start': starts[s - 1], 'opener_end': starts[s],
+            'closer_start': starts[e - 1], 'closer_end': starts[e],
+        })
+    return out
+
+
 def _preview(s, limit=60):
     one = ' '.join((s or '').split())
     if len(one) > limit:
@@ -138,6 +164,16 @@ def list_marks(path):
         line_no = 1 + text.count('\n', 0, m['start'])
         out.append({'N': m['N'], 'type': t, 'line': line_no,
                     'old': m['old'], 'new': m['new'], 'preview': preview})
+    # v6 Fix D: include whole-region insertions so /tc list shows them and
+    # /tc accept|reject recognizes their numbers.
+    for r in tc_grammar.extract_regions(text, ftype):
+        s, e = r.get('start'), r.get('end')
+        if not s or not e:
+            continue
+        out.append({'N': r['N'], 'type': 'region', 'line': s,
+                    'old': '', 'new': '', 'prov': r.get('prov', 'authored'),
+                    'preview': f"[region {r.get('prov', 'authored')}] lines {s}-{e}"})
+    out.sort(key=lambda d: (d['line'], _n_key(d['N'])))
     return out
 
 
@@ -238,31 +274,45 @@ def resolve(path, decision, ns):
         original = f.read()
     text = original.replace('\r\n', '\n')
     marks = _extract_marks_with_offsets(text, ftype)
+    regions = _extract_regions_with_offsets(text, ftype)   # v6 Fix D
     by_n = {m['N']: m for m in marks}
+    region_by_n = {r['N']: r for r in regions}
 
     resolved = []
-    not_found = sorted((n for n in want if n not in by_n), key=_n_key)
+    not_found = sorted((n for n in want if n not in by_n and n not in region_by_n),
+                       key=_n_key)
 
-    # Apply replacements right-to-left so earlier offsets stay valid.
-    targets = [m for m in marks if m['N'] in want]
-    targets.sort(key=lambda m: m['start'], reverse=True)
-    new_text = text
+    # Build splice spans (start, end, repl) against the ORIGINAL text for both
+    # inline marks and whole-region insertions, then apply right-to-left so
+    # earlier offsets stay valid. Regions are atomic and never overlap an inline
+    # mark, so one sorted apply is safe.
+    spans = []          # (start, end, repl)
     resolved_marks = []
-    for m in targets:
+    for m in (mm for mm in marks if mm['N'] in want):
         repl = _resolved_replacement(m, decision)
         # Fix #6: if the mark owned its own line and the replacement collapses
-        # that line to empty, swallow the whole line (incl. its trailing '\n')
-        # so no orphan blank line remains. Detection uses the ORIGINAL `text`
-        # (offsets are valid there); the splice into `new_text` is safe under
-        # the right-to-left order because an owned line carries no other mark.
+        # that line to empty, swallow the whole line (incl. its trailing '\n').
+        # Detection uses the ORIGINAL `text` (offsets are valid there).
         span = _owned_line_empty_span(text, m['start'], m['end'], repl)
-        if span is not None:
-            seg_start, seg_end = span
-            new_text = new_text[:seg_start] + repl + new_text[seg_end:]
-        else:
-            new_text = new_text[:m['start']] + repl + new_text[m['end']:]
+        spans.append(span + (repl,) if span is not None
+                     else (m['start'], m['end'], repl))
         resolved.append(m['N'])
         resolved_marks.append(m)
+    for r in (rr for rr in regions if rr['N'] in want):
+        if decision == 'accept':
+            # Keep the body; strip the closer then the opener delimiter line.
+            spans.append((r['closer_start'], r['closer_end'], ''))
+            spans.append((r['opener_start'], r['opener_end'], ''))
+        else:
+            # reject: remove the whole region (opener through closer inclusive).
+            spans.append((r['opener_start'], r['closer_end'], ''))
+        resolved.append(r['N'])
+        resolved_marks.append({'N': r['N'], 'type': 'region', 'old': '',
+                               'new': '(region)', 'prov': r.get('prov', 'authored')})
+    spans.sort(key=lambda s: s[0], reverse=True)
+    new_text = text
+    for (s, e, repl) in spans:
+        new_text = new_text[:s] + repl + new_text[e:]
     resolved = sorted(set(resolved), key=_n_key)
 
     wrote_file = False
@@ -276,7 +326,9 @@ def resolve(path, decision, ns):
             f.write(out_text)
         wrote_file = True
 
-    remaining = sorted((m['N'] for m in marks if m['N'] not in want), key=_n_key)
+    remaining = sorted(
+        [m['N'] for m in marks if m['N'] not in want]
+        + [r['N'] for r in regions if r['N'] not in want], key=_n_key)
 
     # Audit attribution (explicit) + cache update. Best-effort.
     wrote_log = _write_explicit_audit(path, ftype, decision, resolved_marks,

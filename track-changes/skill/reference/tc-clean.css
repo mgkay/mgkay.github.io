@@ -25,3 +25,47 @@ body.no-marks mark {
 body.no-marks mark + sup {
   display: none;
 }
+
+/* --- v6: provenance-typed inline marks (Fix E) -------------------------------
+ * An imported-verbatim mark (landed via /import) gets a distinct tint so a
+ * reviewer can skim the safe imports and scrutinize authored text. Absent
+ * tc-prov ⇒ ordinary (authored) yellow, unchanged. */
+mark[tc-prov="imported"] {
+  background: #bdf0ff;   /* pale cyan */
+}
+
+/* --- v6: whole-region insertion (Fix D) -------------------------------------
+ * The Quarto fenced div  ::: {.tc-region tc-n="N" tc-prov="..."}  renders as
+ * <div class="tc-region" tc-n="N" tc-prov="...">. Show the multi-block new
+ * region as ONE tracked unit: a colored left change-bar + subtle tint, with the
+ * mark number in the margin. Provenance picks the color (authored=amber,
+ * imported=blue), matching the LaTeX tcregion bar. */
+.tc-region {
+  border-left: 4px solid #d98c14;   /* authored: amber */
+  background: #fff8e6;
+  padding: 0.25rem 0.75rem;
+  margin: 0.5rem 0;
+  position: relative;
+}
+.tc-region[tc-prov="imported"] {
+  border-left-color: #1e76c8;        /* imported: blue */
+  background: #eef6ff;
+}
+.tc-region::before {
+  content: "[" attr(tc-n) "]";
+  position: absolute;
+  left: -2.75rem;
+  color: #d98c14;
+  font-size: 0.75rem;
+  font-weight: bold;
+}
+.tc-region[tc-prov="imported"]::before { color: #1e76c8; }
+
+/* Clean view (no-marks) hides region styling too — reads as ordinary prose. */
+body.no-marks .tc-region {
+  border-left: none;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+}
+body.no-marks .tc-region::before { display: none; }

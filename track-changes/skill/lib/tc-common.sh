@@ -89,6 +89,25 @@ tc_sentinel_active() {
   tc_sentinel_active_draft
 }
 
+# v6 Fix B (mechanical user-only /draft). The authorized marker a /draft
+# sentinel must carry to be HONORED by the PreToolUse gate. MUST stay
+# byte-identical to DRAFT_AUTH_MARKER in lib/tc_core/activation.py. Only
+# user-prompt-submit.sh (the UserPromptSubmit hook, which fires solely on human
+# input) writes a sentinel carrying this marker — so the AI, which cannot make
+# UserPromptSubmit fire, cannot author an honored sentinel.
+TC_DRAFT_AUTH_MARKER='tc-draft-authorized-by=user-prompt-submit'
+
+# tc_write_draft_sentinel — write an AUTHORIZED /draft sentinel for the current
+# session. Called ONLY by the UserPromptSubmit hook when the human's own prompt
+# requests drafting. draft-on.sh no longer writes the sentinel (v6).
+tc_write_draft_sentinel() {
+  local p; p="$(tc_sentinel_path_draft)" || return 1
+  local ts; ts="$(date -u +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || echo unknown-time)"
+  printf '# created %s (UserPromptSubmit; session=%s)\n%s\n' \
+    "$ts" "$(tc_session_id)" "$TC_DRAFT_AUTH_MARKER" > "$p" 2>/dev/null || return 1
+  return 0
+}
+
 # ---------------------------------------------------------------------------
 # tc_find_marker <file_path> — check the file's OWN directory for a
 # .tc-tracked marker. No walk-up — markers are folder-local in v3.
@@ -323,13 +342,21 @@ tc_extract_mark_numbers() {
   ftype="$(tc_file_type "$file")"
   case "$ftype" in
     md|qmd)
-      # </mark><sup>N</sup> where N is one or more digits
+      # inline </mark><sup>N</sup> where N is one or more digits
       grep -oE '</mark><sup>[0-9]+</sup>' "$file" 2>/dev/null \
+        | grep -oE '[0-9]+'
+      # v6 Fix D: whole-region insertions ::: {.tc-region ... tc-n="N" ...}
+      # share the single mark-number space; include them in max-N / dup checks.
+      grep -E '\.tc-region' "$file" 2>/dev/null \
+        | grep -oE 'tc-n="[0-9]+"' \
         | grep -oE '[0-9]+'
       ;;
     tex)
-      # \tcn{N} where N is one or more digits
+      # inline \tcn{N} where N is one or more digits
       grep -oE '\\tcn\{[0-9]+\}' "$file" 2>/dev/null \
+        | grep -oE '[0-9]+'
+      # v6 Fix D: \begin{tcregion}{N} region numbers.
+      grep -oE '\\begin\{tcregion\}\{[0-9]+\}' "$file" 2>/dev/null \
         | grep -oE '[0-9]+'
       ;;
     *)

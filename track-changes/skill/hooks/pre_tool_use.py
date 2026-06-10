@@ -69,21 +69,34 @@ def _read_payload():
         return None
 
 
-def _emit_block(tool_name, file_path, violations, ftype, suggest_draft, subagent_detected):
+def _emit_block(tool_name, file_path, violations, ftype, suggest_region, subagent_detected):
     section_ref = ('SKILL.md Highlight Syntax (Markdown)'
                    if ftype in ('md', 'qmd')
                    else 'SKILL.md Highlight Syntax (LaTeX)')
+    is_md = ftype in ('md', 'qmd')
     out = [f'track-changes: blocked {tool_name} to {file_path}']
     for ln, reason in violations:
         out.append(f'- line {ln}: {reason}')
+    # v6 Fix A: every AI write into a tracked deliverable must be tracked —
+    # name the three honest paths, never suggest self-/draft (it is user-only).
+    out.append('Everything you write into a tracked deliverable must be tracked. Use one of:')
+    if is_md:
+        out.append('  - inline mark (single edit):  <mark>NEW</mark><sup>M</sup>')
+        out.append('  - whole-region insertion (multi-block new content — heading + prose + '
+                   'code/div as ONE tracked insertion):')
+        out.append('      ::: {.tc-region tc-n="M" tc-prov="authored"}\n      …new blocks…\n      :::')
+    else:
+        out.append('  - inline mark (single edit):  \\tc{NEW}\\tcn{M}')
+        out.append('  - whole-region insertion (multi-block new content):')
+        out.append('      \\begin{tcregion}{M}[authored]\n      …new blocks…\n      \\end{tcregion}')
+    out.append('  - verbatim from a named source:  /import  (lands attributed, typed "imported")')
     out.append(f'See {section_ref}.')
-    if suggest_draft:
-        out.append('This edit lands inside a non-rendering construct (code/math/table/div), '
-                   'which cannot carry an inline mark. If intentional, invoke /draft for this '
-                   'turn; see SKILL.md.')
+    if suggest_region:
+        out.append('This new content spans a non-inline construct (code/math/table/div); wrap it as a '
+                   'whole-region insertion (above), which tracks the entire block as one unit.')
     if subagent_detected:
-        out.append('Detected subagent context — if this is intentional drafting from a PCV builder, '
-                   'the user can invoke /draft then retry.')
+        out.append('Detected subagent context — author content as marks / a region / via /import. '
+                   '/draft is USER-ONLY and cannot be self-invoked.')
     msg = '\n'.join(out) + '\n'
     # Write UTF-8 explicitly so non-ASCII (section signs, smart quotes) survive
     # on platforms whose stderr codec isn't UTF-8.
