@@ -1,7 +1,7 @@
 # track-changes Bootstrap — Source-preserving AI edit protocol (three-skill suite)
 
-**Version:** 6.0.0
-**Date:** 2026-06-09
+**Version:** 6.0.1
+**Date:** 2026-06-10
 
 ## What This File Does
 
@@ -38,16 +38,16 @@ When Claude Code follows the instructions below, it downloads all three skills �
 
 ## Instructions for Claude Code
 
-You are reading the track-changes v6.0.0 bootstrap manifest. Follow these steps precisely.
+You are reading the track-changes v6.0.1 bootstrap manifest. Follow these steps precisely.
 
 ### Step 1: Check for existing installation
 
-Read `~/.claude/skills/track-changes/VERSION`. If the file exists, parse the first line as a version number. Compare it to `6.0.0` using semantic-version ordering (compare major, then minor, then patch as integers; treat a missing component as 0, so a two-part `2.0` is `2.0.0`).
+Read `~/.claude/skills/track-changes/VERSION`. If the file exists, parse the first line as a version number. Compare it to `6.0.1` using semantic-version ordering (compare major, then minor, then patch as integers; treat a missing component as 0, so a two-part `2.0` is `2.0.0`).
 
-- **Equal to 6.0.0** → "track-changes v6.0.0 is already installed. No update needed." **STOP.**
-- **Higher than 6.0.0** → "track-changes v[installed] is newer than this bootstrap (6.0.0). Aborting — will not downgrade." **STOP.**
-- **Lower than 6.0.0** (e.g. v5.0.x, v4.x, v3.0.x, or any v1.x or v2.x) → "Updating track-changes from v[installed] to v6.0.0." Proceed to Step 2. The download in Step 2 overwrites every skill file in place (and, from a pre-v5 install, adds the `polish` skill), so the upgrade is a clean replacement (the upgrade also re-merges settings.json, laying down the single combined PreToolUse matcher group); existing `<mark>…</mark><sup>N</sup>` content in your documents is fully backward-compatible and is left untouched (the mark grammar is unchanged — no document migration is needed). **Upgrading from v4.0.x?** The per-file activation key was renamed `track-changes:` → `tc-track:` in v4.1 (the old key is a reserved Quarto YAML field that breaks `.qmd`/`.md` renders); swap any old keys to `tc-track:`. **v6 is behavior-changing:** `/draft` is now **user-only** — the AI can no longer suspend its own tracking (the suspension sentinel is written solely by the `UserPromptSubmit` hook on *your* `/draft` prompt). Everything the AI writes into a tracked deliverable is tracked; large new blocks use the new whole-region insertion (`::: {.tc-region …}` / `\tcregion`). No document migration — the mark grammar is backward-compatible.
-- **Does not exist** → "Installing track-changes v6.0.0." Proceed to Step 2.
+- **Equal to 6.0.1** → "track-changes v6.0.1 is already installed. No update needed." **STOP.**
+- **Higher than 6.0.1** → "track-changes v[installed] is newer than this bootstrap (6.0.1). Aborting — will not downgrade." **STOP.**
+- **Lower than 6.0.1** (e.g. v6.0.0, v5.0.x, v4.x, v3.0.x, or any v1.x or v2.x) → "Updating track-changes from v[installed] to v6.0.1." Proceed to Step 2. The download in Step 2 overwrites every skill file in place (and, from a pre-v5 install, adds the `polish` skill), so the upgrade is a clean replacement (the upgrade also re-merges settings.json, laying down the single combined PreToolUse matcher group); existing `<mark>…</mark><sup>N</sup>` content in your documents is fully backward-compatible and is left untouched (the mark grammar is unchanged — no document migration is needed). **Upgrading from v4.0.x?** The per-file activation key was renamed `track-changes:` → `tc-track:` in v4.1 (the old key is a reserved Quarto YAML field that breaks `.qmd`/`.md` renders); swap any old keys to `tc-track:`. **v6 is behavior-changing:** `/draft` is now **user-only** — the AI can no longer suspend its own tracking (the suspension sentinel is written solely by the `UserPromptSubmit` hook on *your* `/draft` prompt). Everything the AI writes into a tracked deliverable is tracked; large new blocks use the new whole-region insertion (`::: {.tc-region …}` / `\tcregion`). **v6.0.1 is a patch** over v6.0.0 — it fixes the Quarto whole-region cases (brace-less inner fenced divs no longer trip the analyzer; the region CSS binds to Pandoc's `data-`-prefixed attributes); no behavior or grammar change. No document migration — the mark grammar is backward-compatible.
+- **Does not exist** → "Installing track-changes v6.0.1." Proceed to Step 2.
 
 ### Step 2: Download all files (curl-based)
 
@@ -97,7 +97,7 @@ If the command exits non-zero, report the error to the user and stop.
 
 ### Step 4: Verify installation
 
-1. Read `~/.claude/skills/track-changes/VERSION` → first line must be `6.0.0`.
+1. Read `~/.claude/skills/track-changes/VERSION` → first line must be `6.0.1`.
 2. Read `~/.claude/skills/track-changes/SKILL.md` → must begin with `---` (YAML frontmatter).
 3. Read `~/.claude/skills/track-changes/hooks/pre_tool_use.py` → must begin with `"""` (Python docstring).
 4. Read `~/.claude/skills/track-changes/lib/tc_core/grammar.py` → must exist (shared mark-grammar package).
@@ -116,7 +116,7 @@ Any verification failure → report to user and do not claim success.
 
 On success, tell the user:
 
-> **track-changes v6.0.0 installed successfully — three skills + shared `tc_core`.**
+> **track-changes v6.0.1 installed successfully — three skills + shared `tc_core`.**
 >
 > **`track-changes`** (`~/.claude/skills/track-changes/`): always-on mark-tracking. SKILL.md, VERSION, settings-patch.json, hooks/ (5 sh + 2 py), lib/ (4 py + 6 sh + 1 sty + the shared `tc_core` package), reference/ (highlight-syntax.md, latex.md, quarto-notes.md, **digest.md**, tc-clean.css, tc-clean.js).
 >
@@ -208,6 +208,8 @@ Each entry lists source-URL → destination-path. Base URL: `https://raw.githubu
 ---
 
 ## Changelog Summary
+
+**v6.0.1 (Quarto whole-region bug fixes — patch).** Two bugs surfaced when a Fix-D whole-region insertion was used in a Quarto `html` lecture; both are isolated to **whole-region insertions** (inline `<mark>` marks were unaffected). **(1)** The PreToolUse analyzer wrongly blocked a correctly-wrapped `.tc-region` whose body contained Quarto **brace-less shorthand** fenced divs (`::: statement`, `::: result-box`, `::: example-end`): the depth tracker only recognized the brace-block opener form, so an inner brace-less `:::` closed (and prematurely popped) the region, and every line after was reported as "added content not wrapped." `grammar.py`'s fenced-div opener now recognizes **both** the brace block `{…}` and the bare-class-identifier forms (matching the standard Quarto div grammar), so brace-less inner divs are depth-balanced. **(2)** The region styling never bound under Quarto because Pandoc renders fenced-div key–value attributes as **`data-`-prefixed** HTML attributes (`data-tc-n`, `data-tc-prov`) — so `reference/tc-clean.css`'s `attr(tc-n)` margin number resolved empty and the imported-provenance color never matched. The CSS now targets **both** the `data-*` and raw attribute forms, so the `[N]` number and provenance color render. **(3)** `SKILL.md` §12 now documents that a region (unlike inline `<mark>`, which browsers style by default) needs `tc-clean.css` included to be visible, the `data-*` attribute behavior, and the **purge-safe** `include-in-header: text:` `<style>` path for wiring the region CSS into a Quarto project (theme SCSS can purge rules for unknown classes). Patch release: **no grammar change, no behavior change, no document migration**; the suite stays at 6 hooks. Adds regression test TC-W-13.
 
 **v6.0.0 (tracking-enforcement hardening — behavior-changing).** Closes the recurring hole where AI-authored content reached a tracked deliverable **untracked**. **(A)** Everything the AI writes into a tracked deliverable is now tracked regardless of approval — the "approval is the audit trail" rule is removed (authorization and verification are separate gates that both always hold). **(B) `/draft` is now mechanically USER-ONLY:** the per-turn suspension sentinel is written solely by the `UserPromptSubmit` hook when the human's own prompt requests it (carrying an authorized marker the PreToolUse gate requires); `lib/draft-on.sh` no longer writes it and a forged/bare sentinel is ignored, so the AI cannot suspend its own tracking. **(D) Whole-region insertion:** a multi-block new region marks as ONE tracked unit — a Quarto `::: {.tc-region tc-n="N" tc-prov="…"}` … `:::` div, or a LaTeX `tcregion` environment drawing a left **change-bar** (robust across display math and verbatim); `/tc accept|reject N` resolves it atomically. **(E) Provenance-typed marks:** `tc-prov="authored"` (default) vs `"imported"` (a verbatim `/import` slice), with distinct render colors — plus the corpus-example convention (import the lifted scenario; track the new Julia/prose as authored). The mark grammar is **backward-compatible**: every v1–v5 mark and document parses unchanged (absent provenance = authored); no migration. **No new hooks** (the suite stays at 6) and no settings change beyond the existing merge. The only breaking change is behavioral — the AI can no longer self-suspend tracking; only the user can.
 

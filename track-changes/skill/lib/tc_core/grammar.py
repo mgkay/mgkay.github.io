@@ -60,7 +60,14 @@ TEX_NUMS_RE = re.compile(r'\\tcn\{(\d+)\}')
 # md/qmd: a Quarto fenced div carrying .tc-region with tc-n / tc-prov.
 #   ::: {.tc-region tc-n="3" tc-prov="authored"}
 # Opener = a `:::`-fence line whose attribute block mentions .tc-region.
-_MD_FENCE_OPEN_RE = re.compile(r'^\s*(:{3,})\s*\{(?P<attrs>[^}]*)\}\s*$')
+# Recognize BOTH standard Quarto fenced-div opener forms so depth-tracking stays
+# balanced: a brace block `{…}` OR a bare class identifier (the brace-less
+# shorthand `::: statement`, `::: result-box`). A bare `:::` closer never matches
+# the opener (it requires a brace/identifier after the colons), so open and close
+# stay unambiguous. Non-region openers push None (skipped but depth-counted); the
+# downstream `.search()` calls tolerate the braces captured by the brace branch.
+_MD_FENCE_OPEN_RE = re.compile(
+    r'^\s*(:{3,})\s*(?P<attrs>\{[^}]*\}|[A-Za-z][\w-]*)\s*$')
 _MD_FENCE_CLOSE_RE = re.compile(r'^\s*(:{3,})\s*$')
 _MD_REGION_CLASS_RE = re.compile(r'(?<![\w.-])\.tc-region(?![\w-])')
 _MD_REGION_N_RE = re.compile(r'tc-n\s*=\s*"(\d+)"')

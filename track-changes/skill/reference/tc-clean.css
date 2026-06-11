@@ -35,11 +35,15 @@ mark[tc-prov="imported"] {
 }
 
 /* --- v6: whole-region insertion (Fix D) -------------------------------------
- * The Quarto fenced div  ::: {.tc-region tc-n="N" tc-prov="..."}  renders as
- * <div class="tc-region" tc-n="N" tc-prov="...">. Show the multi-block new
- * region as ONE tracked unit: a colored left change-bar + subtle tint, with the
- * mark number in the margin. Provenance picks the color (authored=amber,
- * imported=blue), matching the LaTeX tcregion bar. */
+ * The Quarto fenced div  ::: {.tc-region tc-n="N" tc-prov="..."}  renders via
+ * Pandoc as e.g.
+ *   <section class="level2 tc-region" data-tc-n="N" data-tc-prov="...">
+ * i.e. Pandoc DATA-PREFIXES the non-standard div key-value attributes. Only
+ * hand-written HTML keeps the raw `tc-n` / `tc-prov` form. Show the multi-block
+ * new region as ONE tracked unit: a colored left change-bar + subtle tint, with
+ * the mark number in the margin. Provenance picks the color (authored=amber,
+ * imported=blue), matching the LaTeX tcregion bar. Selectors below target BOTH
+ * the data- and raw forms so the rule binds under Quarto render AND raw HTML. */
 .tc-region {
   border-left: 4px solid #d98c14;   /* authored: amber */
   background: #fff8e6;
@@ -47,18 +51,24 @@ mark[tc-prov="imported"] {
   margin: 0.5rem 0;
   position: relative;
 }
+.tc-region[data-tc-prov="imported"],
 .tc-region[tc-prov="imported"] {
   border-left-color: #1e76c8;        /* imported: blue */
   background: #eef6ff;
 }
+/* Margin number — sourced from whichever attribute form is present. Split so a
+ * region with neither attribute generates no "[]" (the ::before is not created
+ * without a content rule). */
+.tc-region[data-tc-n]::before { content: "[" attr(data-tc-n) "]"; }
+.tc-region[tc-n]::before      { content: "[" attr(tc-n) "]"; }
 .tc-region::before {
-  content: "[" attr(tc-n) "]";
   position: absolute;
   left: -2.75rem;
   color: #d98c14;
   font-size: 0.75rem;
   font-weight: bold;
 }
+.tc-region[data-tc-prov="imported"]::before,
 .tc-region[tc-prov="imported"]::before { color: #1e76c8; }
 
 /* Clean view (no-marks) hides region styling too — reads as ordinary prose. */

@@ -793,28 +793,54 @@ meeting, student preview, PR review by a non-author), everyone sees the
 marks — not always desired. The skill ships two optional render-time assets
 that hide marks at *view* time without mutating the source:
 
-- `reference/tc-clean.css` — when `<body>` carries the `no-marks` class,
-  `<mark>` highlights become transparent (text reads as plain prose) and the
-  trailing `<sup>N</sup>` is hidden.
+- `reference/tc-clean.css` — supplies the **whole-region** styling (the
+  `.tc-region` change-bar / tint / margin number, §15) **and** the `no-marks`
+  hiding rules: when `<body>` carries the `no-marks` class, `<mark>` highlights
+  become transparent (text reads as plain prose) and the trailing `<sup>N</sup>`
+  is hidden.
 - `reference/tc-clean.js` — adds the `no-marks` class to `<body>` when the
   URL carries `?clean=1` (or a bare `?clean`).
 
-Include both in the rendered HTML, then append `?clean=1` to the URL when
-sharing mid-review. For a Quarto HTML document:
+**Inline marks vs. regions — what needs the CSS.** Inline `<mark>` highlights
+show yellow with *no* CSS (browsers style `<mark>` by default), so they render
+even if you include nothing. A **whole-region insertion** (§15) renders as a
+container with the `.tc-region` class and has **no default styling** — it is
+invisible (no bar, no number) unless `tc-clean.css` is actually included. If a
+region "tracked silently but shows no highlight," the CSS was not wired in.
+
+**Quarto emits `data-`-prefixed attributes.** Pandoc renders the fenced-div
+key–value attributes as `data-`-prefixed HTML attributes —
+`::: {.tc-region tc-n="1" tc-prov="authored"}` becomes
+`<section class="… tc-region" data-tc-n="1" data-tc-prov="authored">`. The
+shipped `tc-clean.css` already targets both the `data-tc-n` / `data-tc-prov`
+forms (for Quarto render) and the raw `tc-n` / `tc-prov` forms (hand-written
+HTML), so the margin number and imported-provenance color bind either way.
+
+Include both assets in the rendered HTML, then append `?clean=1` to the URL when
+sharing mid-review. For a Quarto HTML document, prefer **`include-in-header:
+text:`** with a raw `<style>` — it is **purge-safe** (theme SCSS can drop rules
+for unknown classes like `.tc-region`, but a raw header `<style>` survives):
 
 ```yaml
 format:
   html:
-    css: tc-clean.css
+    include-in-header:
+      text: |
+        <style>
+        /* paste reference/tc-clean.css here, or: */
+        @import url("tc-clean.css");
+        </style>
     include-after-body:
       text: |
         <script src="tc-clean.js"></script>
 ```
 
-(Copy the two files from `~/.claude/skills/track-changes/reference/` into the
-project, or reference them by path.) Removing `?clean=1` — or loading the
-page without it — restores the marks unchanged. This is purely a viewing
-concern; the source file and its marks are never altered.
+The simpler `css: tc-clean.css` also works for non-theme projects, but the
+header-`<style>` path is the robust default. (Copy the two files from
+`~/.claude/skills/track-changes/reference/` into the project, or reference them
+by path.) Removing `?clean=1` — or loading the page without it — restores the
+marks unchanged. This is purely a viewing concern; the source file and its
+marks are never altered.
 
 ## 13. Common pitfalls
 
