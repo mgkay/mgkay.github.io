@@ -308,15 +308,42 @@ always override it for a single commit.</p>
 
 <h3>Pre-clean voice dictation in your editor &mdash; <code>decap</code></h3>
 <p>Voice dictation often sprinkles stray capital letters mid-sentence. The suite bundles a small
-companion tool, <code>decap</code>, that strips them &mdash; a deterministic filter you run on a
-selection <em>in your editor</em> (for example a <kbd>Ctrl+Alt+C</kbd> keybinding that pipes the
-selection through <code>python ~/.claude/skills/track-changes/tools/decap.py</code>). Because it
-runs in your editor and never goes through Claude, its edits are deliberately <strong>not</strong>
-tracked &mdash; exactly what you want for a bulk, judgment-free cleanup of your own dictation. Run it
-on fresh dictation <em>before</em> the text is marked (it is text-only and not aware of
-<code>&lt;mark&gt;</code> spans). It pairs naturally with <code>/tc polish</code>: <code>decap</code>
-for the instant mechanical pass, <code>/tc polish</code> for the deeper editorial pass you review as
-marks.</p>
+companion tool, <code>decap</code>, that strips them &mdash; a deterministic filter that lowercases
+stray mid-sentence capitals while leaving sentence starts, acronyms, camelCase, and protected terms
+alone. Because you run it <em>in your editor</em> and it never goes through Claude, its edits are
+deliberately <strong>not</strong> tracked &mdash; exactly what you want for a bulk, judgment-free
+cleanup of your own dictation. Run it on fresh dictation <em>before</em> the text is marked (it is
+text-only and not aware of <code>&lt;mark&gt;</code> spans). It pairs naturally with
+<code>/tc polish</code>: <code>decap</code> for the instant mechanical pass, <code>/tc polish</code>
+for the deeper editorial pass you review as marks.</p>
+
+<p><strong>Installation.</strong> <code>decap</code> is installed <strong>automatically when you run
+the bootstrap</strong> &mdash; the tool lands at
+<code>~/.claude/skills/track-changes/tools/decap.py</code> (with its protect-list
+<code>decap_protect.txt</code> alongside), so there is nothing extra to download. The one thing the
+bootstrap cannot do for you is bind it to a key in your editor, so set that up once:</p>
+
+<p><strong>VS Code.</strong> Install an extension that filters a selection through a shell command
+&mdash; for example <strong>Filter Text</strong> (<code>yhirose.filtertext</code>). Then open
+<em>Keyboard Shortcuts (JSON)</em> (<kbd>Ctrl+Shift+P</kbd> &rarr; &ldquo;Open Keyboard Shortcuts
+(JSON)&rdquo;) and add:</p>
+
+<pre class="snippet">{
+  "key": "ctrl+alt+c",
+  "command": "filtertext.runShellCommand",
+  "args": { "cmd": "python ~/.claude/skills/track-changes/tools/decap.py" }
+}</pre>
+
+<p>Then select the fresh, unmarked text and press <kbd>Ctrl+Alt+C</kbd> &mdash; the selection is
+piped through <code>decap.py</code> and replaced in place. Any extension exposing a &ldquo;filter
+selection through shell command&rdquo; action works; only the command name in the binding changes.</p>
+
+<p><strong>Other editors.</strong> The core is plain <code>stdin &rarr; stdout</code>, so any editor
+that can filter a selection through a shell command works &mdash; e.g. Vim
+(<code>:'&lt;,'&gt;!python ~/.claude/skills/track-changes/tools/decap.py</code>) or Emacs
+(<code>M-| python ~/.claude/skills/track-changes/tools/decap.py</code>). Add your own proper nouns
+and mixed-case terms to <code>decap_protect.txt</code> next to the script so they are never
+lowercased.</p>
 
 <h2>Good to know</h2>
 
