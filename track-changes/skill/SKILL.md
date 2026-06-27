@@ -1011,24 +1011,35 @@ plain text, editable directly.
 
 ### VS Code setup
 
-The filter requires a VS Code extension that pipes the current selection through
-a shell command and replaces it with the output. A purpose-built choice is
-**Filter Text** (`yhirose.filtertext`). After installing, add to
-`keybindings.json` (`Ctrl+Shift+P` → *Open Keyboard Shortcuts (JSON)*):
+The filter runs through a VS Code extension that pipes the current selection
+through a shell command and replaces it with the output — for example
+**Edit with Shell Command** (`ryu1kn.edit-with-shell`). After installing it,
+register decap as a favorite command in `settings.json`:
 
 ```json
-{
-  "key": "ctrl+alt+c",
-  "command": "filtertext.runShellCommand",
-  "args": { "cmd": "python ~/.claude/skills/track-changes/tools/decap.py" }
-}
+"editWithShell.favoriteCommands": [
+  { "id": "decap", "command": "python ~/.claude/skills/track-changes/tools/decap.py" }
+],
+"editWithShell.quickCommand1": "decap"
 ```
 
-Select the fresh, unmarked text and press `Ctrl+Alt+C` — the selection is
-piped through `decap.py` and replaced in place.
+then bind it in `keybindings.json` (`Ctrl+Shift+P` → *Open Keyboard Shortcuts (JSON)*):
 
-Any extension that exposes a "filter selection through shell command" action
-(stdin → stdout → replace) works; the keybinding command name will differ.
+```json
+{ "key": "ctrl+alt+c", "command": "editWithShell.runQuickCommand1", "when": "editorTextFocus" }
+```
+
+Select the fresh, unmarked text and press `Ctrl+Alt+C` — the selection is piped
+through `decap.py` and replaced in place. (On Windows the extension may need the
+full path, e.g. `python C:\Users\<you>\.claude\skills\track-changes\tools\decap.py`,
+if it does not expand `~`.)
+
+Or just ask Claude Code to set this up for you: it can install the extension
+(`code --install-extension ryu1kn.edit-with-shell`) and add the two config
+blocks above.
+
+Any extension that filters a selection through a shell command (stdin → stdout →
+replace) works; the command and binding names will differ.
 
 ### Editor-agnostic
 

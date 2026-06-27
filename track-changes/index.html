@@ -323,20 +323,27 @@ the bootstrap</strong> &mdash; the tool lands at
 <code>decap_protect.txt</code> alongside), so there is nothing extra to download. The one thing the
 bootstrap cannot do for you is bind it to a key in your editor, so set that up once:</p>
 
-<p><strong>VS Code.</strong> Install an extension that filters a selection through a shell command
-&mdash; for example <strong>Filter Text</strong> (<code>yhirose.filtertext</code>). Then open
-<em>Keyboard Shortcuts (JSON)</em> (<kbd>Ctrl+Shift+P</kbd> &rarr; &ldquo;Open Keyboard Shortcuts
-(JSON)&rdquo;) and add:</p>
+<p><strong>VS Code.</strong> Install an extension that pipes a selection through a shell command and
+replaces it &mdash; for example <strong>Edit with Shell Command</strong>
+(<code>ryu1kn.edit-with-shell</code>). Register decap as a favorite command in your
+<code>settings.json</code>:</p>
 
-<pre class="snippet">{
-  "key": "ctrl+alt+c",
-  "command": "filtertext.runShellCommand",
-  "args": { "cmd": "python ~/.claude/skills/track-changes/tools/decap.py" }
-}</pre>
+<pre class="snippet">"editWithShell.favoriteCommands": [
+  { "id": "decap", "command": "python ~/.claude/skills/track-changes/tools/decap.py" }
+],
+"editWithShell.quickCommand1": "decap"</pre>
 
-<p>Then select the fresh, unmarked text and press <kbd>Ctrl+Alt+C</kbd> &mdash; the selection is
-piped through <code>decap.py</code> and replaced in place. Any extension exposing a &ldquo;filter
-selection through shell command&rdquo; action works; only the command name in the binding changes.</p>
+<p>then bind it in <em>Keyboard Shortcuts (JSON)</em> (<kbd>Ctrl+Shift+P</kbd> &rarr; &ldquo;Open
+Keyboard Shortcuts (JSON)&rdquo;):</p>
+
+<pre class="snippet">{ "key": "ctrl+alt+c", "command": "editWithShell.runQuickCommand1", "when": "editorTextFocus" }</pre>
+
+<p>Select the fresh, unmarked text and press <kbd>Ctrl+Alt+C</kbd>; the selection is piped through
+<code>decap.py</code> and replaced in place. (On Windows, give the full path &mdash;
+<code>python C:\Users\&lt;you&gt;\.claude\skills\track-changes\tools\decap.py</code> &mdash; if the
+extension doesn&rsquo;t expand <code>~</code>.) Any extension that filters a selection through a
+shell command works; the command names just differ. <strong>Or ask Claude Code to set it up</strong>
+&mdash; it can install the extension and add both config blocks for you.</p>
 
 <p><strong>Other editors.</strong> The core is plain <code>stdin &rarr; stdout</code>, so any editor
 that can filter a selection through a shell command works &mdash; e.g. Vim
