@@ -317,40 +317,25 @@ text-only and not aware of <code>&lt;mark&gt;</code> spans). It pairs naturally 
 <code>/tc polish</code>: <code>decap</code> for the instant mechanical pass, <code>/tc polish</code>
 for the deeper editorial pass you review as marks.</p>
 
-<p><strong>Installation.</strong> <code>decap</code> is installed <strong>automatically when you run
-the bootstrap</strong> &mdash; the tool lands at
-<code>~/.claude/skills/track-changes/tools/decap.py</code> (with its protect-list
-<code>decap_protect.txt</code> alongside), so there is nothing extra to download. The one thing the
-bootstrap cannot do for you is bind it to a key in your editor, so set that up once:</p>
+<p><strong>Installation.</strong> <code>decap</code> installs <strong>automatically when you run the
+bootstrap</strong> &mdash; the tool lands at <code>~/.claude/skills/track-changes/tools/decap.py</code>,
+so there is nothing extra to download. The one piece the bootstrap can&rsquo;t do is bind it to a key
+in your editor &mdash; and since you&rsquo;re already in Claude Code, the easiest way is to let Claude
+do that for you. Paste this:</p>
 
-<p><strong>VS Code.</strong> Install an extension that pipes a selection through a shell command and
-replaces it &mdash; for example <strong>Edit with Shell Command</strong>
-(<code>ryu1kn.edit-with-shell</code>). Register decap as a favorite command in your
-<code>settings.json</code>:</p>
+<pre class="snippet">Set up the bundled decap tool as a VS Code keybinding. Install the
+"Edit with Shell Command" extension (ryu1kn.edit-with-shell) if it isn't
+already installed; add an editWithShell.favoriteCommands entry with id
+"decap" that runs:  python ~/.claude/skills/track-changes/tools/decap.py
+(use the full absolute path if ~ isn't expanded on my OS); set
+editWithShell.quickCommand1 to "decap"; and bind ctrl+alt+c to
+editWithShell.runQuickCommand1 in keybindings.json.</pre>
 
-<pre class="snippet">"editWithShell.favoriteCommands": [
-  { "id": "decap", "command": "python ~/.claude/skills/track-changes/tools/decap.py" }
-],
-"editWithShell.quickCommand1": "decap"</pre>
-
-<p>then bind it in <em>Keyboard Shortcuts (JSON)</em> (<kbd>Ctrl+Shift+P</kbd> &rarr; &ldquo;Open
-Keyboard Shortcuts (JSON)&rdquo;):</p>
-
-<pre class="snippet">{ "key": "ctrl+alt+c", "command": "editWithShell.runQuickCommand1", "when": "editorTextFocus" }</pre>
-
-<p>Select the fresh, unmarked text and press <kbd>Ctrl+Alt+C</kbd>; the selection is piped through
-<code>decap.py</code> and replaced in place. (On Windows, give the full path &mdash;
-<code>python C:\Users\&lt;you&gt;\.claude\skills\track-changes\tools\decap.py</code> &mdash; if the
-extension doesn&rsquo;t expand <code>~</code>.) Any extension that filters a selection through a
-shell command works; the command names just differ. <strong>Or ask Claude Code to set it up</strong>
-&mdash; it can install the extension and add both config blocks for you.</p>
-
-<p><strong>Other editors.</strong> The core is plain <code>stdin &rarr; stdout</code>, so any editor
-that can filter a selection through a shell command works &mdash; e.g. Vim
-(<code>:'&lt;,'&gt;!python ~/.claude/skills/track-changes/tools/decap.py</code>) or Emacs
-(<code>M-| python ~/.claude/skills/track-changes/tools/decap.py</code>). Add your own proper nouns
-and mixed-case terms to <code>decap_protect.txt</code> next to the script so they are never
-lowercased.</p>
+<p>That installs a small VS Code extension and binds <kbd>Ctrl+Alt+C</kbd> to run <code>decap</code>
+on the current selection &mdash; select fresh, unmarked dictation and press it. Prefer to wire it up
+by hand, or use a different editor (Vim, Emacs)? Ask Claude for the manual steps, or see
+<code>SKILL.md</code> in the
+<a href="https://github.com/mgkay/mgkay.github.io/tree/main/track-changes">project repository</a>.</p>
 
 <h2>Good to know</h2>
 
