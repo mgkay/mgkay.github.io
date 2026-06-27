@@ -340,7 +340,7 @@ LaTeX:              \tc[imported]{NEW}\tcn{N}
 ```
 
 Values: `authored` (default — anything written or paraphrased) or `imported` (a
-verbatim slice landed via `/import`). Absent ⇒ `authored`, so every pre-v6 mark
+verbatim slice landed via `/tc import`). Absent ⇒ `authored`, so every pre-v6 mark
 is unchanged. The opening-tag attribute does not affect the closing
 `</mark><sup>N</sup>` (number extraction is unchanged).
 
@@ -383,6 +383,6 @@ grep -oE '\\begin\{tcregion\}\{[0-9]+\}' file.tex | grep -oE '[0-9]+'
   `SKILL.md` §6
 - Activation mechanisms: `SKILL.md` §2
 - Slash commands: `SKILL.md` §7
-- Importing from a source (separate skill): `verified-import` `/import`
+- Importing from a source (separate skill): `verified-import` `/tc import` (formerly `/import`)
 - LaTeX preamble setup: `SKILL.md` §10
 - v1 → v2 migration: `bash install.sh --migrate <dir>`

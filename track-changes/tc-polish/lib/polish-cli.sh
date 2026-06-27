@@ -12,7 +12,7 @@
 #   audit <file> --runs N [--mode M2] [--baseline REF] [--flagged a,b]
 #       Append a `dictated:` breadcrumb to .tc-history.md (call after edits).
 #
-# polish has no `setup` step: /polish is explicitly invoked, so the invocation is
+# polish has no `setup` step: /tc polish is explicitly invoked, so the invocation is
 # the opt-in (there is no `.polish-on` marker). The only prerequisite is that the
 # target is already track-changes-tracked (a `.tc-tracked` marker / `tc-track:`
 # key), since AI fixes become marks via that hook. polish is yellow-only — no

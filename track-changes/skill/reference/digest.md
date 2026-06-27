@@ -29,7 +29,7 @@ each change. Default-OFF. (Full spec lives in `SKILL.md`, lazy-loaded on demand.
 `<sup>N</sup>` sits OUTSIDE the `</mark>`. Next N = highest existing mark + 1.
 
 **Provenance (v6, optional):** `<mark tc-prov="imported">…` / `\tc[imported]{…}`
-for a verbatim `/import` slice; default (absent) = `authored`. Region numbers
+for a verbatim `/tc import` slice; default (absent) = `authored`. Region numbers
 share the single mark-number space.
 
 **Whole-region insertion (v6, Fix D)** — a MULTI-block new region as ONE tracked
@@ -46,15 +46,19 @@ inside. **Single brand-new block** (one heading/fenced/`:::`) → still a siblin
 `/tc draft` · `/tc enable <file>` · `/tc disable <file>` · `/tc mark [<dir>]` ·
 `/tc migrate <dir>` · `/tc status [<file>]` · `/tc list [<file>]` ·
 `/tc accept [<file>] <ranges>` · `/tc reject [<file>] <ranges>` ·
-`/tc accept-all [<file>]` · `/tc reject-all [<file>]` · `/tc help`.
+`/tc accept-all [<file>]` · `/tc reject-all [<file>]` · `/tc help` ·
+`/tc import <source>[#L<a>-L<b>] [<target>]` · `/tc polish [<file>]`.
 Ranges use `1-25,!7` syntax. Omit `<file>` on a resolution command to use the
 working file (most-recently-modified tracked file). Bare `/tc` prints the menu.
-`/draft` = suspend this turn — **USER-ONLY (v6); the AI cannot invoke it.**
+`/draft` = suspend this turn — **USER-ONLY (v6, v7-confirmed shadow-proof: the
+UserPromptSubmit hook fires on the raw prompt before command routing, so no
+skill named `draft` can intercept it); the AI cannot invoke it.**
 
 ## Limits & pointers
 - Editing INSIDE code/math/tables (non-rendering contexts): wrap the whole block
   as a `tcregion` / `.tc-region` insertion (v6), or ask the user to `/draft`.
-- Verbatim/converted **source import** is a separate skill: `verified-import` `/import`.
+- Verbatim/converted **source import**: use `/tc import` (routes to the `verified-import` skill; lands clean via sha-bound exemption).
+- Companion `decap` tool (author-side dictation capitalization pre-clean, OUTSIDE the mark protocol; run on fresh unmarked dictation only) — see `SKILL.md §Companion`.
 - Lazy-load from `SKILL.md` on demand: activation-precedence edge cases →
   `SKILL.md §2 (Activation)`; worked mark examples + resolution walk →
   `SKILL.md §3 (Highlight Syntax)`; LaTeX preamble / `\tc` macro setup →

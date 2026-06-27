@@ -15,5 +15,5 @@ set -u
 echo "track-changes: /draft is user-only (v6). This script no longer suspends" >&2
 echo "tracking. To draft, the USER types /draft (or /tc draft) as their prompt;" >&2
 echo "the UserPromptSubmit hook authorizes it. The AI cannot self-suspend —" >&2
-echo "author content as <mark> edits, a whole-region insertion, or via /import." >&2
+echo "author content as <mark> edits, a whole-region insertion, or via /tc import." >&2
 exit 0

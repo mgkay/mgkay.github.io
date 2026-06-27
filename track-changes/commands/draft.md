@@ -18,7 +18,7 @@ suspend its own tracking: `lib/draft-on.sh` no longer writes the sentinel, and a
 sentinel without the authorized marker is ignored. If the assistant believes
 content should land untracked, it must ask you to `/draft` — it cannot do it
 itself. For authored content the honest paths are a `<mark>` edit, a whole-region
-insertion (`::: {.tc-region …}` / `\begin{tcregion}{N}`), or `/import` for
+insertion (`::: {.tc-region …}` / `\begin{tcregion}{N}`), or `/tc import` for
 verbatim source.
 
 This is the per-turn override. For per-file opt-out use `/tc disable <file>`;

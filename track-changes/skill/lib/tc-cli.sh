@@ -87,6 +87,18 @@ Batch resolution (edits the file; writes explicit audit attribution):
 Diagnostics:
   /tc status [<file>]     Show the activation chain for <file> (or CWD)
   /tc help                This message
+
+Cooperating skills (routes to the installed companion skill):
+  /tc import <source>[#L<a>-L<b>] [<target>]
+                          Run verified-import: resolve and slice a text source,
+                          print the slice + conversion instruction, you convert
+                          faithfully and write only the converted block; lands
+                          clean via sha-bound exemption; self-mark only
+                          significant/meaning-altering changes.
+  /tc polish [<file>]     Run tc-polish: dictation cleanup + full editorial
+                          pass; changes surface as track-changes marks;
+                          never changes meaning; never auto-corrects a flagged
+                          protected token.
 USAGE
 }
 
@@ -522,6 +534,15 @@ case "${sub}" in
       tc_run_resolve "${sub}" "$1"
     fi
     ;;
+  import)
+    VI="$HOME/.claude/skills/verified-import/lib/vi-cli.sh"
+    [ -f "$VI" ] || { echo "tc import: verified-import not installed — reinstall the track-changes suite (see bootstrap)." >&2; exit 2; }
+    exec bash "$VI" "$@" ;;
+  polish)
+    PC="$HOME/.claude/skills/tc-polish/lib/polish-cli.sh"
+    [ -f "$PC" ] || { echo "tc polish: tc-polish not installed — reinstall the track-changes suite (see bootstrap)." >&2; exit 2; }
+    bash "$PC" analyze "$@"
+    echo "tc polish: follow tc-polish SKILL.md bright-line rules — improve freely, never change meaning, never auto-correct a flagged protected token." ;;
   help|--help|-h)
     print_usage
     ;;

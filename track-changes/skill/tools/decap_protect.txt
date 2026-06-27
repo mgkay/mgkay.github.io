@@ -1,0 +1,24 @@
+# Proper nouns / terms decap.py must NOT lowercase. One per line, case-insensitive.
+# (ALL-CAPS acronyms like US/DC/LTL/VRP and camelCase like JuMP/CairoMakie are
+#  auto-protected, so they don't need to be listed.) Months and days of the week
+#  are built-in. Add your own project-specific terms below the generic list.
+
+# AI / tech platforms
+Anthropic
+Claude
+OpenAI
+Google
+GitHub
+Wikipedia
+
+# Languages / tools
+Python
+Julia
+Quarto
+Excel
+Word
+
+# Operating systems / environments
+Windows
+macOS
+Linux

@@ -1,6 +1,6 @@
 ---
-name: polish
-description: Opt-in, default-OFF skill for cleaning up AND editorially improving VOICE-DICTATED document prose in existing .md/.qmd files, WITHOUT destabilizing track-changes. Does the full copy-editor pass — speech-recognition errors, grammar, dropped words, PLUS meaning-preserving restructuring (split run-ons, reorder for flow, tighten wordiness, smooth awkward phrasing). AI changes surface as ordinary track-changes <mark> marks (reviewable via /tc accept|reject). Bright lines: improve freely but NEVER change meaning; and NEVER auto-correct an unrecognized token (jargon/code/math/domain term) — leave it and flag it. Invoke explicitly with /polish [file] — the invocation is the opt-in (no marker). On a track-changes-tracked file, fixes surface as marks; on an untracked file, polish offers a one-time direct edit (no marks) or to enable tracking first. Sits on top of track-changes + verified-import; modifies neither.
+name: tc-polish
+description: Opt-in, default-OFF skill for cleaning up AND editorially improving VOICE-DICTATED document prose in existing .md/.qmd files, WITHOUT destabilizing track-changes. Does the full copy-editor pass — speech-recognition errors, grammar, dropped words, PLUS meaning-preserving restructuring (split run-ons, reorder for flow, tighten wordiness, smooth awkward phrasing). AI changes surface as ordinary track-changes <mark> marks (reviewable via /tc accept|reject). Bright lines: improve freely but NEVER change meaning; and NEVER auto-correct an unrecognized token (jargon/code/math/domain term) — leave it and flag it. Invoke explicitly with /tc polish [file] (or /tc-polish [file]) — the invocation is the opt-in (no marker). On a track-changes-tracked file, fixes surface as marks; on an untracked file, polish offers a one-time direct edit (no marks) or to enable tracking first. Sits on top of track-changes + verified-import; modifies neither.
 ---
 
 # polish
@@ -49,7 +49,7 @@ by construction, not by discipline.
 ## 1. Activation (explicit invocation; tracked → marks, untracked → ask)
 
 `polish` never fires unbidden — it runs only when you **explicitly invoke**
-`/polish [file]`. The invocation itself is the opt-in; there is **no separate
+`/tc polish [file]`. The invocation itself is the opt-in; there is **no separate
 `.polish-on` marker or `polish-on:` key** (removed 2026-06-02 — superfluous for a
 manually-invoked command).
 
@@ -61,7 +61,7 @@ misreports Windows-CRLF files).
 
 - **`tracked: true`** → **mark mode**: fixes surface as track-changes marks (§4),
   validated and logged by the existing hook. The default for any maintained
-  deliverable — for a tracked lecture `/polish <file>` just works.
+  deliverable — for a tracked lecture `/tc polish <file>` just works.
 - **`tracked: false`** (or `null` — track-changes not importable) → **ask the
   author** which they want:
   - **(a) Enable tracking first** (`/tc enable <file>` / `/tc mark <dir>`), then
@@ -176,9 +176,9 @@ nothing about resolution.
 
 ---
 
-## 5. The `/polish` workflow
+## 5. The `/tc polish` workflow
 
-`/polish` splits into a cheap **orchestrator** (this session) and a **Sonnet
+`/tc polish` splits into a cheap **orchestrator** (this session) and a **Sonnet
 sub-agent** that does the actual fix-finding + marking in a **fresh, minimal
 context** — so the slow part (model reasoning) runs on a faster model and is not
 taxed by a long main-session context.
@@ -325,7 +325,7 @@ passed its Pattern-1 verification, and was **retired on first real-lecture use**
   nodes the source lacks — figure/table caption prefixes, cross-reference
   expansions, callout titles, and the output of every code chunk — so the indices
   drift and the lens shades the wrong words or none.
-- **Evidence:** running `/polish` on a real dictated edit of a lecture, a
+- **Evidence:** running `/tc polish` on a real dictated edit of a lecture, a
   dictated `## 2.` heading rename that was unmistakably present in `git diff` did
   **not** shade. An incomplete "see everything I changed" lens is worse than
   none: you cannot trust it, so you re-read manually anyway.
@@ -349,4 +349,4 @@ lens is a standing trust hazard; do not reintroduce it.
 
 Dictation is **not** an import. But a dictated *paraphrase of a source* is a
 fidelity event: when the author says "use the source wording," **defer to
-`/import`** (verified-import) rather than polishing a paraphrase into place.
+`/tc import`** (verified-import) rather than polishing a paraphrase into place.

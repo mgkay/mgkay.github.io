@@ -1,7 +1,7 @@
 """vi_verify — verified-import source resolution and pending-import staging
 (v4, LLM-judgment model).
 
-This module is the engine for the `verified-import` skill's `/import`
+This module is the engine for the `verified-import` skill's `/tc import`
 command and its PreToolUse hook. It is a simplified, prose-normalized rebirth
 of v2's `tc_provenance` (which left track-changes in v3 C2): the source-path
 resolution + fragment-slice + text-source gate are ported here; the §0 inline
@@ -10,7 +10,7 @@ faithfulness gate are both dropped.
 
 Two roles:
 
-1. CLI (`main`) — the `/import` command path. Resolves + slices the source,
+1. CLI (`main`) — the `/tc import` command path. Resolves + slices the source,
    resolves the target (explicit arg or the working file), stages a one-shot,
    target-keyed pending-import record under the track-changes state tree, and
    prints the resolved slice + a conversion instruction for Claude.

@@ -1,6 +1,6 @@
 ---
 name: track-changes
-description: Source-preserving edit protocol. Tracks Claude-introduced changes to existing .md, .qmd, and .tex files by wrapping only the changed characters in a <mark> highlight followed by a <sup>N</sup> reference number, so the human author can accept or reject each change individually. Default-OFF; opt in per folder via .tc-tracked marker, per file via YAML frontmatter `tc-track: true` (or `% tc-track: true` for .tex). Per-turn override via /draft. Unified /tc command for all operations (/tc mark, /tc enable, /tc disable, /tc migrate, /tc status, /tc list, /tc accept, /tc reject, /tc draft). Edits to tracked files append to a project-local .tc-history.md audit log. Verbatim/converted source import is the separate opt-in verified-import skill (/import).
+description: Source-preserving edit protocol. Tracks Claude-introduced changes to existing .md, .qmd, and .tex files by wrapping only the changed characters in a <mark> highlight followed by a <sup>N</sup> reference number, so the human author can accept or reject each change individually. Default-OFF; opt in per folder via .tc-tracked marker, per file via YAML frontmatter `tc-track: true` (or `% tc-track: true` for .tex). Per-turn override via /draft. Unified /tc command for all operations (/tc mark, /tc enable, /tc disable, /tc migrate, /tc status, /tc list, /tc accept, /tc reject, /tc draft, /tc import, /tc polish). Edits to tracked files append to a project-local .tc-history.md audit log. Verbatim/converted source import is the separate opt-in verified-import skill (/tc import).
 ---
 
 # track-changes
@@ -21,12 +21,12 @@ track-changes is one of **two co-installed skills**. The always-on
 track-changes skill (this file) gates ordinary edits with marks; its
 opt-in counterpart **`verified-import`** handles the one deliberate
 operation that should *not* be mark-wrapped — pulling content from a
-source file into a tracked document via `/import` (see §0).
+source file into a tracked document via `/tc import` (see §0).
 
 ## Quick Install
 
 Two skills install together as one suite: **track-changes** (always-on
-mark protocol) and **verified-import** (opt-in `/import`, loaded only when
+mark protocol) and **verified-import** (opt-in `/tc import`, loaded only when
 invoked). track-changes is the dependency — verified-import imports its
 shared `tc_core`.
 
@@ -51,10 +51,10 @@ is the job of the separate, opt-in **`verified-import`** skill, not the
 mark protocol. Invoke it with:
 
 ```
-/import <source>[#L<a>-L<b>] [<target>]
+/tc import <source>[#L<a>-L<b>] [<target>]
 ```
 
-`/import` reads the source (a whole text file or a `#L<a>-L<b>` line
+`/tc import` reads the source (a whole text file or a `#L<a>-L<b>` line
 range), prints it with an instruction to convert it to the target
 document's format, and you write the converted block. The block lands
 **clean (no `<mark>`)** by default — a `verified-import` PreToolUse hook
@@ -65,11 +65,11 @@ wrap only a genuinely *significant* change (an added or removed sentence or
 clause, or a changed quantity, term, or formula) in a mark for the author;
 pure formatting differences (`\section{Methods}` ↔ `## Methods`) need none.
 
-**Text sources only.** `/import` accepts only text sources (`.md`,
+**Text sources only.** `/tc import` accepts only text sources (`.md`,
 `.markdown`, `.qmd`, `.rmd`, `.tex`, `.txt`); a binary/non-text source is
 rejected. Converting a Word/PDF/slide original into text is an upstream,
 separately reviewed activity — do that conversion first (to a vetted text
-file), then `/import` from it. See the **verified-import** skill's
+file), then `/tc import` from it. See the **verified-import** skill's
 `SKILL.md` for the full contract.
 
 ## 1. Protocol
@@ -106,6 +106,12 @@ wins):
    draft`), the skill is suspended for the current user turn regardless
    of any other mechanism. Auto-clears at the start of the next user
    prompt.
+
+   > **v7 guarantee — `/draft` is user-only AND shadow-proof.** The
+   > UserPromptSubmit hook matches `/draft` on the **raw prompt before
+   > command routing**, so a third-party skill named `draft` cannot
+   > intercept or shadow it. The sentinel is written exclusively by that
+   > hook in response to the human's own prompt; the AI cannot self-suspend.
 
 2. **Per-file YAML frontmatter or magic comment.** A file containing
    `tc-track: true` in its YAML frontmatter is tracked. A file
@@ -475,12 +481,14 @@ root, else current directory) — and the command echoes the chosen file.
 "Batch resolution via `/tc`" for the resolution behavior and `commands/tc.md`
 for the full surface.
 
-### Importing — a separate skill
+### Importing via `/tc import`
 
-`/import` is **not** a `/tc` subcommand. Importing content from a source
-file into a tracked document is the opt-in **`verified-import`** skill
-(`/import <source>[#L<a>-L<b>] [<target>]`, §0). Its verified output lands
-clean (no marks) via an exemption this skill honors.
+`/tc import` **is** a `/tc` subcommand (added in v7). It routes to the
+opt-in **`verified-import`** skill (`/tc import <source>[#L<a>-L<b>]
+[<target>]`, §0). Its verified output lands clean (no marks) via an
+exemption this skill honors. Importing is still a **distinct operation**
+from inline marks — verified-import owns the implementation; `/tc import`
+is the dispatch surface.
 
 ### Legacy alias
 
@@ -543,7 +551,7 @@ sentinel carrying its authorized marker. Running `lib/draft-on.sh`
 yourself does nothing (it no longer writes a sentinel). If you believe
 some content should land untracked, **ask the user to `/draft`** — do not
 attempt to arrange it. For your own authored content the honest paths are
-a `<mark>` edit, a whole-region insertion (§Region), or `/import` for
+a `<mark>` edit, a whole-region insertion (§Region), or `/tc import` for
 verbatim source.
 
 ## 8. Composition with PCV
@@ -744,7 +752,7 @@ resolved:
   `rejected` / `ambiguous` are the possible values.
 - `imported` entries (a clean, unmarked source import) are **not**
   produced by this skill's edit gate — they are appended by the
-  **`verified-import`** hook when a `/import` write lands clean
+  **`verified-import`** hook when a `/tc import` write lands clean
   (§0). They share the same `.tc-history.md` log so the import trail
   rides alongside the mark trail in git history.
 
@@ -865,7 +873,7 @@ marks are never altered.
   a brand-new LaTeX `\section{}`/environment. Those edits route to `/draft`
   (§6) — the hook blocks an unwrapped change and suggests it. This is a
   documented v3 limitation (the v2 in-construct sibling form was removed).
-- **Importing from a source → `/import`, not a mark.** Pulling content from a
+- **Importing from a source → `/tc import`, not a mark.** Pulling content from a
   source file into a tracked document is the separate **`verified-import`**
   skill (§0), which lands the verified block clean. Do not hand-wrap an import
   in marks, and do not `/draft` it (that loses verification and marks on the
@@ -888,12 +896,12 @@ workflow *around* them is implicit. A typical tracked-revision session runs:
    `.tc-tracked` marker via `/tc mark`, or per-file `/tc enable <file>`), then
    asks Claude for the edit in plain language — "tighten the intro", "modernize
    this example". To pull a passage *from a source file*, the author uses the
-   separate `/import` command (§0, the verified-import skill).
+   separate `/tc import` command (§0, the verified-import skill).
 2. **Claude lands marks.** Claude edits the file, wrapping only the changed
    characters in `<mark>…</mark><sup>N</sup>` (`.md`/`.qmd`) or
    `\tc{}\tcn{N}` (`.tex`). The PreToolUse hook blocks any unmarked change.
    Each landed mark is recorded as `introduced` in `.tc-history.md`. A verified
-   `/import` (§0) is the exception: that block lands clean (no marks) and is
+   `/tc import` (§0) is the exception: that block lands clean (no marks) and is
    recorded as `imported`.
 3. **Author batch-resolves.** The author reviews the highlighted output and
    resolves in bulk through the canonical commands rather than a conversational
@@ -931,7 +939,7 @@ no longer writes anything. Tracking auto-resumes next user prompt.
 Authorization and verification are separate gates that both always hold: being
 told to do something never lets your output skip tracking. **Every change you
 write into a tracked deliverable lands as a mark, a whole-region insertion, or a
-verified `/import` — never plain untracked text.** Pick the path by what the
+verified `/tc import` — never plain untracked text.** Pick the path by what the
 content *is*, mechanically, not by whether you were "approved":
 
 - **Whole-region insertion (Fix D) — the path for a large new block.** A
@@ -948,7 +956,7 @@ content *is*, mechanically, not by whether you were "approved":
   reaching for `/draft`.
 - **Inline `<mark>` / `\tc{}`** when **refining** vetted content — each change
   individually reviewable.
-- **`/import` (verified-import, §0)** for content lifted **verbatim from a source
+- **`/tc import` (verified-import, §0)** for content lifted **verbatim from a source
   file**: it lands clean (attributed, typed `imported`) via an exemption this
   skill honors; you self-mark only significant changes. Verbatim is a mechanical
   operation the tool proves — never hand-type content and call it "from your
@@ -956,13 +964,76 @@ content *is*, mechanically, not by whether you were "approved":
 
 **Provenance (Fix E).** A mark or region carries an optional provenance type:
 `tc-prov="authored"` (default — anything you wrote/paraphrased) or
-`tc-prov="imported"` (a verbatim `/import` slice). Imported marks/regions render
+`tc-prov="imported"` (a verbatim `/tc import` slice). Imported marks/regions render
 in a distinct color so the reviewer can skim the verbatim parts and scrutinize
 the authored ones. Absent ⇒ authored (every pre-v6 mark reads as authored).
 
 **The corpus-example rule (standing convention).** Worked examples lifted from
 the spreadsheet/MATLAB corpus have mixed, predictable provenance: the
-**scenario / statement / data** is lifted → `/import` (clean, `imported`); the
+**scenario / statement / data** is lifted → `/tc import` (clean, `imported`); the
 **Julia code is a re-implementation → new → tracked** (a region or marks,
 `authored`); **AI prose → new → tracked**. So by default: *import the scenario,
 track the Julia as new.* This is automatic — do not relitigate it per example.
+
+## Companion tool: `decap` (author-side dictation pre-clean)
+
+> **Apply `decap` ONLY to fresh, unmarked dictation — never to a selection
+> containing `<mark>`/`\tc{}`; it is regex over raw text and will corrupt
+> mark syntax.**
+
+`decap` ships with the suite at
+`~/.claude/skills/track-changes/tools/decap.py` (with protect-list
+`decap_protect.txt` in the same directory). It is a deterministic stdin→stdout
+text filter that removes the extraneous mid-sentence capitalization voice
+dictation introduces. It runs **entirely in your editor** as a selection
+filter — Claude Code is never involved and the track-changes hook never fires.
+It is **inherently untracked by design**: the PreToolUse hook triggers only on
+Claude's Write/Edit/MultiEdit calls; an editor selection filter bypasses it.
+And it *should* be untracked — marks review AI judgment; decap exercises none
+(mechanical normalization of your own dictation, no different from an
+autocorrect pass you run yourself).
+
+**Rule.** A word's leading capital is lowercased unless the word is
+sentence-initial, in the protect-list, ALL-CAPS (acronym), camelCase, a
+single letter, or "I" / its contractions ("I've", "I'll", etc.).
+
+**Composition with `/tc polish`.** The two tools compose cleanly in sequence:
+run `decap` on fresh dictation first (fast untracked mechanical pass, in-editor),
+then ask Claude to `/tc polish` the cleaned prose (deeper editorial pass,
+reviewable marks). Run `decap` before the text carries any marks.
+
+**Protect-list.** `decap_protect.txt` lives next to the script at
+`~/.claude/skills/track-changes/tools/decap_protect.txt`. One term per line;
+any listed term is never lowercased regardless of position. The default list
+seeds broadly-useful entries (Claude, Anthropic, Quarto, Excel, Wikipedia).
+**Add your project's proper nouns and mixed-case acronyms here** — the file is
+plain text, editable directly.
+
+### VS Code setup
+
+The filter requires a VS Code extension that pipes the current selection through
+a shell command and replaces it with the output. A purpose-built choice is
+**Filter Text** (`yhirose.filtertext`). After installing, add to
+`keybindings.json` (`Ctrl+Shift+P` → *Open Keyboard Shortcuts (JSON)*):
+
+```json
+{
+  "key": "ctrl+alt+c",
+  "command": "filtertext.runShellCommand",
+  "args": { "cmd": "python ~/.claude/skills/track-changes/tools/decap.py" }
+}
+```
+
+Select the fresh, unmarked text and press `Ctrl+Alt+C` — the selection is
+piped through `decap.py` and replaced in place.
+
+Any extension that exposes a "filter selection through shell command" action
+(stdin → stdout → replace) works; the keybinding command name will differ.
+
+### Editor-agnostic
+
+The core is plain `stdin → stdout` — any editor that can filter a selection
+through a shell command works:
+
+- **Vim** (visual selection): `:'<,'>!python ~/.claude/skills/track-changes/tools/decap.py`
+- **Emacs** (region): `M-| python ~/.claude/skills/track-changes/tools/decap.py RET`

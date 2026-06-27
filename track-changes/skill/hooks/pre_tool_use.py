@@ -89,13 +89,13 @@ def _emit_block(tool_name, file_path, violations, ftype, suggest_region, subagen
         out.append('  - inline mark (single edit):  \\tc{NEW}\\tcn{M}')
         out.append('  - whole-region insertion (multi-block new content):')
         out.append('      \\begin{tcregion}{M}[authored]\n      …new blocks…\n      \\end{tcregion}')
-    out.append('  - verbatim from a named source:  /import  (lands attributed, typed "imported")')
+    out.append('  - verbatim from a named source:  /tc import  (lands attributed, typed "imported")')
     out.append(f'See {section_ref}.')
     if suggest_region:
         out.append('This new content spans a non-inline construct (code/math/table/div); wrap it as a '
                    'whole-region insertion (above), which tracks the entire block as one unit.')
     if subagent_detected:
-        out.append('Detected subagent context — author content as marks / a region / via /import. '
+        out.append('Detected subagent context — author content as marks / a region / via /tc import. '
                    '/draft is USER-ONLY and cannot be self-invoked.')
     msg = '\n'.join(out) + '\n'
     # Write UTF-8 explicitly so non-ASCII (section signs, smart quotes) survive

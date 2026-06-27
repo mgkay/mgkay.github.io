@@ -27,7 +27,7 @@ body.no-marks mark + sup {
 }
 
 /* --- v6: provenance-typed inline marks (Fix E) -------------------------------
- * An imported-verbatim mark (landed via /import) gets a distinct tint so a
+ * An imported-verbatim mark (landed via /tc import) gets a distinct tint so a
  * reviewer can skim the safe imports and scrutinize authored text. Absent
  * tc-prov ⇒ ordinary (authored) yellow, unchanged. */
 mark[tc-prov="imported"] {

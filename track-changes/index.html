@@ -55,8 +55,8 @@
 span (with a strikethrough overlay for anything deleted) in any markdown viewer &mdash; so you can
 review every change individually and accept or reject it, the way you would with Track Changes in
 Word or Suggesting mode in Google Docs. The companion <code>verified-import</code> skill (installed
-alongside) adds the <code>/import</code> command for bringing in vetted source material without
-unnecessary highlights. The <code>polish</code> skill adds the <code>/polish</code> command for
+alongside) adds the <code>/tc import</code> command for bringing in vetted source material without
+unnecessary highlights. The <code>tc-polish</code> skill adds the <code>/tc polish</code> command for
 cleaning up voice-dictated prose &mdash; speech-recognition errors, grammar, dropped words &mdash;
 surfacing every fix as an ordinary track-changes mark you review the same way.</p>
 
@@ -104,7 +104,7 @@ if you haven&rsquo;t already. The skill also needs <strong>Python&nbsp;3</strong
   </li>
   <li>
     <strong>Confirm.</strong> Claude Code downloads all three skills (<code>track-changes</code>,
-    <code>verified-import</code>, and <code>polish</code>), wires them into your configuration, and reports success.
+    <code>verified-import</code>, and <code>tc-polish</code>), wires them into your configuration, and reports success.
   </li>
   <li>
     <strong>Open a new Claude Code session</strong> so the skill takes effect.
@@ -186,10 +186,11 @@ on its own. Three things happen automatically behind the scenes:</p>
 
 <h2 id="commands">Commands</h2>
 
-<p>The suite adds these slash commands to Claude Code: <code>/tc</code>, <code>/draft</code>,
-<code>/polish</code>, and <code>/import</code>. <code>/tc</code> takes a subcommand. Here is the full
-set, grouped by what you&rsquo;re trying to do (<code>/import</code> has its own
-<a href="#importing">section below</a>).</p>
+<p>The suite adds two top-level slash commands to Claude Code: <code>/tc</code> and
+<code>/draft</code>. <code>/tc</code> takes a subcommand &mdash; including <code>/tc import</code>
+and <code>/tc polish</code>, which reach the cooperating <code>verified-import</code> and
+<code>tc-polish</code> skills. Here is the full set, grouped by what you&rsquo;re trying to do
+(<code>/tc import</code> has its own <a href="#importing">section below</a>).</p>
 
 <h3>Turning tracking on and off</h3>
 <ul class="cmds">
@@ -216,18 +217,18 @@ set, grouped by what you&rsquo;re trying to do (<code>/import</code> has its own
 
 <h3>Cleaning up voice-dictated prose</h3>
 <ul class="cmds">
-  <li><code>/polish [&lt;file&gt;]</code> &mdash; Clean up <em>voice-dictated</em> prose &mdash;
+  <li><code>/tc polish [&lt;file&gt;]</code> &mdash; Clean up <em>voice-dictated</em> prose &mdash;
     speech-recognition slips, ordinary grammar, dropped words &mdash; in a tracked file. Every fix
     lands as an ordinary highlight you review with <code>/tc accept</code> / <code>/tc reject</code>,
     exactly like any other change. It never rewrites a token it can&rsquo;t recognize as plain prose
     (jargon, code, math, a domain term): it leaves that untouched and flags it for you instead. On an
     untracked file it offers a one-time direct cleanup (no marks) or to enable tracking first. (Part
-    of the <code>polish</code> skill.)</li>
+    of the <code>tc-polish</code> skill.)</li>
 </ul>
 
 <h3>Bringing in trusted source material</h3>
 <ul class="cmds">
-  <li><code>/import &lt;source&gt;[#L&lt;a&gt;-L&lt;b&gt;] [&lt;target&gt;]</code> &mdash; Insert vetted
+  <li><code>/tc import &lt;source&gt;[#L&lt;a&gt;-L&lt;b&gt;] [&lt;target&gt;]</code> &mdash; Insert vetted
     material &mdash; a section of an old notebook, a prior manuscript, a chapter &mdash; into a tracked
     document. Claude converts it to the document&rsquo;s format and it lands <em>clean</em> (no
     highlights), because faithfully reproduced source isn&rsquo;t an AI edit you need to review; Claude
@@ -266,9 +267,9 @@ when you build documents with an AI&rsquo;s help.</p>
 vetted: a section of an old notebook, a prior manuscript, a trusted reference. Only a little is
 genuinely new AI writing. If every imported paragraph were highlighted, the handful of lines that
 actually need your attention would be buried in yellow. The companion <code>verified-import</code>
-skill handles this with the <code>/import</code> command:</p>
+skill handles this with the <code>/tc import</code> command:</p>
 
-<pre class="snippet">/import chapter3.md#L10-L42 lecture-notes.md</pre>
+<pre class="snippet">/tc import chapter3.md#L10-L42 lecture-notes.md</pre>
 
 <p>Claude converts the source into the target document&rsquo;s format and inserts it, reproducing
 the content faithfully. A verified import lands <strong>clean (no highlights)</strong> by default,
@@ -305,6 +306,18 @@ still has unresolved highlights in it &mdash; a safety net so partly-reviewed AI
 slip into your project&rsquo;s history by accident. It&rsquo;s off until you switch it on, and you can
 always override it for a single commit.</p>
 
+<h3>Pre-clean voice dictation in your editor &mdash; <code>decap</code></h3>
+<p>Voice dictation often sprinkles stray capital letters mid-sentence. The suite bundles a small
+companion tool, <code>decap</code>, that strips them &mdash; a deterministic filter you run on a
+selection <em>in your editor</em> (for example a <kbd>Ctrl+Alt+C</kbd> keybinding that pipes the
+selection through <code>python ~/.claude/skills/track-changes/tools/decap.py</code>). Because it
+runs in your editor and never goes through Claude, its edits are deliberately <strong>not</strong>
+tracked &mdash; exactly what you want for a bulk, judgment-free cleanup of your own dictation. Run it
+on fresh dictation <em>before</em> the text is marked (it is text-only and not aware of
+<code>&lt;mark&gt;</code> spans). It pairs naturally with <code>/tc polish</code>: <code>decap</code>
+for the instant mechanical pass, <code>/tc polish</code> for the deeper editorial pass you review as
+marks.</p>
+
 <h2>Good to know</h2>
 
 <ul>
@@ -329,7 +342,7 @@ always override it for a single commit.</p>
 </main>
 
 <footer>
-  <p>track-changes v6.0.1 &middot; M. G. Kay &middot; NC State ISE<br>
+  <p>track-changes v8.0.0 &middot; M. G. Kay &middot; NC State ISE<br>
   <a href="bootstrap.md" download>Download bootstrap.md</a></p>
 </footer>
 

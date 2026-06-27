@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# lib/vi-cli.sh — thin launcher for the /import slash command.
+# lib/vi-cli.sh — thin launcher for the /tc import command.
 #
 # Resolves a Python 3 interpreter (same probe as track-changes' tc-cli.sh) and
 # invokes lib/vi_verify.py in CLI `import` mode with the user's arguments:
 #
-#   /import <source>[#L<a>-L<b>] [<target>]
+#   /tc import <source>[#L<a>-L<b>] [<target>]
 #
 # vi_verify.py resolves + slices the source, resolves the target (the explicit
 # arg or the working file), stages a one-shot pending-import under the

@@ -1,7 +1,7 @@
 """hooks/pre_tool_use.py — verified-import PreToolUse gate (v4, LLM-judgment).
 
 This hook runs on Write/Edit/MultiEdit to an existing file. It is the enabler
-for a `/import` operation: when a live, target-keyed pending-import exists for
+for a `/tc import` operation: when a live, target-keyed pending-import exists for
 the file being written, it writes a one-shot, sha-bound exemption sentinel via
 tc_core.exempt.write over the EXACT proposed file bytes the track-changes gate
 will hash (tc_analyzer._build_proposed + tc_core.exempt.content_sha —
