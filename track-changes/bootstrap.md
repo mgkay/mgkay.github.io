@@ -71,6 +71,15 @@ find ~/.claude/skills/track-changes ~/.claude/skills/verified-import ~/.claude/s
 ```
 If this prints nothing, all installed files are non-empty. If it prints any paths, those files failed to download correctly — report to the user and re-run the bootstrap (curl overwrites, so retrying is safe).
 
+### Step 2.5: Remove retired artifacts (upgrade only)
+
+This step matters only when **upgrading from before v7**; on a fresh install both paths below are absent and it is a no-op. The download in Step 2 overwrites and adds files but does **not** delete files that no longer ship — so a pre-v7 install would otherwise keep the retired `/polish` skill and `/import` command resolvable, defeating the v7 namespace consolidation. If either path still exists, delete it:
+
+- the directory `~/.claude/skills/polish/` — the skill was renamed to `tc-polish` in v7; the old directory must go so a stale `/polish` no longer resolves.
+- the file `~/.claude/commands/import.md` — the bare `/import` command was retired in v7 (use `/tc import`).
+
+After deleting, confirm `~/.claude/skills/polish` is gone and `~/.claude/skills/tc-polish` is present.
+
 ### Step 3: Merge hook registrations into settings.json
 
 The suite registers **six** hooks across the two skills in `~/.claude/settings.json`: five for `track-changes` (PreToolUse, PostToolUse, SessionStart, Stop, UserPromptSubmit) and one for `verified-import` (PreToolUse). The downloaded `lib/tc_settings_merge.py` performs an idempotent merge: per event it strips the suite-owned groups (track-changes OR verified-import) and re-adds the patch's groups, preserving third-party hooks.
