@@ -28,9 +28,13 @@ each change. Default-OFF. (Full spec lives in `SKILL.md`, lazy-loaded on demand.
 
 `<sup>N</sup>` sits OUTSIDE the `</mark>`. Next N = highest existing mark + 1.
 
-**Provenance (v6, optional):** `<mark tc-prov="imported">…` / `\tc[imported]{…}`
-for a verbatim `/tc import` slice; default (absent) = `authored`. Region numbers
-share the single mark-number space.
+**Provenance (v6, optional; v7 adds transcript):** `<mark tc-prov="imported">…`
+/ `\tc[imported]{…}` for a verbatim `/tc import` slice;
+`tc-prov="transcript"` (v7) for AI wording over the instructor's own spoken
+transcript content; default (absent) = `authored`. Region numbers share the
+single mark-number space. A transcript region is conventionally preceded by a
+TEMPORARY gray `.tc-verbatim` block quoting the raw transcript — scaffolding,
+not a region: resolution commands ignore it; delete it once confirmed.
 
 **Whole-region insertion (v6, Fix D)** — a MULTI-block new region as ONE tracked
 unit (the path for large new content; no `/draft`):
@@ -55,6 +59,11 @@ UserPromptSubmit hook fires on the raw prompt before command routing, so no
 skill named `draft` can intercept it); the AI cannot invoke it.**
 
 ## Limits & pointers
+- **Committed-content invariant (v7):** `accept`/`reject`/`*-all` REFUSE on a
+  file with uncommitted changes (exit 3) — commit instructor tweaks (own
+  commit) and AI corrections (own MARKED commit) FIRST, then resolve. AI
+  polish of instructor edits is marked BEFORE resolution, never applied
+  during it. `list` is not gated; `TC_FORCE=1` is a human-only override.
 - Editing INSIDE code/math/tables (non-rendering contexts): wrap the whole block
   as a `tcregion` / `.tc-region` insertion (v6), or ask the user to `/draft`.
 - Verbatim/converted **source import**: use `/tc import` (routes to the `verified-import` skill; lands clean via sha-bound exemption).

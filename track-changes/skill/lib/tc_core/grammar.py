@@ -27,7 +27,10 @@ Consolidated so the two skills share one grammar.
 import re
 
 DEFAULT_PROV = 'authored'
-PROV_VALUES = ('authored', 'imported')
+# 'transcript' (v7): a region reworded from the instructor's class-recording
+# transcript — AI wording over the instructor's own spoken content, distinct
+# from 'authored' (AI-invented) and 'imported' (verbatim from a named source).
+PROV_VALUES = ('authored', 'imported', 'transcript')
 
 # --- Inline wrapper detection (attribute-tolerant; back-compatible) ----------
 # The optional `(?:\s+[^>]*?)?` matches v6 attributes (e.g. tc-prov="…") while

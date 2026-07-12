@@ -196,8 +196,50 @@ tc_default_working_file() {
 # tc_run_resolve <subcommand> <file> [<ranges>]
 # Dispatch §5 batch resolution to lib/tc_resolve.py.
 # ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
+# tc_require_clean <file> <sub>
+# Committed-content invariant (v7, 2026-07-12): a mark may be RESOLVED only
+# from committed state. Rationale: an open mark/region is editable right up
+# to resolution, so approval could otherwise attach to content the reviewer
+# never read (observed live: an AI polish edit applied and accepted in one
+# step). Requiring a clean file means (1) instructor tweaks land as their own
+# attributable commit, (2) any AI polish lands as its own MARKED commit, and
+# (3) git history shows exactly the text each approval covered. Marks
+# accumulate across commits and resolve in batches — that is the intended
+# workflow, not a cost. Read-only subcommands (list) are not gated.
+# Human-only override for genuine edge cases: TC_FORCE=1.
+# Fail-open outside a git repo (the invariant is meaningless there).
+# ---------------------------------------------------------------------------
+tc_require_clean() {
+  local file="$1" sub="$2" dir top
+  [ "${TC_FORCE:-0}" = "1" ] && return 0
+  dir="$(dirname -- "${file}")"
+  top="$(git -C "${dir}" rev-parse --show-toplevel 2>/dev/null)" || return 0
+  if ! git -C "${dir}" ls-files --error-unmatch -- "$(basename -- "${file}")" >/dev/null 2>&1; then
+    echo "tc ${sub}: BLOCKED — ${file} is not committed (untracked)." >&2
+    echo "Resolution runs only on committed content; commit the file first." >&2
+    return 3
+  fi
+  if ! git -C "${dir}" diff --quiet HEAD -- "$(basename -- "${file}")" 2>/dev/null; then
+    echo "tc ${sub}: BLOCKED — ${file} has uncommitted changes." >&2
+    echo "Marks resolve only from COMMITTED content, so the approved text is" >&2
+    echo "exactly what git history shows was reviewed. Sequence:" >&2
+    echo "  1. commit the file as it stands (instructor tweaks as their own" >&2
+    echo "     commit; any AI corrections as MARKED edits in their own commit)," >&2
+    echo "  2. review the diff(s)," >&2
+    echo "  3. re-run /tc ${sub}." >&2
+    echo "(Human-only override: TC_FORCE=1 — never for AI use.)" >&2
+    return 3
+  fi
+  return 0
+}
+
 tc_run_resolve() {
   local py
+  case "$1" in
+    accept|reject|accept-all|reject-all)
+      tc_require_clean "$2" "$1" || return 3 ;;
+  esac
   if ! py="$(tc_resolve_python)"; then
     echo "tc: ERROR — Python 3 not found" >&2
     return 2

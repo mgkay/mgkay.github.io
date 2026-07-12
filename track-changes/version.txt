@@ -1,3 +1,21 @@
+8.1.0
+2026-07-12
+track-changes v8.1.0 — committed-content invariant + transcript provenance.
+- RESOLUTION GATE: accept/reject/accept-all/reject-all now REFUSE (exit 3) if the target
+  file has uncommitted changes or is untracked (tc_require_clean in lib/tc-cli.sh). An open
+  mark is editable right up to resolution, so approval could otherwise attach to content the
+  reviewer never read (observed live: an AI polish correction applied and accepted in one
+  step). Enforced sequence: commit instructor tweaks (own commit) -> commit AI corrections
+  as MARKED edits (own commit) -> review diffs -> resolve. list is not gated; TC_FORCE=1 is
+  a human-only override; fail-open outside a git repo. No new hooks; suite stays at 6.
+- PROVENANCE (v7 work, first published here): tc-prov="transcript" joins authored/imported
+  in tc_core/grammar.py PROV_VALUES — AI wording over the instructor's own class-recording
+  transcript content; conventionally paired with a TEMPORARY .tc-verbatim scaffolding block
+  (delete after confirming). Documented in SKILL.md (Provenance, Fix E extended) + digest.
+- Mark grammar note (from the same incident): the <s>OLD</s> form cannot re-present an
+  already-applied change for approval (OLD must still exist in the file) — the rule is that
+  polish corrections are marked BEFORE resolution, never applied during it.
+
 8.0.0
 2026-06-27
 track-changes v8.0.0 — bundle decap, a deterministic author-invoked dictation pre-clean filter (stdin→stdout), shipped with the suite under track-changes/tools/ but outside the mark protocol; no new hook, no mark-grammar change, suite stays at 6 hooks.

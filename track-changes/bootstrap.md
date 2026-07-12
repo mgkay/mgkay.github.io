@@ -1,6 +1,6 @@
 # track-changes Bootstrap — Source-preserving AI edit protocol (three-skill suite)
 
-**Version:** 8.0.0
+**Version:** 8.1.0
 **Date:** 2026-06-27
 
 ## What This File Does
@@ -38,16 +38,16 @@ When Claude Code follows the instructions below, it downloads all three skills �
 
 ## Instructions for Claude Code
 
-You are reading the track-changes v8.0.0 bootstrap manifest. Follow these steps precisely.
+You are reading the track-changes v8.1.0 bootstrap manifest. Follow these steps precisely.
 
 ### Step 1: Check for existing installation
 
-Read `~/.claude/skills/track-changes/VERSION`. If the file exists, parse the first line as a version number. Compare it to `8.0.0` using semantic-version ordering (compare major, then minor, then patch as integers; treat a missing component as 0, so a two-part `2.0` is `2.0.0`).
+Read `~/.claude/skills/track-changes/VERSION`. If the file exists, parse the first line as a version number. Compare it to `8.1.0` using semantic-version ordering (compare major, then minor, then patch as integers; treat a missing component as 0, so a two-part `2.0` is `2.0.0`).
 
-- **Equal to 8.0.0** → "track-changes v8.0.0 is already installed. No update needed." **STOP.**
-- **Higher than 8.0.0** → "track-changes v[installed] is newer than this bootstrap (8.0.0). Aborting — will not downgrade." **STOP.**
-- **Lower than 8.0.0** (e.g. v7.0.x, v6.0.x, v5.0.x, v4.x, v3.0.x, or any v1.x or v2.x) → "Updating track-changes from v[installed] to v8.0.0." Proceed to Step 2. The download in Step 2 overwrites every skill file in place (and, from a pre-v5 install, adds the `tc-polish` skill), so the upgrade is a clean replacement (the upgrade also re-merges settings.json, laying down the single combined PreToolUse matcher group); existing `<mark>…</mark><sup>N</sup>` content in your documents is fully backward-compatible and is left untouched (the mark grammar is unchanged — no document migration is needed). **Upgrading from v4.0.x?** The per-file activation key was renamed `track-changes:` → `tc-track:` in v4.1 (the old key is a reserved Quarto YAML field that breaks `.qmd`/`.md` renders); swap any old keys to `tc-track:`. **v6 is behavior-changing:** `/draft` is now **user-only** — the AI can no longer suspend its own tracking (the suspension sentinel is written solely by the `UserPromptSubmit` hook on *your* `/draft` prompt). Everything the AI writes into a tracked deliverable is tracked; large new blocks use the new whole-region insertion (`::: {.tc-region …}` / `\tcregion`). No document migration — the mark grammar is backward-compatible. **Upgrading from v6?** The bare `/polish` and `/import` slash aliases are retired — use `/tc polish` and `/tc import` instead. The `polish` skill directory is renamed to `tc-polish` (the upgrade removes the old `~/.claude/skills/polish/` directory and `~/.claude/commands/import.md` if present). No document migration. **Upgrading from v7?** v8 adds the bundled `decap` editor pre-clean tool under `~/.claude/skills/track-changes/tools/`; no behavior change to tracking, the mark grammar, or the hook suite.
-- **Does not exist** → "Installing track-changes v8.0.0." Proceed to Step 2.
+- **Equal to 8.1.0** → "track-changes v8.1.0 is already installed. No update needed." **STOP.**
+- **Higher than 8.1.0** → "track-changes v[installed] is newer than this bootstrap (8.1.0). Aborting — will not downgrade." **STOP.**
+- **Lower than 8.1.0** (e.g. v7.0.x, v6.0.x, v5.0.x, v4.x, v3.0.x, or any v1.x or v2.x) → "Updating track-changes from v[installed] to v8.1.0." Proceed to Step 2. The download in Step 2 overwrites every skill file in place (and, from a pre-v5 install, adds the `tc-polish` skill), so the upgrade is a clean replacement (the upgrade also re-merges settings.json, laying down the single combined PreToolUse matcher group); existing `<mark>…</mark><sup>N</sup>` content in your documents is fully backward-compatible and is left untouched (the mark grammar is unchanged — no document migration is needed). **Upgrading from v4.0.x?** The per-file activation key was renamed `track-changes:` → `tc-track:` in v4.1 (the old key is a reserved Quarto YAML field that breaks `.qmd`/`.md` renders); swap any old keys to `tc-track:`. **v6 is behavior-changing:** `/draft` is now **user-only** — the AI can no longer suspend its own tracking (the suspension sentinel is written solely by the `UserPromptSubmit` hook on *your* `/draft` prompt). Everything the AI writes into a tracked deliverable is tracked; large new blocks use the new whole-region insertion (`::: {.tc-region …}` / `\tcregion`). No document migration — the mark grammar is backward-compatible. **Upgrading from v6?** The bare `/polish` and `/import` slash aliases are retired — use `/tc polish` and `/tc import` instead. The `polish` skill directory is renamed to `tc-polish` (the upgrade removes the old `~/.claude/skills/polish/` directory and `~/.claude/commands/import.md` if present). No document migration. **Upgrading from v7?** v8 adds the bundled `decap` editor pre-clean tool under `~/.claude/skills/track-changes/tools/`; no behavior change to tracking, the mark grammar, or the hook suite.
+- **Does not exist** → "Installing track-changes v8.1.0." Proceed to Step 2.
 
 ### Step 2: Download all files (curl-based)
 
@@ -106,7 +106,7 @@ If the command exits non-zero, report the error to the user and stop.
 
 ### Step 4: Verify installation
 
-1. Read `~/.claude/skills/track-changes/VERSION` → first line must be `8.0.0`.
+1. Read `~/.claude/skills/track-changes/VERSION` → first line must be `8.1.0`.
 2. Read `~/.claude/skills/track-changes/SKILL.md` → must begin with `---` (YAML frontmatter).
 3. Read `~/.claude/skills/track-changes/hooks/pre_tool_use.py` → must begin with `"""` (Python docstring).
 4. Read `~/.claude/skills/track-changes/lib/tc_core/grammar.py` → must exist (shared mark-grammar package).
@@ -127,7 +127,7 @@ Any verification failure → report to user and do not claim success.
 
 On success, tell the user:
 
-> **track-changes v8.0.0 installed successfully — three skills + shared `tc_core` + bundled tools.**
+> **track-changes v8.1.0 installed successfully — three skills + shared `tc_core` + bundled tools.**
 >
 > **`track-changes`** (`~/.claude/skills/track-changes/`): always-on mark-tracking. SKILL.md, VERSION, settings-patch.json, hooks/ (5 sh + 2 py), lib/ (4 py + 6 sh + 1 sty + the shared `tc_core` package), reference/ (highlight-syntax.md, latex.md, quarto-notes.md, **digest.md**, tc-clean.css, tc-clean.js), tools/ (decap.py, decap_protect.txt).
 >
@@ -223,9 +223,9 @@ Each entry lists source-URL → destination-path. Base URL: `https://raw.githubu
 
 ---
 
-## v8.0.0 Changelog Summary
+## v8.1.0 Changelog Summary
 
-**v8.0.0 (bundle `decap`, the dictation pre-clean filter — additive).** Bundles `decap`, a deterministic author-invoked capitalization-cleanup filter for voice dictation, shipped WITH the suite under `~/.claude/skills/track-changes/tools/` but explicitly **outside** the mark protocol. `decap` runs as an editor selection filter (stdin→stdout), never through Claude's Write/Edit tools, so it is inherently untracked. Apply it to fresh, unmarked dictation BEFORE content is tracked; it composes with `/tc polish` (fast mechanical pass you run yourself vs reviewable AI editorial pass). The `<mark>`-boundary caveat: `decap` is regex over raw text — never run it across a selection containing `<mark>`/`\tc{}` marks (it will corrupt mark syntax). **No mark-grammar change, no new hook, no document migration; hook count stays 6; three-skill suite is unchanged.** Only the installer (`install.sh`) and bootstrap (`bootstrap.md`) gain the two new `tools/` entries.
+**v8.1.0 (bundle `decap`, the dictation pre-clean filter — additive).** Bundles `decap`, a deterministic author-invoked capitalization-cleanup filter for voice dictation, shipped WITH the suite under `~/.claude/skills/track-changes/tools/` but explicitly **outside** the mark protocol. `decap` runs as an editor selection filter (stdin→stdout), never through Claude's Write/Edit tools, so it is inherently untracked. Apply it to fresh, unmarked dictation BEFORE content is tracked; it composes with `/tc polish` (fast mechanical pass you run yourself vs reviewable AI editorial pass). The `<mark>`-boundary caveat: `decap` is regex over raw text — never run it across a selection containing `<mark>`/`\tc{}` marks (it will corrupt mark syntax). **No mark-grammar change, no new hook, no document migration; hook count stays 6; three-skill suite is unchanged.** Only the installer (`install.sh`) and bootstrap (`bootstrap.md`) gain the two new `tools/` entries.
 
 ## v7.0.0 Changelog Summary
 

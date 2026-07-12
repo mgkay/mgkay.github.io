@@ -330,6 +330,20 @@ and strip the wrapper) and works for `.md` / `.qmd` (`<mark>`) and `.tex`
 (`\tc{}\tcn{}`). Each decision is recorded in `.tc-history.md` with
 `decision: explicit`, which the best-effort Fix #8 inference never overwrites.
 
+**Committed-content invariant (v7, 2026-07-12).** `accept`/`reject`/
+`accept-all`/`reject-all` REFUSE to run if the target file has uncommitted
+changes (or is untracked) in its git repo — exit 3 with the required
+sequence. Rationale: an open mark is editable right up to resolution, so
+without this gate an approval can attach to content the reviewer never read
+(observed live: an AI polish correction applied and accepted in one step).
+The enforced workflow is therefore: commit the instructor's tweaks as their
+own attributable commit; commit any AI corrections as their own MARKED
+commit; review the diff(s); then resolve. Marks accumulate across commits
+and resolve in batches — that is the intended rhythm, not friction.
+`list` is read-only and not gated. `TC_FORCE=1` overrides — **human-only,
+never for AI use** (same status as `/draft`). Outside a git repo the gate
+is inert (fail-open).
+
 When the **user explicitly** asks to accept/reject marks, prefer these
 commands — that is user-authorized execution through the documented surface,
 not the prohibited autonomous self-invocation (see §7).
@@ -962,11 +976,22 @@ content *is*, mechanically, not by whether you were "approved":
   operation the tool proves — never hand-type content and call it "from your
   material."
 
-**Provenance (Fix E).** A mark or region carries an optional provenance type:
-`tc-prov="authored"` (default — anything you wrote/paraphrased) or
-`tc-prov="imported"` (a verbatim `/tc import` slice). Imported marks/regions render
-in a distinct color so the reviewer can skim the verbatim parts and scrutinize
-the authored ones. Absent ⇒ authored (every pre-v6 mark reads as authored).
+**Provenance (Fix E; extended v7).** A mark or region carries an optional
+provenance type: `tc-prov="authored"` (default — anything you
+wrote/paraphrased), `tc-prov="imported"` (a verbatim `/tc import` slice), or
+`tc-prov="transcript"` (v7 — AI wording over the instructor's own spoken
+class-recording transcript content: the ideas are the instructor's, the
+sentences are the AI's, so it reviews between imported and authored in
+scrutiny). Each provenance renders in a distinct color so the reviewer can
+skim the verbatim parts and scrutinize the authored ones. Absent ⇒ authored
+(every pre-v6 mark reads as authored). The grammar
+(`lib/tc_core/grammar.py PROV_VALUES`) recognizes all three; resolution
+commands (`accept`/`reject`/`list`) treat regions identically regardless of
+provenance. A transcript region is conventionally preceded by a TEMPORARY
+gray `.tc-verbatim` block quoting the raw transcript for side-by-side
+confirmation — `.tc-verbatim` is scaffolding, not a tracked region:
+resolution commands ignore it, and it is deleted by hand once its region is
+accepted (a conversion's definition-of-done should gate on none remaining).
 
 **The corpus-example rule (standing convention).** Worked examples lifted from
 the spreadsheet/MATLAB corpus have mixed, predictable provenance: the

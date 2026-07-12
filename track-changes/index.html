@@ -257,6 +257,18 @@ editing each wrapper by hand.</p>
   never silently undo a choice you made &mdash; even if Claude edits the same passage again later.</p>
 </div>
 
+<div class="callout">
+  <p><strong>Resolution runs only on committed files (v8.1).</strong> A highlight stays editable
+  right up to the moment it is resolved, so without a guard an approval could attach to text the
+  reviewer never read &mdash; for example, an AI &ldquo;polish&rdquo; correction applied and accepted
+  in one step. The <code>accept</code> and <code>reject</code> commands therefore refuse to run if
+  the file has uncommitted changes: commit your own tweaks as their own commit, let any AI
+  corrections land as new <em>marked</em> edits in theirs, review the diffs, then resolve. Git
+  history then shows exactly the text every approval covered. Highlights accumulate across commits
+  and resolve in batches &mdash; that is the intended rhythm. (Human-only escape hatch:
+  <code>TC_FORCE=1</code>.)</p>
+</div>
+
 <h2>What else it can do</h2>
 
 <p>Beyond the basic mark-and-review loop, track-changes handles the situations that actually come up
@@ -361,7 +373,7 @@ by hand, or use a different editor (Vim, Emacs)? Ask Claude for the manual steps
 </main>
 
 <footer>
-  <p>track-changes v8.0.0 &middot; M. G. Kay &middot; NC State ISE<br>
+  <p>track-changes v8.1.0 &middot; M. G. Kay &middot; NC State ISE<br>
   <a href="bootstrap.md" download>Download bootstrap.md</a></p>
 </footer>
 
