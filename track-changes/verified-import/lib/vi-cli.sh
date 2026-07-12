@@ -4,13 +4,16 @@
 # Resolves a Python 3 interpreter (same probe as track-changes' tc-cli.sh) and
 # invokes lib/vi_verify.py in CLI `import` mode with the user's arguments:
 #
-#   /tc import <source>[#L<a>-L<b>] [<target>]
+#   /tc import [--allow-partial] <source>[#L<a>-L<b>] [<target>]
 #
 # vi_verify.py resolves + slices the source, resolves the target (the explicit
 # arg or the working file), stages a one-shot pending-import under the
 # track-changes state tree, and prints the source slice + a faithful-conversion
 # instruction. The verified-import PreToolUse hook then verifies the converted
-# write and signals a clean-import exemption that track-changes honors.
+# write and signals a clean-import exemption that track-changes honors. As of
+# 8.2.0 the hook also runs a content-token COVERAGE gate (no source token may
+# be dropped); `--allow-partial` is the explicit override, forwarded through
+# to vi_verify and stored on the pending record.
 #
 # Exit codes:
 #   0  — staged successfully

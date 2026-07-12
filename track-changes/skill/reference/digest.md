@@ -51,7 +51,8 @@ inside. **Single brand-new block** (one heading/fenced/`:::`) → still a siblin
 `/tc migrate <dir>` · `/tc status [<file>]` · `/tc list [<file>]` ·
 `/tc accept [<file>] <ranges>` · `/tc reject [<file>] <ranges>` ·
 `/tc accept-all [<file>]` · `/tc reject-all [<file>]` · `/tc help` ·
-`/tc import <source>[#L<a>-L<b>] [<target>]` · `/tc polish [<file>]`.
+`/tc import [--allow-partial] <source>[#L<a>-L<b>] [<target>]` ·
+`/tc coverage <doc> <source> [--units N,N,…]` · `/tc polish [<file>]`.
 Ranges use `1-25,!7` syntax. Omit `<file>` on a resolution command to use the
 working file (most-recently-modified tracked file). Bare `/tc` prints the menu.
 `/draft` = suspend this turn — **USER-ONLY (v6, v7-confirmed shadow-proof: the
@@ -66,7 +67,7 @@ skill named `draft` can intercept it); the AI cannot invoke it.**
   during it. `list` is not gated; `TC_FORCE=1` is a human-only override.
 - Editing INSIDE code/math/tables (non-rendering contexts): wrap the whole block
   as a `tcregion` / `.tc-region` insertion (v6), or ask the user to `/draft`.
-- Verbatim/converted **source import**: use `/tc import` (routes to the `verified-import` skill; lands clean via sha-bound exemption).
+- Verbatim/converted **source import**: use `/tc import` (routes to the `verified-import` skill; lands clean via sha-bound exemption). **Coverage-gated (8.2.0):** a write that DROPS a source content token is blocked with the missing tokens named (pending import preserved — fix and retry); `--allow-partial` is the explicit, audited override. Whole-document audit: `/tc coverage <doc> <source>`.
 - Companion `decap` tool (author-side dictation capitalization pre-clean, OUTSIDE the mark protocol; run on fresh unmarked dictation only) — see `SKILL.md §Companion`.
 - Lazy-load from `SKILL.md` on demand: activation-precedence edge cases →
   `SKILL.md §2 (Activation)`; worked mark examples + resolution walk →

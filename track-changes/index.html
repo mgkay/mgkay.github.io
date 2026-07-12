@@ -292,6 +292,16 @@ quantity, term, or formula &mdash; it highlights just that change for your revie
 differences (reflow, formatting, equivalent notation) stay clean. The command works on text
 sources; binary formats require a plain-text copy to import from.</p>
 
+<p><strong>Import-fidelity guarantee (8.2.0).</strong> An import can no longer silently drop part
+of its source. At write time the hook mechanically checks <em>content-token coverage</em>: every
+meaningful word, number, and subscripted symbol (say, the <code>r_f</code> of four listed rates)
+in the source slice must appear in the converted block. Reformatting and reordering pass; dropped
+content blocks the import and names exactly what is missing, so a corrected retry lands cleanly.
+An intended omission is declared explicitly with <code>/tc import --allow-partial</code> and is
+recorded in the audit log. A whole document can be audited against its source at any time with
+<code>/tc coverage &lt;doc&gt; &lt;source&gt;</code>, which reports per-unit coverage and any
+missing tokens.</p>
+
 <h3>Resolve a whole review pass in seconds</h3>
 <p>A heavy editing session can leave dozens of highlights. Rather than clicking through them one at a
 time, list them and then accept or reject in ranges &mdash; for example, keep everything except the
@@ -373,7 +383,7 @@ by hand, or use a different editor (Vim, Emacs)? Ask Claude for the manual steps
 </main>
 
 <footer>
-  <p>track-changes v8.1.0 &middot; M. G. Kay &middot; NC State ISE<br>
+  <p>track-changes v8.2.0 &middot; M. G. Kay &middot; NC State ISE<br>
   <a href="bootstrap.md" download>Download bootstrap.md</a></p>
 </footer>
 

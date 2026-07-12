@@ -10,13 +10,22 @@ audit entry, clears the pending-import, and ALLOWS the write (exit 0). The
 converted block lands clean (no <mark>) because track-changes consumes the
 sentinel.
 
-v4 paradigm shift (Q1/Q3): there is NO mechanical content gate. The LLM does a
-best-effort faithful import and self-judges significant-vs-minor; if it
+v4 paradigm shift (Q1/Q3): there is NO mechanical faithfulness gate. The LLM
+does a best-effort faithful import and self-judges significant-vs-minor; if it
 introduced a genuinely significant change it wraps that span in a track-changes
 mark itself (and that mark survives, since the exemption only suppresses the
 whole-file <mark>-requirement for this single write). The v3 normalized_equal
-content-word check + fail-closed FAIL branch are removed; the exemption write
-is now UNCONDITIONAL on a live pending-import.
+content-word check + fail-closed FAIL branch are removed.
+
+8.2.0 coverage gate: one mechanical check returns, narrower than v3's --
+COMPLETENESS, not equivalence. Every source content token (word/number/
+subscripted id, per tc_core.coverage) must appear somewhere in the proposed
+write; rewording and reformatting still pass, but an import that DROPS content
+is blocked (exit 2) with the missing tokens named, and the pending-import is
+preserved so a corrected retry still verifies. Explicit override:
+`/tc import --allow-partial` stores allow_partial on the record; the hook then
+lands the write and records the override + dropped list in the audit entry.
+Fail-closed: if the source cannot be re-read at write time, block.
 
 When there is NO live pending-import for the target, this is an ordinary edit:
 the hook is a no-op passthrough (exit 0) and track-changes handles it normally.
@@ -132,10 +141,12 @@ def _added_block(source_text, proposed_text):
     return '\n'.join(added)
 
 
-def _write_import_audit(abs_file_path, rec, added_block):
+def _write_import_audit(abs_file_path, rec, added_block, dropped=None):
     """Append an `imported:` audit entry (best-effort), mirroring the entry
     shape used by track-changes' tc_resolve._write_explicit_audit (timestamp,
-    relative path, find_project_root, log_path_for)."""
+    relative path, find_project_root, log_path_for). When the import landed
+    under an --allow-partial override WITH missing tokens, `dropped` carries
+    the missing-token list and the entry records the override (8.2.0)."""
     try:
         from tc_core import audit as tc_audit
         import datetime
@@ -158,6 +169,9 @@ def _write_import_audit(abs_file_path, rec, added_block):
         lines.append(f"  - from: {tc_audit._fmt_str(src)}")
         lines.append(f"    range: {rng}")
         lines.append(f"    verified: true")
+        if dropped:
+            lines.append(f"    allow_partial: true")
+            lines.append(f"    dropped: {tc_audit._fmt_str(', '.join(dropped))}")
         lines.append(f"    new: {tc_audit._fmt_str(added_block)}")
         entry = '\n'.join(lines) + '\n'
         os.makedirs(os.path.dirname(log_path), exist_ok=True)
@@ -219,13 +233,14 @@ def main():
     # consumes). T3/D3: if it is unavailable, fail closed.
     try:
         from tc_core import exempt as tc_exempt  # noqa: F401
+        from tc_core import coverage as tc_coverage
         import tc_analyzer
     except Exception as e:
         _log('tc_core/tc_analyzer import failed with a live pending-import: %s' % e)
-        _emit('verified-import: track-changes is not installed '
-              '(install track-changes first; verified-import depends on its '
-              'tc_core). Aborting the import write to avoid bypassing the mark '
-              'gate.')
+        _emit('verified-import: track-changes is not installed or is outdated '
+              '— install track-changes first (or update it; verified-import '
+              'depends on its tc_core, incl. tc_core.coverage as of 8.2.0). '
+              'Aborting the import write to avoid bypassing the mark gate.')
         return 2
 
     # Build the proposed full-file text IDENTICALLY to how the track-changes
@@ -251,6 +266,43 @@ def main():
     # longer stored on the record).
     added_block = _added_block(source_text, proposed_text)
 
+    # 8.2.0 coverage gate: no source content token may be missing from the
+    # proposed write. Re-resolve the source slice from the live record (the v4
+    # record stores no text), tokenize both sides, and block (exit 2, pending
+    # PRESERVED so a corrected retry still verifies) when content was dropped
+    # -- unless the record carries the explicit --allow-partial override.
+    allow_partial = bool(rec.get('allow_partial'))
+    src_arg = rec.get('source_path', '')
+    resolved_src, _tried = vi_verify.resolve_source_path(src_arg, file_path)
+    if not resolved_src:
+        # Fail-closed: source moved/deleted between staging and write time --
+        # coverage cannot be verified, so the import must not land unchecked.
+        _log('coverage: cannot re-resolve source %s for %s' % (src_arg, file_path))
+        _emit('verified-import: cannot re-read the import source %s to verify '
+              'coverage -- re-run `/tc import` to re-stage (or add '
+              '`--allow-partial`).' % src_arg)
+        return 2
+    try:
+        src_slice = tc_coverage.read_slice(
+            resolved_src, tc_coverage.parse_range(rec.get('range')))
+    except (OSError, UnicodeDecodeError) as e:
+        _log('coverage: cannot read source slice %s: %s' % (resolved_src, e))
+        _emit('verified-import: cannot re-read the import source %s to verify '
+              'coverage (%s) -- re-run `/tc import` to re-stage (or add '
+              '`--allow-partial`).' % (resolved_src, e))
+        return 2
+    dropped = tc_coverage.missing_tokens(src_slice, proposed_text)
+    if dropped and not allow_partial:
+        _log('coverage: blocked %s -- %d missing token(s): %s'
+             % (file_path, len(dropped), ', '.join(dropped)))
+        _emit('coverage: import blocked -- %d source content token(s) missing '
+              'from %s: %s\n'
+              'The import dropped content; restore it and retry (the pending '
+              'import is still live). If this is legitimate rewording/'
+              'reformatting, re-run: /tc import --allow-partial <source> '
+              '[<target>]' % (len(dropped), file_path, ', '.join(dropped)))
+        return 2
+
     # Write the one-shot exemption sentinel over the proposed bytes, in the SAME
     # way track-changes computes the sha it consumes (#LEARN): sha256 over the
     # proposed file bytes via tc_core.exempt.content_sha, no extra
@@ -271,7 +323,8 @@ def main():
               '(state dir unwritable). Aborting to avoid an unmarked write.')
         return 2
 
-    _write_import_audit(file_path, rec, added_block)
+    _write_import_audit(file_path, rec, added_block,
+                        dropped=(dropped if allow_partial else None))
     vi_verify.clear_pending(file_path)
     _log('verified import %s (exempt sha %s)' % (file_path, content_sha[:12]))
     return 0

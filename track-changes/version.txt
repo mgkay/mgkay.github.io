@@ -1,3 +1,19 @@
+8.2.0
+2026-07-12
+track-changes v8.2.0 — import-fidelity coverage check for verified-import.
+- COVERAGE GATE: a verified import can no longer silently drop source content (the recurring
+  "translated only part of a slide" failure, e.g. dropping r_f of four rates). New shared lib
+  tc_core/coverage.py compares CONTENT TOKENS (words >=4 letters minus stoplist, numbers >=2
+  significant chars, subscripted ids like r_f) with formatting normalized away — reformatting
+  passes, dropped content blocks (hook exit 2, missing tokens named, pending import preserved
+  for a corrected retry). Fail-closed when the source cannot be re-read at write time.
+- OVERRIDE: /tc import --allow-partial stores allow_partial on the pending record; the hook
+  then lands the write and records the override + dropped list in the audit entry.
+- AUDIT: new /tc coverage <doc> <source> [--units N,N,...] reports per-unit % covered and
+  missing tokens (--slides accepted as alias); exit non-zero on any drop.
+- Additive and backward-compatible: optional pending-record key; import behavior otherwise
+  unchanged; no new hooks (suite stays at 6); no document migration.
+
 8.1.0
 2026-07-12
 track-changes v8.1.0 — committed-content invariant + transcript provenance.

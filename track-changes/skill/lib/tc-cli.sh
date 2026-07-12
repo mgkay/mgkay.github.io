@@ -29,6 +29,9 @@
 #                                    ranges syntax: 1-25,!7,!11
 #   /tc accept-all <file>          — accept every mark in <file>
 #   /tc reject-all <file>          — reject every mark in <file>
+#   /tc coverage <doc> <source> [--units N,N,...]
+#                                  — audit: per-unit content-token coverage
+#                                    of <doc> against <source> (8.2.0)
 #   /tc help                       — print this usage
 #
 # Fix #6 removed /tc on and /tc off — session-scope toggles reintroduced
@@ -86,15 +89,25 @@ Batch resolution (edits the file; writes explicit audit attribution):
 
 Diagnostics:
   /tc status [<file>]     Show the activation chain for <file> (or CWD)
+  /tc coverage <doc> <source> [--units N,N,...]
+                          Audit import completeness: for each source unit
+                          (<!-- slide N --> marker, or the whole file), report
+                          % of content tokens covered by <doc> and list any
+                          missing ones (--slides accepted as an alias).
+                          Exit non-zero when content was dropped.
   /tc help                This message
 
 Cooperating skills (routes to the installed companion skill):
-  /tc import <source>[#L<a>-L<b>] [<target>]
+  /tc import [--allow-partial] <source>[#L<a>-L<b>] [<target>]
                           Run verified-import: resolve and slice a text source,
                           print the slice + conversion instruction, you convert
                           faithfully and write only the converted block; lands
                           clean via sha-bound exemption; self-mark only
-                          significant/meaning-altering changes.
+                          significant/meaning-altering changes. The write is
+                          coverage-gated (8.2.0): dropping a source content
+                          token blocks the import and names what is missing;
+                          --allow-partial is the explicit override (recorded
+                          in the audit log with the dropped tokens).
   /tc polish [<file>]     Run tc-polish: dictation cleanup + full editorial
                           pass; changes surface as track-changes marks;
                           never changes meaning; never auto-corrects a flagged
@@ -575,6 +588,19 @@ case "${sub}" in
     else
       tc_run_resolve "${sub}" "$1"
     fi
+    ;;
+  coverage)
+    # /tc coverage <doc> <source> [--units N,N,...]  (8.2.0 audit mode)
+    if [ $# -lt 2 ]; then
+      echo "tc coverage: missing arguments" >&2
+      echo "usage: /tc coverage <doc> <source> [--units N,N,...]" >&2
+      exit 1
+    fi
+    if ! py="$(tc_resolve_python)"; then
+      echo "tc: ERROR — Python 3 not found" >&2
+      exit 2
+    fi
+    ${py} "${SCRIPT_DIR}/tc_coverage_audit.py" "$@"
     ;;
   import)
     VI="$HOME/.claude/skills/verified-import/lib/vi-cli.sh"

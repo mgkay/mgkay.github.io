@@ -1,14 +1,14 @@
 # track-changes Bootstrap — Source-preserving AI edit protocol (three-skill suite)
 
-**Version:** 8.1.0
-**Date:** 2026-06-27
+**Version:** 8.2.0
+**Date:** 2026-07-12
 
 ## What This File Does
 
 Installer manifest for the **track-changes** suite for Claude Code. The suite ships **three skills** that share a single `tc_core` package:
 
 - **`track-changes`** (always-on, opt-in per file/folder) — every Claude edit to a tracked `.md` / `.qmd` / `.tex` file is wrapped in a `<mark>…</mark><sup>N</sup>` highlight you can review and accept/reject. This is the mark-gate.
-- **`verified-import`** (opt-in, invoked via `/tc import`) — insert a vetted source (a Word chapter, a prior notebook, a manuscript section) into a tracked document. Claude converts the source to the document's format and lands it **clean** (no marks): there is **no mechanical content gate** — the LLM imports faithfully and self-marks only genuinely significant changes (altered meaning) in track-changes marks; minor diffs land clean. A PreToolUse hook writes a one-shot, sha-bound exemption that the always-on `track-changes` skill honors, so the faithful block is not mark-wrapped.
+- **`verified-import`** (opt-in, invoked via `/tc import`) — insert a vetted source (a Word chapter, a prior notebook, a manuscript section) into a tracked document. Claude converts the source to the document's format and lands it **clean** (no marks): the LLM imports faithfully and self-marks only genuinely significant changes (altered meaning) in track-changes marks; minor diffs land clean. A PreToolUse hook writes a one-shot, sha-bound exemption that the always-on `track-changes` skill honors, so the faithful block is not mark-wrapped. **Import-fidelity guarantee (8.2.0):** the same hook mechanically verifies **content-token coverage** — an import that silently drops source content (a word, number, or subscripted identifier) is blocked with the missing tokens named; rewording/reformatting passes, and `--allow-partial` is the explicit, audited override. Audit a whole document with `/tc coverage <doc> <source>`.
 - **`tc-polish`** (opt-in, invoked via `/tc polish [file]`) — clean up **and editorially improve voice-dictated** prose in an existing tracked document: recognition/grammar/dropped-word fixes **plus** meaning-preserving restructuring (split run-ons, reorder for flow, tighten wordiness). Every change surfaces as an ordinary track-changes `<mark>` you review with `/tc accept|reject`. Bright line: it **never** auto-corrects an unrecognized token (jargon / code / math / domain term) — such a token is left and flagged, never silently changed; a meaning-affecting fix is surfaced as a mark, not applied silently. tc-polish adds **no hook** — its fixes flow through the existing `track-changes` PreToolUse hook — and **no slash-command file** (the explicit `/tc polish` invocation is the opt-in). It reuses the shared `tc_core` for its tracked-check.
 
 When Claude Code follows the instructions below, it downloads all three skills — hooks, library modules, the shared `tc_core` package, slash commands, and reference docs — and merges **six** hook registrations into your `~/.claude/settings.json` (five for `track-changes`, one for `verified-import`; `tc-polish` owns no hook).
@@ -16,7 +16,7 @@ When Claude Code follows the instructions below, it downloads all three skills �
 **The suite design:**
 - **Leaner always-on footprint.** The `track-changes` skill is narrowed: source-provenance import wrappers moved out into the separate opt-in `verified-import` skill; cross-file mark renumbering and edit-inside-non-rendering-construct sibling handling were removed (such edits now route to `/draft`).
 - **SessionStart digest.** The session-start hook now injects a compact `reference/digest.md` (~2.9 KB) instead of the full `SKILL.md` — ~93.5% smaller, well under the 40 KB inline cap. The full `SKILL.md` is lazy-loaded on demand.
-- **Convert-on-import (LLM-judgment).** `verified-import` trusts the LLM to import the AI-converted block faithfully — there is **no mechanical content gate**. On a live pending-import the hook writes a one-shot, sha-bound exemption that the `track-changes` gate consumes, so the converted block lands clean; the model self-marks only genuinely significant changes (altered meaning) for the author to review.
+- **Convert-on-import (LLM-judgment) + coverage gate (8.2.0).** `verified-import` trusts the LLM to import the AI-converted block faithfully — there is no mechanical *equivalence* gate. On a live pending-import the hook writes a one-shot, sha-bound exemption that the `track-changes` gate consumes, so the converted block lands clean; the model self-marks only genuinely significant changes (altered meaning) for the author to review. As of 8.2.0 the hook does enforce mechanical **completeness**: every source content token must appear in the written block, so an import cannot silently drop content (block + named missing tokens; `--allow-partial` overrides, audited).
 - **Editorial polish (v5; broadened in v5.1).** `tc-polish` (`/tc polish [file]`) cleans up **and editorially improves** voice-dictated prose — recognition/grammar/dropped-word fixes plus meaning-preserving restructuring (split run-ons, reorder for flow, tighten wordiness) — surfacing every change as an ordinary track-changes mark. It adds no hook and no settings change — changes flow through the existing `track-changes` PreToolUse hook — and never auto-corrects an unrecognized domain/code/math token (it leaves and flags it), nor drops a qualifier or alters meaning.
 
 **Backward compatibility / clean break:** the `<mark>…</mark><sup>N</sup>` mark grammar is **unchanged**. Existing tracked documents need **no conversion** — upgrading only re-installs the skill files and re-registers the hooks. See the changelog at the bottom.
@@ -38,16 +38,16 @@ When Claude Code follows the instructions below, it downloads all three skills �
 
 ## Instructions for Claude Code
 
-You are reading the track-changes v8.1.0 bootstrap manifest. Follow these steps precisely.
+You are reading the track-changes v8.2.0 bootstrap manifest. Follow these steps precisely.
 
 ### Step 1: Check for existing installation
 
-Read `~/.claude/skills/track-changes/VERSION`. If the file exists, parse the first line as a version number. Compare it to `8.1.0` using semantic-version ordering (compare major, then minor, then patch as integers; treat a missing component as 0, so a two-part `2.0` is `2.0.0`).
+Read `~/.claude/skills/track-changes/VERSION`. If the file exists, parse the first line as a version number. Compare it to `8.2.0` using semantic-version ordering (compare major, then minor, then patch as integers; treat a missing component as 0, so a two-part `2.0` is `2.0.0`).
 
-- **Equal to 8.1.0** → "track-changes v8.1.0 is already installed. No update needed." **STOP.**
-- **Higher than 8.1.0** → "track-changes v[installed] is newer than this bootstrap (8.1.0). Aborting — will not downgrade." **STOP.**
-- **Lower than 8.1.0** (e.g. v7.0.x, v6.0.x, v5.0.x, v4.x, v3.0.x, or any v1.x or v2.x) → "Updating track-changes from v[installed] to v8.1.0." Proceed to Step 2. The download in Step 2 overwrites every skill file in place (and, from a pre-v5 install, adds the `tc-polish` skill), so the upgrade is a clean replacement (the upgrade also re-merges settings.json, laying down the single combined PreToolUse matcher group); existing `<mark>…</mark><sup>N</sup>` content in your documents is fully backward-compatible and is left untouched (the mark grammar is unchanged — no document migration is needed). **Upgrading from v4.0.x?** The per-file activation key was renamed `track-changes:` → `tc-track:` in v4.1 (the old key is a reserved Quarto YAML field that breaks `.qmd`/`.md` renders); swap any old keys to `tc-track:`. **v6 is behavior-changing:** `/draft` is now **user-only** — the AI can no longer suspend its own tracking (the suspension sentinel is written solely by the `UserPromptSubmit` hook on *your* `/draft` prompt). Everything the AI writes into a tracked deliverable is tracked; large new blocks use the new whole-region insertion (`::: {.tc-region …}` / `\tcregion`). No document migration — the mark grammar is backward-compatible. **Upgrading from v6?** The bare `/polish` and `/import` slash aliases are retired — use `/tc polish` and `/tc import` instead. The `polish` skill directory is renamed to `tc-polish` (the upgrade removes the old `~/.claude/skills/polish/` directory and `~/.claude/commands/import.md` if present). No document migration. **Upgrading from v7?** v8 adds the bundled `decap` editor pre-clean tool under `~/.claude/skills/track-changes/tools/`; no behavior change to tracking, the mark grammar, or the hook suite.
-- **Does not exist** → "Installing track-changes v8.1.0." Proceed to Step 2.
+- **Equal to 8.2.0** → "track-changes v8.2.0 is already installed. No update needed." **STOP.**
+- **Higher than 8.2.0** → "track-changes v[installed] is newer than this bootstrap (8.2.0). Aborting — will not downgrade." **STOP.**
+- **Lower than 8.2.0** (e.g. v8.x, v7.0.x, v6.0.x, v5.0.x, v4.x, v3.0.x, or any v1.x or v2.x) → "Updating track-changes from v[installed] to v8.2.0." Proceed to Step 2. The download in Step 2 overwrites every skill file in place (and, from a pre-v5 install, adds the `tc-polish` skill), so the upgrade is a clean replacement (the upgrade also re-merges settings.json, laying down the single combined PreToolUse matcher group); existing `<mark>…</mark><sup>N</sup>` content in your documents is fully backward-compatible and is left untouched (the mark grammar is unchanged — no document migration is needed). **Upgrading from v4.0.x?** The per-file activation key was renamed `track-changes:` → `tc-track:` in v4.1 (the old key is a reserved Quarto YAML field that breaks `.qmd`/`.md` renders); swap any old keys to `tc-track:`. **v6 is behavior-changing:** `/draft` is now **user-only** — the AI can no longer suspend its own tracking (the suspension sentinel is written solely by the `UserPromptSubmit` hook on *your* `/draft` prompt). Everything the AI writes into a tracked deliverable is tracked; large new blocks use the new whole-region insertion (`::: {.tc-region …}` / `\tcregion`). No document migration — the mark grammar is backward-compatible. **Upgrading from v6?** The bare `/polish` and `/import` slash aliases are retired — use `/tc polish` and `/tc import` instead. The `polish` skill directory is renamed to `tc-polish` (the upgrade removes the old `~/.claude/skills/polish/` directory and `~/.claude/commands/import.md` if present). No document migration. **Upgrading from v7?** v8 adds the bundled `decap` editor pre-clean tool under `~/.claude/skills/track-changes/tools/`; no behavior change to tracking, the mark grammar, or the hook suite. **Upgrading from v8.0/v8.1?** 8.2.0 adds the import-fidelity coverage gate (`tc_core/coverage.py` + `tc_coverage_audit.py`, wired into the verified-import hook) and the `/tc coverage` audit command; existing import behavior is otherwise unchanged, hook count stays 6, no document migration.
+- **Does not exist** → "Installing track-changes v8.2.0." Proceed to Step 2.
 
 ### Step 2: Download all files (curl-based)
 
@@ -106,10 +106,11 @@ If the command exits non-zero, report the error to the user and stop.
 
 ### Step 4: Verify installation
 
-1. Read `~/.claude/skills/track-changes/VERSION` → first line must be `8.1.0`.
+1. Read `~/.claude/skills/track-changes/VERSION` → first line must be `8.2.0`.
 2. Read `~/.claude/skills/track-changes/SKILL.md` → must begin with `---` (YAML frontmatter).
 3. Read `~/.claude/skills/track-changes/hooks/pre_tool_use.py` → must begin with `"""` (Python docstring).
 4. Read `~/.claude/skills/track-changes/lib/tc_core/grammar.py` → must exist (shared mark-grammar package).
+4a. Read `~/.claude/skills/track-changes/lib/tc_core/coverage.py` → must exist (import-fidelity coverage lib, 8.2.0).
 5. Read `~/.claude/skills/track-changes/reference/digest.md` → must exist (SessionStart digest).
 6. Read `~/.claude/skills/verified-import/SKILL.md` → must begin with `---` (YAML frontmatter).
 7. Read `~/.claude/skills/verified-import/hooks/pre_tool_use.py` → must exist (import exemption hook).
@@ -127,9 +128,9 @@ Any verification failure → report to user and do not claim success.
 
 On success, tell the user:
 
-> **track-changes v8.1.0 installed successfully — three skills + shared `tc_core` + bundled tools.**
+> **track-changes v8.2.0 installed successfully — three skills + shared `tc_core` + bundled tools.**
 >
-> **`track-changes`** (`~/.claude/skills/track-changes/`): always-on mark-tracking. SKILL.md, VERSION, settings-patch.json, hooks/ (5 sh + 2 py), lib/ (4 py + 6 sh + 1 sty + the shared `tc_core` package), reference/ (highlight-syntax.md, latex.md, quarto-notes.md, **digest.md**, tc-clean.css, tc-clean.js), tools/ (decap.py, decap_protect.txt).
+> **`track-changes`** (`~/.claude/skills/track-changes/`): always-on mark-tracking. SKILL.md, VERSION, settings-patch.json, hooks/ (5 sh + 2 py), lib/ (5 py + 6 sh + 1 sty + the shared `tc_core` package), reference/ (highlight-syntax.md, latex.md, quarto-notes.md, **digest.md**, tc-clean.css, tc-clean.js), tools/ (decap.py, decap_protect.txt).
 >
 > **`verified-import`** (`~/.claude/skills/verified-import/`): opt-in `/tc import`. SKILL.md, hooks/pre_tool_use.py, lib/ (vi_verify.py, vi-cli.sh). It imports the shared `tc_core` from `track-changes/lib` — no duplicate copy.
 >
@@ -141,7 +142,7 @@ On success, tell the user:
 >
 > **Always-on mark-tracking:** once a file is tracked, every AI edit to a `.md` / `.qmd` / `.tex` file is wrapped in `<mark>…</mark><sup>N</sup>` highlights you can review and accept/reject. Batch-resolve with `/tc accept|reject|list [<file>] <ranges>` (e.g. `1-25,!7`).
 >
-> **Verified import:** `/tc import <source>[#L<a>-L<b>] [<target>]` inserts a vetted source into a tracked document. Claude converts it faithfully to the document's format and the import lands clean (no marks) — there is no mechanical content gate. Claude self-marks only genuinely significant changes (altered meaning) for you to review.
+> **Verified import:** `/tc import [--allow-partial] <source>[#L<a>-L<b>] [<target>]` inserts a vetted source into a tracked document. Claude converts it faithfully to the document's format and the import lands clean (no marks). Claude self-marks only genuinely significant changes (altered meaning) for you to review. **Import fidelity (8.2.0):** the write is mechanically coverage-gated — if any source content token is missing from the converted block, the import is blocked and the dropped tokens are named (`--allow-partial` is the explicit, audited override). Audit a whole document with `/tc coverage <doc> <source> [--units N,N,…]`.
 >
 > **Dictation polish:** `/tc polish [file]` cleans up voice-dictated prose (speech-recognition errors, grammar, dropped words) in a tracked document, surfacing every fix as a reviewable `<mark>`. It never auto-corrects a domain/code/math token — it leaves and flags it. On an untracked file it offers a one-time direct polish (no marks) or to enable tracking first.
 >
@@ -183,6 +184,7 @@ Each entry lists source-URL → destination-path. Base URL: `https://raw.githubu
 - `skill/lib/tc-history.sh` → `~/.claude/skills/track-changes/lib/tc-history.sh`
 - `skill/lib/migrate-v1-to-v2.sh` → `~/.claude/skills/track-changes/lib/migrate-v1-to-v2.sh`
 - `skill/lib/tc.sty` → `~/.claude/skills/track-changes/lib/tc.sty`
+- `skill/lib/tc_coverage_audit.py` → `~/.claude/skills/track-changes/lib/tc_coverage_audit.py`
 
 ### track-changes — shared `tc_core` package
 - `skill/lib/tc_core/__init__.py` → `~/.claude/skills/track-changes/lib/tc_core/__init__.py`
@@ -190,6 +192,7 @@ Each entry lists source-URL → destination-path. Base URL: `https://raw.githubu
 - `skill/lib/tc_core/activation.py` → `~/.claude/skills/track-changes/lib/tc_core/activation.py`
 - `skill/lib/tc_core/audit.py` → `~/.claude/skills/track-changes/lib/tc_core/audit.py`
 - `skill/lib/tc_core/exempt.py` → `~/.claude/skills/track-changes/lib/tc_core/exempt.py`
+- `skill/lib/tc_core/coverage.py` → `~/.claude/skills/track-changes/lib/tc_core/coverage.py`
 
 ### track-changes — reference docs
 - `skill/reference/highlight-syntax.md` → `~/.claude/skills/track-changes/reference/highlight-syntax.md`
@@ -223,9 +226,17 @@ Each entry lists source-URL → destination-path. Base URL: `https://raw.githubu
 
 ---
 
+## v8.2.0 Changelog Summary
+
+**v8.2.0 (import-fidelity coverage check — minor, additive).** A verified import can no longer silently drop source content (the recurring "translated only part of a slide" failure, e.g. keeping three of four rates and losing `r_f`). New shared lib `tc_core/coverage.py` compares **content tokens** (words ≥ 4 letters minus a stoplist, numbers ≥ 2 significant chars, subscripted identifiers like `r_f`) after normalizing formatting away, so reordering/reformatting passes and only dropped content fails. The verified-import PreToolUse hook now blocks a content-dropping import write (exit 2), names the missing tokens, and keeps the pending import live for a corrected retry; `/tc import --allow-partial` is the explicit override for intended omissions (recorded, with the dropped list, in the audit log). Fail-closed: if the source cannot be re-read at write time, the import is blocked. New `/tc coverage <doc> <source> [--units N,N,…]` audits whole-document completeness per source unit (`--slides` alias kept). Backward compatible: the pending record gains one optional key; existing import behavior is otherwise unchanged; hook count stays 6; no document migration.
+
 ## v8.1.0 Changelog Summary
 
-**v8.1.0 (bundle `decap`, the dictation pre-clean filter — additive).** Bundles `decap`, a deterministic author-invoked capitalization-cleanup filter for voice dictation, shipped WITH the suite under `~/.claude/skills/track-changes/tools/` but explicitly **outside** the mark protocol. `decap` runs as an editor selection filter (stdin→stdout), never through Claude's Write/Edit tools, so it is inherently untracked. Apply it to fresh, unmarked dictation BEFORE content is tracked; it composes with `/tc polish` (fast mechanical pass you run yourself vs reviewable AI editorial pass). The `<mark>`-boundary caveat: `decap` is regex over raw text — never run it across a selection containing `<mark>`/`\tc{}` marks (it will corrupt mark syntax). **No mark-grammar change, no new hook, no document migration; hook count stays 6; three-skill suite is unchanged.** Only the installer (`install.sh`) and bootstrap (`bootstrap.md`) gain the two new `tools/` entries.
+**v8.1.0 (committed-content resolution gate + transcript provenance).** `accept`/`reject`/`accept-all`/`reject-all` now REFUSE (exit 3) on a file with uncommitted changes or an untracked file (`tc_require_clean` in `lib/tc-cli.sh`): an open mark is editable right up to resolution, so approval could otherwise attach to content the reviewer never read. Enforced sequence: commit instructor tweaks (own commit) → commit AI corrections as MARKED edits (own commit) → review diffs → resolve. `list` is not gated; `TC_FORCE=1` is a human-only override; fail-open outside a git repo. Also adds `tc-prov="transcript"` to the provenance values (AI wording over the instructor's own class-recording transcript content, conventionally paired with a TEMPORARY `.tc-verbatim` scaffolding block). No new hooks; suite stays at 6.
+
+## v8.0.0 Changelog Summary
+
+**v8.0.0 (bundle `decap`, the dictation pre-clean filter — additive).** Bundles `decap`, a deterministic author-invoked capitalization-cleanup filter for voice dictation, shipped WITH the suite under `~/.claude/skills/track-changes/tools/` but explicitly **outside** the mark protocol. `decap` runs as an editor selection filter (stdin→stdout), never through Claude's Write/Edit tools, so it is inherently untracked. Apply it to fresh, unmarked dictation BEFORE content is tracked; it composes with `/tc polish` (fast mechanical pass you run yourself vs reviewable AI editorial pass). The `<mark>`-boundary caveat: `decap` is regex over raw text — never run it across a selection containing `<mark>`/`\tc{}` marks (it will corrupt mark syntax). **No mark-grammar change, no new hook, no document migration; hook count stays 6; three-skill suite is unchanged.** Only the installer (`install.sh`) and bootstrap (`bootstrap.md`) gain the two new `tools/` entries.
 
 ## v7.0.0 Changelog Summary
 

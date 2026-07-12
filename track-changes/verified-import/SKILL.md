@@ -1,6 +1,6 @@
 ---
 name: verified-import
-description: Opt-in, source-faithful import for tracked documents. The /tc import command reads a source file (or a #L<a>-L<b> line range) and prints it with an instruction to convert it to the target document's format. There is no mechanical content gate — the LLM imports faithfully and self-marks only genuinely significant changes (altered meaning) in track-changes marks; minor diffs land clean. A PreToolUse hook writes a one-shot, sha-bound exemption that the always-on track-changes skill honors, so the faithful block lands clean (no <mark>). Separate from track-changes; loads only when /tc import is invoked. Depends on track-changes' shared tc_core.
+description: Opt-in, source-faithful import for tracked documents. The /tc import command reads a source file (or a #L<a>-L<b> line range) and prints it with an instruction to convert it to the target document's format. The LLM imports faithfully and self-marks only genuinely significant changes (altered meaning) in track-changes marks; minor diffs land clean. A PreToolUse hook mechanically verifies content-token COVERAGE (an import that drops source content is blocked with the missing tokens named; /tc import --allow-partial overrides, audited) and writes a one-shot, sha-bound exemption that the always-on track-changes skill honors, so the faithful block lands clean (no <mark>). Audit whole-document completeness with /tc coverage. Separate from track-changes; loads only when /tc import is invoked. Depends on track-changes' shared tc_core.
 ---
 
 # verified-import
@@ -21,7 +21,7 @@ track-changes skill governs (see its `/tc` command).
 (`/tc import` replaces the former bare `/import`, retired in v7.)
 
 ```
-/tc import <source>[#L<a>-L<b>] [<target>]
+/tc import [--allow-partial] <source>[#L<a>-L<b>] [<target>]
 ```
 
 - **`<source>`** — the source file. A relative path is resolved against the
@@ -38,6 +38,9 @@ track-changes skill governs (see its `/tc` command).
   and stripped). Defaults to the **working file**: the most-recently-modified
   tracked `.md`/`.qmd`/`.tex` under the project scope (git root of the current
   directory, else the current directory).
+- **`--allow-partial`** — explicit override of the coverage gate (below) for a
+  genuinely intended omission. The override and the dropped tokens are recorded
+  in the `imported:` audit entry.
 
 Running `/import` resolves and slices the source, stages a one-shot
 pending-import for the target, and prints the source slice plus an instruction
@@ -46,10 +49,12 @@ converted block into the target.
 
 ## How a verified import lands clean
 
-There is **no mechanical content gate**. The whole point of using a large
+There is **no mechanical equivalence gate**. The whole point of using a large
 language model is that it can judge which differences matter — so v4 trusts the
 model to import faithfully and to flag only the changes a human author would
-want to review. The flow:
+want to review. What IS mechanical (8.2.0) is **completeness**: the hook
+verifies that no source content token was silently dropped (see *The coverage
+gate* below). The flow:
 
 1. **`/tc import` stages a pending-import.** It resolves and slices the source,
    prints the slice plus a conversion instruction, and writes a one-shot,
@@ -59,8 +64,9 @@ want to review. The flow:
    change to match the target format. Write **only** the converted block in this
    edit; do not bundle unrelated edits into the same write (the exemption in
    step 3 covers the whole written file — see *Author responsibility* below).
-3. **The PreToolUse hook writes a sha-bound exemption.** With a live
-   pending-import staged, the `verified-import` PreToolUse hook records a
+3. **The PreToolUse hook verifies coverage, then writes a sha-bound exemption.**
+   With a live pending-import staged, the `verified-import` PreToolUse hook
+   first runs the coverage gate (below); if the write passes, it records a
    one-shot, sha-bound exemption for the exact bytes about to be written, appends
    an `imported:` entry to the project's `.tc-history.md` audit log, consumes the
    pending-import, and allows the write. The always-on track-changes skill
@@ -82,6 +88,43 @@ reformatting, or equivalent notation (e.g. `\section{Methods}` → `## Methods`,
 - **Negative example (do NOT mark):** rewrapping lines, or converting an
   `equation` environment to `$$…$$`, is equivalent notation — leave it clean.
 
+## The coverage gate (8.2.0 import-fidelity guarantee)
+
+The recurring import failure is **silently dropping part of the source** — e.g.
+a slide listed four rates (`r_e, r_f, r_d, r_a`) and the converted block kept
+three. The hook closes this mechanically: at write time it re-reads the staged
+source slice, extracts its **content tokens** — words (≥ 4 letters, minus a
+stoplist), numbers (≥ 2 significant chars), and subscripted identifiers
+(`r_f`, `c_a`, `t_0`) — with formatting normalized away, and requires every one
+to appear somewhere in the proposed write.
+
+- **Reformatting passes:** reordering, slide markup → markdown,
+  `\section{X}` → `## X`, an `equation` environment → `$$…$$` — none of these
+  drop tokens.
+- **Dropped content blocks:** the write is refused (exit 2) with the missing
+  tokens named, and the pending import stays live — restore the content and
+  retry the same write.
+- **Intended omission:** re-run `/tc import --allow-partial <source> [<target>]`;
+  the import then lands and the audit entry records `allow_partial: true` plus
+  the dropped list.
+- **Fail-closed:** if the source has moved or cannot be re-read at write time,
+  the import is blocked (re-run `/tc import` to re-stage).
+
+Presence is checked anywhere in the target (the concern is *dropping* content,
+not placement). The check runs only on pending-import writes — ordinary edits
+are untouched.
+
+**Whole-document audit.** Before declaring a converted document done, run
+
+```
+/tc coverage <doc> <source> [--units N,N,…]
+```
+
+For each source unit (`<!-- slide N -->` marker; the whole file when the source
+has no markers) it reports the % of content tokens covered by `<doc>` and lists
+any missing ones (`--slides` is accepted as an alias). Exit is non-zero when any
+unit dropped content.
+
 **Author responsibility (whole-file exemption).** The exemption is keyed to the
 whole written file's bytes, so any unrelated edit bundled into the same import
 write would also land unmarked. Keep the import write to **only** the converted
@@ -101,7 +144,8 @@ track-changes' shared `tc_core` package (the exemption protocol + audit log
 format) from `~/.claude/skills/track-changes/lib`. If track-changes is not
 installed, a `/tc import` write fails closed with:
 
-> verified-import: track-changes is not installed (install track-changes
-> first; verified-import depends on its tc_core).
+> verified-import: track-changes is not installed or outdated (install/update
+> track-changes first; verified-import depends on its tc_core, incl.
+> tc_core.coverage as of 8.2.0).
 
 Install track-changes first, then verified-import.

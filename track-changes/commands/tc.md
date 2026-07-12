@@ -1,7 +1,7 @@
 ---
-description: track-changes unified command (draft / enable / disable / mark / migrate / status / help / import / polish)
+description: track-changes unified command (draft / enable / disable / mark / migrate / status / coverage / help / import / polish)
 allowed-tools: Bash(bash:*)
-argument-hint: "draft|enable|disable|mark|migrate|status|list|accept|reject|accept-all|reject-all|import|polish|help [args]"
+argument-hint: "draft|enable|disable|mark|migrate|status|list|accept|reject|accept-all|reject-all|coverage|import|polish|help [args]"
 ---
 
 !bash "$HOME/.claude/skills/track-changes/lib/tc-cli.sh" $ARGUMENTS
@@ -21,11 +21,12 @@ Subcommands:
 - `/tc reject [<file>] <ranges>` — reject the listed marks: restore the old text, strip the wrapper (same range syntax; `<file>` optional)
 - `/tc accept-all [<file>]` — accept every mark in `<file>` (omit `<file>` to use the working file)
 - `/tc reject-all [<file>]` — reject every mark in `<file>` (omit `<file>` to use the working file)
+- `/tc coverage <doc> <source> [--units N,N,…]` — audit import completeness: for each source unit (`<!-- slide N -->` marker; the whole file when the source has no markers), report the % of content tokens covered by `<doc>` and list any missing ones (`--slides` accepted as an alias for `--units`). Exits non-zero when any unit dropped content — run it before declaring a converted document done.
 - `/tc help` — show this list
 
 **Cooperating skills** (dispatches to the installed companion skill):
 
-- `/tc import <source>[#L<a>-L<b>] [<target>]` — import a slice of a text source into a tracked document via the **verified-import** skill. The dispatcher resolves and slices the source file, prints the slice together with a conversion instruction, and you convert faithfully, writing only the converted block. The block lands **clean (no `<mark>`)** via a sha-bound one-shot exemption the track-changes hook honors. Self-mark only genuinely significant changes — meaning-altering additions or removals (added/dropped sentences, changed quantities, terms, or formulas); pure formatting differences need no mark. Text sources only (`.md`, `.qmd`, `.tex`, `.txt`, etc.); binary/non-text sources are rejected. If verified-import is not installed, the dispatcher prints an actionable install hint and exits non-zero.
+- `/tc import [--allow-partial] <source>[#L<a>-L<b>] [<target>]` — import a slice of a text source into a tracked document via the **verified-import** skill. The dispatcher resolves and slices the source file, prints the slice together with a conversion instruction, and you convert faithfully, writing only the converted block. The block lands **clean (no `<mark>`)** via a sha-bound one-shot exemption the track-changes hook honors. Self-mark only genuinely significant changes — meaning-altering additions or removals (added/dropped sentences, changed quantities, terms, or formulas); pure formatting differences need no mark. **Coverage gate (8.2.0):** the write is blocked if any source content token (word, number, subscripted identifier) is missing from the converted block — the hook names the dropped tokens and keeps the pending import live for a corrected retry; reformatting and reordering pass. `--allow-partial` is the explicit override for an intended omission (the audit log records the override and the dropped tokens). Text sources only (`.md`, `.qmd`, `.tex`, `.txt`, etc.); binary/non-text sources are rejected. If verified-import is not installed, the dispatcher prints an actionable install hint and exits non-zero.
 
 - `/tc polish [<file>]` — run the **tc-polish** dictation-cleanup and editorial pass on `<file>`. Corrections and restructures surface as ordinary track-changes `<mark>` marks, reviewable via `/tc accept|reject`. Bright lines: improve freely but never change meaning; never auto-correct a flagged protected token (jargon, code, math, domain terms) — leave it and flag it. If tc-polish is not installed, prints an install hint and exits non-zero.
 

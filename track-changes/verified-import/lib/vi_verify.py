@@ -268,13 +268,20 @@ def _safe_unlink(p):
         pass
 
 
-def stage_pending(target_path, source_path, frag, ttl=_PENDING_TTL_DEFAULT):
+def stage_pending(target_path, source_path, frag, ttl=_PENDING_TTL_DEFAULT,
+                  allow_partial=False):
     """Write a one-shot pending-import record keyed on the target file.
 
-    Record (v4 — slimmed per F5): EXACTLY {target, source_path, range, expires}.
-    The v3 fields `source_slice_text`, `mode`, and `source_ftype` are dropped —
-    with no mechanical content gate the hook no longer compares against a stored
-    slice; the CLI prints the slice at stage time and the LLM converts it.
+    Record (v4 — slimmed per F5): {target, source_path, range, expires}
+    (+ optional `allow_partial` as of 8.2.0; absent ⇒ false — backward-
+    compatible). The v3 fields `source_slice_text`, `mode`, and `source_ftype`
+    are dropped — the CLI prints the slice at stage time and the LLM converts
+    it; the 8.2.0 coverage gate re-resolves the slice from `source_path` +
+    `range` at write time.
+
+    `allow_partial` records the explicit `/tc import --allow-partial` override:
+    the hook then skips the coverage block and logs the dropped tokens in the
+    audit entry instead.
 
     Returns the record on success, None on I/O failure (truthy on success — the
     CLI uses the returned `range`)."""
@@ -288,6 +295,10 @@ def stage_pending(target_path, source_path, frag, ttl=_PENDING_TTL_DEFAULT):
         'range': rng,
         'expires': time.time() + ttl,
     }
+    if allow_partial:
+        # Optional key, present only under the explicit override — the default
+        # record keeps the v4 slim 4-key shape (absent => false).
+        rec['allow_partial'] = True
     try:
         with open(p, 'w', encoding='utf-8') as f:
             json.dump(rec, f)
@@ -449,13 +460,18 @@ def _err(msg):
 
 
 def cmd_import(argv):
-    """`vi_verify.py import <source>[#L<a>-L<b>] [<target>]`.
+    """`vi_verify.py import [--allow-partial] <source>[#L<a>-L<b>] [<target>]`.
 
     Resolves + slices the source, resolves the target (explicit arg or working
     file), stages a one-shot pending-import, and prints the slice + a
-    conversion instruction. Returns an exit code."""
+    conversion instruction. `--allow-partial` (anywhere in argv) is the 8.2.0
+    coverage-gate override: the staged record carries allow_partial=true and
+    the hook lands a content-dropping write instead of blocking it (recording
+    the dropped tokens in the audit entry). Returns an exit code."""
+    allow_partial = '--allow-partial' in argv
+    argv = [a for a in argv if a != '--allow-partial']
     if not argv:
-        _err('usage: import <source>[#L<a>-L<b>] [<target>]')
+        _err('usage: import [--allow-partial] <source>[#L<a>-L<b>] [<target>]')
         return 1
     source_arg = argv[0]
     target_arg = argv[1] if len(argv) > 1 else None
@@ -519,7 +535,7 @@ def cmd_import(argv):
              % (frag[0], frag[1], resolved))
         return 1
 
-    rec = stage_pending(target, resolved, frag)
+    rec = stage_pending(target, resolved, frag, allow_partial=allow_partial)
     if rec is None:
         _err('could not stage the pending-import record (state dir '
              'unwritable). Is track-changes installed?')
@@ -569,7 +585,8 @@ def cmd_import(argv):
 def main(argv=None):
     argv = list(sys.argv[1:] if argv is None else argv)
     if not argv:
-        _err('usage: vi_verify.py import <source>[#L<a>-L<b>] [<target>]')
+        _err('usage: vi_verify.py import [--allow-partial] '
+             '<source>[#L<a>-L<b>] [<target>]')
         return 1
     cmd = argv[0]
     if cmd == 'import':
