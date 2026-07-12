@@ -123,6 +123,49 @@ In either case the hook blocks the unwrapped change and suggests
 `/draft`; make the edit under `/draft` and note it in your reply for
 review. This is a documented v3 limitation. See `SKILL.md` §6.
 
+## Source-grounded regions and verbatim scaffolding (v9)
+
+`tc.sty` provides two region-level environments beyond the inline
+`\tc`/`\tcn` pair. The `tcregion` change-bar (v6) now carries a second
+optional argument, and a new `tcverbatim` environment holds a verbatim
+source excerpt for side-by-side confirmation.
+
+### `tcregion` — the source locator argument
+
+The environment takes `{N}[<prov>][<src>]` (arg spec `m o o`). The first
+optional argument is the provenance; v9 adds two source-grounded values,
+`transcript` and `sourced`, which share a green bar (`tcbarsourced`). The
+second optional argument is a source locator, printed after the `[N]` head
+as `sourced: <src>` in the bar color:
+
+```latex
+\begin{tcregion}{7}[sourced][@daskin2013 p.114]
+The p-median objective minimizes demand-weighted distance ...
+\end{tcregion}
+```
+
+The locator renders whenever supplied, but is meaningful only with the
+`sourced`/`transcript` provenances. The `{N}` and `{N}[<prov>]` forms parse
+exactly as before — the second bracket is independent and optional.
+
+### `tcverbatim` — confirmation scaffolding
+
+`tcverbatim` frames a verbatim source excerpt in a gray left bar with a
+muted `\footnotesize` body, self-labeled to mark it as temporary:
+
+```latex
+\begin{tcverbatim}{Freight Transport.docx p. 12}
+The excerpt lifted verbatim from the source, quoted here so the
+source-grounded refinement beside it can be confirmed at a glance.
+\end{tcverbatim}
+```
+
+The mandatory argument is the citation; the head prints
+`<citation> — delete after confirming` in gray. The block is not numbered,
+is ignored by the mark protocol, and is deleted per project policy once the
+refinement is confirmed. Like `tcregion`, it is `framed`-based, so it
+tolerates paragraph breaks and display math inside.
+
 ## Compatibility notes
 
 - The `\tc{}` macro takes a single mandatory argument. v1 took two

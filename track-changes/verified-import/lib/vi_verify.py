@@ -375,7 +375,9 @@ def sweep_pending():
 # gate is the track-changes hook on the actual write.
 # ---------------------------------------------------------------------------
 
-_PRUNE_DIRS = {'.git', 'node_modules'}
+# 'validation' holds generated evidence (manifests, annotated twins) - never a
+# working-file candidate.
+_PRUNE_DIRS = {'.git', 'node_modules', 'validation'}
 _TRACK_EXTS = {'.md', '.qmd', '.tex'}
 
 

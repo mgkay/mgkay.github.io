@@ -22,6 +22,23 @@ v6 additions (back-compatible):
     Region numbers share the file's single mark-number space (uniqueness is
     enforced across inline marks AND regions).
 
+v9 additions (back-compatible):
+  - Fourth provenance value 'sourced' (F9): a green region whose text is
+    supported by a named document source. Carries a source locator:
+      md/qmd:  ::: {.tc-region tc-n="N" tc-prov="sourced" tc-src="…"} … :::
+      tex:     \\begin{tcregion}{N}[sourced][<src-locator>] … \\end{tcregion}
+    The tex region opener gains an OPTIONAL SECOND bracket group for the src
+    locator; absent ⇒ src None (so every v6/v7 region parses unchanged). md
+    regions expose the `tc-src` attribute via a new 'src' key (None when
+    absent). `src_from_attrs` reads it.
+  - Verbatim scaffolding (Dilemma A/D): a transient gray block holding the
+    supporting excerpt beside its green sourced region.
+      md/qmd:  ::: {.tc-verbatim tc-cite="…"} … :::
+      tex:     \\begin{tcverbatim}{<citation>} … \\end{tcverbatim}
+    Recognized by extract_verbatim_blocks / verbatim_covered_lines; it carries
+    NO mark number and is deliberately kept OUT of region numbering/uniqueness
+    (extract_regions must not emit it).
+
 Consolidated so the two skills share one grammar.
 """
 import re
@@ -30,7 +47,9 @@ DEFAULT_PROV = 'authored'
 # 'transcript' (v7): a region reworded from the instructor's class-recording
 # transcript — AI wording over the instructor's own spoken content, distinct
 # from 'authored' (AI-invented) and 'imported' (verbatim from a named source).
-PROV_VALUES = ('authored', 'imported', 'transcript')
+# 'sourced' (v9): AI wording supported by a named document source, carrying a
+# tc-src locator and a verified verbatim excerpt (the gray scaffolding block).
+PROV_VALUES = ('authored', 'imported', 'transcript', 'sourced')
 
 # --- Inline wrapper detection (attribute-tolerant; back-compatible) ----------
 # The optional `(?:\s+[^>]*?)?` matches v6 attributes (e.g. tc-prov="…") while
@@ -45,6 +64,8 @@ TEX_TCN_AFTER_RE = re.compile(r'\\tcn\{(\d+)\}')
 
 # Provenance attribute inside an md tag / div attribute block.
 _PROV_ATTR_RE = re.compile(r'tc-prov\s*=\s*"([^"]*)"')
+# Source-locator attribute (v9) inside a `.tc-region` div attribute block.
+TC_SRC_ATTR_RE = re.compile(r'tc-src\s*=\s*"([^"]*)"')
 
 # Body classification.
 _MD_S_REP_RE = re.compile(r'^<s>(.*?)</s>(.+)$', re.DOTALL)
@@ -75,13 +96,31 @@ _MD_FENCE_CLOSE_RE = re.compile(r'^\s*(:{3,})\s*$')
 _MD_REGION_CLASS_RE = re.compile(r'(?<![\w.-])\.tc-region(?![\w-])')
 _MD_REGION_N_RE = re.compile(r'tc-n\s*=\s*"(\d+)"')
 # tex: \begin{tcregion}{N}[prov] … \end{tcregion}
+# v9: an OPTIONAL SECOND bracket group carries the src locator —
+#   \begin{tcregion}{N}[prov][src]  (src may contain any char except ']').
+# Both optional groups are independent, so the v6/v7 forms {N} and {N}[prov]
+# match exactly as before (src stays None).
 TEX_REGION_OPEN_RE = re.compile(
-    r'\\begin\{tcregion\}\{(?P<n>\d+)\}(?:\[(?P<prov>\w+)\])?')
+    r'\\begin\{tcregion\}\{(?P<n>\d+)\}'
+    r'(?:\[(?P<prov>\w+)\])?(?:\[(?P<src>[^\]]*)\])?')
 TEX_REGION_CLOSE_RE = re.compile(r'\\end\{tcregion\}')
 # Region number scanners (for uniqueness / max-N).
 MD_REGION_NUMS_RE = re.compile(
     r'^\s*:{3,}\s*\{[^}]*\.tc-region[^}]*tc-n\s*=\s*"(\d+)"[^}]*\}\s*$', re.M)
 TEX_REGION_NUMS_RE = re.compile(r'\\begin\{tcregion\}\{(\d+)\}')
+
+# --- Verbatim scaffolding grammar (v9) ---------------------------------------
+# A transient gray block holding the supporting excerpt beside a sourced region.
+# It carries NO mark number and is NOT part of region numbering/uniqueness.
+# md/qmd: a `:::`-fenced div whose attr block carries `.tc-verbatim`, with an
+# optional `tc-cite="…"` citation attribute. Recognized with the same
+# depth-tracked fence walk as `.tc-region` so nested divs stay balanced.
+_MD_VERBATIM_CLASS_RE = re.compile(r'(?<![\w.-])\.tc-verbatim(?![\w-])')
+_MD_CITE_ATTR_RE = re.compile(r'tc-cite\s*=\s*"([^"]*)"')
+# tex: \begin{tcverbatim}{<citation>} … \end{tcverbatim} — the citation is a
+# brace-balanced single group; the environment is non-nesting (like tcregion).
+TEX_VERBATIM_OPEN_RE = re.compile(r'\\begin\{tcverbatim\}\{')
+TEX_VERBATIM_CLOSE_RE = re.compile(r'\\end\{tcverbatim\}')
 
 
 def prov_from_attrs(attrs):
@@ -93,6 +132,15 @@ def prov_from_attrs(attrs):
     if m and m.group(1) in PROV_VALUES:
         return m.group(1)
     return DEFAULT_PROV
+
+
+def src_from_attrs(attrs):
+    """Source locator from an md `.tc-region` attribute block (the `tc-src`
+    attribute). Returns the raw string, or None when the attribute is absent."""
+    if not attrs:
+        return None
+    m = TC_SRC_ATTR_RE.search(attrs)
+    return m.group(1) if m else None
 
 
 def norm_prov(value):
@@ -189,12 +237,13 @@ def extract_marks(text, ftype):
 
 
 def extract_regions(text, ftype):
-    """Return list of region dicts {N(str), prov, start(1-indexed opener line),
-    end(1-indexed closer line)} for whole-region insertions (D).
+    """Return list of region dicts {N(str), prov, src, start(1-indexed opener
+    line), end(1-indexed closer line)} for whole-region insertions (D).
 
-    md/qmd: depth-tracked `:::` fenced divs; only those whose attr block carries
-    `.tc-region` are emitted (nested non-region divs are skipped but counted for
-    depth). tex: \\begin{tcregion}{N}[prov] … \\end{tcregion} (non-nesting).
+    'src' (v9) is the source locator (None when absent). md/qmd: depth-tracked
+    `:::` fenced divs; only those whose attr block carries `.tc-region` are
+    emitted (nested non-region divs are skipped but counted for depth). tex:
+    \\begin{tcregion}{N}[prov][src] … \\end{tcregion} (non-nesting).
     """
     regions = []
     if ftype in ('md', 'qmd'):
@@ -210,6 +259,7 @@ def extract_regions(text, ftype):
                     stack.append({
                         'N': mn.group(1) if mn else None,
                         'prov': prov_from_attrs(attrs),
+                        'src': src_from_attrs(attrs),
                         'start': idx,
                         'end': None,
                     })
@@ -229,6 +279,7 @@ def extract_regions(text, ftype):
             regions.append({
                 'N': mo.group('n'),
                 'prov': norm_prov(mo.group('prov')),
+                'src': mo.group('src'),
                 'start': start_line,
                 'end': end_line,
             })
@@ -243,6 +294,107 @@ def region_covered_lines(text, ftype):
     for r in extract_regions(text, ftype):
         if r['start'] and r['end']:
             covered.update(range(r['start'], r['end'] + 1))
+    return covered
+
+
+def extract_verbatim_blocks(text, ftype):
+    """Return list of verbatim-scaffolding dicts (v9), sorted by opener line:
+      {'start': int (1-indexed opener/delimiter line),
+       'end':   int|None (1-indexed closer line; None when unclosed at EOF),
+       'body':  str (text strictly between the delimiter lines),
+       'citation': str|None}
+
+    md/qmd: depth-tracked `:::` fenced divs whose attr block carries
+    `.tc-verbatim` (citation from the optional `tc-cite="…"` attribute; nested
+    non-verbatim divs are skipped but counted for depth). tex:
+    \\begin{tcverbatim}{<citation>} … \\end{tcverbatim} (brace-balanced citation,
+    non-nesting). These blocks carry NO mark number and are never region marks.
+    """
+    blocks = []
+    if ftype in ('md', 'qmd'):
+        lines = text.split('\n')
+        # Stack of open fenced divs: each entry is a verbatim dict or None.
+        stack = []
+        for idx, line in enumerate(lines, start=1):
+            mo = _MD_FENCE_OPEN_RE.match(line)
+            if mo:
+                attrs = mo.group('attrs')
+                if _MD_VERBATIM_CLASS_RE.search(attrs):
+                    mc = _MD_CITE_ATTR_RE.search(attrs)
+                    stack.append({
+                        'start': idx,
+                        'citation': mc.group(1) if mc else None,
+                    })
+                else:
+                    stack.append(None)
+                continue
+            if _MD_FENCE_CLOSE_RE.match(line) and stack:
+                top = stack.pop()
+                if top is not None:
+                    top['end'] = idx
+                    top['body'] = '\n'.join(lines[top['start']:idx - 1])
+                    blocks.append(top)
+        # Any verbatim divs still open at EOF are emitted unclosed (end=None).
+        for top in stack:
+            if top is not None:
+                top['end'] = None
+                top['body'] = '\n'.join(lines[top['start']:])
+                blocks.append(top)
+    elif ftype == 'tex':
+        lines = text.split('\n')
+        L = len(text)
+        pos = 0
+        while pos < L:
+            mh = TEX_VERBATIM_OPEN_RE.search(text, pos)
+            if not mh:
+                break
+            # Brace-balance the citation group (respecting backslash escapes).
+            i = mh.end()
+            depth = 1
+            while i < L and depth > 0:
+                c = text[i]
+                if c == '\\' and i + 1 < L:
+                    i += 2
+                    continue
+                if c == '{':
+                    depth += 1
+                elif c == '}':
+                    depth -= 1
+                    if depth == 0:
+                        break
+                i += 1
+            if depth != 0:
+                pos = mh.end()
+                continue
+            citation = text[mh.end():i]
+            start_line = 1 + text.count('\n', 0, mh.start())
+            mc = TEX_VERBATIM_CLOSE_RE.search(text, i + 1)
+            if mc:
+                end_line = 1 + text.count('\n', 0, mc.start())
+                body = '\n'.join(lines[start_line:end_line - 1])
+                pos = mc.end()
+            else:
+                end_line = None
+                body = '\n'.join(lines[start_line:])
+                pos = i + 1
+            blocks.append({
+                'start': start_line,
+                'end': end_line,
+                'body': body,
+                'citation': citation,
+            })
+    blocks.sort(key=lambda b: b['start'])
+    return blocks
+
+
+def verbatim_covered_lines(text, ftype):
+    """Set of 1-indexed line numbers enclosed by a well-formed (closed)
+    verbatim block, delimiters inclusive. Unclosed blocks (end None) contribute
+    nothing."""
+    covered = set()
+    for b in extract_verbatim_blocks(text, ftype):
+        if b['start'] and b['end']:
+            covered.update(range(b['start'], b['end'] + 1))
     return covered
 
 

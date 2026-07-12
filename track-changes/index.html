@@ -302,6 +302,24 @@ recorded in the audit log. A whole document can be audited against its source at
 <code>/tc coverage &lt;doc&gt; &lt;source&gt;</code>, which reports per-unit coverage and any
 missing tokens.</p>
 
+<h3 id="sourcing">Ground AI writing in sources you can open &mdash; with excerpts that cannot be faked (9.0.0)</h3>
+<p>When AI-drafted text is supported by a document &mdash; a chapter, a slide deck, a cited
+paper &mdash; the supporting excerpt appears beside it as a temporary <em>gray</em> block and the
+AI&rsquo;s interpretation as a <em>green</em> region labeled with its source
+(<code>sourced: chapter3.pdf p.12</code>). The critical guarantee is mechanical: the gray excerpt
+is <strong>verbatim by construction, not by discipline</strong>. The
+<code>/tc source &lt;file&gt;#&lt;locator&gt;</code> command stages the source slice, and at write
+time the hook verifies the quoted text is actually contained in it &mdash; a fabricated or altered
+quote is refused outright, with the mismatch named. Sources can be text files, PDFs, or Word
+documents, and a citation can be named by its BibTeX key
+(<code>/tc source @daskin2013 p.114</code>), so every AI claim about a cited paper carries a
+verified excerpt from that paper &mdash; an anti-hallucination layer for literature claims.
+The durable evidence never depends on the document itself: <code>/tc manifest</code> regenerates a
+per-document source manifest in a <code>validation/</code> folder, and a bundled annotator tool
+highlights every used passage in an annotated <em>copy</em> of each source PDF with a summary page
+&mdash; the source folder becomes self-validating. Gray scaffolding is deleted after confirmation
+(lectures) or at submission (manuscripts); deleting it never loses evidence.</p>
+
 <h3>Resolve a whole review pass in seconds</h3>
 <p>A heavy editing session can leave dozens of highlights. Rather than clicking through them one at a
 time, list them and then accept or reject in ranges &mdash; for example, keep everything except the
@@ -383,7 +401,7 @@ by hand, or use a different editor (Vim, Emacs)? Ask Claude for the manual steps
 </main>
 
 <footer>
-  <p>track-changes v8.2.0 &middot; M. G. Kay &middot; NC State ISE<br>
+  <p>track-changes v9.0.0 &middot; M. G. Kay &middot; NC State ISE<br>
   <a href="bootstrap.md" download>Download bootstrap.md</a></p>
 </footer>
 

@@ -32,6 +32,13 @@
 #   /tc coverage <doc> <source> [--units N,N,...]
 #                                  — audit: per-unit content-token coverage
 #                                    of <doc> against <source> (8.2.0)
+#   /tc source <file>#<locator> [<target>]
+#   /tc source @citekey [<locator>] [<target>]
+#                                  — stage a source slice + print the gray
+#                                    verbatim / green sourced write
+#                                    instruction (9.0.0)
+#   /tc manifest [<doc>]           — regenerate validation/<stem>.sources.md
+#                                    from audit evidence (9.0.0)
 #   /tc help                       — print this usage
 #
 # Fix #6 removed /tc on and /tc off — session-scope toggles reintroduced
@@ -96,6 +103,27 @@ Diagnostics:
                           missing ones (--slides accepted as an alias).
                           Exit non-zero when content was dropped.
   /tc help                This message
+
+Source-validation discipline (9.0.0):
+  /tc source <file>#<locator> [<target>]
+  /tc source @citekey [<locator>] [<target>]
+                          Stage a source slice, then print it plus an
+                          instruction to write ONE edit pairing a temporary
+                          gray verbatim excerpt (::: .tc-verbatim / tcverbatim)
+                          with a green `sourced` region carrying its tc-src.
+                          The excerpt is verified MECHANICALLY at write time —
+                          the hook re-reads the source and refuses a fabricated
+                          or paraphrased quotation (fail-closed). Two source
+                          forms: a path with an optional trailing #locator
+                          (L<a>-L<b> text lines, p.<a>[-<b>] PDF pages, or none
+                          for the whole file), or an @citekey resolved via the
+                          document's .bib file field / .tc-sources.json map.
+                          <target> defaults to the working file.
+  /tc manifest [<doc>]    Regenerate validation/<stem>.sources.md for <doc>
+                          (working file by default) from the `sourced:` audit
+                          evidence in .tc-history.md: one section per sourced
+                          region with its source, locator, excerpt, and
+                          supported text. Whole-file, deterministic.
 
 Cooperating skills (routes to the installed companion skill):
   /tc import [--allow-partial] <source>[#L<a>-L<b>] [<target>]
@@ -175,7 +203,7 @@ tc_resolve_working_file() {
     fi
   done <<EOF
 $(find "${scope}" \
-    \( -name .git -o -name node_modules -o -name '.*' \) -prune -o \
+    \( -name .git -o -name node_modules -o -name validation -o -name '.*' \) -prune -o \
     -type f \( -name '*.md' -o -name '*.qmd' -o -name '*.tex' \) -print \
     2>/dev/null)
 EOF
@@ -601,6 +629,33 @@ case "${sub}" in
       exit 2
     fi
     ${py} "${SCRIPT_DIR}/tc_coverage_audit.py" "$@"
+    ;;
+  source)
+    # /tc source <file>#<locator> [<target>]  (path form)
+    # /tc source @citekey [<locator>] [<target>]  (citekey form)  (9.0.0)
+    if [ $# -lt 1 ]; then
+      echo "tc source: missing source argument" >&2
+      echo "usage: /tc source <file>#<locator> [<target>]" >&2
+      echo "   or: /tc source @<citekey> [<locator>] [<target>]" >&2
+      exit 1
+    fi
+    if ! py="$(tc_resolve_python)"; then
+      echo "tc: ERROR — Python 3 not found" >&2
+      exit 2
+    fi
+    ${py} "${SCRIPT_DIR}/tc_source.py" "$@"
+    ;;
+  manifest)
+    # /tc manifest [<doc>]  (working-file default is the backend's job) (9.0.0)
+    if [ ! -f "${SCRIPT_DIR}/tc_manifest.py" ]; then
+      echo "tc manifest: not yet installed" >&2
+      exit 2
+    fi
+    if ! py="$(tc_resolve_python)"; then
+      echo "tc: ERROR — Python 3 not found" >&2
+      exit 2
+    fi
+    ${py} "${SCRIPT_DIR}/tc_manifest.py" "$@"
     ;;
   import)
     VI="$HOME/.claude/skills/verified-import/lib/vi-cli.sh"

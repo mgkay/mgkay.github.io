@@ -28,13 +28,15 @@ each change. Default-OFF. (Full spec lives in `SKILL.md`, lazy-loaded on demand.
 
 `<sup>N</sup>` sits OUTSIDE the `</mark>`. Next N = highest existing mark + 1.
 
-**Provenance (v6, optional; v7 adds transcript):** `<mark tc-prov="imported">…`
+**Provenance (v6+; v7 transcript, v9 sourced):** `<mark tc-prov="imported">…`
 / `\tc[imported]{…}` for a verbatim `/tc import` slice;
 `tc-prov="transcript"` (v7) for AI wording over the instructor's own spoken
-transcript content; default (absent) = `authored`. Region numbers share the
-single mark-number space. A transcript region is conventionally preceded by a
-TEMPORARY gray `.tc-verbatim` block quoting the raw transcript — scaffolding,
-not a region: resolution commands ignore it; delete it once confirmed.
+transcript; `tc-prov="sourced"` (v9) for AI text supported by a document
+source (carries `tc-src`; verified vs a gray excerpt — see §Source-validation);
+default (absent) = `authored`. Region numbers share the single mark-number
+space. A transcript/sourced region is conventionally preceded by a TEMPORARY
+gray `.tc-verbatim` block quoting the raw source — scaffolding, not a region:
+resolution commands ignore it; delete it once confirmed.
 
 **Whole-region insertion (v6, Fix D)** — a MULTI-block new region as ONE tracked
 unit (the path for large new content; no `/draft`):
@@ -52,7 +54,8 @@ inside. **Single brand-new block** (one heading/fenced/`:::`) → still a siblin
 `/tc accept [<file>] <ranges>` · `/tc reject [<file>] <ranges>` ·
 `/tc accept-all [<file>]` · `/tc reject-all [<file>]` · `/tc help` ·
 `/tc import [--allow-partial] <source>[#L<a>-L<b>] [<target>]` ·
-`/tc coverage <doc> <source> [--units N,N,…]` · `/tc polish [<file>]`.
+`/tc coverage <doc> <source> [--units N,N,…]` · `/tc polish [<file>]` ·
+`/tc source <file>#<loc>|@citekey [<target>]` · `/tc manifest [<doc>]`.
 Ranges use `1-25,!7` syntax. Omit `<file>` on a resolution command to use the
 working file (most-recently-modified tracked file). Bare `/tc` prints the menu.
 `/draft` = suspend this turn — **USER-ONLY (v6, v7-confirmed shadow-proof: the
@@ -68,6 +71,7 @@ skill named `draft` can intercept it); the AI cannot invoke it.**
 - Editing INSIDE code/math/tables (non-rendering contexts): wrap the whole block
   as a `tcregion` / `.tc-region` insertion (v6), or ask the user to `/draft`.
 - Verbatim/converted **source import**: use `/tc import` (routes to the `verified-import` skill; lands clean via sha-bound exemption). **Coverage-gated (8.2.0):** a write that DROPS a source content token is blocked with the missing tokens named (pending import preserved — fix and retry); `--allow-partial` is the explicit, audited override. Whole-document audit: `/tc coverage <doc> <source>`.
+- **Source-validation (v9):** AI text supported by a document source = green `sourced` region + a TEMPORARY gray `.tc-verbatim` excerpt (verbatim by construction). Stage with `/tc source`; the hook re-reads the source and REFUSES unstaged/fabricated/paraphrased gray, >1 gray/write, or missing/wrong `tc-src` (fail-closed on scanned/unreadable). Durable evidence = `sourced:` audit entries; manifest = `/tc manifest`. A quote meant to STAY = quoted text + citation or `/tc import`, not green. Full rules → `SKILL.md §16`.
 - Companion `decap` tool (author-side dictation capitalization pre-clean, OUTSIDE the mark protocol; run on fresh unmarked dictation only) — see `SKILL.md §Companion`.
 - Lazy-load from `SKILL.md` on demand: activation-precedence edge cases →
   `SKILL.md §2 (Activation)`; worked mark examples + resolution walk →

@@ -110,6 +110,231 @@ def _emit_block(tool_name, file_path, violations, ftype, suggest_region, subagen
             sys.stderr.write(msg.encode('utf-8', 'replace').decode('ascii', 'replace'))
 
 
+def _emit(msg):
+    """Write a message to stderr as UTF-8 (non-ASCII survives any codec).
+    Mirrors verified-import's _emit / this hook's _emit_block byte-writer."""
+    text = msg if msg.endswith('\n') else msg + '\n'
+    try:
+        sys.stderr.buffer.write(text.encode('utf-8'))
+        sys.stderr.buffer.flush()
+    except Exception:
+        try:
+            sys.stderr.write(text)
+        except Exception:
+            sys.stderr.write(text.encode('utf-8', 'replace').decode('ascii', 'replace'))
+
+
+def _added_line_set(src_text, prop_text):
+    """1-indexed proposed line numbers ADDED by the write — computed exactly the
+    way tc_analyzer.analyze parses its unified diff (difflib n=3 + @@-hunk walk),
+    so the gate and the analyzer agree on which lines are new."""
+    import difflib
+    import re as _re
+    src_lines = src_text.split('\n')
+    prp_lines = prop_text.split('\n')
+    diff_text = ''.join(difflib.unified_diff(
+        [l + '\n' for l in src_lines],
+        [l + '\n' for l in prp_lines],
+        fromfile='source', tofile='proposed', n=3))
+    hunk_re = _re.compile(r'^@@\s+-\d+(?:,\d+)?\s+\+(\d+)(?:,(\d+))?\s+@@')
+    added = set()
+    in_hunk = False
+    new_cursor = 0
+    for dl in diff_text.split('\n'):
+        if dl.startswith('@@'):
+            m = hunk_re.match(dl)
+            if m:
+                new_cursor = int(m.group(1))
+                in_hunk = True
+            else:
+                in_hunk = False
+            continue
+        if not in_hunk:
+            continue
+        if dl.startswith('\\') or not dl:
+            continue
+        tag = dl[0]
+        if tag == '+':
+            added.add(new_cursor)
+            new_cursor += 1
+        elif tag == ' ':
+            new_cursor += 1
+    return added
+
+
+def _source_gate(tool_name, file_path, source_text, payload, ftype):
+    """v9 source-validation gate (MakePlan Dilemma A, resolution 2).
+
+    Runs BEFORE the analyzer verdict on a tracked existing file. Detects NEW
+    gray `.tc-verbatim` scaffolding (a verbatim block intersecting added lines)
+    and enforces that it is verified verbatim against a live `/tc source`
+    staging record:
+      - zero new-gray blocks           → no-op (return None; nothing changes).
+      - more than one new-gray block   → block (return 2): split the write.
+      - exactly one, no live record    → block (return 2): stage with /tc source.
+      - exactly one, live record:
+          re-read the staged source slice; extraction failure → block, record
+          PRESERVED. normalized-exact containment fails → block naming the
+          fabricated/mismatched excerpt, record PRESERVED. The accompanying NEW
+          green sourced region must carry tc-src == srcstage.expected_src(rec)
+          and a tc-n number; missing/mismatched → block printing the expected
+          value. All good → write the one-shot sentinel, append the `sourced:`
+          audit entry, clear the record, and return None so the write proceeds
+          to the analyzer (which consumes the sentinel and covers the gray).
+
+    Fail-open to PROCEED only when the gate machinery itself cannot be imported
+    (the gray lines then fall to the analyzer, which fails-open to VIOLATION).
+    """
+    try:
+        import tc_analyzer
+        from tc_core import grammar as tc_grammar
+        from tc_core import srcstage
+        from tc_core import sourcetext
+        from tc_core import audit as tc_audit
+    except Exception as e:
+        _log(f'source gate: import failed ({e}); skipping gate')
+        return None
+
+    proposed = tc_analyzer._build_proposed(source_text, payload, tool_name)
+    if proposed is None:
+        return None
+    src_norm = source_text.replace('\r\n', '\n')
+    prop_norm = proposed.replace('\r\n', '\n')
+    if src_norm == prop_norm:
+        return None
+
+    prop_lines = prop_norm.split('\n')
+    added = _added_line_set(src_norm, prop_norm)
+
+    # New gray content: verbatim blocks intersecting an added line.
+    new_gray = []
+    for b in tc_grammar.extract_verbatim_blocks(prop_norm, ftype):
+        bs, be = b.get('start'), b.get('end')
+        if not bs:
+            continue
+        span = set(range(bs, (be if be else len(prop_lines)) + 1))
+        if span & added:
+            new_gray.append(b)
+
+    if not new_gray:
+        return None  # gate is a no-op — everything proceeds as today
+
+    hdr = f'track-changes: blocked {tool_name} to {file_path}'
+
+    if len(new_gray) > 1:
+        _emit(hdr + '\n'
+              + f'This write adds {len(new_gray)} gray `.tc-verbatim` excerpts. '
+              'Stage and land ONE sourced excerpt per write: split this into '
+              f'{len(new_gray)} separate `/tc source` + write steps (each gray '
+              'excerpt needs its own verified staging).')
+        _log(f'SOURCE-BLOCK {file_path}: {len(new_gray)} new gray blocks')
+        return 2
+
+    block = new_gray[0]
+    gray_body = block.get('body') or ''
+
+    rec = srcstage.load(file_path)
+    if rec is None:
+        _emit(hdr + '\n'
+              'A new gray `.tc-verbatim` excerpt requires a live `/tc source` '
+              'staging. Run `/tc source <file>#<locator> [<target>]` (or '
+              '`/tc source @citekey <locator> [<target>]`) first — it re-reads '
+              'the source and authorizes this one write. Fail-closed: an '
+              'unstaged (or expired) gray excerpt cannot verify.')
+        _log(f'SOURCE-BLOCK {file_path}: gray block, no live staging record')
+        return 2
+
+    source_path = rec.get('source_path', '')
+    locator = rec.get('locator') or ''
+    expected = srcstage.expected_src(rec)
+
+    # Re-read the staged source slice; fail-closed on any extraction failure,
+    # preserving the record so a corrected re-stage still verifies.
+    try:
+        slice_text = sourcetext.extract_text(source_path, locator or None)
+    except Exception as e:
+        _emit(hdr + '\n'
+              f'cannot re-read the staged source {source_path} '
+              f'(locator: {locator or "whole"}) to verify the gray excerpt '
+              f'({e}). Re-run `/tc source` to re-stage against a readable '
+              'source. The staging record is preserved.')
+        _log(f'SOURCE-BLOCK {file_path}: source re-read failed ({e}); '
+             'record preserved')
+        return 2
+
+    if not sourcetext.contains(gray_body, slice_text):
+        preview = sourcetext.normalize(gray_body)[:80]
+        _emit(hdr + '\n'
+              'the gray `.tc-verbatim` excerpt is NOT contained in the staged '
+              f'source {expected} — it looks fabricated or mismatched. Excerpt '
+              f'(normalized, first 80 chars): "{preview}". Re-stage with '
+              '`/tc source` against the correct slice. The staging record is '
+              'preserved.')
+        _log(f'SOURCE-BLOCK {file_path}: excerpt not contained in {expected}; '
+             'record preserved')
+        return 2
+
+    # Containment passed. The accompanying NEW green sourced region must carry
+    # the expected tc-src (and a tc-n number).
+    candidates = []
+    for r in tc_grammar.extract_regions(prop_norm, ftype):
+        if r.get('prov') != 'sourced':
+            continue
+        rs, re_ = r.get('start'), r.get('end')
+        if not rs or not re_:
+            continue
+        if set(range(rs, re_ + 1)) & added:
+            candidates.append(r)
+    matched = [r for r in candidates if r.get('src') == expected]
+    if not matched:
+        if candidates:
+            found = ', '.join('"%s"' % (r.get('src') or '') for r in candidates)
+            detail = (f'found new sourced region(s) with tc-src {found}, but '
+                      f'expected tc-src="{expected}".')
+        else:
+            detail = ('no NEW green `sourced` region accompanies the gray '
+                      f'excerpt. Add one carrying tc-src="{expected}".')
+        _emit(hdr + '\n'
+              'the gray excerpt verified, but its green sourced region is '
+              f'missing/mismatched. {detail} (md: '
+              f'`::: {{.tc-region tc-n="N" tc-prov="sourced" tc-src="{expected}"}}`; '
+              f'tex: `\\begin{{tcregion}}{{N}}[sourced][{expected}]`).')
+        _log(f'SOURCE-BLOCK {file_path}: tc-src missing/mismatched; '
+             f'expected {expected}')
+        return 2
+
+    region = matched[0]
+    if region.get('N') is None:
+        _emit(hdr + '\n'
+              'the green sourced region needs a tc-n number (the mark number '
+              'that carries this region). Add tc-n="N" (md) / {N} (tex).')
+        _log(f'SOURCE-BLOCK {file_path}: sourced region missing tc-n')
+        return 2
+
+    # Verified. Write the one-shot sentinel the analyzer consumes, record the
+    # durable `sourced:` audit entry, clear the transient staging record, and
+    # fall through to the analyzer (which must still run). A failed sentinel
+    # write (state dir unwritable / path too long) must fail CLOSED here with a
+    # clear message — otherwise the analyzer refuses the gray block with the
+    # generic unverified-excerpt error and the record has already been spent.
+    if not srcstage.sentinel_write(file_path, srcstage.gray_sha_of(gray_body)):
+        _emit('track-changes: could not record the source-verification '
+              'sentinel (state dir unwritable or path too long). The staged '
+              'record is preserved — retry, or check '
+              '~/.claude/skills/track-changes/state/source-ok/.')
+        _log(f'SOURCE-BLOCK {file_path}: sentinel_write failed (state dir)')
+        return 2
+    # supports = the region body (lines strictly between the delimiters).
+    rs, re_ = region['start'], region['end']
+    supports = '\n'.join(prop_lines[rs:re_ - 1])
+    tc_audit.write_sourced_entry(file_path, rec, region['N'], expected,
+                                 gray_body, supports)
+    srcstage.clear(file_path)
+    _log(f'SOURCE-OK {file_path}: region {region["N"]} tc-src {expected}; '
+         'sentinel written, record cleared')
+    return None
+
+
 def main():
     payload = _read_payload()
     if payload is None:
@@ -166,6 +391,20 @@ def main():
                 return 0
         except Exception as e:
             _log(f'exemption check failed: {e}; proceeding to analyzer')
+
+    # v9 source-validation gate (Dilemma A): a NEW gray `.tc-verbatim` excerpt
+    # must be verified verbatim against a live `/tc source` staging before it
+    # can land. Runs before the analyzer verdict; on the verified path it writes
+    # the one-shot sentinel the analyzer consumes and falls through (returns
+    # None). A no-op when the write adds no gray content (byte-identical to
+    # prior behavior for every ordinary write).
+    try:
+        gate_rc = _source_gate(tool_name, file_path, source_text, payload, ftype)
+    except Exception as e:
+        _log(f'source gate raised ({e}); proceeding to analyzer')
+        gate_rc = None
+    if gate_rc is not None:
+        return gate_rc
 
     # Subagent detection (best-effort).
     payload_str = json.dumps(payload)

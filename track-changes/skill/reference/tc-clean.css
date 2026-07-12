@@ -15,6 +15,18 @@
  * add them under `format: html:` as `css:` and `include-after-body:` (a
  * <script src> tag), or via `header-includes`. See SKILL.md "Render-time
  * visibility of marks".
+ *
+ * v9 additions (source-validation discipline; canonicalizes the ISE754-reviewed
+ * top-right label form — see pcvplans/artifacts/render-spec.md):
+ *   - Provenance-typed regions for ALL FOUR provenances (authored/imported/
+ *     transcript/sourced), each in BOTH the Quarto `data-tc-*` and raw `tc-*`
+ *     attribute forms. The mark number now rides a TOP-RIGHT label (replacing
+ *     the v6 margin `[N]` ::before form). Sourced pulls its locator live from
+ *     tc-src; absent tc-src it falls back to "sourced +N".
+ *   - The gray `.tc-verbatim` scaffolding block (verbatim source excerpt held
+ *     for confirmation): dashed gray bar, muted body, self-labeled "delete after
+ *     confirming", hidden entirely under no-marks (must not reach a shared
+ *     render). Colors/labels match tc.sty and the render-spec table exactly.
  */
 
 body.no-marks mark {
@@ -34,48 +46,120 @@ mark[tc-prov="imported"] {
   background: #bdf0ff;   /* pale cyan */
 }
 
-/* --- v6: whole-region insertion (Fix D) -------------------------------------
- * The Quarto fenced div  ::: {.tc-region tc-n="N" tc-prov="..."}  renders via
- * Pandoc as e.g.
- *   <section class="level2 tc-region" data-tc-n="N" data-tc-prov="...">
+/* --- v9: whole-region insertion, provenance-typed (Fix D + source discipline)
+ * The Quarto fenced div  ::: {.tc-region tc-n="N" tc-prov="..." tc-src="..."}
+ * renders via Pandoc as e.g.
+ *   <section class="level2 tc-region" data-tc-n="N" data-tc-prov="..." data-tc-src="...">
  * i.e. Pandoc DATA-PREFIXES the non-standard div key-value attributes. Only
- * hand-written HTML keeps the raw `tc-n` / `tc-prov` form. Show the multi-block
- * new region as ONE tracked unit: a colored left change-bar + subtle tint, with
- * the mark number in the margin. Provenance picks the color (authored=amber,
- * imported=blue), matching the LaTeX tcregion bar. Selectors below target BOTH
- * the data- and raw forms so the rule binds under Quarto render AND raw HTML. */
+ * hand-written HTML keeps the raw `tc-n` / `tc-prov` / `tc-src` form. Show the
+ * multi-block new region as ONE tracked unit: a colored left change-bar + pale
+ * tint + a TOP-RIGHT label carrying the provenance word and the mark number.
+ * Provenance picks the color (authored=amber, imported=blue, transcript &
+ * sourced share green), matching the LaTeX tcregion bar. Every rule targets
+ * BOTH the data- and raw forms so it binds under Quarto render AND raw HTML. */
+
+/* Region box — shared by all four provenances (authored default: amber). */
 .tc-region {
+  position: relative;
   border-left: 4px solid #d98c14;   /* authored: amber */
   background: #fff8e6;
   padding: 0.25rem 0.75rem;
-  margin: 0.5rem 0;
-  position: relative;
+  margin: 0.6rem 0;
+  border-radius: 3px;
 }
-.tc-region[data-tc-prov="imported"],
-.tc-region[tc-prov="imported"] {
-  border-left-color: #1e76c8;        /* imported: blue */
-  background: #eef6ff;
-}
-/* Margin number — sourced from whichever attribute form is present. Split so a
- * region with neither attribute generates no "[]" (the ::before is not created
- * without a content rule). */
-.tc-region[data-tc-n]::before { content: "[" attr(data-tc-n) "]"; }
-.tc-region[tc-n]::before      { content: "[" attr(tc-n) "]"; }
+
+/* Top-right label — shared placement; per-provenance color + content below. */
 .tc-region::before {
   position: absolute;
-  left: -2.75rem;
-  color: #d98c14;
-  font-size: 0.75rem;
-  font-weight: bold;
+  top: 0.2rem;
+  right: 0.55rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #b9770f;                   /* authored label */
+}
+.tc-region[data-tc-n]::before { content: "tracked +" attr(data-tc-n); }
+.tc-region[tc-n]::before      { content: "tracked +" attr(tc-n); }
+
+/* imported — blue. */
+.tc-region[data-tc-prov="imported"],
+.tc-region[tc-prov="imported"] {
+  border-left-color: #1e76c8;
+  background: #eef6ff;
 }
 .tc-region[data-tc-prov="imported"]::before,
 .tc-region[tc-prov="imported"]::before { color: #1e76c8; }
+.tc-region[data-tc-prov="imported"][data-tc-n]::before { content: "imported +" attr(data-tc-n); }
+.tc-region[tc-prov="imported"][tc-n]::before           { content: "imported +" attr(tc-n); }
 
-/* Clean view (no-marks) hides region styling too — reads as ordinary prose. */
+/* transcript — green (shared family with sourced). */
+.tc-region[data-tc-prov="transcript"],
+.tc-region[tc-prov="transcript"] {
+  border-left-color: #2e8b57;
+  background: #edf7f0;
+}
+.tc-region[data-tc-prov="transcript"]::before,
+.tc-region[tc-prov="transcript"]::before { color: #2e8b57; }
+.tc-region[data-tc-prov="transcript"][data-tc-n]::before { content: "transcript +" attr(data-tc-n); }
+.tc-region[tc-prov="transcript"][tc-n]::before           { content: "transcript +" attr(tc-n); }
+
+/* sourced — green; label pulls the locator live from tc-src. The src-LESS rule
+ * comes first (fallback "sourced +N"); the src-FULL rule follows via the extra
+ * [tc-src] attribute selector, whose higher specificity wins when present. */
+.tc-region[data-tc-prov="sourced"],
+.tc-region[tc-prov="sourced"] {
+  border-left-color: #2e8b57;
+  background: #edf7f0;
+}
+.tc-region[data-tc-prov="sourced"]::before,
+.tc-region[tc-prov="sourced"]::before { color: #2e8b57; }
+.tc-region[data-tc-prov="sourced"][data-tc-n]::before { content: "sourced +" attr(data-tc-n); }
+.tc-region[tc-prov="sourced"][tc-n]::before           { content: "sourced +" attr(tc-n); }
+.tc-region[data-tc-prov="sourced"][data-tc-src][data-tc-n]::before {
+  content: "sourced: " attr(data-tc-src) " +" attr(data-tc-n);
+}
+.tc-region[tc-prov="sourced"][tc-src][tc-n]::before {
+  content: "sourced: " attr(tc-src) " +" attr(tc-n);
+}
+
+/* --- v9: gray verbatim scaffolding block ------------------------------------
+ * ::: {.tc-verbatim tc-cite="<citation>"}  holds a verbatim source excerpt for
+ * side-by-side confirmation next to a source-grounded refinement. It is NOT a
+ * tracked region and carries no number: it is temporary text the author deletes
+ * once the refinement is confirmed. Muted, dashed, self-labeled to signal it is
+ * scaffolding. When tc-cite is present the label prefixes it. */
+.tc-verbatim {
+  position: relative;
+  border-left: 4px dashed #9a9a9a;
+  background: #f4f4f4;
+  color: #555;
+  font-size: 0.92em;
+  padding: 0.25rem 0.75rem;
+  margin: 0.6rem 0 0.2rem;
+  border-radius: 3px;
+}
+.tc-verbatim::before {
+  content: "verbatim \2014 delete after confirming";
+  position: absolute;
+  top: 0.2rem;
+  right: 0.55rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #777;
+  letter-spacing: 0.02em;
+}
+.tc-verbatim[data-tc-cite]::before { content: attr(data-tc-cite) " \2014 delete after confirming"; }
+.tc-verbatim[tc-cite]::before      { content: attr(tc-cite) " \2014 delete after confirming"; }
+
+/* Clean view (no-marks): regions read as ordinary prose (bar/tint/padding/label
+ * removed); the verbatim scaffolding is hidden entirely so it never reaches a
+ * shared render. */
 body.no-marks .tc-region {
   border-left: none;
   background: transparent;
   padding: 0;
   margin: 0;
+  border-radius: 0;
 }
 body.no-marks .tc-region::before { display: none; }
+body.no-marks .tc-verbatim { display: none; }

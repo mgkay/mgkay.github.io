@@ -1,3 +1,32 @@
+9.0.0
+2026-07-12
+track-changes v9.0.0 — source-validation discipline, suite-wide.
+- SOURCE-VALIDATION DISCIPLINE: AI text supported by a document source lands as a green
+  `sourced` region beside a temporary gray `.tc-verbatim` excerpt that is verbatim BY
+  CONSTRUCTION — `/tc source` stages the slice and the PreToolUse hook re-reads the source at
+  write time, refusing a fabricated or paraphrased excerpt (exit 2). Containment is
+  normalized-exact (NFKC fold, soft-hyphen/ligature/line-break-join, whitespace collapse); a
+  scanned/unreadable source fails closed. Sources: text (`.md`/`.qmd`/`.tex`/`.txt`), `.pdf`
+  (PyMuPDF), `.docx` (python-docx).
+- PROVENANCE + tc-src: `tc-prov="sourced"` joins authored/imported/transcript; a sourced
+  region carries `tc-src` binding it to `path#locator` or an `@citekey locator` resolved via
+  the document's `.bib` `file`/`localfile` field or a `.tc-sources.json` map (unresolvable
+  keys fail closed, naming both mechanisms).
+- /tc manifest [<doc>]: regenerates `validation/<stem>.sources.md` whole-file and
+  deterministically from the `sourced:` audit entries in `.tc-history.md` — one section per
+  region (source, locator, verbatim excerpt, supported text, links both ways) plus a
+  "Resolved/removed regions" list. Machine-generated evidence, never model-reconstructed.
+- tools/annotate_source_pdf.py: highlights each verified excerpt in an annotated PDF TWIN
+  (never the original) under `validation/`, regenerates a trailing summary page, and reports
+  every unmatched excerpt (nonzero exit); image-only PDFs are reported and skipped.
+- LaTeX first-class: `tcregion` gains an optional trailing src arg (`{N}[prov][src]`, xparse
+  `m o o` — absent second optional leaves every v6/v7 parse untouched) plus a `tcverbatim`
+  gray-scaffolding environment and green transcript/sourced change-bars. Suite-shipped
+  `tc-clean.css` styles all four provenances + `.tc-verbatim` under both raw and `data-`
+  attribute forms (a course `_quarto.yml` can shrink to a thin consumer).
+- Additive and backward-compatible: mark grammar unchanged (absent provenance/src = authored);
+  no new hooks (suite stays at 6); no document migration.
+
 8.2.0
 2026-07-12
 track-changes v8.2.0 — import-fidelity coverage check for verified-import.

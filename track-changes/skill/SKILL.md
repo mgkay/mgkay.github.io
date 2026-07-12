@@ -1,6 +1,6 @@
 ---
 name: track-changes
-description: Source-preserving edit protocol. Tracks Claude-introduced changes to existing .md, .qmd, and .tex files by wrapping only the changed characters in a <mark> highlight followed by a <sup>N</sup> reference number, so the human author can accept or reject each change individually. Default-OFF; opt in per folder via .tc-tracked marker, per file via YAML frontmatter `tc-track: true` (or `% tc-track: true` for .tex). Per-turn override via /draft. Unified /tc command for all operations (/tc mark, /tc enable, /tc disable, /tc migrate, /tc status, /tc list, /tc accept, /tc reject, /tc draft, /tc import, /tc polish). Edits to tracked files append to a project-local .tc-history.md audit log. Verbatim/converted source import is the separate opt-in verified-import skill (/tc import).
+description: Source-preserving edit protocol. Tracks Claude-introduced changes to existing .md, .qmd, and .tex files by wrapping only the changed characters in a <mark> highlight followed by a <sup>N</sup> reference number, so the human author can accept or reject each change individually. Default-OFF; opt in per folder via .tc-tracked marker, per file via YAML frontmatter `tc-track: true` (or `% tc-track: true` for .tex). Per-turn override via /draft. Unified /tc command for all operations (/tc mark, /tc enable, /tc disable, /tc migrate, /tc status, /tc list, /tc accept, /tc reject, /tc draft, /tc import, /tc polish, /tc source, /tc manifest). Edits to tracked files append to a project-local .tc-history.md audit log. Verbatim/converted source import is the separate opt-in verified-import skill (/tc import).
 ---
 
 # track-changes
@@ -976,22 +976,26 @@ content *is*, mechanically, not by whether you were "approved":
   operation the tool proves — never hand-type content and call it "from your
   material."
 
-**Provenance (Fix E; extended v7).** A mark or region carries an optional
+**Provenance (Fix E; extended v7, v9).** A mark or region carries an optional
 provenance type: `tc-prov="authored"` (default — anything you
-wrote/paraphrased), `tc-prov="imported"` (a verbatim `/tc import` slice), or
+wrote/paraphrased), `tc-prov="imported"` (a verbatim `/tc import` slice),
 `tc-prov="transcript"` (v7 — AI wording over the instructor's own spoken
 class-recording transcript content: the ideas are the instructor's, the
 sentences are the AI's, so it reviews between imported and authored in
-scrutiny). Each provenance renders in a distinct color so the reviewer can
-skim the verbatim parts and scrutinize the authored ones. Absent ⇒ authored
+scrutiny), or `tc-prov="sourced"` (v9 — AI text supported by a *document*
+source, carrying a `tc-src` binding and verified against a gray verbatim
+excerpt; see §16). Each provenance renders in a distinct color so the reviewer
+can skim the verbatim parts and scrutinize the authored ones. Absent ⇒ authored
 (every pre-v6 mark reads as authored). The grammar
-(`lib/tc_core/grammar.py PROV_VALUES`) recognizes all three; resolution
+(`lib/tc_core/grammar.py PROV_VALUES`) recognizes all four; resolution
 commands (`accept`/`reject`/`list`) treat regions identically regardless of
-provenance. A transcript region is conventionally preceded by a TEMPORARY
-gray `.tc-verbatim` block quoting the raw transcript for side-by-side
+provenance. A transcript or sourced region is conventionally preceded by a
+TEMPORARY gray `.tc-verbatim` block quoting the raw source for side-by-side
 confirmation — `.tc-verbatim` is scaffolding, not a tracked region:
 resolution commands ignore it, and it is deleted by hand once its region is
 accepted (a conversion's definition-of-done should gate on none remaining).
+For the mechanically-verified `sourced` discipline (staging, the write-time
+excerpt check, and the evidence manifest), see §16.
 
 **The corpus-example rule (standing convention).** Worked examples lifted from
 the spreadsheet/MATLAB corpus have mixed, predictable provenance: the
@@ -999,6 +1003,149 @@ the spreadsheet/MATLAB corpus have mixed, predictable provenance: the
 **Julia code is a re-implementation → new → tracked** (a region or marks,
 `authored`); **AI prose → new → tracked**. So by default: *import the scenario,
 track the Julia as new.* This is automatic — do not relitigate it per example.
+
+## 16. Source-validation discipline (v9)
+
+The transcript gray/green convention (§15) generalizes in v9 to arbitrary
+**document sources**. When AI-written text is *supported by* a document — a
+chapter PDF, a prior manuscript, a Word draft, a cited reference — it lands as
+a green **`sourced`** region, and the supporting quotation appears beside it as
+a temporary **gray `.tc-verbatim` block that is verbatim by construction**. A
+`/tc source` staging command plus the always-on write-time hook mechanically
+guarantee the gray block quotes the real source; a fabricated or paraphrased
+excerpt is refused fail-closed. The gray/green split keeps the reviewable
+authored interpretation (green) cleanly separated from the raw evidence (gray),
+and makes "does this claim actually rest on the source?" a mechanical check
+rather than a matter of trust.
+
+### The `/tc source` flow
+
+Stage the source, then write one edit pairing the two blocks:
+
+```
+/tc source <file>#<locator> [<target>]        # path form
+/tc source @citekey [<locator>] [<target>]    # BibTeX-citekey form
+```
+
+The locator is `L<a>-L<b>` (text lines), `p.<a>[-<b>]` (PDF pages), or absent
+(the whole source). `<file>` sources may be text (`.md`/`.qmd`/`.tex`/`.txt`),
+`.pdf` (PyMuPDF), or `.docx` (python-docx). An `@citekey` resolves via the
+document's `.bib` `file`/`localfile` field or a `.tc-sources.json` map (§F5;
+unresolvable keys fail closed, naming both mechanisms). `<target>` defaults to
+the working file.
+
+`/tc source` prints the resolved slice together with the exact block shapes to
+write. In `.md`/`.qmd`:
+
+```
+::: {.tc-verbatim tc-cite="<src>"}
+<the exact quotation, copied verbatim from the slice>
+:::
+
+::: {.tc-region tc-n="N" tc-prov="sourced" tc-src="<src>"}
+<your sourced prose, supported by the quotation above>
+:::
+```
+
+In `.tex`:
+
+```latex
+\begin{tcverbatim}{<src>}
+<the exact quotation, copied verbatim from the slice>
+\end{tcverbatim}
+
+\begin{tcregion}{N}[sourced][<src>]
+<your sourced prose, supported by the quotation above>
+\end{tcregion}
+```
+
+`N` is the next free mark number. `<src>` is the canonical `tc-src` value the
+CLI prints for that staging — `path#locator` (or bare `path` for a whole
+source), or `@citekey locator` (or bare `@citekey`) — and it must be copied
+**verbatim** into the green region opener.
+
+### The mechanical guarantee (what the hook refuses)
+
+On the write that adds the gray+green pair, the track-changes PreToolUse hook
+re-reads the staged source and enforces, fail-closed:
+
+- a gray `.tc-verbatim` block with **no live `/tc source` staging** → blocked
+  ("gray excerpt requires `/tc source` staging"). The fabricated-excerpt back
+  door stays closed even for a hand-typed gray block.
+- a gray block whose normalized text is **not contained** in the staged source
+  slice → blocked, naming the first divergent fragment; the staging is
+  preserved for a corrected retry. Containment is **normalized-exact** (Unicode
+  NFKC fold, soft hyphens dropped, hyphen-linebreak splits joined, whitespace
+  runs collapsed; case preserved), so an honest PDF excerpt spanning a line
+  break passes while a paraphrase does not.
+- **more than one** gray block in a single write → blocked (stage and write one
+  source at a time; run `/tc source` again for the next).
+- a green `sourced` region **missing `tc-src`, or carrying a `tc-src` different
+  from the staged value** → blocked, with the expected value named.
+- a **scanned/image PDF** (empty text layer) or otherwise unreadable source →
+  refused at staging time with a named message; the discipline never guesses.
+
+On success the hook writes a one-shot sentinel that covers exactly the gray
+scaffolding for this write (the green region stays governed by the normal
+region grammar), appends a `sourced:` entry to `.tc-history.md` (region `N`,
+target, source, locator, verbatim excerpt, supported text, timestamp), and
+clears the staging. A later AI edit *inside* a gray block is new added content
+requiring a fresh staging; a hand edit by the author is human content, outside
+the gate.
+
+### Quotation vs. interpretation — the boundary
+
+A green `sourced` region is for **AI-authored interpretation, paraphrase, or
+synthesis** that leans on a source. It is **not** a place to park a quotation
+that is meant to *stay* in the document. Two cases sit outside the discipline:
+
+- An exact quotation the author wants to **keep** in the finished text is
+  ordinary **quoted text with a citation** — write it as a normal `<mark>` edit
+  (or under `/draft`), not as a green region. The gray block is transient
+  scaffolding; do not use it for durable quotations.
+- Lifting a **verbatim block from a source file** into the document (a slide's
+  scenario, a prior section) is the separate **`/tc import`** operation (§0),
+  which lands the block clean. `sourced` is for *your words supported by* the
+  source, `imported` is for *the source's words placed into* the document.
+
+### Gray lifecycle and the durable record
+
+The gray `.tc-verbatim` block is **transient scaffolding** — it exists so the
+green interpretation can be confirmed against the evidence side by side. Once
+the green region is confirmed, delete the gray block. Deletion timing is a
+**per-project policy**: for lecture notes, delete each gray block as its region
+is confirmed; for a manuscript, keep the gray blocks through internal review
+and strip them at submission. **Deleting a gray block never loses evidence** —
+the `sourced:` audit entry in `.tc-history.md` is durable, and the manifest
+below regenerates the full excerpt-and-support record from it on demand.
+
+### `/tc manifest` and the `validation/` folder
+
+`/tc manifest [<doc>]` regenerates `<doc-dir>/validation/<stem>.sources.md`
+whole-file and deterministically from the `sourced:` audit entries — one
+section per sourced region (source + locator as a relative link, verbatim
+excerpt, supported text, a link back to the region), plus a "Resolved/removed
+regions" list for entries whose region no longer exists in the document. The
+manifest is **machine-generated evidence, never model-reconstructed** — do not
+hand-edit it; re-run `/tc manifest` after resolving or removing regions. The
+companion tool `tools/annotate_source_pdf.py` reads a document's audit entries
+(or a `validation/*.sources.md` manifest) and, per source, writes an annotated
+PDF **twin** under `validation/` with each verified excerpt highlighted and a
+regenerated summary page — it never touches the original, reports every
+unmatched excerpt (nonzero exit), and skips an image-only PDF with a clear
+"no text layer" message. Committing `validation/` is per-project policy.
+
+### Privacy note (F7)
+
+Source excerpts and the manifests that quote them can carry material from
+publisher PDFs or unpublished drafts, so keep the `validation/` folder in a
+**private evidence location** — `.gitignore` it (or commit it only to a private
+repo), never fold it into a public or anonymized hand-off. The `tc-src`
+attributes embedded in the document itself point at local source paths and
+citekeys; before an **anonymous submission**, strip them with a single
+one-pass search-replace over `tc-src="…"` (and the LaTeX `[<src>]` region
+argument). This is a documented per-project step, like the gray-deletion
+timing above — there is no v9 mechanism that does it automatically.
 
 ## Companion tool: `decap` (author-side dictation pre-clean)
 

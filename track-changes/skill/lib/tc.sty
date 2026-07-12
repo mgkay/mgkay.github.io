@@ -33,9 +33,25 @@
 %       \end{tcregion}
 %     The bar color encodes provenance (authored vs imported); N is printed at
 %     the region start.
+%
+% v9 additions (source-validation discipline):
+%   - tcregion arg spec extended to {m o o}: a SECOND optional carries a source
+%     locator for the source-grounded provenances —
+%       \begin{tcregion}{N}[sourced][@daskin2013 p.114] ... \end{tcregion}
+%     When present it prints "sourced: <src>" in the bar color after the [N] head.
+%   - Two new region-bar colors in the GREEN family, shared by the two
+%     source-grounded provenances: transcript and sourced both use tcbarsourced
+%     (AI wording grounded in a source the reader can open). Four-color ceiling
+%     preserved (yellow inline marks + amber/blue/green regions).
+%   - tcverbatim environment: a GRAY-barred scaffolding block holding a verbatim
+%     source excerpt for side-by-side confirmation, self-labeled to signal it is
+%     temporary (delete after confirming). No number; not a tracked region:
+%       \begin{tcverbatim}{Freight Transport.docx p. 12}
+%         <verbatim excerpt>
+%       \end{tcverbatim}
 
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesPackage{tc}[2026/06/09 v6.0 track-changes highlight + region macros]
+\ProvidesPackage{tc}[2026/07/12 v9.0 track-changes highlight + region + verbatim macros]
 
 \RequirePackage{soul}
 \RequirePackage{xcolor}
@@ -47,6 +63,8 @@
 \definecolor{tchighlightimported}{rgb}{0.7,1,1}  % imported inline highlight (pale cyan)
 \definecolor{tcbarauthored}{rgb}{0.85,0.55,0.08} % authored region bar (amber)
 \definecolor{tcbarimported}{rgb}{0.12,0.46,0.78} % imported region bar (blue)
+\definecolor{tcbarsourced}{rgb}{0.18,0.55,0.34}  % transcript+sourced region bar (green)
+\definecolor{tcgray}{rgb}{0.6,0.6,0.6}           % tcverbatim scaffolding bar (gray)
 \sethlcolor{tchighlight}
 
 % \tc[<prov>]{<content>} — wrap inline content in a highlight. Optional prov in
@@ -62,18 +80,44 @@
 % it is numeric (the PreToolUse hook does).
 \newcommand{\tcn}[1]{\textsuperscript{#1}}
 
-% \begin{tcregion}{<N>}[<prov>] ... \end{tcregion} — a whole-region insertion
-% marked by a colored left change-bar (NOT a background highlight, which soul
-% cannot span across math/verbatim/paragraphs). N is printed at the region
-% start; prov in {authored, imported} (default authored) picks the bar color.
-% Arg spec `m o` (xparse, in the LaTeX kernel) gives the {N}[prov] order the
+% \begin{tcregion}{<N>}[<prov>][<src>] ... \end{tcregion} — a whole-region
+% insertion marked by a colored left change-bar (NOT a background highlight,
+% which soul cannot span across math/verbatim/paragraphs). N is printed at the
+% region start; prov in {authored, imported, transcript, sourced} (default
+% authored) picks the bar color — transcript and sourced share the green
+% tcbarsourced. The optional second bracket <src> is a source locator; when
+% present it is printed after the [N] head as "sourced: <src>" in the bar color
+% (meaningful with sourced/transcript, but rendered whenever supplied). Arg spec
+% `m o o` (xparse, in the LaTeX kernel) gives the {N}[prov][src] order the
 % PreToolUse grammar expects.
-\NewDocumentEnvironment{tcregion}{m o}{%
+\NewDocumentEnvironment{tcregion}{m o o}{%
   \def\tc@barcolor{tcbarauthored}%
-  \IfValueT{#2}{\ifthenelse{\equal{#2}{imported}}{\def\tc@barcolor{tcbarimported}}{}}%
+  \IfValueT{#2}{%
+    \ifthenelse{\equal{#2}{imported}}{\def\tc@barcolor{tcbarimported}}{}%
+    \ifthenelse{\equal{#2}{transcript}}{\def\tc@barcolor{tcbarsourced}}{}%
+    \ifthenelse{\equal{#2}{sourced}}{\def\tc@barcolor{tcbarsourced}}{}%
+  }%
   \def\FrameCommand{{\color{\tc@barcolor}\vrule width 3pt}\hspace{8pt}}%
   \MakeFramed{\advance\hsize-\width\FrameRestore}%
-  {\footnotesize\textbf{\textcolor{\tc@barcolor}{[\,#1\,]}}\quad}\ignorespaces
+  {\footnotesize\textbf{\textcolor{\tc@barcolor}{[\,#1\,]}}\quad}%
+  \IfValueT{#3}{{\footnotesize\textcolor{\tc@barcolor}{sourced: #3}}\quad}%
+  \ignorespaces
+}{%
+  \par\endMakeFramed
+}
+
+% \begin{tcverbatim}{<citation>} ... \end{tcverbatim} — a GRAY-barred
+% scaffolding block holding a verbatim source excerpt for side-by-side
+% confirmation. Not a tracked region and not numbered: it is temporary text the
+% author deletes once the source-grounded refinement beside it is confirmed. The
+% gray left bar + \footnotesize gray body + self-label ("<citation> — delete
+% after confirming") signal that intent. framed-based, so it tolerates paragraph
+% breaks and display math inside.
+\NewDocumentEnvironment{tcverbatim}{m}{%
+  \def\FrameCommand{{\color{tcgray}\vrule width 3pt}\hspace{8pt}}%
+  \MakeFramed{\advance\hsize-\width\FrameRestore}%
+  \footnotesize\color{gray!80!black}%
+  {\textcolor{tcgray}{#1 --- delete after confirming}\par}\ignorespaces
 }{%
   \par\endMakeFramed
 }

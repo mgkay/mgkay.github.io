@@ -659,8 +659,51 @@ def analyze(source_text, payload, tool_name, ftype):
     # covered and exempt from the inline-mark requirement.
     region_insertion_lines = _grammar.region_covered_lines(proposed_text, ftype)
 
+    # v9 source-validation: gray `.tc-verbatim` scaffolding coverage. An added
+    # line INSIDE a verbatim block is covered IFF a one-shot verification
+    # sentinel (written by the source hook after normalized-exact containment
+    # passed) authorizes THIS block's normalized body. The sentinel is consumed
+    # ONCE per analyze call — on the first block that has any added line — so a
+    # replay of the identical payload (no fresh staging) is refused, and a gray
+    # block whose body was altered after the sentinel was written fails the sha
+    # match. srcstage is imported defensively: if it is unavailable the gray
+    # lines simply fall through to VIOLATION (fail-open to violation, never to
+    # allow). Blocks with NO added lines are untouched (existing gray content
+    # never re-triggers).
+    _added_set = set(added_line_nums)
+    verbatim_authorized = set()       # added gray lines the sentinel covered
+    verbatim_violation_lines = set()  # added gray lines with no authorization
+    try:
+        from tc_core import srcstage as _srcstage
+    except Exception:
+        _srcstage = None
+    _ti = (payload or {}).get('tool_input') or {}
+    _file_path = (_ti.get('file_path') or '').strip()
+    _v_consumed = False
+    for _vb in _grammar.extract_verbatim_blocks(proposed_text, ftype):
+        _bs, _be = _vb.get('start'), _vb.get('end')
+        if not _bs or not _be:
+            continue  # unclosed block: not a well-formed coverable region
+        _blk_lines = set(range(_bs, _be + 1))
+        _added_in_blk = _blk_lines & _added_set
+        if not _added_in_blk:
+            continue  # untouched existing gray content — never re-triggers
+        _auth = False
+        if not _v_consumed and _srcstage is not None and _file_path:
+            try:
+                _auth = _srcstage.sentinel_consume(
+                    _file_path, _srcstage.gray_sha_of(_vb.get('body') or ''))
+            except Exception:
+                _auth = False
+            _v_consumed = True
+        if _auth:
+            verbatim_authorized |= _blk_lines
+        else:
+            verbatim_violation_lines |= _added_in_blk
+
     if not is_pure_resolution:
         inline_violation_added = False
+        verbatim_violation_added = False
         for ln in added_line_nums:
             line_text = proposed_lines[ln - 1] if 1 <= ln <= n_lines else ''
             # A line covered by a new-block sibling mark (mechanism 1) is exempt.
@@ -668,6 +711,20 @@ def analyze(source_text, payload, tool_name, ftype):
                 continue
             # A line inside a whole-region insertion (Fix D) is exempt.
             if ln in region_insertion_lines:
+                continue
+            # A gray `.tc-verbatim` line the sentinel authorized is covered.
+            if ln in verbatim_authorized:
+                continue
+            # An added gray line with NO live sentinel is a dedicated violation
+            # (distinct from the generic unmarked-content message): the excerpt
+            # was never verified against a staged source.
+            if ln in verbatim_violation_lines:
+                if not verbatim_violation_added:
+                    add_v(ln, "gray .tc-verbatim excerpt not verified — stage the "
+                              "source with /tc source first (a gray excerpt must be "
+                              "verified verbatim against its staged source before it "
+                              "can land)")
+                    verbatim_violation_added = True
                 continue
             if line_text.strip() == '':
                 continue
