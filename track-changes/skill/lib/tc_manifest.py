@@ -431,6 +431,33 @@ def cmd_manifest(argv):
     return 0
 
 
+def regenerate(doc_path):
+    """v9.3.0: quiet, importable manifest regenerator for automatic refresh
+    (PostToolUse on a sourced write; post-accept). Deterministic — re-derives the
+    whole manifest from the durable `sourced:` audit entries — so it is safe to
+    call on every sourced write / accept (idempotent). Best-effort: returns True
+    iff a manifest was written, False on any failure or when there is no evidence.
+    Emits nothing (never disturbs hook/CLI output)."""
+    try:
+        doc = os.path.abspath(doc_path)
+        if not os.path.isfile(doc):
+            return False
+        entries = audit.read_sourced_entries(doc)
+        good = [e for e in entries if not e.get('malformed')]
+        if not good:
+            return False
+        text, _live, _removed, _malformed = _render_manifest(doc, entries)
+        val_dir = os.path.join(os.path.dirname(doc), 'validation')
+        stem = os.path.splitext(os.path.basename(doc))[0]
+        out_path = os.path.join(val_dir, stem + '.sources.md')
+        os.makedirs(val_dir, exist_ok=True)
+        with open(out_path, 'w', encoding='utf-8', newline='\n') as f:
+            f.write(text)
+        return True
+    except Exception:
+        return False
+
+
 def main(argv=None):
     argv = list(sys.argv[1:] if argv is None else argv)
     return cmd_manifest(argv)

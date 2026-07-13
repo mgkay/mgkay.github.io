@@ -37,6 +37,7 @@ import re
 import sys
 import json
 import datetime
+import subprocess
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
 if _HERE not in sys.path:
@@ -133,6 +134,64 @@ def _extract_regions_with_offsets(text, ftype):
             'closer_start': starts[e - 1], 'closer_end': starts[e],
         })
     return out
+
+
+def _line_starts(text):
+    """Char offset at the start of each line (index i = start of 1-indexed line
+    i+1). starts[k] is the offset just past the k-th line's trailing '\\n'."""
+    starts = [0]
+    for ln in text.split('\n'):
+        starts.append(starts[-1] + len(ln) + 1)  # +1 for the '\n'
+    return starts
+
+
+def _extract_verbatim_with_offsets(text, ftype):
+    """v9.3.0: gray `.tc-verbatim` scaffolding blocks with the char-offset span of
+    the WHOLE block (opener delimiter line through the closer line inclusive of
+    its trailing newline). Returns dicts {start_line, end_line, span_start,
+    span_end, citation}; only closed blocks (end present)."""
+    blocks = tc_grammar.extract_verbatim_blocks(text, ftype)
+    n_lines = len(text.split('\n'))
+    starts = _line_starts(text)
+    out = []
+    for b in blocks:
+        s, e = b.get('start'), b.get('end')
+        if not s or not e or e > n_lines or s < 1:
+            continue
+        out.append({
+            'start_line': s, 'end_line': e,
+            'span_start': starts[s - 1], 'span_end': starts[e],
+            'citation': b.get('citation'),
+        })
+    return out
+
+
+def _paired_gray_span(region_line, gray_blocks, text):
+    """v9.3.0: the char span to splice out for the gray `.tc-verbatim` block
+    paired with a region whose opener is at 1-indexed `region_line`.
+
+    Pairing is conservative and adjacency-based: the paired block is the closed
+    gray block whose closer line sits immediately above the region opener,
+    separated only by blank lines. Returns (span_start, span_end) covering the
+    block AND the blank gap up to (not including) the region opener line, so no
+    orphan blank lines remain. Returns None when no block is immediately
+    adjacent (already removed, or a non-scaffolded region) — never guessing
+    across intervening content."""
+    lines = text.split('\n')
+    starts = _line_starts(text)
+    best = None
+    for b in gray_blocks:
+        if b['end_line'] >= region_line:
+            continue
+        # Lines strictly between the block closer and the region opener
+        # (1-indexed end_line+1 .. region_line-1) must all be blank.
+        gap = lines[b['end_line']:region_line - 1]
+        if all(g.strip() == '' for g in gap):
+            if best is None or b['end_line'] > best['end_line']:
+                best = b
+    if best is None:
+        return None
+    return (best['span_start'], starts[region_line - 1])
 
 
 def _preview(s, limit=60):
@@ -275,6 +334,7 @@ def resolve(path, decision, ns):
     text = original.replace('\r\n', '\n')
     marks = _extract_marks_with_offsets(text, ftype)
     regions = _extract_regions_with_offsets(text, ftype)   # v6 Fix D
+    gray_blocks = _extract_verbatim_with_offsets(text, ftype)  # v9.3.0
     by_n = {m['N']: m for m in marks}
     region_by_n = {r['N']: r for r in regions}
 
@@ -298,6 +358,7 @@ def resolve(path, decision, ns):
                      else (m['start'], m['end'], repl))
         resolved.append(m['N'])
         resolved_marks.append(m)
+    sourced_resolved = []       # v9.3.0: Ns of resolved sourced regions (C3 trigger)
     for r in (rr for rr in regions if rr['N'] in want):
         if decision == 'accept':
             # Keep the body; strip the closer then the opener delimiter line.
@@ -306,9 +367,23 @@ def resolve(path, decision, ns):
         else:
             # reject: remove the whole region (opener through closer inclusive).
             spans.append((r['opener_start'], r['closer_end'], ''))
+        # v9.3.0 (Issue 1): a sourced/transcript region's paired gray
+        # `.tc-verbatim` scaffolding is transient — remove it in the same
+        # resolution (accept OR reject). Its durable record persists in
+        # `.tc-history.md`; conservative adjacency pairing (see _paired_gray_span).
+        prov = r.get('prov', 'authored')
+        gray_removed = False
+        if prov in ('sourced', 'transcript'):
+            gspan = _paired_gray_span(r['line'], gray_blocks, text)
+            if gspan is not None:
+                spans.append((gspan[0], gspan[1], ''))
+                gray_removed = True
+        if prov == 'sourced':
+            sourced_resolved.append(r['N'])
         resolved.append(r['N'])
         resolved_marks.append({'N': r['N'], 'type': 'region', 'old': '',
-                               'new': '(region)', 'prov': r.get('prov', 'authored')})
+                               'new': '(region)', 'prov': prov,
+                               'gray_removed': gray_removed})
     spans.sort(key=lambda s: s[0], reverse=True)
     new_text = text
     for (s, e, repl) in spans:
@@ -337,7 +412,8 @@ def resolve(path, decision, ns):
 
     return {'resolved': resolved, 'not_found': not_found,
             'remaining': remaining, 'wrote_file': wrote_file,
-            'wrote_log': wrote_log}
+            'wrote_log': wrote_log,
+            'sourced_resolved': sorted(set(sourced_resolved), key=_n_key)}
 
 
 def _n_key(n):
@@ -379,6 +455,8 @@ def _write_explicit_audit(path, ftype, decision, resolved_marks, post_text):
             lines.append(f"    was_old: {tc_audit._fmt_str(m['old'])}")
         if m.get('new', ''):
             lines.append(f"    was_new: {tc_audit._fmt_str(m['new'])}")
+        if m.get('gray_removed'):
+            lines.append(f"    gray_removed: true")  # v9.3.0 paired .tc-verbatim
     entry = '\n'.join(lines) + '\n'
     try:
         os.makedirs(os.path.dirname(log_path), exist_ok=True)
@@ -455,6 +533,53 @@ def _cmd_list(path):
     return 0
 
 
+def _regen_manifest(path):
+    """v9.3.0 (Issue 2): best-effort manifest refresh. Returns True on success."""
+    try:
+        import tc_manifest
+        return bool(tc_manifest.regenerate(path))
+    except Exception:
+        return False
+
+
+def _regen_annotated(path):
+    """v9.3.0 (Issue 2): best-effort annotated-PDF twin regen for a doc's sourced
+    sources. Runs the bundled annotator as a subprocess so its heavier deps
+    (PyMuPDF / headless render) and failure modes stay isolated — a failure is
+    reported by the caller and never fails the accept. Returns (ok, message)."""
+    tool = os.path.join(os.path.dirname(_HERE), 'tools', 'annotate_source_pdf.py')
+    if not os.path.isfile(tool):
+        return (False, 'annotator not found')
+    try:
+        env = dict(os.environ)
+        env['PYTHONIOENCODING'] = 'utf-8'
+        p = subprocess.run([sys.executable, tool, path],
+                           capture_output=True, text=True, env=env, timeout=120)
+        tail = (p.stdout or p.stderr or '').strip().splitlines()
+        msg = tail[-1] if tail else ''
+        return (p.returncode == 0, msg)
+    except Exception as e:
+        return (False, str(e))
+
+
+def _post_accept_evidence(path):
+    """v9.3.0 (Issue 2): after an accept that resolved >=1 sourced region,
+    auto-(re)generate the human-facing evidence — the manifest and the annotated
+    source twin(s). Best-effort and LOUD on failure; NEVER changes the accept's
+    outcome. Emits notes to stdout."""
+    if _regen_manifest(path):
+        print("tc: refreshed source manifest (validation/)")
+    ok, msg = _regen_annotated(path)
+    if ok:
+        print("tc: regenerated annotated source twin(s)"
+              + (" -- %s" % msg if msg else ""))
+    else:
+        print("tc: note -- could not regenerate annotated source twin(s)"
+              + (" (%s)" % msg if msg else "")
+              + "; the accept succeeded. Run tools/annotate_source_pdf.py by hand "
+                "if you need the highlighted PDF.")
+
+
 def _cmd_resolve(path, decision, spec, all_marks=False):
     try:
         existing = list_marks(path)
@@ -504,6 +629,9 @@ def _cmd_resolve(path, decision, spec, all_marks=False):
     if res['remaining']:
         print("tc: %d mark(s) remain: %s"
               % (len(res['remaining']), ', '.join(res['remaining'])))
+    # v9.3.0 (Issue 2): accept of a sourced region auto-(re)generates evidence.
+    if decision == 'accept' and res.get('sourced_resolved'):
+        _post_accept_evidence(path)
     return 0
 
 

@@ -1175,13 +1175,32 @@ outside the discipline:
 ### Gray lifecycle and the durable record
 
 The gray `.tc-verbatim` block is **transient scaffolding** — it exists so the
-green interpretation can be confirmed against the evidence side by side. Once
-the green region is confirmed, delete the gray block. Deletion timing is a
-**per-project policy**: for lecture notes, delete each gray block as its region
-is confirmed; for a manuscript, keep the gray blocks through internal review
-and strip them at submission. **Deleting a gray block never loses evidence** —
-the `sourced:` audit entry in `.tc-history.md` is durable, and the manifest
-below regenerates the full excerpt-and-support record from it on demand.
+green interpretation can be confirmed against the evidence side by side.
+**As of 9.3.0 the gray block is removed automatically** when its
+`sourced`/`transcript` region is resolved: `/tc accept` **or** `/tc reject` of
+the region also strips the paired gray block (the one immediately above it) in
+the same resolution — no manual deletion, no `/draft`. The pairing is
+conservative: a region with no immediately-adjacent gray block, or an
+authored/imported region, is left untouched, so nothing is removed by surprise.
+**Removing a gray block never loses evidence** — the `sourced:` audit entry in
+`.tc-history.md` is durable, and the manifest below is regenerated from it. (You
+may still delete a gray block by hand before resolving; that is ordinary
+scaffolding cleanup and is not itself tracked.)
+
+Deletion *timing* remains a **per-project policy** for gray blocks you keep past
+their region's resolution: for lecture notes, let acceptance clear each block;
+for a manuscript, keep the gray blocks through internal review and strip them at
+submission.
+
+**Auto-generated evidence (9.3.0).** The human-facing validation artifacts are
+now produced automatically, not only on demand: the manifest
+`validation/<stem>.sources.md` refreshes on each successful **sourced write**
+(an ordinary tracked write regenerates nothing), and the annotated-PDF twin(s)
+regenerate on **`/tc accept`** of a sourced region. Both are **best-effort and
+loud on failure** — a missing browser/PyMuPDF or an unreadable source prints a
+note but never fails the write or the accept. (Excerpt *verification* is
+separate and still fails closed.) `/tc manifest` and the annotator remain
+available to run by hand.
 
 ### `/tc manifest` and the `validation/` folder
 

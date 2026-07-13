@@ -1,3 +1,28 @@
+9.3.0
+2026-07-13
+track-changes v9.3.0 — sourced-region lifecycle: gray cleanup + auto-evidence (behavior-changing).
+- GRAY CLEANUP: `/tc accept` (and `/tc reject`) of a `sourced`/`transcript` region now also removes
+  its paired gray `.tc-verbatim` scaffolding block in the same resolution. The block's sole purpose
+  (side-by-side confirmation) is discharged at resolution and its durable record persists in the
+  `sourced:` audit entry, so nothing is lost. Closes the self-contradiction where SKILL.md prescribed
+  deleting the gray block but the deletion gate refused the AI's unmarked deletion. Pairing is
+  conservative — the gray block immediately above the region (blank lines only between); a region with
+  no adjacent block, or an authored/imported region, is untouched. Runs in the resolver's own direct
+  write, so the always-on hook is never involved. Markdown/Quarto (`.tc-verbatim`) and LaTeX
+  (`tcverbatim`) parity.
+- AUTO-EVIDENCE: the human-facing validation artifacts are now generated automatically instead of
+  on-demand. (1) MANIFEST: a successful write that touches a `sourced` region refreshes
+  `validation/<stem>.sources.md` from the just-recorded audit (in the existing PostToolUse hook;
+  gated so ordinary tracked writes never regenerate it). (2) ANNOTATED TWIN: `/tc accept` of a
+  sourced region regenerates the highlighted annotated-PDF twin(s) for the touched source(s). Both
+  are BEST-EFFORT and LOUD on failure — a missing browser / PyMuPDF / unreadable source reports a
+  note but NEVER fails the write or the accept (excerpt *verification* is unchanged and still fails
+  closed). New importable `tc_manifest.regenerate(doc)`; the annotator runs as an isolated subprocess.
+- CSS: the provenance `::before` label no longer overlaps the first body line — `.tc-region` /
+  `.tc-verbatim` top padding bumped to clear the absolutely-positioned label.
+- Additive audit field `gray_removed: true` on resolved sourced/transcript regions (back-compat).
+  No new hooks (suite stays at 6); backward-compatible grammar; no document migration.
+
 9.2.0
 2026-07-13
 track-changes v9.2.0 — web-source citation with a captured dated snapshot (additive).

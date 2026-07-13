@@ -96,6 +96,20 @@ def main():
     except Exception as e:
         _log(f'in-process record failed: {e}')
 
+    # v9.3.0 (Issue 2): auto-refresh the human-facing source manifest after a
+    # write that touched a `sourced` region. Gated so ordinary tracked writes
+    # never regenerate it; the `sourced:` audit entry was just recorded above, so
+    # the manifest sees it. Best-effort — a failure must not disturb exit 0.
+    try:
+        from tc_core import grammar as tc_grammar
+        if any(r.get('prov') == 'sourced'
+               for r in tc_grammar.extract_regions(source_text, ftype)):
+            import tc_manifest
+            if tc_manifest.regenerate(abs_file):
+                _log(f'refreshed source manifest for {abs_file}')
+    except Exception as e:
+        _log(f'manifest refresh skipped: {e}')
+
     return 0
 
 

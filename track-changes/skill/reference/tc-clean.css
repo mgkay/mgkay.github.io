@@ -63,7 +63,9 @@ mark[tc-prov="imported"] {
   position: relative;
   border-left: 4px solid #d98c14;   /* authored: amber */
   background: #fff8e6;
-  padding: 0.25rem 0.75rem;
+  /* Top padding clears the absolutely-positioned provenance label (::before,
+   * top:.2rem) so it never overlaps the first body line (9.3.0). */
+  padding: 1.4rem 0.75rem 0.35rem;
   margin: 0.6rem 0;
   border-radius: 3px;
 }
@@ -134,7 +136,9 @@ mark[tc-prov="imported"] {
   background: #f4f4f4;
   color: #555;
   font-size: 0.92em;
-  padding: 0.25rem 0.75rem;
+  /* Top padding clears the absolutely-positioned label (::before, top:.2rem)
+   * so it never overlaps the first body line (9.3.0). */
+  padding: 1.4rem 0.75rem 0.35rem;
   margin: 0.6rem 0 0.2rem;
   border-radius: 3px;
 }
