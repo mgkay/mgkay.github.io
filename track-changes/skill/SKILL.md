@@ -968,6 +968,22 @@ content *is*, mechanically, not by whether you were "approved":
     atomic unit.
   This is what makes large first-pass content land tracked without anyone
   reaching for `/draft`.
+  - **Paragraph continuity on acceptance (9.4.0).** A region is a *block*, so a
+    sentence carved out of the middle or end of a paragraph (e.g. to ground it in
+    a source) sits as its own block; on `/tc accept` the wrapper is stripped but
+    the block's blank-line boundaries remain, leaving the sentence as a standalone
+    paragraph. To rejoin it, declare **`tc-join`** on the region:
+    `::: {.tc-region … tc-join="prev"}` merges the body onto the END of the
+    preceding paragraph on accept; `tc-join="next"` prepends it to the following
+    one (LaTeX: a 4th optional, `\begin{tcregion}{N}[prov][src][join]`). The
+    neighbour scan skips a paired gray `.tc-verbatim` block, so a `sourced` region
+    rejoins the paragraph *above* its excerpt (and a `prev` merge removes that gray
+    block as part of the join). Absent `tc-join`, the region resolves standalone as
+    before; if there is no adjacent body paragraph (top/end of file, or a
+    heading/list/region neighbour) the join falls back to a standalone block with a
+    note. As a safety net, `/tc accept` prints an **advisory warning** (never a
+    block) when a resolved region leaves a single-line paragraph sandwiched between
+    two body paragraphs — the sign of a carve that wanted `tc-join`.
 - **Inline `<mark>` / `\tc{}`** when **refining** vetted content — each change
   individually reviewable.
 - **`/tc import` (verified-import, §0)** for content lifted **verbatim from a source

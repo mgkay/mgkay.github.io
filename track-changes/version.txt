@@ -1,3 +1,29 @@
+9.4.0
+2026-07-13
+track-changes v9.4.0 — region acceptance: paragraph continuity (additive, opt-in).
+- PROBLEM: a region carved from inside a paragraph (a mid/end sentence pulled out to
+  source or mark it) sits as its own block; on `/tc accept` the wrapper is stripped but
+  the block's blank-line boundaries remain, leaving the sentence as a standalone
+  paragraph instead of rejoining the one it came from — right text, wrong paragraphing,
+  silently.
+- `tc-join` (opt-in, the proper fix): a region may declare that it rejoins an adjacent
+  paragraph on accept — md/qmd `::: {.tc-region … tc-join="prev"}` (merge into the
+  PRECEDING paragraph) or `tc-join="next"`; LaTeX a 4th optional on `tcregion`,
+  `\begin{tcregion}{N}[prov][src][join]` (arg spec `m o o o`, back-compatible — the
+  macro accepts and render-ignores it). On accept the body is spliced onto the end
+  (`prev`) / start (`next`) of the neighbouring paragraph with a single space. The
+  neighbour scan skips gray `.tc-verbatim` scaffolding (so a sourced region rejoins the
+  paragraph ABOVE its excerpt block, and a `prev` merge subsumes that gray block).
+  Absent the attribute, resolution is byte-for-byte as in 9.3.0. No valid neighbour
+  (BOF/EOF or a structural neighbour) ⇒ fall back to the standalone strip + a note.
+- Accept-time orphan warning (always-on safety net): after `/tc accept`, an advisory
+  WARNING (never a block; exit unchanged) fires when a resolved region left a
+  single-line paragraph sandwiched between two body paragraphs — the region-split
+  signature — suggesting `tc-join`. A joined region, or one resolved at a real
+  structural boundary, does not trigger it.
+- Additive audit field `join: prev|next` on joined regions. Back-compatible grammar; no
+  new hooks (suite stays 6); no document migration.
+
 9.3.0
 2026-07-13
 track-changes v9.3.0 — sourced-region lifecycle: gray cleanup + auto-evidence (behavior-changing).

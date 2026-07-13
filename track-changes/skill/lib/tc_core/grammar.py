@@ -66,6 +66,11 @@ TEX_TCN_AFTER_RE = re.compile(r'\\tcn\{(\d+)\}')
 _PROV_ATTR_RE = re.compile(r'tc-prov\s*=\s*"([^"]*)"')
 # Source-locator attribute (v9) inside a `.tc-region` div attribute block.
 TC_SRC_ATTR_RE = re.compile(r'tc-src\s*=\s*"([^"]*)"')
+# Paragraph-join directive (9.4.0): a region carved from inside a paragraph may
+# declare that it should rejoin an adjacent paragraph on `/tc accept` instead of
+# remaining a standalone block. Values: prev | next (anything else ⇒ None).
+JOIN_VALUES = ('prev', 'next')
+_JOIN_ATTR_RE = re.compile(r'tc-join\s*=\s*"([^"]*)"')
 
 # Body classification.
 _MD_S_REP_RE = re.compile(r'^<s>(.*?)</s>(.+)$', re.DOTALL)
@@ -100,9 +105,13 @@ _MD_REGION_N_RE = re.compile(r'tc-n\s*=\s*"(\d+)"')
 #   \begin{tcregion}{N}[prov][src]  (src may contain any char except ']').
 # Both optional groups are independent, so the v6/v7 forms {N} and {N}[prov]
 # match exactly as before (src stays None).
+# 9.4.0: an OPTIONAL THIRD bracket group carries the paragraph-join directive —
+#   \begin{tcregion}{N}[prov][src][join]  (join in {prev, next}).
+# All three optionals are independent, so {N}, {N}[prov], {N}[prov][src] match
+# exactly as before (join stays None).
 TEX_REGION_OPEN_RE = re.compile(
     r'\\begin\{tcregion\}\{(?P<n>\d+)\}'
-    r'(?:\[(?P<prov>\w+)\])?(?:\[(?P<src>[^\]]*)\])?')
+    r'(?:\[(?P<prov>\w+)\])?(?:\[(?P<src>[^\]]*)\])?(?:\[(?P<join>[^\]]*)\])?')
 TEX_REGION_CLOSE_RE = re.compile(r'\\end\{tcregion\}')
 # Region number scanners (for uniqueness / max-N).
 MD_REGION_NUMS_RE = re.compile(
@@ -147,6 +156,22 @@ def norm_prov(value):
     """Normalize a provenance token (e.g. a LaTeX optional arg). None/unknown ⇒
     'authored'."""
     return value if value in PROV_VALUES else DEFAULT_PROV
+
+
+def norm_join(value):
+    """Normalize a paragraph-join token (md attr value or LaTeX optional arg).
+    None/empty/unknown ⇒ None (no join; standalone block on accept)."""
+    v = (value or '').strip()
+    return v if v in JOIN_VALUES else None
+
+
+def join_from_attrs(attrs):
+    """Paragraph-join directive from an md `.tc-region` attribute block
+    (`tc-join="prev"|"next"`). Returns 'prev'|'next', or None when absent/other."""
+    if not attrs:
+        return None
+    m = _JOIN_ATTR_RE.search(attrs)
+    return norm_join(m.group(1)) if m else None
 
 
 def classify_md(body):
@@ -237,10 +262,11 @@ def extract_marks(text, ftype):
 
 
 def extract_regions(text, ftype):
-    """Return list of region dicts {N(str), prov, src, start(1-indexed opener
-    line), end(1-indexed closer line)} for whole-region insertions (D).
+    """Return list of region dicts {N(str), prov, src, join, start(1-indexed
+    opener line), end(1-indexed closer line)} for whole-region insertions (D).
 
-    'src' (v9) is the source locator (None when absent). md/qmd: depth-tracked
+    'src' (v9) is the source locator (None when absent); 'join' (9.4.0) is the
+    paragraph-join directive 'prev'|'next'|None. md/qmd: depth-tracked
     `:::` fenced divs; only those whose attr block carries `.tc-region` are
     emitted (nested non-region divs are skipped but counted for depth). tex:
     \\begin{tcregion}{N}[prov][src] … \\end{tcregion} (non-nesting).
@@ -260,6 +286,7 @@ def extract_regions(text, ftype):
                         'N': mn.group(1) if mn else None,
                         'prov': prov_from_attrs(attrs),
                         'src': src_from_attrs(attrs),
+                        'join': join_from_attrs(attrs),
                         'start': idx,
                         'end': None,
                     })
@@ -280,6 +307,7 @@ def extract_regions(text, ftype):
                 'N': mo.group('n'),
                 'prov': norm_prov(mo.group('prov')),
                 'src': mo.group('src'),
+                'join': norm_join(mo.group('join')),
                 'start': start_line,
                 'end': end_line,
             })

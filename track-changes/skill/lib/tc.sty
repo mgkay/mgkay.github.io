@@ -88,9 +88,11 @@
 % tcbarsourced. The optional second bracket <src> is a source locator; when
 % present it is printed after the [N] head as "sourced: <src>" in the bar color
 % (meaningful with sourced/transcript, but rendered whenever supplied). Arg spec
-% `m o o` (xparse, in the LaTeX kernel) gives the {N}[prov][src] order the
-% PreToolUse grammar expects.
-\NewDocumentEnvironment{tcregion}{m o o}{%
+% `m o o o` (xparse, in the LaTeX kernel) gives the {N}[prov][src][join] order the
+% PreToolUse grammar expects. The 4th optional <join> (9.4.0; prev|next) is a
+% resolve-time paragraph-join directive consumed by `/tc accept`; it has NO visual
+% and is accepted-and-ignored here so the .tex compiles whether or not it is set.
+\NewDocumentEnvironment{tcregion}{m o o o}{%
   \def\tc@barcolor{tcbarauthored}%
   \IfValueT{#2}{%
     \ifthenelse{\equal{#2}{imported}}{\def\tc@barcolor{tcbarimported}}{}%

@@ -129,9 +129,11 @@ def _extract_regions_with_offsets(text, ftype):
         if not s or not e or e > len(lines) or s < 1:
             continue
         out.append({
-            'N': r['N'], 'prov': r.get('prov', 'authored'), 'line': s,
+            'N': r['N'], 'prov': r.get('prov', 'authored'),
+            'join': r.get('join'), 'line': s, 'close_line': e,
             'opener_start': starts[s - 1], 'opener_end': starts[s],
             'closer_start': starts[e - 1], 'closer_end': starts[e],
+            'body_start': starts[s], 'body_end': starts[e - 1],
         })
     return out
 
@@ -192,6 +194,125 @@ def _paired_gray_span(region_line, gray_blocks, text):
     if best is None:
         return None
     return (best['span_start'], starts[region_line - 1])
+
+
+# v9.4.0: a "body-prose" line is a valid paragraph-join neighbour — non-blank and
+# NOT a structural construct (heading / list / quote / table / fenced div / region
+# or environment delimiter). Conservative: anything that looks structural is
+# rejected, so an ambiguous neighbour falls back to a standalone block (safe).
+_STRUCT_LINE_RE = re.compile(
+    r'^\s*(?:'
+    r'#|'                       # md heading
+    r'[-*+]\s|'                 # md bullet list
+    r'\d+[.)]\s|'               # md ordered list
+    r'>|'                       # md blockquote
+    r'\||'                      # md table row
+    r':{3,}|'                   # md fenced div (region/verbatim)
+    r'`{3,}|~{3,}|'             # md code fence
+    r'\\begin|\\end|'           # LaTeX environment
+    r'\\(?:sub)*section|\\paragraph|\\item|\\chapter|'  # LaTeX sectioning/list
+    r'%|'                       # LaTeX comment
+    r'\[|\]'                    # LaTeX display-math delimiters
+    r')')
+
+
+def _is_body_line(line):
+    """True iff `line` is ordinary body prose (a valid tc-join neighbour)."""
+    return line.strip() != '' and _STRUCT_LINE_RE.match(line) is None
+
+
+def _join_splice(region, text, ftype, gray_blocks):
+    """v9.4.0: for an ACCEPTED region carrying `join` in {prev,next}, return
+    `(span, subsumes_gray)` where `span` is a single (start, end, repl) that merges
+    the region body onto the adjacent body paragraph (one space join), replacing the
+    standalone opener/closer strip; or `(None, False)` to fall back to the standalone
+    strip when there is no valid neighbour.
+
+    The neighbour scan skips blank lines AND gray `.tc-verbatim` scaffolding lines
+    (they are transient and removed on resolution), so a `sourced` region whose
+    paragraph sits above its paired gray block still rejoins that paragraph. When a
+    `prev` merge subsumes the paired gray block (it lies inside the removed span),
+    `subsumes_gray` is True so the caller does not also remove it separately."""
+    join = region.get('join')
+    if join not in ('prev', 'next'):
+        return (None, False)
+    body_text = ' '.join(text[region['body_start']:region['body_end']].split())
+    if not body_text:
+        return (None, False)
+    lines = text.split('\n')
+    starts = _line_starts(text)
+    n = len(lines)
+    o_line = region['line']            # opener, 1-indexed
+    c_line = region['close_line']      # closer, 1-indexed
+    gray_lines = set()
+    for gb in gray_blocks:
+        gray_lines.update(range(gb['start_line'], gb['end_line'] + 1))
+
+    if join == 'prev':
+        pl = o_line - 1
+        while pl >= 1 and (lines[pl - 1].strip() == '' or pl in gray_lines):
+            pl -= 1
+        if pl < 1 or not _is_body_line(lines[pl - 1]):
+            return (None, False)
+        prev_content_end = starts[pl - 1] + len(lines[pl - 1])
+        span = (prev_content_end, region['closer_end'], ' ' + body_text + '\n')
+        subsumes_gray = any(pl < gb['start_line'] and gb['end_line'] < o_line
+                            for gb in gray_blocks)
+        return (span, subsumes_gray)
+
+    # join == 'next'
+    nl = c_line + 1
+    while nl <= n and (lines[nl - 1].strip() == '' or nl in gray_lines):
+        nl += 1
+    if nl > n or not _is_body_line(lines[nl - 1]):
+        return (None, False)
+    next_content_start = starts[nl - 1]
+    span = (region['opener_start'], next_content_start, body_text + ' ')
+    return (span, False)
+
+
+def _orphan_line_after(text, offset):
+    """v9.4.0 orphan heuristic: at char `offset` in the POST-resolution `text`,
+    is the line there a single-line paragraph sandwiched between two body
+    paragraphs (blank/BOF above, blank/EOF below, body prose on each present
+    side)? Returns the orphan line's stripped text, or None. Advisory only."""
+    lines = text.split('\n')
+    starts = _line_starts(text)
+    # Locate the 1-indexed line containing `offset`.
+    li = 1
+    for i in range(len(lines)):
+        if starts[i] <= offset < starts[i + 1]:
+            li = i + 1
+            break
+    else:
+        li = min(max(1, len(lines)), len(lines))
+    if li < 1 or li > len(lines):
+        return None
+    cur = lines[li - 1]
+    if not _is_body_line(cur):
+        return None
+    # Above: nearest non-blank must be a blank gap then a body paragraph (or BOF).
+    above = lines[li - 2] if li - 2 >= 0 else ''
+    below = lines[li] if li < len(lines) else ''
+    above_blank = (li == 1) or (above.strip() == '')
+    below_blank = (li == len(lines)) or (below.strip() == '')
+    if not (above_blank and below_blank):
+        return None
+    # Require a real body paragraph on at least one present side (so we do not warn
+    # on a lone line in an otherwise empty document).
+    def _body_across_gap(idx, step):
+        j = idx + step
+        while 1 <= j <= len(lines) and lines[j - 1].strip() == '':
+            j += step
+        return 1 <= j <= len(lines) and _is_body_line(lines[j - 1])
+    has_prev = _body_across_gap(li, -1)
+    has_next = _body_across_gap(li, +1)
+    # "Sandwiched between TWO body paragraphs" — require a body paragraph on both
+    # sides (the region-split-orphan signature). A one-line paragraph at the top,
+    # the end, or next to a heading/list/region is not flagged.
+    if not (has_prev and has_next):
+        return None
+    return cur.strip()
 
 
 def _preview(s, limit=60):
@@ -359,21 +480,41 @@ def resolve(path, decision, ns):
         resolved.append(m['N'])
         resolved_marks.append(m)
     sourced_resolved = []       # v9.3.0: Ns of resolved sourced regions (C3 trigger)
+    join_fallbacks = []         # v9.4.0: Ns whose tc-join found no valid neighbour
+    orphan_probe_regions = []   # v9.4.0: (N) resolved standalone (no join) → probe
     for r in (rr for rr in regions if rr['N'] in want):
-        if decision == 'accept':
-            # Keep the body; strip the closer then the opener delimiter line.
-            spans.append((r['closer_start'], r['closer_end'], ''))
-            spans.append((r['opener_start'], r['opener_end'], ''))
-        else:
-            # reject: remove the whole region (opener through closer inclusive).
-            spans.append((r['opener_start'], r['closer_end'], ''))
+        prov = r.get('prov', 'authored')
+        gray_removed = False
+        used_join = False
+        join_applied = None
+        # v9.4.0 (Issue 2): a region carrying tc-join="prev"|"next" rejoins an
+        # adjacent body paragraph on ACCEPT instead of leaving a standalone block.
+        if decision == 'accept' and r.get('join') in ('prev', 'next'):
+            jspan, subsumes_gray = _join_splice(r, text, ftype, gray_blocks)
+            if jspan is not None:
+                spans.append(jspan)
+                used_join = True
+                join_applied = r['join']
+                if subsumes_gray:
+                    gray_removed = True   # the merge span already removed the gray
+            else:
+                join_applied = 'fallback'
+                join_fallbacks.append(r['N'])
+        if not used_join:
+            if decision == 'accept':
+                # Keep the body; strip the closer then the opener delimiter line.
+                spans.append((r['closer_start'], r['closer_end'], ''))
+                spans.append((r['opener_start'], r['opener_end'], ''))
+                orphan_probe_regions.append(r)
+            else:
+                # reject: remove the whole region (opener through closer inclusive).
+                spans.append((r['opener_start'], r['closer_end'], ''))
         # v9.3.0 (Issue 1): a sourced/transcript region's paired gray
         # `.tc-verbatim` scaffolding is transient — remove it in the same
         # resolution (accept OR reject). Its durable record persists in
         # `.tc-history.md`; conservative adjacency pairing (see _paired_gray_span).
-        prov = r.get('prov', 'authored')
-        gray_removed = False
-        if prov in ('sourced', 'transcript'):
+        # (A `prev`-join that subsumed the gray block already removed it.)
+        if prov in ('sourced', 'transcript') and not gray_removed:
             gspan = _paired_gray_span(r['line'], gray_blocks, text)
             if gspan is not None:
                 spans.append((gspan[0], gspan[1], ''))
@@ -381,14 +522,38 @@ def resolve(path, decision, ns):
         if prov == 'sourced':
             sourced_resolved.append(r['N'])
         resolved.append(r['N'])
-        resolved_marks.append({'N': r['N'], 'type': 'region', 'old': '',
-                               'new': '(region)', 'prov': prov,
-                               'gray_removed': gray_removed})
+        entry = {'N': r['N'], 'type': 'region', 'old': '',
+                 'new': '(region)', 'prov': prov, 'gray_removed': gray_removed}
+        if join_applied:
+            entry['join'] = join_applied
+        resolved_marks.append(entry)
     spans.sort(key=lambda s: s[0], reverse=True)
     new_text = text
     for (s, e, repl) in spans:
         new_text = new_text[:s] + repl + new_text[e:]
     resolved = sorted(set(resolved), key=_n_key)
+
+    # v9.4.0 (Issue 1): accept-time orphan warning — a region resolved standalone
+    # (no tc-join) whose single-line body now sits as a paragraph sandwiched
+    # between two body paragraphs is likely a region-split fragment. Advisory only.
+    orphan_warnings = []
+    if decision == 'accept' and orphan_probe_regions:
+        new_lines = new_text.split('\n')
+        new_starts = _line_starts(new_text)
+        for r in orphan_probe_regions:
+            body = ' '.join(text[r['body_start']:r['body_end']].split())
+            if not body:
+                continue
+            raw = [ln for ln in text[r['body_start']:r['body_end']].split('\n')
+                   if ln.strip()]
+            if len(raw) != 1:            # only a single-line body can orphan
+                continue
+            for i, ln in enumerate(new_lines):
+                if ' '.join(ln.split()) == body:
+                    orphan = _orphan_line_after(new_text, new_starts[i])
+                    if orphan is not None:
+                        orphan_warnings.append({'N': r['N'], 'text': orphan})
+                    break
 
     wrote_file = False
     if new_text != text:
@@ -413,7 +578,9 @@ def resolve(path, decision, ns):
     return {'resolved': resolved, 'not_found': not_found,
             'remaining': remaining, 'wrote_file': wrote_file,
             'wrote_log': wrote_log,
-            'sourced_resolved': sorted(set(sourced_resolved), key=_n_key)}
+            'sourced_resolved': sorted(set(sourced_resolved), key=_n_key),
+            'join_fallbacks': sorted(set(join_fallbacks), key=_n_key),
+            'orphan_warnings': orphan_warnings}
 
 
 def _n_key(n):
@@ -457,6 +624,8 @@ def _write_explicit_audit(path, ftype, decision, resolved_marks, post_text):
             lines.append(f"    was_new: {tc_audit._fmt_str(m['new'])}")
         if m.get('gray_removed'):
             lines.append(f"    gray_removed: true")  # v9.3.0 paired .tc-verbatim
+        if m.get('join'):
+            lines.append(f"    join: {m['join']}")   # v9.4.0 paragraph-join
     entry = '\n'.join(lines) + '\n'
     try:
         os.makedirs(os.path.dirname(log_path), exist_ok=True)
@@ -629,6 +798,17 @@ def _cmd_resolve(path, decision, spec, all_marks=False):
     if res['remaining']:
         print("tc: %d mark(s) remain: %s"
               % (len(res['remaining']), ', '.join(res['remaining'])))
+    # v9.4.0 (Issue 2): a tc-join with no valid neighbour fell back to standalone.
+    for n in res.get('join_fallbacks', []):
+        print("tc: note -- region %s had tc-join but no adjacent body paragraph to "
+              "merge into; left as a standalone block." % n)
+    # v9.4.0 (Issue 1): advisory orphan-paragraph warning (never blocks).
+    for w in res.get('orphan_warnings', []):
+        print("tc: WARNING -- accepting region %s left a single-line paragraph "
+              "between two paragraphs:" % w['N'])
+        print("    \"%s\"" % _preview(w['text'], 72))
+        print("    If it was carved from a paragraph, add tc-join=\"prev\" (or "
+              "\"next\") to that region and re-accept to rejoin it.")
     # v9.3.0 (Issue 2): accept of a sourced region auto-(re)generates evidence.
     if decision == 'accept' and res.get('sourced_resolved'):
         _post_accept_evidence(path)

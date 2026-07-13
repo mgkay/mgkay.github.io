@@ -48,7 +48,11 @@ unit (the path for large new content; no `/draft`):
 One number N; `/tc accept|reject N` resolves it atomically; no inline marks
 inside. **Single brand-new block** (one heading/fenced/`:::`) → still a sibling
 `<mark>…</mark><sup>N</sup>` on the line ABOVE. A brand-new LaTeX block → use a
-`tcregion` (replaces the old `/draft` routing).
+`tcregion` (replaces the old `/draft` routing). **Paragraph continuity (9.4.0):**
+a region carved from inside a paragraph can carry `tc-join="prev"|"next"` (LaTeX:
+4th optional `[join]`) to rejoin the adjacent paragraph on `/tc accept` (skips a
+paired gray block; absent ⇒ standalone as before); accept warns (advisory) if it
+leaves a single-line paragraph sandwiched between two paragraphs.
 
 ## `/tc` commands
 `/tc draft` · `/tc enable <file>` · `/tc disable <file>` · `/tc mark [<dir>]` ·
