@@ -1,3 +1,25 @@
+9.5.0
+2026-07-13
+track-changes v9.5.0 — web-capture robustness (additive; JS pages, thin/empty snapshots, fetch errors).
+- Improves the 9.2.0 `/tc source <url>` capture on three reliability axes; no change to
+  the SSRF gate, the mark grammar, the hook, or audit/manifest.
+- JS-rendered pages: the headless Chrome render now passes `--virtual-time-budget`
+  (+ `--run-all-compositor-stages-before-draw`) so async (JS/XHR-built) content settles
+  before `--print-to-pdf` fires — many pages that previously captured as an empty
+  pre-hydration shell now render their real content (verified end-to-end against a
+  JS-injecting fixture).
+- Thin/empty snapshots: a FULLY empty page still fails closed, now with a message that
+  names the JS-page likelihood and the save-then-source workaround; a NEAR-empty
+  snapshot (normalized text below ~120 chars — the shell signature) still stages but
+  emits a LOUD advisory naming the char count + workaround, so a genuinely short page
+  (e.g. example.com) is never blocked while a silent shell no longer stages unnoticed.
+- No junk left behind: a fail-closed capture removes any partial snapshot it wrote, and
+  an unusable browser-rendered PDF is discarded before the HTML fallback.
+- Fetch errors: an SSL/certificate failure in the validated fetch now reports plainly
+  (naming the cert problem) with the save-then-source workaround instead of a bare
+  exception.
+- Additive/robustness only; no new hooks (suite stays 6); no document migration.
+
 9.4.0
 2026-07-13
 track-changes v9.4.0 — region acceptance: paragraph continuity (additive, opt-in).

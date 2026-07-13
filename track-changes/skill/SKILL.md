@@ -1260,10 +1260,20 @@ against link rot**: the page can change or vanish, but the dated capture and its
 
 - **Privacy.** Snapshots live only in the private `validation/` folder; keep it
   out of any public or anonymized hand-off (see the privacy note below).
+- **JavaScript-rendered pages (9.5.0).** The headless render waits for async
+  content to settle (`--virtual-time-budget`) before printing, so a page that
+  builds its body with JavaScript usually captures its real content. When a
+  capture still comes back **empty**, it fails closed with save-then-source
+  guidance; when it comes back **thin** (only a scrap of text — the pre-hydration
+  shell signature) it stages but prints a **loud advisory** naming the character
+  count, so a silent empty shell never slips through unnoticed. A fail-closed
+  capture leaves **no** partial snapshot behind.
 - **Authenticated / paywalled pages are a non-goal.** The capture fetches as an
   anonymous client, so a login- or paywall-gated page yields only its public
-  shell. The path for such a page is **save-then-source**: save the rendered
-  page to a local file (PDF or HTML) and `/tc source` the **file path** instead.
+  shell. The path for such a page — and for any JS-heavy page that still captures
+  thin, or a site with an SSL/certificate error — is **save-then-source**: save
+  the rendered page to a local file (PDF or HTML) and `/tc source` the **file
+  path** instead.
 - **SSRF guard.** Only public `http`/`https` URLs are accepted. A URL whose host
   resolves to a loopback, private (10/8, 172.16/12, 192.168/16), link-local, or
   cloud-metadata (169.254.169.254) address is **refused before any fetch**, and

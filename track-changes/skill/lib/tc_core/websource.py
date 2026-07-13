@@ -43,6 +43,7 @@ import os
 import re
 import shutil
 import socket
+import ssl
 import subprocess
 import sys
 import urllib.error
@@ -212,6 +213,51 @@ def slug(url):
 _UA = 'track-changes/9.2 (+source-capture)'
 _BROWSER_TIMEOUT = 45
 _FETCH_TIMEOUT = 20
+# 9.5.0: advance the headless render's virtual clock so JS/XHR-built content has a
+# chance to settle before `--print-to-pdf` fires (best-effort; a JavaScript-heavy
+# page that still renders thin is caught by the thin-snapshot advisory below).
+_VIRTUAL_TIME_BUDGET_MS = 12000
+# Below this many characters of normalized text, a snapshot is "thin" — likely a
+# JS pre-hydration shell. It still stages (a genuinely short page such as
+# example.com must not be blocked) but with a LOUD save-then-source advisory.
+_MIN_TEXT_CHARS = 120
+
+_SAVE_THEN_SOURCE = ('If this is a JavaScript-rendered page, the capture is likely '
+                     'the empty pre-hydration shell — open the page in a browser, '
+                     'save it to a file, and `/tc source` that file instead.')
+
+
+def _browser_argv(browser, pdf_path, url):
+    """The headless-render argv (argument list, `shell=False`; `url` is one
+    element). Factored out so it is unit-testable without launching a browser.
+    9.5.0 adds `--virtual-time-budget` + `--run-all-compositor-stages-before-draw`
+    so async content settles before the PDF is printed."""
+    return [
+        browser, '--headless=new', '--disable-gpu', '--no-first-run',
+        '--virtual-time-budget=%d' % _VIRTUAL_TIME_BUDGET_MS,
+        '--run-all-compositor-stages-before-draw',
+        '--print-to-pdf=' + pdf_path, '--print-to-pdf-no-header',
+        url,
+    ]
+
+
+def _maybe_thin_notice(text, url):
+    """Emit a LOUD advisory when a captured snapshot's normalized text is thin
+    (below `_MIN_TEXT_CHARS`) — the JS-shell signature. Advisory only: the caller
+    still stages the snapshot (genuinely short pages are valid)."""
+    n = len(sourcetext.normalize(text))
+    if 0 < n < _MIN_TEXT_CHARS:
+        _notice('tc source: WARNING — the snapshot of %s has only %d characters of '
+                'text. %s' % (url, n, _SAVE_THEN_SOURCE))
+
+
+def _unlink_quiet(path):
+    """Best-effort remove — used to clear a partial snapshot after a fail-closed
+    capture so no junk file is left for the author to clean up (9.5.0)."""
+    try:
+        os.remove(path)
+    except OSError:
+        pass
 
 
 def _sha256(path):
@@ -259,6 +305,23 @@ _REDIRECT_CODES = (301, 302, 303, 307, 308)
 _MAX_HOPS = 6
 
 
+def _is_ssl_error(exc):
+    """True iff `exc` is (or wraps) an SSL/certificate error. A urllib SSL failure
+    surfaces as URLError with `reason` an ssl.SSLError; also catch a bare SSLError
+    and a message mentioning SSL/certificate (defensive across Python versions)."""
+    if isinstance(exc, ssl.SSLError):
+        return True
+    if isinstance(getattr(exc, 'reason', None), ssl.SSLError):
+        return True
+    blob = str(getattr(exc, 'reason', '') or exc).upper()
+    return 'SSL' in blob or 'CERTIFICATE' in blob
+
+
+def _ssl_detail(exc):
+    """A short human detail for an SSL error (the wrapped reason if present)."""
+    return str(getattr(exc, 'reason', None) or exc)
+
+
 def _fetch_validated(url):
     """Fetch `url` following redirects MANUALLY, re-validating each hop with
     `validate_url` before following it. Returns `(final_url, body_bytes)` for the
@@ -288,6 +351,12 @@ def _fetch_validated(url):
             raise WebSourceError('cannot fetch %s: HTTP %s' % (cur, exc.code))
         except (urllib.error.URLError, http.client.HTTPException,
                 socket.timeout, OSError, ValueError) as exc:
+            if _is_ssl_error(exc):
+                raise WebSourceError(
+                    'SSL/certificate error fetching %s: %s. The site may have an '
+                    'invalid or untrusted certificate. Open it in a browser, save '
+                    'the page to a file, and `/tc source` that file instead.'
+                    % (cur, _ssl_detail(exc)))
             raise WebSourceError('cannot fetch %s: %s' % (cur, exc))
         with resp:
             return (cur, resp.read())
@@ -333,9 +402,7 @@ def capture(url, validation_dir, accessdate):
         rendered_ok = False
         try:
             proc = subprocess.run(
-                [browser, '--headless=new', '--disable-gpu', '--no-first-run',
-                 '--print-to-pdf=' + pdf_path, '--print-to-pdf-no-header',
-                 final_url],
+                _browser_argv(browser, pdf_path, final_url),
                 shell=False, timeout=_BROWSER_TIMEOUT,
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             rendered_ok = proc.returncode == 0 and os.path.isfile(pdf_path)
@@ -346,20 +413,29 @@ def capture(url, validation_dir, accessdate):
         if rendered_ok:
             text = _usable_text(pdf_path)
             if text is not None:
+                _maybe_thin_notice(text, url)   # 9.5.0: JS-shell advisory
                 return _result(pdf_path, 'pdf', text, url, accessdate)
-        # Present but unusable → fall through to the validated body, loudly.
-        _notice('tc source: browser render failed, fell back to HTML text')
+        # Present but unusable → discard the orphan PDF (no junk left) and fall
+        # through to the validated body, loudly.
+        _unlink_quiet(pdf_path)
+        _notice('tc source: browser render produced no usable text, fell back to '
+                'HTML text')
     else:
         _notice('tc source: no headless browser found — captured HTML text '
                 'only (no visual PDF snapshot)')
 
-    # HTML fallback: use the body already fetched by the validated walk.
+    # HTML fallback: use the body already fetched by the validated walk. On any
+    # fail-closed raise, remove the partial snapshot so no junk is left behind.
     with open(html_path, 'wb') as f:
         f.write(raw)
     try:
         text = sourcetext.extract_text(html_path)
     except (OSError, UnicodeDecodeError, ValueError) as exc:
+        _unlink_quiet(html_path)
         raise WebSourceError('cannot extract text from %s: %s' % (url, exc))
     if not sourcetext.normalize(text):
-        raise WebSourceError('no extractable text (image-only or empty page)')
+        _unlink_quiet(html_path)
+        raise WebSourceError('no extractable text from %s (image-only or empty '
+                             'page). %s' % (url, _SAVE_THEN_SOURCE))
+    _maybe_thin_notice(text, url)   # 9.5.0: JS-shell advisory
     return _result(html_path, 'html', text, url, accessdate)
