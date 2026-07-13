@@ -3,10 +3,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>track-changes: Source-preserving AI edit protocol</title>
+  <title>track-changes: visible AI edits, verified sources</title>
   <link rel="stylesheet" href="style.css">
   <style>
-    /* track-changes-only: example boxes for the rendered round-trip demo */
+    /* Rendered demo boxes — these show the ACTUAL markup as a markdown/Quarto
+       viewer displays it, not a screenshot. */
     .example {
       border: 1px solid #ccc;
       background: #fafafa;
@@ -14,15 +15,67 @@
       margin: 0.4em 0 0.8em;
       font-family: Georgia, "Times New Roman", serif;
     }
-    .example mark {
-      background: #ffec80;
-      padding: 0 0.1em;
+    .example mark { background: #ffec80; padding: 0 0.1em; }
+    .example sup { color: #555; margin-left: 1px; }
+
+    /* Source-validation demo. The markup inside .doc-preview below is the
+       EXACT output the track-changes hook verified and accepted (captured from
+       a real `/tc source` run), and the .tc-verbatim / .tc-region rules here are
+       copied verbatim from the skill's shipped reference/tc-clean.css — so this
+       is the skill's own rendering, not a hand-drawn mock-up. */
+    .doc-preview {
+      border: 1px solid #ccc; background: #fff;
+      padding: 0.3em 0.9em 0.8em; margin: 0.4em 0 0.5em;
+      font-family: Georgia, "Times New Roman", serif;
     }
-    .example sup {
-      color: #555;
-      margin-left: 1px;
+    .doc-preview p { margin: 0.4em 0; }
+    /* --- verbatim copy of the shipped tc-clean.css region/verbatim rules --- */
+    .tc-region {
+      position: relative; border-left: 4px solid #d98c14; background: #fff8e6;
+      padding: 0.25rem 0.75rem; margin: 0.6rem 0; border-radius: 3px;
     }
-    /* command reference: hanging-indent list with the command on its own line */
+    .tc-region::before {
+      position: absolute; top: 0.2rem; right: 0.55rem; font-size: 0.7rem;
+      font-weight: 700; letter-spacing: 0.02em; color: #b9770f;
+      font-family: var(--mono);
+    }
+    .tc-region[data-tc-prov="sourced"] {
+      border-left-color: #2e8b57; background: #edf7f0;
+    }
+    .tc-region[data-tc-prov="sourced"]::before { color: #2e8b57; }
+    .tc-region[data-tc-prov="sourced"][data-tc-src][data-tc-n]::before {
+      content: "sourced: " attr(data-tc-src) " +" attr(data-tc-n);
+    }
+    .tc-verbatim {
+      position: relative; border-left: 4px dashed #9a9a9a; background: #f4f4f4;
+      color: #555; font-size: 0.92em; padding: 0.25rem 0.75rem;
+      margin: 0.6rem 0 0.2rem; border-radius: 3px;
+    }
+    .tc-verbatim::before {
+      content: "verbatim \2014 delete after confirming";
+      position: absolute; top: 0.2rem; right: 0.55rem; font-size: 0.7rem;
+      font-weight: 700; color: #777; letter-spacing: 0.02em;
+      font-family: var(--mono);
+    }
+    .tc-verbatim[data-tc-cite]::before {
+      content: attr(data-tc-cite) " \2014 delete after confirming";
+    }
+    .doc-preview .references {
+      border-top: 1px solid #e0e0e0; margin-top: 0.8em; padding-top: 0.5em;
+      font-size: 0.85em; color: #555;
+    }
+    .doc-preview .references::before {
+      content: "References"; display: block; font-family: var(--mono);
+      font-size: 0.68rem; font-weight: 700; color: #888;
+      letter-spacing: .02em; margin-bottom: 0.3em;
+    }
+    .ex-refused {
+      border-left: 4px solid #b23b3b; background: #fbeeee;
+      padding: 0.55em 0.9em; margin: 0.4em 0 0.8em;
+      font-family: var(--mono); font-size: 0.82rem; color: #7a2020;
+      border-radius: 0 4px 4px 0;
+    }
+
     .cmds { list-style: none; padding-left: 0; }
     .cmds > li { margin: 0.55em 0; }
     .cmds code:first-child { font-weight: 600; }
@@ -30,6 +83,16 @@
       background: #f4f4f4; border: 1px solid #ddd; border-radius: 4px;
       padding: 0.6em 0.8em; overflow-x: auto; font-size: 0.92em;
     }
+    /* Two capability cards near the top */
+    .caps { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1.5rem 0 1rem; }
+    .cap {
+      border: 1px solid var(--gray-200); border-radius: 6px;
+      padding: 0.9rem 1rem; background: var(--gray-50);
+    }
+    .cap h3 { margin: 0 0 0.35rem; font-size: 1rem; }
+    .cap p { margin: 0; font-size: 0.9rem; color: var(--gray-700); }
+    .cap .swatch { font-weight: 700; }
+    @media (max-width: 600px) { .caps { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
@@ -37,7 +100,7 @@
 
 <header>
   <h1><span>track-changes</span></h1>
-  <p class="subtitle">A Claude Code skill that wraps every AI-introduced edit in a numbered yellow highlight you can review and accept or reject</p>
+  <p class="subtitle">A Claude Code skill suite for trustworthy AI-assisted authoring: every AI edit is a highlight you review, and every claim drawn from a source carries an excerpt that can&rsquo;t be faked.</p>
   <p class="affiliation">NC State &middot; ISE</p>
   <nav>
     <a href="index.html" class="active">Home</a>
@@ -46,323 +109,312 @@
 
 <main>
 
-<h2>What is track-changes?</h2>
+<h2>What track-changes gives you</h2>
 
-<p>track-changes is a <strong>three-skill suite for Claude Code</strong>. The core
-<code>track-changes</code> skill watches every change Claude makes to your tracked <code>.md</code>,
-<code>.qmd</code>, and <code>.tex</code> files: each AI-introduced edit is wrapped in a
-<code>&lt;mark&gt;</code> highlight followed by a small reference number &mdash; rendered as a yellow
-span (with a strikethrough overlay for anything deleted) in any markdown viewer &mdash; so you can
-review every change individually and accept or reject it, the way you would with Track Changes in
-Word or Suggesting mode in Google Docs. The companion <code>verified-import</code> skill (installed
-alongside) adds the <code>/tc import</code> command for bringing in vetted source material without
-unnecessary highlights. The <code>tc-polish</code> skill adds the <code>/tc polish</code> command for
-cleaning up voice-dictated prose &mdash; speech-recognition errors, grammar, dropped words &mdash;
-surfacing every fix as an ordinary track-changes mark you review the same way.</p>
+<p>track-changes is a suite of Claude Code skills for people who edit documents they are
+accountable for &mdash; lecture notes, exams, manuscripts, referee responses. When an AI assistant
+helps, two things normally go invisible: <em>what</em> it changed, and <em>whether</em> what it
+wrote is actually grounded in the source it claims. track-changes makes both visible and
+mechanically enforced.</p>
 
-<div class="phases">
-  <div class="phase-box">Block<small>Unmarked AI edit</small></div>
-  <div class="phase-arrow">&#x2192;</div>
-  <div class="phase-box">Wrap<small>Mark the diff</small></div>
-  <div class="phase-arrow">&#x2192;</div>
-  <div class="phase-box">Review<small>Accept / reject</small></div>
-  <div class="phase-arrow">&#x2192;</div>
-  <div class="phase-box">Audit<small>Append to log</small></div>
+<div class="caps">
+  <div class="cap">
+    <h3><span class="swatch" style="color:#b9770f;">1.</span> Every AI edit is reviewable</h3>
+    <p>Each change Claude makes to a tracked file is wrapped in a numbered <strong>yellow
+    highlight</strong> you accept or reject &mdash; like Track Changes in Word, but enforced: an
+    unmarked edit is refused before it can be saved.</p>
+  </div>
+  <div class="cap">
+    <h3><span class="swatch" style="color:#1f6b43;">2.</span> Every sourced claim is verified</h3>
+    <p>When Claude grounds a passage in a document, its <strong>cited interpretation</strong> stays
+    in your text (green) while the supporting quote (gray) is checked, character for character,
+    against the real source. A fabricated excerpt is refused &mdash; so a citation is never
+    decorative.</p>
+  </div>
 </div>
+
+<p>Under the hood it is three cooperating skills: <code>track-changes</code> (the always-on
+mark-and-review core), <code>verified-import</code> (<code>/tc import</code>, for bringing in vetted
+material cleanly), and <code>tc-polish</code> (<code>/tc polish</code>, for cleaning up
+voice-dictated prose). You stay the author; the AI is a copy-editor whose work you sign off on,
+change by change &mdash; and whose sourcing you can open and check.</p>
 
 <h2>Why it exists</h2>
 
-<p>Vetted documents &mdash; lecture notes, exams, manuscripts &mdash; have often been refined by
-their author over years. When an AI assistant rewrites part of one, the changes are invisible:
-they blend into text you already trust, and you have no easy way to tell what the AI touched. A
-single quiet, wrong change can undermine confidence in the whole file.</p>
+<p>A vetted document has often been refined by its author over years. When an AI rewrites part of
+one, the change is invisible &mdash; it blends into text you already trust, and a single quiet,
+wrong edit can undermine confidence in the whole file. Worse, an assistant can write a fluent
+sentence attributed to a source that <em>does not say it</em>: the classic failure of AI-assisted
+scholarship is a citation that reads perfectly and does not support the claim.</p>
 
-<p>track-changes makes every AI change <strong>visible and reversible</strong>. It refuses to let
-Claude save an edit to a tracked file unless the changed characters are wrapped in a highlight you
-can see, and it records each highlight &mdash; and every later accept-or-reject decision &mdash; in
-a plain-text log kept alongside the document. You stay the author; the AI is a copy-editor whose
-work you sign off on, change by change.</p>
+<p>track-changes answers both. It refuses to let Claude save an edit to a tracked file unless the
+changed characters are wrapped in a highlight you can see, and &mdash; for anything Claude grounds
+in a source &mdash; it refuses the write unless the quoted excerpt is genuinely present in that
+source. Every highlight, every accept-or-reject, and every verified excerpt is recorded in a
+plain-text log kept alongside the document.</p>
+
+<h2>Enforced, not just requested &mdash; which is why it works for AI agents</h2>
+
+<p>You could simply <em>ask</em> an AI assistant to mark its edits and quote its sources
+accurately. But an instruction is advisory: over a long task an assistant can forget it, drift
+from it, or report a compliance it never delivered &mdash; and you would have no reliable way to
+tell. track-changes does not depend on the assistant&rsquo;s cooperation. The guarantees are
+enforced <strong>mechanically, at the moment of the write</strong>, by a hook Claude Code runs
+before any save:</p>
+
+<ul>
+  <li><strong>An unmarked edit to a tracked file is refused</strong> &mdash; and the assistant
+    cannot switch tracking off for itself. Only you can, and only for a single message
+    (<code>/draft</code>). Every AI change is marked whether or not the assistant remembered
+    to.</li>
+  <li><strong>A passage presented as grounded in a source is refused</strong> unless its quoted
+    excerpt is genuinely present in that source <em>and</em> the passage carries a citation a
+    reader can follow. A sourced claim is either real and attributed, or it doesn&rsquo;t land.</li>
+</ul>
+
+<p>That is what makes the common case trustworthy: <strong>handing the document to an AI
+agent</strong> and relying on the record afterward. The enforcement holds no matter how the agent
+was prompted, so your role narrows to what only you can do &mdash; deciding which files are in
+scope, and reviewing the marked changes and verified excerpts the agent produced. The skill turns
+&ldquo;please track your edits and cite your sources&rdquo; from a hope you cannot audit into a
+property of the file: an unmarked edit never lands, and a fabricated citation never lands. (It
+cannot force an agent to <em>decide</em> a claim needs a source &mdash; but every source it does
+cite is verified, and the manifest makes what it grounded, and in what, auditable at a glance.)</p>
+
+<h2 id="ex-edit">See it: an AI edit, reviewed</h2>
+
+<p>The boxes below render the actual markup &mdash; this is what you see in VS Code&rsquo;s
+markdown preview (<kbd>Ctrl+Shift+V</kbd>) or any viewer that displays markdown.</p>
+
+<h4>Claude proposes two changes</h4>
+<div class="example">The greedy algorithm<mark> often</mark><sup>1</sup> finds <mark><s>the optimal</s>a near-optimal</mark><sup>2</sup> solution.</div>
+
+<p>Change&nbsp;1 inserts &ldquo;often&rdquo;; change&nbsp;2 strikes &ldquo;the optimal&rdquo; and
+proposes &ldquo;a near-optimal.&rdquo; Claude was <em>allowed</em> to save this only because every
+altered character sits inside a highlight &mdash; an unmarked edit would have been refused. Each
+number is a handle: tell Claude <em>&ldquo;accept 1, reject 2&rdquo;</em> (or run
+<code>/tc accept 1</code> and <code>/tc reject 2</code>), and the accepted change stays while the
+rejected one rolls back to your original wording. Both decisions &mdash; with timestamps and the
+old and new text &mdash; are appended to a <code>.tc-history.md</code> log in your project, so
+<code>git diff</code> and <code>git blame</code> surface AI-attributed changes months later.</p>
+
+<h2 id="ex-source">See it: AI writing grounded in a source</h2>
+
+<p>Say you ask Claude to add a sentence to a lecture, supported by a report on your shelf. You point
+it at the source and the page range:</p>
+
+<pre class="snippet">/tc source @sol2024 p.8 freight-lecture.md</pre>
+
+<p>Claude reads that slice and writes <strong>two</strong> blocks &mdash; the verbatim excerpt it is
+relying on (gray, temporary scaffolding), and the sentence that will actually stay in your lecture:
+its interpretation, carrying a citation the reader can follow (green). The box below is the
+<strong>actual output</strong> that write produced &mdash; the exact markup the hook verified and
+accepted, rendered with the skill&rsquo;s own stylesheet (the citation resolved from the
+<code>@sol2024</code> BibTeX entry):</p>
+
+<div class="doc-preview">
+<div class="tc-verbatim" data-tc-cite="@sol2024 p.8">
+<p>Transportation represented 45% of total U.S. business logistics costs in 2023.</p>
+</div>
+<div class="tc-region" data-tc-n="1" data-tc-prov="sourced" data-tc-src="@sol2024 p.8">
+<p>Transportation is the dominant controllable cost in the logistics budget, so it is where
+lot-sizing and routing improvements pay off first
+<span class="citation" data-cites="sol2024">(CSCMP 2024)</span>.</p>
+</div>
+<div class="references" role="list">
+<div class="csl-entry" role="listitem">CSCMP. 2024. <em>35th Annual State of Logistics Report</em>.</div>
+</div>
+</div>
+
+<p>The green region is the AI&rsquo;s <em>interpretation</em> &mdash; a paraphrase, carrying its
+citation, that you review like any other change and that stays in the finished document. As of
+version&nbsp;9.1 that citation is <strong>required</strong>: the hook refuses a &ldquo;sourced&rdquo;
+region that carries no citation a reader can follow, and when the source is named by a BibTeX key it
+must cite <em>that</em> key &mdash; a token hidden in a comment or code span does not count.
+Validating a source is not busywork you do <em>instead</em> of citing it; it is the same act seen
+from both ends &mdash; the citation is what the reader follows, and the gray excerpt is the proof
+beneath it, quoted exactly. And &ldquo;exactly&rdquo; is not a matter of good behavior: before the
+write is allowed, track-changes re-reads the source and checks the gray text is actually present in
+it. If Claude misremembered the figure &mdash; say it wrote 62% &mdash; or invented a quote
+wholesale, the save is refused and the discrepancy named (this is the hook&rsquo;s actual message):</p>
+
+<div class="ex-refused">coverage: the gray <code>.tc-verbatim</code> excerpt is NOT contained in the staged source @sol2024 p.8 &mdash; it looks fabricated or mismatched. Excerpt (normalized, first 80 chars): "Transportation represented 62% of total U.S. business logistics costs in 2023." Re-stage with `/tc source` against the correct slice. The staging record is preserved.</div>
+
+<p>That is the point: a hallucinated quote wearing the &ldquo;verified&rdquo; style is exactly the
+failure that would make such a scheme worse than nothing, so the excerpt is <strong>verbatim by
+construction, not by discipline</strong>. Sources can be plain-text files, PDFs, or Word documents,
+and a citation can be named by its BibTeX key &mdash; <code>/tc source @daskin2013 p.114</code>
+&mdash; so every AI claim about a cited paper carries a checked excerpt from that paper.</p>
+
+<p>The gray scaffolding is temporary; you delete it once you&rsquo;ve confirmed the passage (at
+submission, for a manuscript). What stays in the document is the ordinary, properly-cited sentence
+&mdash; and deleting the scaffolding loses no evidence, because the durable record lives elsewhere:
+the citation itself, and a <code>/tc manifest</code>-generated list of every sourced passage
+(excerpt, locator, and the text it supports) in a <code>validation/</code> folder, with a bundled
+tool that highlights each used passage in an annotated <em>copy</em> of the source PDF. The source
+folder becomes self-validating.</p>
 
 <h2>Prerequisites</h2>
 
-<p><strong>Claude Code</strong> must be installed and working. track-changes is a Claude Code skill
-&mdash; it runs inside Claude Code, not separately.
-<a href="https://docs.anthropic.com/en/docs/claude-code/overview">Install Claude Code first</a>
-if you haven&rsquo;t already. The skill also needs <strong>Python&nbsp;3</strong> and
-<strong>curl</strong> available on your system (both are present on most setups by default).</p>
+<p><strong>Claude Code</strong> must be installed &mdash; track-changes runs inside it, not
+separately.
+<a href="https://docs.anthropic.com/en/docs/claude-code/overview">Install Claude Code first</a> if
+you haven&rsquo;t. The suite also needs <strong>Python&nbsp;3</strong> and <strong>curl</strong>
+(present on most setups by default); PDF and Word sources for the sourcing feature use Python
+libraries the installer notes.</p>
 
 <h2>Installation</h2>
 
 <ol class="steps">
-  <li>
-    <strong>Start a Claude Code session</strong> &mdash; anywhere; track-changes installs into your
-    user profile, not a specific project.
-  </li>
-  <li>
-    <strong>Give the install link to Claude Code.</strong> Type:<br>
-    <code>Read <a href="bootstrap.md">https://mgkay.github.io/track-changes/bootstrap.md</a> and follow the installation instructions inside it.</code>
-  </li>
-  <li>
-    <strong>Confirm.</strong> Claude Code downloads all three skills (<code>track-changes</code>,
-    <code>verified-import</code>, and <code>tc-polish</code>), wires them into your configuration, and reports success.
-  </li>
-  <li>
-    <strong>Open a new Claude Code session</strong> so the skill takes effect.
-  </li>
+  <li><strong>Start a Claude Code session</strong> &mdash; anywhere; the suite installs into your
+    user profile, not a specific project.</li>
+  <li><strong>Give the install link to Claude Code:</strong><br>
+    <code>Read <a href="bootstrap.md">https://mgkay.github.io/track-changes/bootstrap.md</a> and follow the installation instructions inside it.</code></li>
+  <li><strong>Confirm.</strong> Claude Code downloads all three skills, wires them into your
+    configuration, and reports success.</li>
+  <li><strong>Open a new Claude Code session</strong> so the skills take effect.</li>
 </ol>
 
 <div class="callout">
   <p><strong>Updating later.</strong> Run the same install command again. It checks the installed
-  version and only replaces files if the published version is newer, so re-running is always safe.</p>
+  version and only replaces files if the published version is newer, so re-running is always
+  safe.</p>
 </div>
 
 <h2>Turn it on for your files</h2>
 
-<p>track-changes is <strong>off by default</strong> &mdash; it ignores every file until you
-explicitly opt in. Nothing is tracked until you say so, and you opt in per folder or per file.</p>
-
-<p>The usual way is to mark a whole folder of source files at once. From inside Claude Code:</p>
+<p>track-changes is <strong>off by default</strong> &mdash; it ignores every file until you opt in,
+per folder or per file. The usual way is to mark a whole folder at once, from inside Claude Code:</p>
 
 <pre class="snippet">/tc mark /path/to/your/lectures</pre>
 
-<p>That drops a small marker file named <code>.tc-tracked</code> in the folder. From then on, every
-<code>.md</code> / <code>.qmd</code> / <code>.tex</code> file <em>in that folder</em> is tracked.
-The marker only covers its own folder &mdash; it does not reach up to parent folders or down into
-subfolders, so you stay in control of exactly what is watched. To track a subfolder too, mark it
-separately. To track just one file instead of a whole folder, use <code>/tc enable &lt;file&gt;</code>
-(explained under <a href="#commands">Commands</a> below).</p>
-
-<h2>Example: an AI edit, reviewed</h2>
-
-<p>The boxes below render the actual highlight markup &mdash; this is what you see in VS Code&rsquo;s
-built-in markdown preview (<kbd>Ctrl+Shift+V</kbd>) or any viewer that displays markdown.</p>
-
-<h4>1. Your original sentence (on disk)</h4>
-<div class="example">The greedy algorithm finds the optimal solution.</div>
-
-<h4>2. Claude proposes two changes</h4>
-<div class="example">The greedy algorithm<mark> often</mark><sup>1</sup> finds <mark><s>the optimal</s>a near-optimal</mark><sup>2</sup> solution.</div>
-
-<p>Change&nbsp;1 inserts the word &ldquo;often.&rdquo; Change&nbsp;2 strikes through &ldquo;the
-optimal&rdquo; and proposes &ldquo;a near-optimal&rdquo; in its place. Claude was <em>allowed</em> to
-save this only because every altered character sits inside a highlight; an unmarked edit would have
-been refused. Each small number is a handle you use in the next step.</p>
-
-<h4>3. You decide: keep #1, drop #2</h4>
-
-<p>Just tell Claude in plain English &mdash; <em>&ldquo;accept 1, reject 2&rdquo;</em> &mdash; or run
-<code>/tc accept &lt;file&gt; 1</code> and <code>/tc reject &lt;file&gt; 2</code>. (You can also delete
-the highlight wrappers by hand in any editor; nothing is locked.)</p>
-
-<h4>4. The result (on disk)</h4>
-<div class="example">The greedy algorithm often finds the optimal solution.</div>
-
-<p>The accepted change stayed; the rejected one was rolled back to your original wording. Both
-decisions &mdash; with timestamps and the old and new text &mdash; were appended to a log file named
-<code>.tc-history.md</code> in your project. Because that log is plain text kept in version control,
-tools like <code>git diff</code> and <code>git blame</code> surface AI-attributed changes naturally,
-even months later.</p>
+<p>That drops a small <code>.tc-tracked</code> marker in the folder. From then on, every
+<code>.md</code> / <code>.qmd</code> / <code>.tex</code> file <em>in that folder</em> is tracked. The
+marker covers only its own folder &mdash; it never reaches into parent folders or subfolders, so you
+control exactly what is watched. To track one file rather than a folder, use
+<code>/tc enable &lt;file&gt;</code>.</p>
 
 <h2>How it works</h2>
 
 <p>You don&rsquo;t run track-changes during normal work &mdash; once installed, it watches for edits
-on its own. Three things happen automatically behind the scenes:</p>
+on its own, through a <em>hook</em> Claude Code triggers before every save:</p>
 
 <ul>
-  <li><strong>It checks every save before it happens.</strong> Whenever Claude is about to write to a
-    tracked file, track-changes first inspects what would change. If any new or altered text
-    isn&rsquo;t wrapped in a highlight, the save is refused and Claude is told to mark it. (This kind
-    of automatic, behind-the-scenes check is called a <em>hook</em> &mdash; Claude Code triggers it
-    for you; you never invoke it yourself.) The practical effect: an AI edit can never land in your
-    document unhighlighted.</li>
-  <li><strong>It keeps a running log.</strong> Every highlight Claude adds, and every accept-or-reject
-    decision you make afterward, is appended to the plain-text <code>.tc-history.md</code> file next
-    to your document. Since the log travels with your project, you &mdash; or a co-author, or a
-    reviewer &mdash; can always see what the AI touched and what you decided.</li>
+  <li><strong>It checks every save before it happens.</strong> If a change to a tracked file
+    isn&rsquo;t wrapped in a highlight &mdash; or a grounded passage&rsquo;s excerpt isn&rsquo;t
+    present in its cited source &mdash; the save is refused and Claude is told what to fix. An AI edit
+    can never land unhighlighted, and a sourced claim can never land unverified.</li>
+  <li><strong>It keeps a running log.</strong> Every highlight, every accept-or-reject, and every
+    verified excerpt is appended to the plain-text <code>.tc-history.md</code> next to your document,
+    so you &mdash; or a co-author or reviewer &mdash; can always see what the AI touched and what it
+    relied on.</li>
   <li><strong>It stays out of the way otherwise.</strong> On files you haven&rsquo;t opted in, and in
-    any turn where you&rsquo;ve paused it, the checks do nothing at all. There is no separate app or
-    window; it lives entirely inside your normal Claude Code session.</li>
+    any turn you&rsquo;ve paused it with <code>/draft</code>, the checks do nothing. There is no
+    separate app or window.</li>
 </ul>
 
 <h2 id="commands">Commands</h2>
 
-<p>The suite adds two top-level slash commands to Claude Code: <code>/tc</code> and
-<code>/draft</code>. <code>/tc</code> takes a subcommand &mdash; including <code>/tc import</code>
-and <code>/tc polish</code>, which reach the cooperating <code>verified-import</code> and
-<code>tc-polish</code> skills. Here is the full set, grouped by what you&rsquo;re trying to do
-(<code>/tc import</code> has its own <a href="#importing">section below</a>).</p>
+<p>The suite adds two slash commands: <code>/tc</code> (with subcommands) and <code>/draft</code>.
+Here is the full set, grouped by what you&rsquo;re doing.</p>
 
-<h3>Turning tracking on and off</h3>
+<h3>Turn tracking on and off</h3>
 <ul class="cmds">
-  <li><code>/tc mark [&lt;dir&gt;]</code> &mdash; Turn tracking on for an entire folder by dropping a
-    <code>.tc-tracked</code> marker in it. This is the usual way to start. With no folder given, it
-    marks the current one.</li>
-  <li><code>/tc enable &lt;file&gt;</code> &mdash; Turn tracking on for a <em>single</em> file (it adds
-    <code>tc-track: true</code> to the file&rsquo;s header). Use this when you want just one file
-    watched rather than its whole folder.</li>
-  <li><code>/tc disable &lt;file&gt;</code> &mdash; The opposite: explicitly exclude one file from
-    tracking, even if its folder is marked.</li>
-  <li><code>/tc status [&lt;file&gt;]</code> &mdash; Show whether a file is currently being tracked and
-    <em>why</em> (which rule turned it on or off). Use it when you&rsquo;re not sure a file is being
-    watched.</li>
+  <li><code>/tc mark [&lt;dir&gt;]</code> &mdash; Track a whole folder (drops the
+    <code>.tc-tracked</code> marker). The usual way to start.</li>
+  <li><code>/tc enable &lt;file&gt;</code> / <code>/tc disable &lt;file&gt;</code> &mdash; Track, or
+    explicitly exclude, a single file.</li>
+  <li><code>/tc status [&lt;file&gt;]</code> &mdash; Show whether a file is tracked and which rule
+    decided it.</li>
+  <li><code>/draft</code> &mdash; Pause tracking for just your next message, then it resumes by
+    itself. For a large rewrite or brand-new draft that would be too noisy to highlight line by
+    line.</li>
 </ul>
 
-<h3>Pausing for one request</h3>
+<h3>Review and resolve changes</h3>
 <ul class="cmds">
-  <li><code>/draft</code> &mdash; Suspend tracking for just your next message to Claude, then it
-    switches back on by itself. Use it when you&rsquo;re asking for a large rewrite or a brand-new
-    draft that would be too noisy to highlight line by line &mdash; you want the writing for that one
-    step, not the marks. (<code>/tc draft</code> does the same thing.)</li>
+  <li><code>/tc list &lt;file&gt;</code> &mdash; List every highlight by number with a preview of what
+    changed. The natural start of a review pass.</li>
+  <li><code>/tc accept &lt;file&gt; &lt;ranges&gt;</code> / <code>/tc reject &lt;file&gt; &lt;ranges&gt;</code>
+    &mdash; Keep or discard the listed highlights and remove the wrappers. Ranges are flexible:
+    <code>1-25,!7,!11</code> means &ldquo;1 through 25, except 7 and 11.&rdquo;</li>
+  <li><code>/tc accept-all &lt;file&gt;</code> / <code>/tc reject-all &lt;file&gt;</code> &mdash;
+    Resolve every highlight at once.</li>
 </ul>
 
-<h3>Cleaning up voice-dictated prose</h3>
+<h3>Ground writing in a source</h3>
 <ul class="cmds">
-  <li><code>/tc polish [&lt;file&gt;]</code> &mdash; Clean up <em>voice-dictated</em> prose &mdash;
-    speech-recognition slips, ordinary grammar, dropped words &mdash; in a tracked file. Every fix
-    lands as an ordinary highlight you review with <code>/tc accept</code> / <code>/tc reject</code>,
-    exactly like any other change. It never rewrites a token it can&rsquo;t recognize as plain prose
-    (jargon, code, math, a domain term): it leaves that untouched and flags it for you instead. On an
-    untracked file it offers a one-time direct cleanup (no marks) or to enable tracking first. (Part
-    of the <code>tc-polish</code> skill.)</li>
+  <li><code>/tc source &lt;file&gt;#&lt;locator&gt; [&lt;target&gt;]</code> &mdash; Stage a source slice
+    (a line range, a PDF page range <code>#p.12-14</code>, or a whole file); Claude then writes the
+    verified gray excerpt + green interpretation. A citation can be named by BibTeX key:
+    <code>/tc source @daskin2013 p.114</code>.</li>
+  <li><code>/tc manifest [&lt;doc&gt;]</code> &mdash; Regenerate the document&rsquo;s source manifest in
+    <code>validation/&lt;doc&gt;.sources.md</code> &mdash; the durable, committable record of every
+    sourced passage.</li>
 </ul>
 
-<h3>Bringing in trusted source material</h3>
+<h3>Bring in trusted material</h3>
 <ul class="cmds">
   <li><code>/tc import &lt;source&gt;[#L&lt;a&gt;-L&lt;b&gt;] [&lt;target&gt;]</code> &mdash; Insert vetted
-    material &mdash; a section of an old notebook, a prior manuscript, a chapter &mdash; into a tracked
-    document. Claude converts it to the document&rsquo;s format and it lands <em>clean</em> (no
-    highlights), because faithfully reproduced source isn&rsquo;t an AI edit you need to review; Claude
-    marks only a genuinely significant change (one that alters meaning), while minor reformatting stays
-    clean. See <a href="#importing">the fuller walkthrough below</a>. (Part of the
-    <code>verified-import</code> skill.)</li>
+    material and let it land <em>clean</em> (no highlights), reproducing the source faithfully; Claude
+    marks only a genuinely significant change. See <a href="#importing">below</a>.</li>
 </ul>
 
-<h3>Reviewing and resolving changes</h3>
-<p>After Claude has marked up a file, these let you work through the highlights quickly instead of
-editing each wrapper by hand.</p>
+<h3>Clean up voice dictation</h3>
 <ul class="cmds">
-  <li><code>/tc list &lt;file&gt;</code> &mdash; List every highlight in the file by number, each with a
-    short preview of what changed. The natural starting point for a review pass.</li>
-  <li><code>/tc accept &lt;file&gt; &lt;ranges&gt;</code> &mdash; Keep Claude&rsquo;s version for the
-    listed highlights and remove the wrappers, making the text final. Ranges are flexible:
-    <code>1-25,!7,!11</code> means &ldquo;marks 1 through 25, except 7 and 11.&rdquo;</li>
-  <li><code>/tc reject &lt;file&gt; &lt;ranges&gt;</code> &mdash; The opposite: discard
-    Claude&rsquo;s version, restore your original text, and remove the wrappers. Same range syntax.</li>
-  <li><code>/tc accept-all &lt;file&gt;</code> / <code>/tc reject-all &lt;file&gt;</code> &mdash;
-    Resolve every highlight in the file at once, when you&rsquo;ve decided wholesale.</li>
+  <li><code>/tc polish [&lt;file&gt;]</code> &mdash; Clean up voice-dictated prose (recognition slips,
+    grammar, dropped words); every fix lands as an ordinary highlight you review. It never rewrites a
+    token it can&rsquo;t recognize as plain prose (jargon, code, math): it leaves that alone and flags
+    it. (Part of <code>tc-polish</code>.)</li>
 </ul>
 
 <div class="callout">
-  <p>Every accept or reject is recorded in the audit log as a deliberate decision, so the skill will
-  never silently undo a choice you made &mdash; even if Claude edits the same passage again later.</p>
+  <p>Every accept or reject is recorded as a deliberate decision, so the skill never silently undoes
+  a choice you made &mdash; even if Claude edits the same passage again later. And
+  <code>accept</code> / <code>reject</code> run only on a <strong>committed</strong> file, so an
+  approval always attaches to text git shows was reviewed (human-only override:
+  <code>TC_FORCE=1</code>).</p>
 </div>
 
-<div class="callout">
-  <p><strong>Resolution runs only on committed files (v8.1).</strong> A highlight stays editable
-  right up to the moment it is resolved, so without a guard an approval could attach to text the
-  reviewer never read &mdash; for example, an AI &ldquo;polish&rdquo; correction applied and accepted
-  in one step. The <code>accept</code> and <code>reject</code> commands therefore refuse to run if
-  the file has uncommitted changes: commit your own tweaks as their own commit, let any AI
-  corrections land as new <em>marked</em> edits in theirs, review the diffs, then resolve. Git
-  history then shows exactly the text every approval covered. Highlights accumulate across commits
-  and resolve in batches &mdash; that is the intended rhythm. (Human-only escape hatch:
-  <code>TC_FORCE=1</code>.)</p>
-</div>
-
-<h2>What else it can do</h2>
-
-<p>Beyond the basic mark-and-review loop, track-changes handles the situations that actually come up
-when you build documents with an AI&rsquo;s help.</p>
+<h2>More the suite handles</h2>
 
 <h3 id="importing">Build from material you already trust &mdash; without drowning in highlights</h3>
-<p>Most of a new lecture or chapter is assembled from things you&rsquo;ve already written and
-vetted: a section of an old notebook, a prior manuscript, a trusted reference. Only a little is
-genuinely new AI writing. If every imported paragraph were highlighted, the handful of lines that
-actually need your attention would be buried in yellow. The companion <code>verified-import</code>
-skill handles this with the <code>/tc import</code> command:</p>
-
+<p>Most of a new lecture or chapter is assembled from things you&rsquo;ve already vetted; only a
+little is genuinely new AI writing. <code>/tc import</code> inserts a source and lands it clean, so
+only the new writing around it is highlighted:</p>
 <pre class="snippet">/tc import chapter3.md#L10-L42 lecture-notes.md</pre>
+<p>Claude reproduces the content faithfully and marks only a change that alters meaning &mdash; an
+added or dropped sentence, a changed quantity or term &mdash; while reflow and formatting stay clean.
+An import is also checked for <strong>completeness</strong>: if the conversion silently dropped a
+word, number, or symbol that was in the source, the write is refused and the missing token named
+(override with <code>--allow-partial</code>). Where sourcing (above) proves an excerpt is
+<em>real</em>, import proves a conversion is <em>whole</em>.</p>
 
-<p>Claude converts the source into the target document&rsquo;s format and inserts it, reproducing
-the content faithfully. A verified import lands <strong>clean (no highlights)</strong> by default,
-so it reads as ordinary prose and only Claude&rsquo;s genuinely new writing around it gets
-highlighted. Claude uses its judgment: if a conversion introduces a genuinely
-<strong>significant</strong> change &mdash; an added or removed sentence or clause, or a changed
-quantity, term, or formula &mdash; it highlights just that change for your review; minor
-differences (reflow, formatting, equivalent notation) stay clean. The command works on text
-sources; binary formats require a plain-text copy to import from.</p>
-
-<p><strong>Import-fidelity guarantee (8.2.0).</strong> An import can no longer silently drop part
-of its source. At write time the hook mechanically checks <em>content-token coverage</em>: every
-meaningful word, number, and subscripted symbol (say, the <code>r_f</code> of four listed rates)
-in the source slice must appear in the converted block. Reformatting and reordering pass; dropped
-content blocks the import and names exactly what is missing, so a corrected retry lands cleanly.
-An intended omission is declared explicitly with <code>/tc import --allow-partial</code> and is
-recorded in the audit log. A whole document can be audited against its source at any time with
-<code>/tc coverage &lt;doc&gt; &lt;source&gt;</code>, which reports per-unit coverage and any
-missing tokens.</p>
-
-<h3 id="sourcing">Ground AI writing in sources you can open &mdash; with excerpts that cannot be faked (9.0.0)</h3>
-<p>When AI-drafted text is supported by a document &mdash; a chapter, a slide deck, a cited
-paper &mdash; the supporting excerpt appears beside it as a temporary <em>gray</em> block and the
-AI&rsquo;s interpretation as a <em>green</em> region labeled with its source
-(<code>sourced: chapter3.pdf p.12</code>). The critical guarantee is mechanical: the gray excerpt
-is <strong>verbatim by construction, not by discipline</strong>. The
-<code>/tc source &lt;file&gt;#&lt;locator&gt;</code> command stages the source slice, and at write
-time the hook verifies the quoted text is actually contained in it &mdash; a fabricated or altered
-quote is refused outright, with the mismatch named. Sources can be text files, PDFs, or Word
-documents, and a citation can be named by its BibTeX key
-(<code>/tc source @daskin2013 p.114</code>), so every AI claim about a cited paper carries a
-verified excerpt from that paper &mdash; an anti-hallucination layer for literature claims.
-The durable evidence never depends on the document itself: <code>/tc manifest</code> regenerates a
-per-document source manifest in a <code>validation/</code> folder, and a bundled annotator tool
-highlights every used passage in an annotated <em>copy</em> of each source PDF with a summary page
-&mdash; the source folder becomes self-validating. Gray scaffolding is deleted after confirmation
-(lectures) or at submission (manuscripts); deleting it never loses evidence.</p>
-
-<h3>Resolve a whole review pass in seconds</h3>
-<p>A heavy editing session can leave dozens of highlights. Rather than clicking through them one at a
-time, list them and then accept or reject in ranges &mdash; for example, keep everything except the
-two changes you disagree with. See <code>/tc list</code>, <code>/tc accept</code>, and
-<code>/tc reject</code> above.</p>
+<h3>Hand the document to a reader, cleanly</h3>
+<p>Sharing the document for someone to <em>read</em> rather than review? Add <code>?clean=1</code> to
+the shared link and the rendered page hides every highlight and reference number. The underlying file
+is untouched, so your review state is preserved.</p>
 
 <h3>Add brand-new sections without breaking the page</h3>
 <p>Wrapping a brand-new heading or code block in an inline highlight would break how the document
-displays. In Markdown and Quarto, a new heading, fenced code block, or callout is flagged with a
-single marker on the line just above it &mdash; you still see at a glance that it&rsquo;s new, and
-the document still renders correctly. For LaTeX, a brand-new <code>\section</code> or environment
-uses <code>/draft</code> instead (write the structure first, then let track-changes mark any content
-Claude adds inside it).</p>
+displays, so a new block is flagged with a single marker on the line just above it &mdash; you still
+see it&rsquo;s new, and the page still renders. LaTeX uses an equivalent marked environment.</p>
 
-<h3>Hand the document to a reader, cleanly</h3>
-<p>When you share the document for someone to <em>read</em> rather than review, you don&rsquo;t want
-yellow highlights all over it. Add <code>?clean=1</code> to the end of the shared link and the
-rendered page hides every mark and reference number. The underlying file is untouched, so your review
-state is fully preserved &mdash; the clean view is just for the reader.</p>
-
-<h3>Catch half-finished edits before they&rsquo;re committed</h3>
-<p>If you keep your documents in git, track-changes can optionally warn you at commit time when a file
-still has unresolved highlights in it &mdash; a safety net so partly-reviewed AI edits don&rsquo;t
-slip into your project&rsquo;s history by accident. It&rsquo;s off until you switch it on, and you can
-always override it for a single commit.</p>
+<h3>Catch half-finished edits at commit</h3>
+<p>If you keep documents in git, track-changes can optionally warn you at commit time when a file
+still has unresolved highlights &mdash; a safety net so partly-reviewed AI edits don&rsquo;t slip
+into history. Off until you switch it on, and overridable per commit.</p>
 
 <h3>Pre-clean voice dictation in your editor &mdash; <code>decap</code></h3>
-<p>Voice dictation often sprinkles stray capital letters mid-sentence. The suite bundles a small
-companion tool, <code>decap</code>, that strips them &mdash; a deterministic filter that lowercases
-stray mid-sentence capitals while leaving sentence starts, acronyms, camelCase, and protected terms
-alone. Because you run it <em>in your editor</em> and it never goes through Claude, its edits are
-deliberately <strong>not</strong> tracked &mdash; exactly what you want for a bulk, judgment-free
-cleanup of your own dictation. Run it on fresh dictation <em>before</em> the text is marked (it is
-text-only and not aware of <code>&lt;mark&gt;</code> spans). It pairs naturally with
-<code>/tc polish</code>: <code>decap</code> for the instant mechanical pass, <code>/tc polish</code>
-for the deeper editorial pass you review as marks.</p>
-
-<p><strong>Installation.</strong> <code>decap</code> installs <strong>automatically when you run the
-bootstrap</strong> &mdash; the tool lands at <code>~/.claude/skills/track-changes/tools/decap.py</code>,
-so there is nothing extra to download. The one piece the bootstrap can&rsquo;t do is bind it to a key
-in your editor &mdash; and since you&rsquo;re already in Claude Code, the easiest way is to let Claude
-do that for you. Paste this:</p>
-
+<p>Voice dictation sprinkles stray capitals mid-sentence. The suite bundles <code>decap</code>, a
+deterministic filter that lowercases them while leaving sentence starts, acronyms, camelCase, and
+protected terms alone. You run it <em>in your editor</em>, so it never goes through Claude and its
+edits are deliberately <strong>not</strong> tracked &mdash; exactly right for a bulk, judgment-free
+cleanup of your own dictation. It pairs with <code>/tc polish</code>: <code>decap</code> for the
+instant mechanical pass, <code>/tc polish</code> for the editorial pass you review as marks.</p>
+<p><code>decap</code> installs automatically with the bootstrap (at
+<code>~/.claude/skills/track-changes/tools/decap.py</code>). To bind it to a key in VS Code, paste
+this to Claude:</p>
 <pre class="snippet">Set up the bundled decap tool as a VS Code keybinding. Install the
 "Edit with Shell Command" extension (ryu1kn.edit-with-shell) if it isn't
 already installed; add an editWithShell.favoriteCommands entry with id
@@ -370,38 +422,34 @@ already installed; add an editWithShell.favoriteCommands entry with id
 (use the full absolute path if ~ isn't expanded on my OS); set
 editWithShell.quickCommand1 to "decap"; and bind ctrl+alt+c to
 editWithShell.runQuickCommand1 in keybindings.json.</pre>
-
-<p>That installs a small VS Code extension and binds <kbd>Ctrl+Alt+C</kbd> to run <code>decap</code>
-on the current selection &mdash; select fresh, unmarked dictation and press it. Prefer to wire it up
-by hand, or use a different editor (Vim, Emacs)? Ask Claude for the manual steps, or see
-<code>SKILL.md</code> in the
+<p>That binds <kbd>Ctrl+Alt+C</kbd> to run <code>decap</code> on the current selection. For manual
+setup or another editor, ask Claude, or see <code>SKILL.md</code> in the
 <a href="https://github.com/mgkay/mgkay.github.io/tree/main/track-changes">project repository</a>.</p>
 
 <h2>Good to know</h2>
-
 <ul>
-  <li><strong>It shows up wherever you already read.</strong> Highlights are stored as small standard
-    HTML tags right inside your document, so they appear in VS Code&rsquo;s preview, on GitHub, in
-    Quarto output, and in common markdown viewers &mdash; no special tool required to see them.</li>
-  <li><strong>The record lives in your project.</strong> The audit log is plain text in your
-    project folder and is meant to be committed to version control, so the AI&rsquo;s edit history is
-    part of your normal project history.</li>
+  <li><strong>It shows up wherever you already read.</strong> Highlights and sourced regions are
+    standard HTML/CSS inside your document, so they render in VS Code&rsquo;s preview, on GitHub, and
+    in Quarto output &mdash; no special tool required.</li>
+  <li><strong>The record lives in your project.</strong> The audit log is plain text meant to be
+    committed, so the AI&rsquo;s edit and sourcing history is part of your normal project history.
+    (Keep private source PDFs and their manifests in a folder you don&rsquo;t publish.)</li>
   <li><strong>It supports <code>.md</code>, <code>.qmd</code>, and <code>.tex</code>.</strong> LaTeX
-    files use an equivalent <code>\tc{...}</code> markup instead of <code>&lt;mark&gt;</code>, so
-    highlighted changes survive a PDF build.</li>
-  <li><strong>It&rsquo;s light and quiet.</strong> The background checks add only a fraction of a
-    second per edit, and do nothing at all on files you haven&rsquo;t opted in.</li>
+    uses equivalent <code>\tc{...}</code> and region markup, so highlighted changes and sourced
+    passages survive a PDF build.</li>
+  <li><strong>It&rsquo;s light and quiet.</strong> The background checks add a fraction of a second
+    per edit, and do nothing on files you haven&rsquo;t opted in.</li>
 </ul>
 
 <h2>Learn more</h2>
-<p>The full installer manifest is in
-<a href="bootstrap.md">bootstrap.md</a>. Source files and the complete file list live in the
+<p>The full installer manifest is in <a href="bootstrap.md">bootstrap.md</a>. Source files and the
+complete file list live in the
 <a href="https://github.com/mgkay/mgkay.github.io/tree/main/track-changes">project repository</a>.</p>
 
 </main>
 
 <footer>
-  <p>track-changes v9.0.0 &middot; M. G. Kay &middot; NC State ISE<br>
+  <p>track-changes v9.1.0 &middot; M. G. Kay &middot; NC State ISE<br>
   <a href="bootstrap.md" download>Download bootstrap.md</a></p>
 </footer>
 

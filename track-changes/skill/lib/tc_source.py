@@ -404,6 +404,7 @@ def _render(rec, target, resolved, locator_str, slice_text):
     is grammar.scan_max_n(target)+1 (the next free mark number)."""
     expected = srcstage.expected_src(rec)          # the tc-src value + label
     display = expected
+    citekey = rec.get('citekey')
     tgt_ftype = _ftype_of(target)
     target_fmt = {'tex': 'LaTeX', 'qmd': 'Quarto Markdown'}.get(
         tgt_ftype, 'Markdown')
@@ -452,12 +453,26 @@ def _render(rec, target, resolved, locator_str, slice_text):
     out.append('<the exact quotation you are relying on, copied from the slice>')
     out.append(gray_close)
     out.append('')
+    # The citation the green region MUST carry (9.1.0): the exact citekey when
+    # staged by key, else an example the author replaces with a real citation.
+    if citekey:
+        cite_example = ('[@%s]' % citekey if tgt_ftype in ('md', 'qmd')
+                        else '\\cite{%s}' % citekey)
+        cite_body = ('<your sourced prose, supported by the quotation above> %s'
+                     % cite_example)
+    else:
+        cite_example = ('[@key]` or a footnote `^[...]'
+                        if tgt_ftype in ('md', 'qmd')
+                        else '\\cite{key}` or `\\footnote{...}')
+        cite_body = ('<your sourced prose, supported by the quotation above> '
+                     '<citation>')
     out.append(
         '  2. IMMEDIATELY AFTER it, a green `sourced` region carrying YOUR '
-        'interpretation / paraphrase of that quotation:')
+        'interpretation / paraphrase of that quotation AND a reader-facing '
+        'citation (the interpretation is what stays in the document):')
     out.append('')
     out.append(green_open)
-    out.append('<your sourced prose, supported by the verbatim quotation above>')
+    out.append(cite_body)
     out.append(green_close)
     out.append('')
     out.append('Rules:')
@@ -474,6 +489,18 @@ def _render(rec, target, resolved, locator_str, slice_text):
         'the green region, leaving only the sourced region. A quotation meant '
         'to REMAIN in the document is ordinary quoted text WITH a citation, '
         'not a green region.')
+    if citekey:
+        out.append(
+            '  - The green region MUST cite `@%s` (staged by citekey): include '
+            '`%s` in the region body — the hook refuses a sourced region that '
+            'does not cite that key. tc-src metadata is NOT a citation.'
+            % (citekey, cite_example))
+    else:
+        out.append(
+            '  - The green region MUST carry a reader-facing citation (`%s`), '
+            'or re-stage by citekey with `/tc source @citekey <locator>`. The '
+            'hook refuses an uncited sourced region — tc-src metadata is NOT a '
+            'citation.' % cite_example)
     return '\n'.join(out)
 
 

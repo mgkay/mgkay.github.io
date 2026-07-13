@@ -1093,11 +1093,54 @@ clears the staging. A later AI edit *inside* a gray block is new added content
 requiring a fresh staging; a hand edit by the author is human content, outside
 the gate.
 
+### Always-cited and always-verified (9.1.0)
+
+`tc-prov="sourced"` is not only verified against its excerpt; it must also be
+**attributed in the document itself**. Two invariants hold, enforced at the
+write:
+
+- **Always-verified (pairing).** The gate now triggers on a new gray
+  `.tc-verbatim` excerpt **or** a touched `sourced` region, and a brand-new
+  `sourced` region and its verified gray excerpt must land as **one pair**. A
+  `sourced` region can no longer bypass verification by omitting the excerpt —
+  a lone `sourced` region with no staged gray block is refused (exit 2). This
+  closes the earlier hole where a `sourced` region added without a gray excerpt
+  landed as an ordinary tracked region.
+- **Always-cited.** The surviving green region must carry a **reader-facing
+  citation** in its body:
+  - **Rule A (citekey binding).** When the source was staged by `@citekey`
+    (`/tc source @daskin2013 …`), the region must cite **that exact key** —
+    `[@daskin2013]` in `.md`/`.qmd`, `\cite{…daskin2013…}` (any `\cite`-family
+    command) in `.tex`.
+  - **Rule B (general token).** Otherwise (path-staged), the region must contain
+    at least one citation/footnote token for the file type: `.md`/`.qmd` —
+    `[@key]` / `@key` / a Pandoc footnote (`^[…]` inline or `[^ref]`
+    reference); `.tex` — any `\cite`/`\citep`/`\citet`/`\autocite`/`\parencite`/
+    `\textcite`/`\footcite`/… command or `\footnote{`.
+
+A citation that **renders nothing to a reader does not count**: a token inside a
+code span or fence, inside an HTML or LaTeX comment, or inside a
+`verbatim`/`\verb` context is ignored (`\nocite`, which registers a key but
+prints nothing, is likewise excluded). Editing an already-present `sourced`
+region needs no re-staging, but the edit **must keep a citation** — a confirmed
+sourced passage cannot be edited into an unattributed one. On any failure the
+write is blocked (exit 2), the staging record is preserved, and the message
+names the exact expected key (Rule A) or the accepted citation forms (Rule B).
+
+The point is that `tc-src` is **invisible provenance metadata**, stripped on
+`/tc accept` — it is not a citation a reader can follow. After acceptance the
+green wrapper and the gray scaffolding are gone; only the document's own
+citation remains as the durable attribution. Enforcement (not prompting) is what
+makes this hold when an AI agent does the authoring.
+
 ### Quotation vs. interpretation — the boundary
 
 A green `sourced` region is for **AI-authored interpretation, paraphrase, or
-synthesis** that leans on a source. It is **not** a place to park a quotation
-that is meant to *stay* in the document. Two cases sit outside the discipline:
+synthesis** that leans on a source, and that interpretation **must itself carry
+a citation** a reader can follow (Rule A/Rule B above) — the source-grounding is
+not complete until the claim is attributed in the document. It is **not** a place
+to park a quotation that is meant to *stay* in the document. Two cases sit
+outside the discipline:
 
 - An exact quotation the author wants to **keep** in the finished text is
   ordinary **quoted text with a citation** — write it as a normal `<mark>` edit

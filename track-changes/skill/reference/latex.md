@@ -148,6 +148,12 @@ The locator renders whenever supplied, but is meaningful only with the
 `sourced`/`transcript` provenances. The `{N}` and `{N}[<prov>]` forms parse
 exactly as before — the second bracket is independent and optional.
 
+As of 9.1.0, a `tcregion` with the `sourced` provenance must contain a
+reader-facing citation in its body — a `\cite`-family command (`\cite{key}`,
+`\citep{key}`, `\autocite{key}`, …) or `\footnote{…}` — enforced by the
+track-changes hook at the write (the exact key when the source was staged by
+`@citekey`); `tc-src` metadata alone does not satisfy it.
+
 ### `tcverbatim` — confirmation scaffolding
 
 `tcverbatim` frames a verbatim source excerpt in a gray left bar with a

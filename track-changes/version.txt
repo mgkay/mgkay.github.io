@@ -1,3 +1,23 @@
+9.1.0
+2026-07-12
+track-changes v9.1.0 — ironclad sourced-region enforcement (behavior-changing).
+- `tc-prov="sourced"` is now an ALWAYS-VERIFIED, ALWAYS-CITED claim, enforced at the write so
+  it holds against an uncooperative/forgetful AI agent (not by prompt discipline):
+  - The gate now triggers on a new gray `.tc-verbatim` excerpt OR a touched sourced region. A
+    sourced region can no longer bypass verification by omitting the gray excerpt (the v9.0
+    hole): a brand-new sourced region and its verified gray excerpt must land as ONE pair.
+  - The surviving green region MUST carry a reader-facing citation (tc-src is invisible
+    metadata, stripped on `/tc accept`). Rule A: staged by `@citekey` → the region must cite
+    THAT key (`[@key]` md / `\cite{key}` tex). Rule B: otherwise → any citation/footnote token
+    (`[@key]`/`@key`/`^[...]` md; `\cite`-family/`\footnote` tex). Citations buried in code
+    spans, HTML/LaTeX comments, or verbatim/`\verb` do NOT count (they render nothing).
+  - Editing an already-present sourced region needs no re-staging but must keep a citation — a
+    confirmed sourced passage cannot be edited into an unattributed one.
+- New shared lib `tc_core/cite.py` (data-only citation detector). `/tc source` instruction now
+  tells the agent to include the citation (the exact key when staged by key).
+- Additive/back-compat grammar; no new hooks (stays 6); no document migration. Adversarially
+  red-teamed (a comment-buried-citation bypass was found and closed).
+
 9.0.0
 2026-07-12
 track-changes v9.0.0 — source-validation discipline, suite-wide.
