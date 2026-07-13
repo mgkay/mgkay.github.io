@@ -282,6 +282,57 @@ the citation itself, and a <code>/tc manifest</code>-generated list of every sou
 tool that highlights each used passage in an annotated <em>copy</em> of the source PDF. The source
 folder becomes self-validating.</p>
 
+<h2 id="ex-websource">See it: citing a web page that might vanish</h2>
+
+<p>Often the only source for a claim is a web page &mdash; a company blog post, a standards page, a
+news article &mdash; and web pages move, change, or disappear. So when the source is a URL,
+<code>/tc source</code> does one extra thing: it captures a <strong>dated snapshot</strong> of the
+page and cites <em>that</em>, so the evidence survives even if the live page later rots. Point it at
+a URL the same way:</p>
+
+<pre class="snippet">/tc source https://example.com/ web-notes.md</pre>
+
+<p>Everything below is again the <strong>actual output</strong> of that command on this machine
+&mdash; a real capture, the real hook, the skill&rsquo;s own stylesheet. At stage time the skill
+fetches the page (headless Chrome, printed to PDF; a text fetch as fallback) and writes a dated
+snapshot into a private <code>validation/sources/</code> folder. That snapshot &mdash; not the live
+URL &mdash; is what the excerpt is checked against, so verification is deterministic and works
+offline. Here is the captured snapshot, with the sentence the note draws on highlighted in place by
+the bundled annotator:</p>
+
+<figure class="src-shot">
+<img src="img/web-source-snapshot.png" alt="A dated PDF snapshot of example.com captured 2026-07-13; the sentence 'This domain is for use in documentation examples without needing permission.' is highlighted in yellow.">
+<figcaption><code>example.com&hellip;2026-07-13.pdf</code> &mdash; the page frozen at the moment it was
+cited (note the capture date in the header), the one sentence the note relies on highlighted.</figcaption>
+</figure>
+
+<p>Then, in your notes, Claude writes the same two blocks as for a file source &mdash; the verbatim
+excerpt it relies on (gray, with the load-bearing sentence <span class="tc-src-key">underlined</span>),
+and the sentence that stays, carrying a citation that records the URL and the access date:</p>
+
+<div class="doc-preview">
+<div class="tc-verbatim" data-tc-cite="https://example.com/ (accessed 2026-07-13)">
+<p><span class="tc-src-key">This domain is for use in documentation examples without needing
+permission.</span> Avoid use in operations.</p>
+</div>
+<div class="tc-region" data-tc-n="1" data-tc-prov="sourced" data-tc-src="https://example.com/ (accessed 2026-07-13)">
+<p>The example.com domain is provided for documentation use without needing permission.<sup>1</sup></p>
+</div>
+<div class="references" role="list">
+<div class="csl-entry" role="listitem">1. <span data-cites="example.com">https://example.com/</span> &mdash; accessed 13&nbsp;July&nbsp;2026.</div>
+</div>
+</div>
+
+<p>The excerpt is verified against the captured snapshot exactly as a PDF or Word source would be
+&mdash; the hook re-reads the snapshot text, never the network, so a fabricated web quote is refused
+just the same. The manifest and the annotated source copy work unchanged, because a snapshot is just
+a local file to the rest of the skill. Two safeguards specific to the web path: the snapshots stay
+<strong>private</strong> (they live under <code>validation/</code>, not in what you publish), and the
+fetch is <strong>SSRF-guarded</strong> &mdash; the URL is resolved and refused if it points at
+loopback, private, link-local, or cloud-metadata addresses, and every redirect hop is re-checked, so
+a hostile link can&rsquo;t make the capture reach into your internal network. A page behind a login
+isn&rsquo;t fetched for you; save it yourself and source the saved file.</p>
+
 <h2>Prerequisites</h2>
 
 <p><strong>Claude Code</strong> must be installed &mdash; track-changes runs inside it, not
