@@ -184,6 +184,41 @@ def extract_text(path, locator_str=None):
         % (ext, path, ', '.join(_SUPPORTED_EXTS)))
 
 
+# Inline "source anchor" markers (9.1.1) — the author wraps the load-bearing
+# sentence inside a contextual gray excerpt so a reviewer sees which part is the
+# actual proposed source. The markers are stripped before the verbatim
+# containment check: only the marker SYNTAX is removed, the inner text stays and
+# must still be verbatim-contained in the source — so an anchor cannot smuggle
+# non-source text past the check.
+_ANCHOR_MD = re.compile(r'\[([^\]]*)\]\{\s*\.tc-src-key\s*\}')
+_ANCHOR_TEX = re.compile(r'\\tcsrckey\{([^}]*)\}')
+
+
+def strip_anchor(text, ftype):
+    """Remove source-anchor marker SYNTAX (keeping the inner text) so a gray
+    excerpt carrying an anchored load-bearing sentence still verifies verbatim
+    against the plain source. md/qmd: `[sentence]{.tc-src-key}`; tex:
+    `\\tcsrckey{sentence}`."""
+    if not text:
+        return text
+    if ftype == 'tex':
+        return _ANCHOR_TEX.sub(r'\1', text)
+    return _ANCHOR_MD.sub(r'\1', text)
+
+
+def anchor_text(text, ftype):
+    """Inner text of the FIRST source-anchor marker in `text`, or None if there
+    is no anchor. When a contextual excerpt marks its load-bearing sentence,
+    THAT anchor — not the whole context block — is the precise sourced span: it
+    is what the durable audit/manifest records and what the annotator highlights
+    in the source. Containment still verifies the whole block (the context is
+    real source too); the anchor just pinpoints the citation's support."""
+    if not text:
+        return None
+    m = (_ANCHOR_TEX if ftype == 'tex' else _ANCHOR_MD).search(text)
+    return m.group(1).strip() if m else None
+
+
 def contains(excerpt, slice_text):
     """True iff the normalized `excerpt` is a substring of the normalized
     `slice_text`. An excerpt that normalizes to empty is never contained (an

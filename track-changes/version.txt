@@ -1,3 +1,22 @@
+9.1.1
+2026-07-12
+track-changes v9.1.1 — contextual gray excerpts with a marked source anchor (additive).
+- A gray `.tc-verbatim` excerpt may now carry a CONTIGUOUS passage of surrounding source context
+  (so a reviewer can place the attribution without reopening the source), with the load-bearing
+  sentence — the part actually proposed as the source — wrapped in a source-anchor marker:
+  md/qmd `[sentence]{.tc-src-key}`, LaTeX `\tcsrckey{sentence}`. The whole block stays gray (all of
+  it is verbatim source); the anchor is emphasized (bold + underline, no new color).
+- The write-time containment check STRIPS the anchor marker syntax before verifying, so an anchored
+  excerpt still verifies verbatim against the plain source; only the syntax is removed — the inner
+  text must still be contained, so an anchor cannot smuggle non-source text. The durable audit /
+  manifest excerpt records the clean (anchor-stripped) text.
+- Guidance (no gate change): the `/tc source` instruction now asks for a contiguous+anchored excerpt
+  and reminds that a sourced region must stay SCOPED to what the source supports — an inference built
+  on top of the source is authored (uncited) content, not sourced, so a single citation never creeps
+  over unsupported claims.
+- Purely presentational + guidance; no new hooks (stays 6); backward-compatible (excerpts without an
+  anchor are unchanged); no new shipped files; no document migration.
+
 9.1.0
 2026-07-12
 track-changes v9.1.0 — ironclad sourced-region enforcement (behavior-changing).

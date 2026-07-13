@@ -122,4 +122,10 @@
   \par\endMakeFramed
 }
 
+% \tcsrckey{<sentence>} (v9.1.1) — mark the load-bearing sentence (the part
+% actually proposed as the source) inside a contextual tcverbatim block.
+% Emphasis only (bold + underline), no color, so it stands out within the gray
+% context without adding to the color count. Requires \ul from soul (loaded).
+\newcommand{\tcsrckey}[1]{\textbf{\ul{#1}}}
+
 \endinput

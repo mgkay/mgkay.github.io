@@ -1064,6 +1064,21 @@ CLI prints for that staging — `path#locator` (or bare `path` for a whole
 source), or `@citekey locator` (or bare `@citekey`) — and it must be copied
 **verbatim** into the green region opener.
 
+### Contextual excerpts and the source anchor (9.1.1)
+
+A gray `.tc-verbatim` excerpt may include a **contiguous passage of surrounding
+verbatim context**, not just the bare load-bearing sentence, so the evidence
+reads in context. Wrap the load-bearing sentence — the part actually proposed as
+the source — in a **source-anchor marker**: `[sentence]{.tc-src-key}` in
+`.md`/`.qmd`, `\tcsrckey{sentence}` in `.tex`. The whole block stays gray (all of
+it is verbatim source); the anchor is only **emphasized** (bold + underline), not
+given a new color. The containment check strips the anchor marker *syntax* before
+verifying, so the marker contributes no text of its own — but the inner sentence
+must still be verbatim-contained in the staged source, so the marker cannot
+smuggle in non-source text. The audit entry and the `/tc manifest` record store
+the clean, anchor-stripped excerpt. An excerpt with **no** anchor behaves exactly
+as before.
+
 ### The mechanical guarantee (what the hook refuses)
 
 On the write that adds the gray+green pair, the track-changes PreToolUse hook
@@ -1138,7 +1153,13 @@ makes this hold when an AI agent does the authoring.
 A green `sourced` region is for **AI-authored interpretation, paraphrase, or
 synthesis** that leans on a source, and that interpretation **must itself carry
 a citation** a reader can follow (Rule A/Rule B above) — the source-grounding is
-not complete until the claim is attributed in the document. It is **not** a place
+not complete until the claim is attributed in the document. A sourced region must
+also stay **scoped** to what the source actually supports: it asserts only
+source-grounded claims. An inference built *on top of* the source — a conclusion
+the source does not itself state — is **authored (uncited)** content, not sourced,
+so the citation never stretches to cover an unsupported claim; a single citation
+must not creep over material the source does not back. Keep such reasoning in an
+ordinary authored mark, outside the green region. It is **not** a place
 to park a quotation that is meant to *stay* in the document. Two cases sit
 outside the discipline:
 

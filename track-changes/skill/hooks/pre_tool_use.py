@@ -337,8 +337,12 @@ def _source_gate(tool_name, file_path, source_text, payload, ftype):
             _log(f'SOURCE-BLOCK {file_path}: source re-read failed ({e}); preserved')
             return 2
 
-        if not sourcetext.contains(gray_body, slice_text):
-            preview = sourcetext.normalize(gray_body)[:80]
+        # Strip source-anchor markers (9.1.1) so an anchored load-bearing
+        # sentence inside a contextual excerpt still verifies verbatim; only the
+        # marker syntax is removed, the inner text must still be contained.
+        gray_plain = sourcetext.strip_anchor(gray_body, ftype)
+        if not sourcetext.contains(gray_plain, slice_text):
+            preview = sourcetext.normalize(gray_plain)[:80]
             _emit(hdr + '\n'
                   'the gray `.tc-verbatim` excerpt is NOT contained in the staged '
                   f'source {expected} — it looks fabricated or mismatched. Excerpt '
@@ -415,8 +419,14 @@ def _source_gate(tool_name, file_path, source_text, payload, ftype):
                   '~/.claude/skills/track-changes/state/source-ok/.')
             _log(f'SOURCE-BLOCK {file_path}: sentinel_write failed (state dir)')
             return 2
+        # Durable evidence = the precise sourced span. When the excerpt marks a
+        # load-bearing sentence, record THAT anchor (what the annotator then
+        # highlights in the source); otherwise the whole clean excerpt. The
+        # sentinel above binds the raw block bytes regardless.
+        sourced_excerpt = (sourcetext.anchor_text(gray_body, ftype)
+                           or gray_plain)
         tc_audit.write_sourced_entry(file_path, rec, region['N'], expected,
-                                     gray_body, body)
+                                     sourced_excerpt, body)
         srcstage.clear(file_path)
         _log(f'SOURCE-OK {file_path}: region {region["N"]} tc-src {expected}; '
              'sentinel written, record cleared')

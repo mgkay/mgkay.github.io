@@ -172,6 +172,11 @@ is ignored by the mark protocol, and is deleted per project policy once the
 refinement is confirmed. Like `tcregion`, it is `framed`-based, so it
 tolerates paragraph breaks and display math inside.
 
+As of 9.1.1, `\tcsrckey{…}` marks the load-bearing sentence inside a
+`tcverbatim` context block — emphasis (bold + underline), not a new color; the
+whole block stays gray, and the write-time containment check strips the marker
+syntax before verifying the excerpt against the source.
+
 ## Compatibility notes
 
 - The `\tc{}` macro takes a single mandatory argument. v1 took two

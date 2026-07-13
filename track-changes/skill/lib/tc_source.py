@@ -418,18 +418,21 @@ def _render(rec, target, resolved, locator_str, slice_text):
         target_text = ''
     next_n = grammar.scan_max_n(target_text, tgt_ftype) + 1
 
-    # Format-specific delimiters for the two blocks.
+    # Format-specific delimiters for the two blocks, plus the source-anchor
+    # marker (9.1.1) used to flag the load-bearing sentence inside the excerpt.
     if tgt_ftype == 'tex':
         gray_open = '\\begin{tcverbatim}{%s}' % display
         gray_close = '\\end{tcverbatim}'
         green_open = '\\begin{tcregion}{%d}[sourced][%s]' % (next_n, expected)
         green_close = '\\end{tcregion}'
+        anchor = '\\tcsrckey{<the sentence actually supporting your claim>}'
     else:
         gray_open = ('::: {.tc-verbatim tc-cite="%s"}' % display)
         gray_close = ':::'
         green_open = ('::: {.tc-region tc-n="%d" tc-prov="sourced" '
                       'tc-src="%s"}' % (next_n, expected))
         green_close = ':::'
+        anchor = '[<the sentence actually supporting your claim>]{.tc-src-key}'
 
     out = []
     out.append('tc source: staged %s (%s) -> %s'
@@ -444,13 +447,17 @@ def _render(rec, target, resolved, locator_str, slice_text):
         % (target, target_fmt))
     out.append('')
     out.append(
-        '  1. A TEMPORARY gray verbatim block quoting ONLY text that appears '
-        'VERBATIM in the source slice above. Copy the exact words — the '
-        'track-changes hook re-reads the source and REFUSES a fabricated or '
-        'paraphrased excerpt (fail-closed):')
+        '  1. A TEMPORARY gray verbatim block quoting a CONTIGUOUS passage from '
+        'the slice above — enough surrounding context that a reviewer can place '
+        'the attribution without reopening the source — and wrap the ONE '
+        'load-bearing sentence (the part actually proposed as the source) in the '
+        'anchor marker. Copy the exact words; the hook re-reads the source and '
+        'REFUSES a fabricated or paraphrased excerpt (fail-closed; the anchor '
+        'markup itself is stripped before that check):')
     out.append('')
     out.append(gray_open)
-    out.append('<the exact quotation you are relying on, copied from the slice>')
+    out.append('<contiguous context from the slice> ' + anchor
+               + ' <more context if useful>')
     out.append(gray_close)
     out.append('')
     # The citation the green region MUST carry (9.1.0): the exact citekey when
@@ -489,6 +496,12 @@ def _render(rec, target, resolved, locator_str, slice_text):
         'the green region, leaving only the sourced region. A quotation meant '
         'to REMAIN in the document is ordinary quoted text WITH a citation, '
         'not a green region.')
+    out.append(
+        '  - Keep the green region SCOPED to what the source actually supports: '
+        'the citation vouches for the whole sourced sentence, so do not let it '
+        'cover an inference you build ON TOP of the source. State only the '
+        'source-grounded claim in the sourced region; put any further analysis '
+        'in a SEPARATE authored (uncited) sentence outside it.')
     if citekey:
         out.append(
             '  - The green region MUST cite `@%s` (staged by citekey): include '

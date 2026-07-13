@@ -60,6 +60,21 @@
     .tc-verbatim[data-tc-cite]::before {
       content: attr(data-tc-cite) " \2014 delete after confirming";
     }
+    /* the anchored load-bearing sentence within a contextual gray excerpt
+       (shipped tc-clean.css rule): emphasis, no new color. */
+    .tc-src-key {
+      font-weight: 700; text-decoration: underline;
+      text-decoration-color: #8a8a8a; text-underline-offset: 2px;
+    }
+    /* the annotated source page (real annotator output) */
+    figure.src-shot { margin: 0.4em 0 0.5em; }
+    figure.src-shot img {
+      display: block; width: 100%; height: auto;
+      border: 1px solid #ccc; border-radius: 3px;
+    }
+    figure.src-shot figcaption {
+      font-size: 0.8rem; color: var(--gray-600); margin-top: 0.35em;
+    }
     .doc-preview .references {
       border-top: 1px solid #e0e0e0; margin-top: 0.8em; padding-top: 0.5em;
       font-size: 0.85em; color: #555;
@@ -205,20 +220,31 @@ it at the source and the page range:</p>
 
 <pre class="snippet">/tc source @sol2024 p.8 freight-lecture.md</pre>
 
-<p>Claude reads that slice and writes <strong>two</strong> blocks &mdash; the verbatim excerpt it is
-relying on (gray, temporary scaffolding), and the sentence that will actually stay in your lecture:
-its interpretation, carrying a citation the reader can follow (green). The box below is the
-<strong>actual output</strong> that write produced &mdash; the exact markup the hook verified and
-accepted, rendered with the skill&rsquo;s own stylesheet (the citation resolved from the
-<code>@sol2024</code> BibTeX entry):</p>
+<p>Everything below is the <strong>actual output</strong> of that command &mdash; a real source PDF,
+the real hook, and the skill&rsquo;s own stylesheet; nothing here is a mock-up. First, in the source
+itself the used sentence is highlighted, so the document folder becomes self-validating (this is the
+bundled annotator&rsquo;s real output on page&nbsp;8 of the report):</p>
+
+<figure class="src-shot">
+<img src="img/source-annotated.png" alt="Page 8 of the source report; the sentence 'Transportation represented 45% of total U.S. business logistics costs in 2023.' is highlighted in yellow within its surrounding paragraph.">
+<figcaption><code>state-of-logistics-2024.pdf</code>, p.&nbsp;8 &mdash; the one sentence the lecture draws on, highlighted in place.</figcaption>
+</figure>
+
+<p>Then, in your lecture, Claude writes <strong>two</strong> blocks: the verbatim excerpt it relies
+on (gray, temporary scaffolding &mdash; a contiguous passage for context, with the load-bearing
+sentence <span class="tc-src-key">underlined</span> to mark exactly what is being sourced), and the
+sentence that stays in the document: its interpretation, carrying the citation
+(green, resolved from the <code>@sol2024</code> BibTeX entry):</p>
 
 <div class="doc-preview">
 <div class="tc-verbatim" data-tc-cite="@sol2024 p.8">
-<p>Transportation represented 45% of total U.S. business logistics costs in 2023.</p>
+<p>U.S. business logistics costs reached $2.3 trillion in 2023, about 8.7 percent of GDP.
+<span class="tc-src-key">Transportation represented 45% of total U.S. business logistics costs in
+2023.</span> That made it the single largest component of the logistics bill, ahead of
+inventory-carrying and administrative costs.</p>
 </div>
 <div class="tc-region" data-tc-n="1" data-tc-prov="sourced" data-tc-src="@sol2024 p.8">
-<p>Transportation is the dominant controllable cost in the logistics budget, so it is where
-lot-sizing and routing improvements pay off first
+<p>Transportation is the single largest component of U.S. business logistics cost
 <span class="citation" data-cites="sol2024">(CSCMP 2024)</span>.</p>
 </div>
 <div class="references" role="list">
@@ -226,17 +252,19 @@ lot-sizing and routing improvements pay off first
 </div>
 </div>
 
-<p>The green region is the AI&rsquo;s <em>interpretation</em> &mdash; a paraphrase, carrying its
-citation, that you review like any other change and that stays in the finished document. As of
-version&nbsp;9.1 that citation is <strong>required</strong>: the hook refuses a &ldquo;sourced&rdquo;
-region that carries no citation a reader can follow, and when the source is named by a BibTeX key it
-must cite <em>that</em> key &mdash; a token hidden in a comment or code span does not count.
-Validating a source is not busywork you do <em>instead</em> of citing it; it is the same act seen
-from both ends &mdash; the citation is what the reader follows, and the gray excerpt is the proof
-beneath it, quoted exactly. And &ldquo;exactly&rdquo; is not a matter of good behavior: before the
-write is allowed, track-changes re-reads the source and checks the gray text is actually present in
-it. If Claude misremembered the figure &mdash; say it wrote 62% &mdash; or invented a quote
-wholesale, the save is refused and the discrepancy named (this is the hook&rsquo;s actual message):</p>
+<p>That closes the circle: <em>document &rarr; highlighted source sentence &rarr; verbatim excerpt
+&rarr; cited interpretation</em>, and the citation traces straight back. Two things the skill is
+strict about. First, the citation is <strong>required</strong>: the hook refuses a
+&ldquo;sourced&rdquo; region with no citation a reader can follow, and when the source is named by a
+BibTeX key the region must cite <em>that</em> key (a token buried in a comment or code span
+doesn&rsquo;t count). Second, keep the green region <strong>scoped to what the source actually
+supports</strong> &mdash; the source backs &ldquo;transportation is the largest cost,&rdquo; so that
+is all the cited sentence claims; any further inference (say, <em>where</em> optimization pays off)
+belongs in a separate, un-cited sentence, so one citation never quietly vouches for more than its
+source does. And &ldquo;verbatim&rdquo; is not a matter of good behavior: before the write is
+allowed, track-changes re-reads the source and checks the excerpt is actually present. If Claude
+misremembered the figure &mdash; say it wrote 62% &mdash; or invented a quote wholesale, the save is
+refused and the discrepancy named (this is the hook&rsquo;s actual message):</p>
 
 <div class="ex-refused">coverage: the gray <code>.tc-verbatim</code> excerpt is NOT contained in the staged source @sol2024 p.8 &mdash; it looks fabricated or mismatched. Excerpt (normalized, first 80 chars): "Transportation represented 62% of total U.S. business logistics costs in 2023." Re-stage with `/tc source` against the correct slice. The staging record is preserved.</div>
 

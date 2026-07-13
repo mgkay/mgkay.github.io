@@ -151,6 +151,18 @@ mark[tc-prov="imported"] {
 .tc-verbatim[data-tc-cite]::before { content: attr(data-tc-cite) " \2014 delete after confirming"; }
 .tc-verbatim[tc-cite]::before      { content: attr(tc-cite) " \2014 delete after confirming"; }
 
+/* --- v9.1.1: source anchor within a contextual gray excerpt -----------------
+ * `[sentence]{.tc-src-key}` (Pandoc span) marks the load-bearing sentence — the
+ * part actually being proposed as the source — inside a gray block that also
+ * carries contiguous verbatim CONTEXT. Emphasis only (bold + underline), NOT a
+ * new color, so it reads within the gray without adding to the color count. */
+.tc-src-key {
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-color: #8a8a8a;
+  text-underline-offset: 2px;
+}
+
 /* Clean view (no-marks): regions read as ordinary prose (bar/tint/padding/label
  * removed); the verbatim scaffolding is hidden entirely so it never reaches a
  * shared render. */
