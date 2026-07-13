@@ -14,12 +14,16 @@ the hook, annotator, and fixtures must agree byte-for-byte on the folded form.
 """
 import re
 import unicodedata
+from html.parser import HTMLParser
 
 from . import coverage
 
 # Text sources are line-addressable; page locators are meaningless for them.
 _TEXT_EXTS = ('.md', '.qmd', '.tex', '.txt', '.markdown', '.rmd')
-_SUPPORTED_EXTS = _TEXT_EXTS + ('.pdf', '.docx')
+# HTML snapshots (produced by websource.capture's fetch fallback) carry no
+# line/page addressing — they are verified as the whole snapshot only.
+_HTML_EXTS = ('.html', '.htm')
+_SUPPORTED_EXTS = _TEXT_EXTS + ('.pdf', '.docx') + _HTML_EXTS
 
 _SOFT_HYPHEN = '­'
 # Hyphen at a line break ("exam-\nple" -> "example"): a hyphen followed by any
@@ -57,6 +61,50 @@ def normalize(text):
     text = text.translate(_EXTRA_SPACE_TABLE)
     text = _WS_RUN_RE.sub(' ', text)
     return text.strip()
+
+
+def is_url(s):
+    """True iff `s` names an http:// or https:// resource (scheme matched
+    case-insensitively). Everything else — a bare path, `file:`, `ftp:`,
+    `@citekey` — is False. The CLI uses this to route a `/tc source` argument
+    to the web-capture flow vs the file flow."""
+    if not s:
+        return False
+    return s.lower().startswith(('http://', 'https://'))
+
+
+# HTML text extraction ---------------------------------------------------------
+# Tags whose DATA is program/style payload, never visible page text.
+_HTML_SKIP_TAGS = frozenset(('script', 'style'))
+
+
+class _HTMLTextExtractor(HTMLParser):
+    """Collect the visible text of an HTML document: drop the DATA inside
+    <script>/<style>, keep every other run of character data, and let
+    html.parser unescape entities for us (convert_charrefs=True — the default —
+    means handle_data already receives `&amp;`→`&`, `&#8212;`→'—', …). Tag
+    markup itself is discarded. The joined result feeds the shared
+    normalize()/contains() unchanged."""
+
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self._parts = []
+        self._skip_depth = 0
+
+    def handle_starttag(self, tag, attrs):
+        if tag in _HTML_SKIP_TAGS:
+            self._skip_depth += 1
+
+    def handle_endtag(self, tag):
+        if tag in _HTML_SKIP_TAGS and self._skip_depth > 0:
+            self._skip_depth -= 1
+
+    def handle_data(self, data):
+        if self._skip_depth == 0:
+            self._parts.append(data)
+
+    def get_text(self):
+        return ''.join(self._parts)
 
 
 # Locator grammar --------------------------------------------------------------
@@ -117,6 +165,9 @@ def extract_text(path, locator_str=None):
       * .docx (lazy `import docx`): all paragraph texts joined with '\\n'; the
         locator is accepted as citation metadata only (no slicing); an empty
         document returns ''.
+      * .html/.htm (UTF-8, stdlib html.parser): a <script>/<style>-stripped,
+        tag-stripped, entity-unescaped text dump of the whole snapshot; a
+        'lines'/'pages' locator is a ValueError (a web snapshot has neither).
       * any other extension → ValueError naming the supported set.
 
     A missing PyMuPDF/python-docx surfaces as an actionable RuntimeError, never
@@ -178,6 +229,19 @@ def extract_text(path, locator_str=None):
                 "`pip install python-docx`") from exc
         document = docx.Document(path)
         return '\n'.join(p.text for p in document.paragraphs)
+
+    if ext in _HTML_EXTS:
+        if kind != 'whole':
+            raise ValueError(
+                "locator %r is meaningless for the HTML snapshot %s; a web "
+                "snapshot is line/page-less and is verified as the whole "
+                "document only" % (locator_str, path))
+        with open(path, 'r', encoding='utf-8') as f:
+            markup = f.read()
+        parser = _HTMLTextExtractor()
+        parser.feed(markup)
+        parser.close()
+        return parser.get_text()
 
     raise ValueError(
         "unsupported source extension %r for %s; supported: %s"

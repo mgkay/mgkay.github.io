@@ -1,7 +1,7 @@
 # track-changes Bootstrap — Source-preserving AI edit protocol (three-skill suite)
 
-**Version:** 9.1.1
-**Date:** 2026-07-12
+**Version:** 9.2.0
+**Date:** 2026-07-13
 
 ## What This File Does
 
@@ -38,16 +38,16 @@ When Claude Code follows the instructions below, it downloads all three skills �
 
 ## Instructions for Claude Code
 
-You are reading the track-changes v9.1.1 bootstrap manifest. Follow these steps precisely.
+You are reading the track-changes v9.2.0 bootstrap manifest. Follow these steps precisely.
 
 ### Step 1: Check for existing installation
 
-Read `~/.claude/skills/track-changes/VERSION`. If the file exists, parse the first line as a version number. Compare it to `9.1.1` using semantic-version ordering (compare major, then minor, then patch as integers; treat a missing component as 0, so a two-part `2.0` is `2.0.0`).
+Read `~/.claude/skills/track-changes/VERSION`. If the file exists, parse the first line as a version number. Compare it to `9.2.0` using semantic-version ordering (compare major, then minor, then patch as integers; treat a missing component as 0, so a two-part `2.0` is `2.0.0`).
 
-- **Equal to 9.1.1** → "track-changes v9.1.1 is already installed. No update needed." **STOP.**
-- **Higher than 9.1.1** → "track-changes v[installed] is newer than this bootstrap (9.1.1). Aborting — will not downgrade." **STOP.**
-- **Lower than 9.1.1** (e.g. v9.1.x, v9.0.x, v8.x, v7.0.x, v6.0.x, v5.0.x, v4.x, v3.0.x, or any v1.x or v2.x) → "Updating track-changes from v[installed] to v9.1.1." Proceed to Step 2. The download in Step 2 overwrites every skill file in place (and, from a pre-v5 install, adds the `tc-polish` skill), so the upgrade is a clean replacement (the upgrade also re-merges settings.json, laying down the single combined PreToolUse matcher group); existing `<mark>…</mark><sup>N</sup>` content in your documents is fully backward-compatible and is left untouched (the mark grammar is unchanged — no document migration is needed). **Upgrading from v4.0.x?** The per-file activation key was renamed `track-changes:` → `tc-track:` in v4.1 (the old key is a reserved Quarto YAML field that breaks `.qmd`/`.md` renders); swap any old keys to `tc-track:`. **v6 is behavior-changing:** `/draft` is now **user-only** — the AI can no longer suspend its own tracking (the suspension sentinel is written solely by the `UserPromptSubmit` hook on *your* `/draft` prompt). Everything the AI writes into a tracked deliverable is tracked; large new blocks use the new whole-region insertion (`::: {.tc-region …}` / `\tcregion`). No document migration — the mark grammar is backward-compatible. **Upgrading from v6?** The bare `/polish` and `/import` slash aliases are retired — use `/tc polish` and `/tc import` instead. The `polish` skill directory is renamed to `tc-polish` (the upgrade removes the old `~/.claude/skills/polish/` directory and `~/.claude/commands/import.md` if present). No document migration. **Upgrading from v7?** v8 adds the bundled `decap` editor pre-clean tool under `~/.claude/skills/track-changes/tools/`; no behavior change to tracking, the mark grammar, or the hook suite. **Upgrading from v8.0/v8.1?** 8.2.0 adds the import-fidelity coverage gate (`tc_core/coverage.py` + `tc_coverage_audit.py`, wired into the verified-import hook) and the `/tc coverage` audit command; existing import behavior is otherwise unchanged, hook count stays 6, no document migration. **Upgrading from v8.x?** v9.0.0 adds the source-validation discipline: `/tc source` staging, the `sourced` provenance value with `tc-src` bindings, mechanical gray-excerpt verification in the track-changes hook, the `/tc manifest` evidence file, the `annotate_source_pdf.py` tool, and LaTeX `tcverbatim` + the optional `tcregion` `src` argument. Existing tracking, imports, and polish are unchanged; the mark grammar is backward-compatible (absent provenance/`tc-src` reads as authored — the new optional `tcregion` `src` arg leaves every v6/v7 parse untouched); hook count stays 6; no document migration. **Upgrading from v9.0?** 9.1.0 tightens the source gate — a `sourced` region must now carry a reader-facing citation (the exact key when staged by `@citekey`) and can no longer land without its verified excerpt; no document migration, hook count stays 6. Existing sourced regions keep working; editing one now requires keeping its citation. **Upgrading from v9.1.0?** 9.1.1 lets a gray excerpt carry contiguous source context with the load-bearing sentence marked (`[…]{.tc-src-key}` / `\tcsrckey{…}`); additive and presentational, no gate change, no migration.
-- **Does not exist** → "Installing track-changes v9.1.1." Proceed to Step 2.
+- **Equal to 9.2.0** → "track-changes v9.2.0 is already installed. No update needed." **STOP.**
+- **Higher than 9.2.0** → "track-changes v[installed] is newer than this bootstrap (9.2.0). Aborting — will not downgrade." **STOP.**
+- **Lower than 9.2.0** (e.g. v9.1.x, v9.0.x, v8.x, v7.0.x, v6.0.x, v5.0.x, v4.x, v3.0.x, or any v1.x or v2.x) → "Updating track-changes from v[installed] to v9.2.0." Proceed to Step 2. The download in Step 2 overwrites every skill file in place (and, from a pre-v5 install, adds the `tc-polish` skill), so the upgrade is a clean replacement (the upgrade also re-merges settings.json, laying down the single combined PreToolUse matcher group); existing `<mark>…</mark><sup>N</sup>` content in your documents is fully backward-compatible and is left untouched (the mark grammar is unchanged — no document migration is needed). **Upgrading from v4.0.x?** The per-file activation key was renamed `track-changes:` → `tc-track:` in v4.1 (the old key is a reserved Quarto YAML field that breaks `.qmd`/`.md` renders); swap any old keys to `tc-track:`. **v6 is behavior-changing:** `/draft` is now **user-only** — the AI can no longer suspend its own tracking (the suspension sentinel is written solely by the `UserPromptSubmit` hook on *your* `/draft` prompt). Everything the AI writes into a tracked deliverable is tracked; large new blocks use the new whole-region insertion (`::: {.tc-region …}` / `\tcregion`). No document migration — the mark grammar is backward-compatible. **Upgrading from v6?** The bare `/polish` and `/import` slash aliases are retired — use `/tc polish` and `/tc import` instead. The `polish` skill directory is renamed to `tc-polish` (the upgrade removes the old `~/.claude/skills/polish/` directory and `~/.claude/commands/import.md` if present). No document migration. **Upgrading from v7?** v8 adds the bundled `decap` editor pre-clean tool under `~/.claude/skills/track-changes/tools/`; no behavior change to tracking, the mark grammar, or the hook suite. **Upgrading from v8.0/v8.1?** 8.2.0 adds the import-fidelity coverage gate (`tc_core/coverage.py` + `tc_coverage_audit.py`, wired into the verified-import hook) and the `/tc coverage` audit command; existing import behavior is otherwise unchanged, hook count stays 6, no document migration. **Upgrading from v8.x?** v9.0.0 adds the source-validation discipline: `/tc source` staging, the `sourced` provenance value with `tc-src` bindings, mechanical gray-excerpt verification in the track-changes hook, the `/tc manifest` evidence file, the `annotate_source_pdf.py` tool, and LaTeX `tcverbatim` + the optional `tcregion` `src` argument. Existing tracking, imports, and polish are unchanged; the mark grammar is backward-compatible (absent provenance/`tc-src` reads as authored — the new optional `tcregion` `src` arg leaves every v6/v7 parse untouched); hook count stays 6; no document migration. **Upgrading from v9.0?** 9.1.0 tightens the source gate — a `sourced` region must now carry a reader-facing citation (the exact key when staged by `@citekey`) and can no longer land without its verified excerpt; no document migration, hook count stays 6. Existing sourced regions keep working; editing one now requires keeping its citation. **Upgrading from v9.1.0?** 9.1.1 lets a gray excerpt carry contiguous source context with the load-bearing sentence marked (`[…]{.tc-src-key}` / `\tcsrckey{…}`); additive and presentational, no gate change, no migration. **Upgrading from v9.1.x?** 9.2.0 adds web-source citation: `/tc source <url>` (or `/tc source @webkey`, a bib `@online`/`@misc` entry with `url`+`urldate`) captures a dated snapshot into the private `validation/sources/` folder and verifies gray excerpts against it, just like a file source; new shared lib `tc_core/websource.py` and a `.html` branch in `sourcetext.py`. No gate change, no new hooks (stays 6), no document migration.
+- **Does not exist** → "Installing track-changes v9.2.0." Proceed to Step 2.
 
 ### Step 2: Download all files (curl-based)
 
@@ -106,7 +106,7 @@ If the command exits non-zero, report the error to the user and stop.
 
 ### Step 4: Verify installation
 
-1. Read `~/.claude/skills/track-changes/VERSION` → first line must be `9.1.1`.
+1. Read `~/.claude/skills/track-changes/VERSION` → first line must be `9.2.0`.
 2. Read `~/.claude/skills/track-changes/SKILL.md` → must begin with `---` (YAML frontmatter).
 3. Read `~/.claude/skills/track-changes/hooks/pre_tool_use.py` → must begin with `"""` (Python docstring).
 4. Read `~/.claude/skills/track-changes/lib/tc_core/grammar.py` → must exist (shared mark-grammar package).
@@ -114,6 +114,7 @@ If the command exits non-zero, report the error to the user and stop.
 4b. Read `~/.claude/skills/track-changes/lib/tc_core/sourcetext.py` → must exist (source normalize + extract_text lib, 9.0.0).
 4c. Read `~/.claude/skills/track-changes/lib/tc_core/srcstage.py` → must exist (pending-source staging + citekey resolution, 9.0.0).
 4d. Read `~/.claude/skills/track-changes/lib/tc_core/cite.py` → must exist (reader-facing citation detector, 9.1.0).
+4e. Read `~/.claude/skills/track-changes/lib/tc_core/websource.py` → must exist (web-source capture: validate_url/discover_browser/capture, 9.2.0).
 5. Read `~/.claude/skills/track-changes/reference/digest.md` → must exist (SessionStart digest).
 6. Read `~/.claude/skills/verified-import/SKILL.md` → must begin with `---` (YAML frontmatter).
 7. Read `~/.claude/skills/verified-import/hooks/pre_tool_use.py` → must exist (import exemption hook).
@@ -133,9 +134,9 @@ Any verification failure → report to user and do not claim success.
 
 On success, tell the user:
 
-> **track-changes v9.1.1 installed successfully — three skills + shared `tc_core` + bundled tools.**
+> **track-changes v9.2.0 installed successfully — three skills + shared `tc_core` + bundled tools.**
 >
-> **`track-changes`** (`~/.claude/skills/track-changes/`): always-on mark-tracking. SKILL.md, VERSION, settings-patch.json, hooks/ (5 sh + 2 py), lib/ (6 py + 6 sh + 1 sty + the shared `tc_core` package — now 9 modules incl. `sourcetext.py`/`srcstage.py`/`cite.py`), reference/ (highlight-syntax.md, latex.md, quarto-notes.md, **digest.md**, tc-clean.css, tc-clean.js), tools/ (decap.py, decap_protect.txt, **annotate_source_pdf.py**).
+> **`track-changes`** (`~/.claude/skills/track-changes/`): always-on mark-tracking. SKILL.md, VERSION, settings-patch.json, hooks/ (5 sh + 2 py), lib/ (6 py + 6 sh + 1 sty + the shared `tc_core` package — now 10 modules incl. `sourcetext.py`/`srcstage.py`/`cite.py`/`websource.py`), reference/ (highlight-syntax.md, latex.md, quarto-notes.md, **digest.md**, tc-clean.css, tc-clean.js), tools/ (decap.py, decap_protect.txt, **annotate_source_pdf.py**).
 >
 > **`verified-import`** (`~/.claude/skills/verified-import/`): opt-in `/tc import`. SKILL.md, hooks/pre_tool_use.py, lib/ (vi_verify.py, vi-cli.sh). It imports the shared `tc_core` from `track-changes/lib` — no duplicate copy.
 >
@@ -205,6 +206,7 @@ Each entry lists source-URL → destination-path. Base URL: `https://raw.githubu
 - `skill/lib/tc_core/sourcetext.py` → `~/.claude/skills/track-changes/lib/tc_core/sourcetext.py`
 - `skill/lib/tc_core/srcstage.py` → `~/.claude/skills/track-changes/lib/tc_core/srcstage.py`
 - `skill/lib/tc_core/cite.py` → `~/.claude/skills/track-changes/lib/tc_core/cite.py`
+- `skill/lib/tc_core/websource.py` → `~/.claude/skills/track-changes/lib/tc_core/websource.py`
 
 ### track-changes — reference docs
 - `skill/reference/highlight-syntax.md` → `~/.claude/skills/track-changes/reference/highlight-syntax.md`
@@ -238,6 +240,10 @@ Each entry lists source-URL → destination-path. Base URL: `https://raw.githubu
 *(No `import.md` — `/tc import` dispatches via the `/tc` command. No `tc-polish.md` — `/tc polish` dispatches via the `/tc` command.)*
 
 ---
+
+## v9.2.0 Changelog Summary
+
+**v9.2.0 (web-source citation with a captured dated snapshot — minor, additive).** Adds a **web page** as a citable source type. `/tc source <url>` (and `/tc source @webkey`, a bib `@online`/`@misc` entry carrying `url`+`urldate`) fetches the page **at stage time** and captures a **dated snapshot** into the document's private `validation/sources/` folder — a discovered headless Chrome/Chromium/Edge renders a `.pdf` (`--print-to-pdf`), and no browser / a render failure / a timeout falls back **loudly** to a `urllib` fetch → `.html` text snapshot. The pending-source record points at the LOCAL snapshot, so everything downstream reuses v9 unchanged: the always-on PreToolUse hook verifies the gray `.tc-verbatim` excerpt against the snapshot text (normalized-exact containment, **network-free**), the 9.1.x always-cited/always-verified gate + the source anchor apply, and the `sourced:` audit entry / `/tc manifest` record the **URL + access date + snapshot** (the manifest links the snapshot with an "(HTML snapshot)" note for the fetch fallback). The snapshot is the durable, viewable proof that gives the access date real teeth against link rot. **Security posture:** capture is **SSRF-guarded** — `validate_url` accepts only public `http(s)` URLs and rejects loopback / private (10/8, 172.16/12, 192.168/16) / link-local / cloud-metadata (169.254.169.254) / reserved addresses **before any fetch** (a `TC_SOURCE_ALLOW_LOCAL=1` opt-in, set only by the test harness, permits loopback for localhost fixtures; production leaves it unset); the browser is invoked as an **argument list** with `shell=False`, so the URL is one argv element and is never interpreted by a shell. **Privacy:** snapshots stay in the private `validation/` folder — `.gitignore` it, never fold it into a public repo. **Non-goal:** authenticated / paywalled pages — save the rendered page to a file and `/tc source` the **file path** instead. New shared lib `tc_core/websource.py` + a `.html`/`.htm` branch in `tc_core/sourcetext.py`; `srcstage`/`tc_source`/audit/manifest carry the URL, access date, and snapshot. Backward compatible (a file/PDF/docx source is byte-identically unchanged); **no new hooks** (suite stays at 6); no document migration.
 
 ## v9.1.1 Changelog Summary
 

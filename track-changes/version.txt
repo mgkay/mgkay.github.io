@@ -1,3 +1,27 @@
+9.2.0
+2026-07-13
+track-changes v9.2.0 — web-source citation with a captured dated snapshot (additive).
+- `/tc source <url>` (or `/tc source @webkey`, a bib `@online`/`@misc` entry with `url`+`urldate`)
+  captures the page AT STAGE TIME into a dated snapshot under the document's private
+  `validation/sources/` folder, extracts its text, and stages a pending-source record pointing at
+  the LOCAL snapshot. From there everything reuses v9: the always-on hook verifies the gray excerpt
+  against the snapshot text (normalized-exact containment, NETWORK-FREE), the 9.1.x citation
+  requirement + anchor apply, and the `sourced:` audit / `/tc manifest` record the URL + access date
+  + snapshot. The snapshot is the durable, viewable proof that gives the access date teeth against
+  link rot.
+- Capture: a discovered headless Chrome/Chromium/Edge renders a `.pdf` (`--print-to-pdf`,
+  discovered PATH-first then per-OS install globs); no browser / render failure / timeout falls back
+  LOUDLY to a `urllib` fetch → `.html` text snapshot. Both paths extract text the hook can verify.
+- Security: capture is SSRF-guarded — `validate_url` accepts only public `http(s)` URLs and rejects
+  loopback / private / link-local / cloud-metadata (169.254.169.254) / reserved addresses before any
+  fetch (a `TC_SOURCE_ALLOW_LOCAL=1` test opt-in permits loopback only). The browser is invoked as an
+  ARGUMENT LIST with `shell=False` (the URL is one argv element) — never a shell string.
+- Snapshots stay in the private `validation/` folder (never a public repo). Authenticated /
+  paywalled pages are a NON-GOAL: save the page to a file and `/tc source` the file path.
+- New shared lib `tc_core/websource.py` + a `.html`/`.htm` branch in `tc_core/sourcetext.py`;
+  `srcstage`/`tc_source`/audit/manifest carry the URL + access date + snapshot. Backward-compatible
+  (a file/PDF/docx source is unchanged); no new hooks (suite stays at 6); no document migration.
+
 9.1.1
 2026-07-12
 track-changes v9.1.1 — contextual gray excerpts with a marked source anchor (additive).

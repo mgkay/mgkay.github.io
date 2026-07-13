@@ -20,22 +20,35 @@ verified-import may not be installed.
 Usage:
     tc_source.py <file>#<locator> [<target>]
     tc_source.py @<citekey> [<locator>] [<target>]
+    tc_source.py <url> [<target>]
 
   <locator> = L<a>-L<b> (text lines) | p.<a>[-<b>] (PDF pages) | absent (whole).
 
-Exit codes: 0 staged; 1 usage / resolution / extraction / staging error.
-(Python-missing is exit 2, handled by the tc-cli.sh shell layer.)
+Web source (9.2): an `http(s)://` argument (or an `@citekey` whose bib entry
+carries a `url` and no resolvable file) is CAPTURED at stage time into a dated
+local snapshot under `<target-dir>/validation/sources/` (headless Chrome
+`--print-to-pdf`, discovered; fallback urllib fetch → HTML text, reported
+loudly). From there the snapshot is an ordinary local source: the hook verifies
+gray excerpts against its text (network-free), and the audit / manifest carry
+the URL + access date + snapshot. A web snapshot is whole-file, so a `#`
+fragment on a URL is NOT a tc locator — it stays part of the captured URL and no
+slicing is applied.
+
+Exit codes: 0 staged; 1 usage / resolution / extraction / capture / staging
+error. (Python-missing is exit 2, handled by the tc-cli.sh shell layer.)
 """
 import os
 import re
 import sys
+import time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from tc_core import sourcetext, srcstage, grammar  # noqa: E402
+from tc_core import sourcetext, srcstage, grammar, websource  # noqa: E402
 
 
 _USAGE = ('usage: /tc source <file>#<locator> [<target>]\n'
-          '   or: /tc source @<citekey> [<locator>] [<target>]')
+          '   or: /tc source @<citekey> [<locator>] [<target>]\n'
+          '   or: /tc source <url> [<target>]')
 
 
 def _err(msg):
@@ -293,8 +306,14 @@ def cmd_source(argv):
     locator_str = ''
     src_path_arg = None
     target_arg = None
+    url = None  # set ⇒ web flow (direct URL, or an @citekey resolving to a url)
 
-    if argv[0].startswith('@'):
+    if sourcetext.is_url(argv[0]):
+        # `<url> [<target>]`. A web snapshot is whole-file, so any `#fragment`
+        # stays part of the URL (not a tc locator) — capture the full argument.
+        url = argv[0]
+        target_arg = argv[1] if len(argv) > 1 else None
+    elif argv[0].startswith('@'):
         # `@<citekey> [<locator>] [<target>]`.
         citekey = argv[0][1:]
         if not citekey:
@@ -335,13 +354,23 @@ def cmd_source(argv):
             return 1
         target = os.path.abspath(wf)
 
-    # --- Resolve the source (path form vs citekey form).
-    if citekey is not None:
-        resolved, tried = srcstage.resolve_citekey(citekey, target)
-        if not resolved:
+    # --- Resolve the source (URL form vs citekey form vs path form).
+    resolved = None
+    if url is not None:
+        # Direct `<url>` argument — already routed to the web flow above.
+        pass
+    elif citekey is not None:
+        value, tried, kind = srcstage.resolve_citekey(citekey, target)
+        if not value:
             # `tried` already names both mechanisms (.bib + .tc-sources.json).
             _err(tried)
             return 1
+        if kind == 'url':
+            # A `url`-only bib entry (@online/@misc): capture that URL; keep the
+            # citekey so Rule A still requires the region to cite it.
+            url = value
+        else:  # kind == 'file'
+            resolved = value
     else:
         resolved, tried = resolve_source_path(src_path_arg, target)
         if not resolved:
@@ -353,6 +382,13 @@ def cmd_source(argv):
                 _err('source not found: %s (looked in: %s)'
                      % (src_path_arg, shown))
             return 1
+
+    # === WEB flow (9.2): capture the page NOW into a dated local snapshot and
+    #     stage that snapshot as the source. Fetching happens at stage time ONLY
+    #     (never in the always-on hook), and the record's source_path points at
+    #     the local snapshot, so verification/audit/manifest treat it as a file.
+    if url is not None:
+        return _stage_web(url, target, citekey, locator_str)
 
     # --- Validate the extension against sourcetext's supported set BEFORE
     #     staging, so an unsupported source is refused up front.
@@ -392,6 +428,50 @@ def cmd_source(argv):
         return 1
 
     _emit(_render(rec, target, resolved, locator_str, slice_text))
+    return 0
+
+
+def _stage_web(url, target, citekey, locator_str):
+    """Capture `url` into a dated local snapshot under the target's
+    `validation/sources/`, stage it as a web pending-source record, and print
+    the same gray/green write instruction as the file flow (with `expected` now
+    the URL + access-date form). Returns an exit code (0 staged; 1 capture or
+    staging error). Shared by the direct-URL and `@webkey` routes.
+
+    The fetch is deterministic-friendly: `TC_SOURCE_DATE` pins the access date
+    (tests), and websource honors `TC_SOURCE_ALLOW_LOCAL` / `TC_SOURCE_NO_BROWSER`
+    from the process environment. A `#fragment` on the URL is display-only — the
+    snapshot is whole-file, so the record locator is '' (no sub-addressing)."""
+    accessdate = os.environ.get('TC_SOURCE_DATE') or time.strftime('%Y-%m-%d')
+    validation_dir = os.path.join(os.path.dirname(target), 'validation')
+    try:
+        rec_meta = websource.capture(url, validation_dir, accessdate)
+    except websource.WebSourceError as e:
+        _err('could not capture %s: %s' % (url, e))
+        return 1
+
+    snapshot_path = rec_meta['snapshot_path']
+    kind = rec_meta['kind']
+    # A web snapshot is whole-file: pass locator '' so the hook re-reads the
+    # whole snapshot text (extract_text(snapshot) with no locator).
+    rec = srcstage.stage(target, snapshot_path, locator_str='',
+                         citekey=citekey, url=url, accessdate=accessdate,
+                         snapshot_sha=rec_meta['sha'])
+    if rec is None:
+        _err('could not stage the pending-source record (state dir '
+             'unwritable). Is track-changes installed?')
+        return 1
+
+    # Web-specific capture banner (the URL + snapshot + kind); the generic
+    # staged banner + instruction follow from _render.
+    if kind == 'html':
+        head = ('tc source: captured %s -> %s (HTML text snapshot; no visual '
+                'PDF snapshot was produced)' % (url, snapshot_path))
+    else:
+        head = ('tc source: captured %s -> %s (PDF snapshot)'
+                % (url, snapshot_path))
+    _emit(head + '\n\n'
+          + _render(rec, target, snapshot_path, '', rec_meta['text']))
     return 0
 
 

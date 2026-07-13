@@ -301,14 +301,26 @@ def _render_manifest(doc, entries):
         group = by_n[n]
         entry = group[-1]        # latest by file order wins the live section
         superseded = group[:-1]
-        src_link = _rel_link(entry['from'], val_dir) + _page_anchor(
-            entry['locator'])
-        src_name = os.path.basename(entry['from']) or entry['from']
 
         out.append('## Region [%d] — %s' % (n, entry['tc_src']))
         out.append('')
-        out.append('Source: [%s](%s) — %s'
-                   % (src_name, src_link, _loc_display(entry['locator'])))
+        if entry.get('url'):
+            # Web source: the durable, viewable proof is the local snapshot; the
+            # link is the relative `sources/<file>` (an `.html` snapshot is a
+            # text-only capture, flagged as such). The URL + access date give
+            # link rot teeth.
+            snap = entry.get('snapshot') or os.path.basename(entry['from'])
+            snap_link = 'sources/' + snap
+            note = ' (HTML snapshot)' if snap.lower().endswith('.html') else ''
+            out.append('Source: %s (accessed %s) — snapshot [%s](%s)%s'
+                       % (entry['url'], entry.get('accessed', ''),
+                          snap, snap_link, note))
+        else:
+            src_link = _rel_link(entry['from'], val_dir) + _page_anchor(
+                entry['locator'])
+            src_name = os.path.basename(entry['from']) or entry['from']
+            out.append('Source: [%s](%s) — %s'
+                       % (src_name, src_link, _loc_display(entry['locator'])))
         out.append('')
         out.append('Excerpt:')
         out.append('')

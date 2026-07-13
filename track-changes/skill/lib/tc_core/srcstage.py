@@ -15,9 +15,10 @@ filesystem helpers — no sys.exit, no argparse, no printing:
    this module persists.
 
 2. Citekey resolution (resolve_citekey) — map a BibTeX-style `@citekey` +
-   locator to a concrete source file path, so `/tc source @daskin2013 p.114`
-   works. Fail-closed: unresolvable keys return (None, <description>) naming
-   both resolution mechanisms for the CLI's error message.
+   locator to a concrete source, so `/tc source @daskin2013 p.114` works. A
+   3-tuple `(value, tried, kind)`: a resolvable file → `(path, '', 'file')`; a
+   `url`-only web entry → `(url, '', 'url')`; unresolvable → `(None, desc,
+   None)` naming both resolution mechanisms for the CLI's error message.
 
 3. The verification sentinel (source-ok) — one-shot and sha-bound exactly like
    tc_core.exempt. Written by the verification path AFTER byte-containment
@@ -87,7 +88,8 @@ def _pending_path(target_path):
 
 
 def stage(target_path, source_path, locator_str=None, citekey=None,
-          ttl=_PENDING_TTL_DEFAULT):
+          ttl=_PENDING_TTL_DEFAULT, url=None, accessdate=None,
+          snapshot_sha=None):
     """Write a one-shot pending-source record keyed on the target file.
 
     Record: {target, source_path, locator, citekey, expires}
@@ -96,6 +98,16 @@ def stage(target_path, source_path, locator_str=None, citekey=None,
       - locator     : the verbatim locator string ('' when whole-file)
       - citekey     : the `@key` used, or None when the source was a raw path
       - expires     : wall-clock deadline (time.time() + ttl)
+
+    Web-source records (9.2) carry three ADDITIONAL keys, present ONLY when
+    `url` is supplied (a file/PDF/docx source omits them entirely, so the
+    record shape is byte-identical to pre-9.2 for a file source — the hook,
+    which reads only `source_path`/`locator`/`citekey`, is unaffected):
+      - url          : the captured page URL
+      - accessdate   : the access date (YYYY-MM-DD) stamped at capture time
+      - snapshot_sha : sha256 of the captured snapshot bytes (provenance)
+    Here `source_path` points at the LOCAL dated snapshot file the CLI captured,
+    so verification / audit / manifest treat it as an ordinary local source.
 
     Returns the record on success, None on I/O failure."""
     p = _pending_path(target_path)
@@ -108,6 +120,10 @@ def stage(target_path, source_path, locator_str=None, citekey=None,
         'citekey': citekey,
         'expires': time.time() + ttl,
     }
+    if url is not None:
+        rec['url'] = url
+        rec['accessdate'] = accessdate
+        rec['snapshot_sha'] = snapshot_sha
     try:
         with open(p, 'w', encoding='utf-8') as f:
             json.dump(rec, f)
@@ -160,13 +176,19 @@ def expected_src(rec):
     green sourced region. Single source of truth (the `/tc source` CLI prints
     the SAME value so the author can copy it verbatim into the region opener):
 
+      <url> (accessed <date>)   when the record is a web source (has `url`)
       @citekey locator   when the record was citekey-staged WITH a locator
       @citekey           when citekey-staged with no locator (whole source)
       basename#locator   when path-staged WITH a locator
       basename           when path-staged whole-file
 
-    `rec` is a pending-source record (see stage): keys `citekey`, `locator`,
-    `source_path`."""
+    `rec` is a pending-source record (see stage): keys `url`/`accessdate`
+    (web sources only), `citekey`, `locator`, `source_path`. A web record is
+    displayed by its URL + access date (never the opaque snapshot filename), so
+    the citation reads meaningfully and the access date gives link rot teeth."""
+    url = rec.get('url')
+    if url:
+        return '%s (accessed %s)' % (url, rec.get('accessdate') or '')
     citekey = rec.get('citekey')
     locator = (rec.get('locator') or '').strip()
     if citekey:
@@ -418,13 +440,18 @@ def _find_entry_field_body(bibtext, key):
 
 
 _FILE_FIELD_RE = re.compile(r'\b(?:local)?file\s*=\s*', re.IGNORECASE)
+# A web `@online`/`@misc` entry carries a `url` (+`urldate`) and no `file`; the
+# `\b` boundary keeps it from matching inside `eprinturl`/`nurl`/etc.
+_URL_FIELD_RE = re.compile(r'\burl\s*=\s*', re.IGNORECASE)
 
 
-def _extract_field_value(field_body):
-    """Return the raw value of the first `file`/`localfile` field in a BibTeX
-    entry body, or None. The value may be `{...}` (brace-balanced), `"..."`
-    (quote-delimited), or bare (up to the next comma / newline)."""
-    m = _FILE_FIELD_RE.search(field_body)
+def _extract_field_value(field_body, field_re=_FILE_FIELD_RE):
+    """Return the raw value of the first field matching `field_re` in a BibTeX
+    entry body, or None. Defaults to the `file`/`localfile` field; pass
+    `_URL_FIELD_RE` for the `url` field. The value may be `{...}` (brace-
+    balanced), `"..."` (quote-delimited), or bare (up to the next comma /
+    newline)."""
+    m = field_re.search(field_body)
     if not m:
         return None
     i = m.end()
@@ -555,30 +582,51 @@ def _resolve_via_map(citekey, doc_path):
 
 
 def resolve_citekey(citekey, doc_path):
-    """Resolve `@citekey` to a source file path relative to `doc_path`.
+    """Resolve `@citekey` to a concrete source relative to `doc_path`.
 
-    Returns (path or None, tried_description). On success `path` is an abspath
-    to an existing file. On failure `path` is None and `tried_description` is a
-    human-readable summary naming BOTH resolution mechanisms (the .bib files
-    scanned and the `.tc-sources.json` map consulted or its absence), for the
-    caller's fail-closed error message. Keys match case-sensitively."""
+    Returns a 3-tuple `(value, tried_description, kind)`:
+      - `('<abspath>', '', 'file')` — a resolvable `file`/`localfile` (in a .bib
+        entry) or a `.tc-sources.json` mapping yielded an existing file (the
+        value is an abspath to that file);
+      - `('<url>', '', 'url')` — the matched .bib entry has NO resolvable file
+        but DOES carry a `url` field (a web `@online`/`@misc` entry): the value
+        is that URL, which the CLI captures into a dated local snapshot;
+      - `(None, tried_description, None)` — nothing resolved; `tried_description`
+        is a human-readable summary naming BOTH resolution mechanisms (the .bib
+        files scanned and the `.tc-sources.json` map consulted or its absence),
+        for the caller's fail-closed error message.
+
+    Precedence: a resolvable FILE always wins (bib file field, then the map);
+    only when no file resolves does a bib `url` yield a web source. Keys match
+    case-sensitively."""
     bib_files = _ordered_bib_files(doc_path)
+    url_found = None
     for bib in bib_files:
         text = _read_text(bib)
         field_body = _find_entry_field_body(text, citekey)
         if field_body is None:
             continue
         field_value = _extract_field_value(field_body)
-        if not field_value:
-            continue
-        resolved = _resolve_file_field(field_value, os.path.dirname(bib))
-        if resolved:
-            return (resolved, '')
+        if field_value:
+            resolved = _resolve_file_field(field_value, os.path.dirname(bib))
+            if resolved:
+                return (resolved, '', 'file')
+        # No resolvable file in this entry — remember its `url`, if any, as the
+        # web-source fallback (the FIRST such entry wins; a file elsewhere still
+        # takes precedence because it returns above).
+        if url_found is None:
+            uval = _extract_field_value(field_body, _URL_FIELD_RE)
+            if uval and uval.strip():
+                url_found = uval.strip()
 
-    # Fallback: .tc-sources.json map.
+    # Fallback: .tc-sources.json map (a file source).
     mapped, map_path = _resolve_via_map(citekey, doc_path)
     if mapped:
-        return (mapped, '')
+        return (mapped, '', 'file')
+
+    # No file resolved anywhere — a bib `url` entry becomes a web source.
+    if url_found:
+        return (url_found, '', 'url')
 
     # Nothing resolved — build the two-mechanism tried summary.
     if bib_files:
@@ -593,7 +641,7 @@ def resolve_citekey(citekey, doc_path):
                     % os.path.dirname(os.path.abspath(doc_path)))
     tried = ("could not resolve citekey '%s'. %s. %s."
              % (citekey, bib_desc, map_desc))
-    return (None, tried)
+    return (None, tried, None)
 
 
 # ---------------------------------------------------------------------------

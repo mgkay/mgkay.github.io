@@ -1199,6 +1199,43 @@ regenerated summary page — it never touches the original, reports every
 unmatched excerpt (nonzero exit), and skips an image-only PDF with a clear
 "no text layer" message. Committing `validation/` is per-project policy.
 
+### Web sources (9.2.0)
+
+A **web page** is a citable source type. `/tc source <url>` (or `/tc source
+@webkey`, a bib `@online`/`@misc` entry carrying `url`+`urldate`) fetches the
+page **at stage time** — never in the always-on hook — and captures a **dated
+snapshot** under the document's private `validation/sources/` folder: a
+discovered headless Chrome/Chromium/Edge renders a visual `.pdf`
+(`--print-to-pdf`), and when no browser is found (or a render fails or times
+out) the capture falls back **loudly** — a stderr notice, not a silent switch —
+to a `urllib` fetch that saves a text-only `.html` snapshot. Either way the text
+is extracted and the pending record points at the **local snapshot file**, so
+the write-time hook verifies the gray `.tc-verbatim` excerpt against the
+snapshot text exactly as for a file source (normalized-exact containment,
+**network-free**). A URL snapshot is whole-file — it has no line or page
+locator, and a `#fragment` on the URL stays part of the captured address, not a
+`tc` locator.
+
+The green region's `tc-src` records `<url> (accessed <date>)` — the URL and the
+access date, never the opaque snapshot filename — so the citation reads
+meaningfully and the access date has teeth. The **snapshot is the durable proof
+against link rot**: the page can change or vanish, but the dated capture and its
+`sourced:` audit entry remain, and `/tc manifest` links the snapshot (with an
+"(HTML snapshot)" note when the fetch fallback produced text-only `.html`).
+
+- **Privacy.** Snapshots live only in the private `validation/` folder; keep it
+  out of any public or anonymized hand-off (see the privacy note below).
+- **Authenticated / paywalled pages are a non-goal.** The capture fetches as an
+  anonymous client, so a login- or paywall-gated page yields only its public
+  shell. The path for such a page is **save-then-source**: save the rendered
+  page to a local file (PDF or HTML) and `/tc source` the **file path** instead.
+- **SSRF guard.** Only public `http`/`https` URLs are accepted. A URL whose host
+  resolves to a loopback, private (10/8, 172.16/12, 192.168/16), link-local, or
+  cloud-metadata (169.254.169.254) address is **refused before any fetch**, and
+  a non-`http(s)` scheme (`file:`, `ftp:`) is refused outright — the capture
+  cannot be steered at the machine's own network. The browser is invoked as an
+  argument list (the URL is one argv element), never a shell string.
+
 ### Privacy note (F7)
 
 Source excerpts and the manifests that quote them can carry material from

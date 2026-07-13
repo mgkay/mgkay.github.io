@@ -214,6 +214,15 @@ def write_sourced_entry(abs_file_path, rec, region_n, src_display,
       locator:   the staged locator, or 'whole' when the source was whole-file
       citekey:   the staged @citekey (omitted when the source was a raw path)
       tc-src:    the canonical display value (srcstage.expected_src(rec))
+      url/accessed/snapshot:  web sources only (9.2) — emitted when the staged
+                 record carries a `url` (a file source omits all three). `url`
+                 is the captured page URL, `accessed` the YYYY-MM-DD access
+                 date, `snapshot` the snapshot file's basename. `from` then
+                 names the LOCAL snapshot; `snapshot` is its basename so the
+                 manifest can build a relative `sources/<file>` link. Read from
+                 `rec` (rec['url']/rec['accessdate']/basename of
+                 rec['source_path']) — NOT extra params — so the hook's existing
+                 six-argument call needs no change.
       excerpt:   the verified gray-block body (the quoted source text)
       supports:  the green sourced region's body (the AI text it supports)
 
@@ -235,6 +244,7 @@ def write_sourced_entry(abs_file_path, rec, region_n, src_display,
         src = rec.get('source_path', '')
         locator = rec.get('locator') or 'whole'
         citekey = rec.get('citekey')
+        url = rec.get('url')
         lines = [f"\n## {ts} -- {rel}  (source-validation)"]
         lines.append("sourced:")
         lines.append(f"  - n: {region_n}")
@@ -243,6 +253,12 @@ def write_sourced_entry(abs_file_path, rec, region_n, src_display,
         if citekey:
             lines.append(f"    citekey: {citekey}")
         lines.append(f"    tc-src: {_fmt_str(src_display)}")
+        if url:
+            # Web source: URL + access date + snapshot basename (the snapshot is
+            # `from`; its basename is the manifest's relative-link target).
+            lines.append(f"    url: {_fmt_str(url)}")
+            lines.append(f"    accessed: {rec.get('accessdate') or ''}")
+            lines.append(f"    snapshot: {os.path.basename(src)}")
         lines.append(f"    excerpt: {_fmt_str(excerpt)}")
         lines.append(f"    supports: {_fmt_str(supports)}")
         entry = '\n'.join(lines) + '\n'
@@ -357,6 +373,11 @@ def _sv_finalize(raw, ts):
         'locator': (raw.get('locator', '') or '').strip(),
         'citekey': (raw.get('citekey') or None),
         'tc_src': raw.get('tc-src', ''),
+        # Web-source fields (9.2): present only when the entry carried a `url`;
+        # None/'' for a file source so callers can branch on `url`.
+        'url': (raw.get('url') or None),
+        'accessed': (raw.get('accessed', '') or '').strip(),
+        'snapshot': (raw.get('snapshot', '') or '').strip(),
         'excerpt': raw.get('excerpt', ''),
         'supports': raw.get('supports', ''),
         'timestamp': ts,
@@ -410,7 +431,9 @@ def read_sourced_entries(abs_file_path):
     `abs_file_path`. Return a list (FILE ORDER) of dicts, each either:
 
       good:      {n:int, from:str, locator:str, citekey:str|None, tc_src:str,
-                  excerpt:str, supports:str, timestamp:str}
+                  url:str|None, accessed:str, snapshot:str, excerpt:str,
+                  supports:str, timestamp:str}
+                  (url is None + accessed/snapshot '' for a file source)
       malformed: {'malformed': True, 'timestamp': str}
 
     `[]` when the log is absent or has no matching sourced entries. A hard read
