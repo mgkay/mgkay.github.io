@@ -1,3 +1,19 @@
+9.5.1
+2026-07-13
+track-changes v9.5.1 — bare-class .tc-verbatim recognition (matcher bug fix).
+- The 9.3.0 gray-pairing matcher (`grammar.extract_verbatim_blocks`) recognized the
+  brace-class form `::: {.tc-verbatim …}` but not the bare-class form `::: tc-verbatim`
+  — both valid Pandoc for a div of class `tc-verbatim`. Sourced excerpts carry
+  attributes (brace form); attribute-free transcript "Your words" blocks are authored
+  bare — so on `/tc accept`/`reject` a bare gray block was left behind, needing a manual
+  deletion (the friction 9.3.0 removed). Now recognized in EITHER form at any fence
+  length (`:::`, `::::`, …); matched precisely (whole attribute token == the class), so a
+  class name appearing as a brace-block VALUE is never mis-detected.
+- Matcher-only: the adjacency pairing rule, the `gray_removed` audit field, and the
+  authored/non-adjacent guarantee are unchanged. The region matcher stays dot-only (a
+  numbered region needs `tc-n`, which forces the brace form, so a bare `::: tc-region` is
+  never a usable region). No document migration; no new hooks (6); back-compatible.
+
 9.5.0
 2026-07-13
 track-changes v9.5.0 — web-capture robustness (additive; JS pages, thin/empty snapshots, fetch errors).

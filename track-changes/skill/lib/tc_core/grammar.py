@@ -98,6 +98,17 @@ TEX_NUMS_RE = re.compile(r'\\tcn\{(\d+)\}')
 _MD_FENCE_OPEN_RE = re.compile(
     r'^\s*(:{3,})\s*(?P<attrs>\{[^}]*\}|[A-Za-z][\w-]*)\s*$')
 _MD_FENCE_CLOSE_RE = re.compile(r'^\s*(:{3,})\s*$')
+
+
+def _bare_class_match(attrs, cls):
+    """9.5.1: True iff `attrs` is the Pandoc BARE-class fenced-div form for `cls`
+    — `::: cls`, where `_MD_FENCE_OPEN_RE` captures the whole attribute token as a
+    single class identifier (no dot, no braces). The brace form `::: {.cls …}` is
+    matched separately by the dot-prefixed class regex. Exact-token compare, so a
+    class name appearing as a VALUE inside a brace block never false-matches."""
+    return attrs.strip() == cls
+
+
 _MD_REGION_CLASS_RE = re.compile(r'(?<![\w.-])\.tc-region(?![\w-])')
 _MD_REGION_N_RE = re.compile(r'tc-n\s*=\s*"(\d+)"')
 # tex: \begin{tcregion}{N}[prov] … \end{tcregion}
@@ -280,6 +291,10 @@ def extract_regions(text, ftype):
             mo = _MD_FENCE_OPEN_RE.match(line)
             if mo:
                 attrs = mo.group('attrs')
+                # NB: the region matcher stays dot-only — a numbered region needs
+                # `tc-n`, which forces the brace form, so a bare `::: tc-region`
+                # can never be a usable (numbered) region. The bare-class fix
+                # (9.5.1) applies only to `tc-verbatim`, which carries no number.
                 if _MD_REGION_CLASS_RE.search(attrs):
                     mn = _MD_REGION_N_RE.search(attrs)
                     stack.append({
@@ -347,7 +362,8 @@ def extract_verbatim_blocks(text, ftype):
             mo = _MD_FENCE_OPEN_RE.match(line)
             if mo:
                 attrs = mo.group('attrs')
-                if _MD_VERBATIM_CLASS_RE.search(attrs):
+                if (_MD_VERBATIM_CLASS_RE.search(attrs)
+                        or _bare_class_match(attrs, 'tc-verbatim')):
                     mc = _MD_CITE_ATTR_RE.search(attrs)
                     stack.append({
                         'start': idx,
