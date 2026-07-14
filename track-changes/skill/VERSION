@@ -1,3 +1,25 @@
+9.6.0
+2026-07-14
+track-changes v9.6.0 — tc-polish cumulative baseline + region-aware numbering.
+- CUMULATIVE BASELINE (feature): `/tc polish` (engine `analyze`) now AUTO-resolves its
+  git baseline to *cumulative edits since the last polish*, so commit-as-you-go workflows
+  (every edit checkpointed, e.g. a `done.py` writing `Instructor edits: <file>`, leaving
+  HEAD always current) no longer see an empty scope. Precedence: explicit `--baseline-ref`
+  → per-file pinned checkpoint → AUTO (newest commit whose subject matches the resolution
+  pattern, default `^Accept polish marks` — the last polish point, so each accepted run
+  resets the window) → FALLBACK (the commit just before the current edit-streak, default
+  `^Instructor edits: <basename>`) → HEAD. The reset anchor is the RESOLUTION commit, not
+  the polish call. Patterns are CONFIGURABLE (repo-tracked `.polish-baselines.json` `config`
+  block) so the feature is generic, not course-specific; the diff stays baseline→on-disk so
+  uncommitted edits are in scope; prior marks/regions are still reduced before tokenizing.
+  New engine CLI surface: `polish-cli.sh resolve|set|clear|show <file>`.
+- REGION-AWARE next_mark_n (bug fix): the polish next-mark number now counts track-changes'
+  WHOLE-REGION numbers (md `tc-n="N"`, LaTeX `\begin{tcregion}{N}`) in addition to inline
+  marks, so a polish mark can no longer collide with a pending `.tc-region` (observed:
+  next=1 while §3 held regions 14–29). Returns max(all)+1, or 1.
+- tc-polish skill only; no change to the track-changes hook, mark grammar, or `/tc accept`
+  mechanics; no new hooks (suite stays 6); no document migration. New test category AB.
+
 9.5.1
 2026-07-13
 track-changes v9.5.1 — bare-class .tc-verbatim recognition (matcher bug fix).

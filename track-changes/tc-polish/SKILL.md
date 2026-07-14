@@ -1,6 +1,6 @@
 ---
-name: tc-polish
-description: Opt-in, default-OFF skill for cleaning up AND editorially improving VOICE-DICTATED document prose in existing .md/.qmd files, WITHOUT destabilizing track-changes. Does the full copy-editor pass — speech-recognition errors, grammar, dropped words, PLUS meaning-preserving restructuring (split run-ons, reorder for flow, tighten wordiness, smooth awkward phrasing). AI changes surface as ordinary track-changes <mark> marks (reviewable via /tc accept|reject). Bright lines: improve freely but NEVER change meaning; and NEVER auto-correct an unrecognized token (jargon/code/math/domain term) — leave it and flag it. Invoke explicitly with /tc polish [file] (or /tc-polish [file]) — the invocation is the opt-in (no marker). On a track-changes-tracked file, fixes surface as marks; on an untracked file, polish offers a one-time direct edit (no marks) or to enable tracking first. Sits on top of track-changes + verified-import; modifies neither.
+name: polish
+description: Opt-in, default-OFF skill for cleaning up AND editorially improving VOICE-DICTATED document prose in existing .md/.qmd files, WITHOUT destabilizing track-changes. Does the full copy-editor pass — speech-recognition errors, grammar, dropped words, PLUS meaning-preserving restructuring (split run-ons, reorder for flow, tighten wordiness, smooth awkward phrasing). AI changes surface as ordinary track-changes <mark> marks (reviewable via /tc accept|reject). Bright lines: improve freely but NEVER change meaning; and NEVER auto-correct an unrecognized token (jargon/code/math/domain term) — leave it and flag it. Invoke explicitly with /polish [file] — the invocation is the opt-in (no marker). On a track-changes-tracked file, fixes surface as marks; on an untracked file, polish offers a one-time direct edit (no marks) or to enable tracking first. Sits on top of track-changes + verified-import; modifies neither.
 ---
 
 # polish
@@ -49,7 +49,7 @@ by construction, not by discipline.
 ## 1. Activation (explicit invocation; tracked → marks, untracked → ask)
 
 `polish` never fires unbidden — it runs only when you **explicitly invoke**
-`/tc polish [file]`. The invocation itself is the opt-in; there is **no separate
+`/polish [file]`. The invocation itself is the opt-in; there is **no separate
 `.polish-on` marker or `polish-on:` key** (removed 2026-06-02 — superfluous for a
 manually-invoked command).
 
@@ -61,7 +61,7 @@ misreports Windows-CRLF files).
 
 - **`tracked: true`** → **mark mode**: fixes surface as track-changes marks (§4),
   validated and logged by the existing hook. The default for any maintained
-  deliverable — for a tracked lecture `/tc polish <file>` just works.
+  deliverable — for a tracked lecture `/polish <file>` just works.
 - **`tracked: false`** (or `null` — track-changes not importable) → **ask the
   author** which they want:
   - **(a) Enable tracking first** (`/tc enable <file>` / `/tc mark <dir>`), then
@@ -78,9 +78,11 @@ misreports Windows-CRLF files).
 Run `bash lib/polish-cli.sh analyze <file>` first. It reports the scope.
 
 ### M2 — diff-scoped (the default, recommended path)
-A prior committed baseline exists (`git` HEAD, or `--baseline-ref`). The engine
-diffs baseline vs on-disk over pandoc `Str` tokens and reports the **dictated
-scope** — the prose newly dictated since the baseline.
+A committed baseline exists. The engine diffs baseline vs on-disk over pandoc
+`Str` tokens and reports the **dictated scope** — the prose newly dictated since
+the baseline. **The baseline auto-resolves to your cumulative edits since the last
+polish** (see §8), so commit-as-you-go workflows (where `HEAD` is always current)
+still get a real scope; `--baseline-ref <ref>` overrides it.
 - **Polish ONLY the new (dictated) prose**, under the §3 safety rules, so an
   already-vetted document is not re-polished.
 
@@ -176,9 +178,9 @@ nothing about resolution.
 
 ---
 
-## 5. The `/tc polish` workflow
+## 5. The `/polish` workflow
 
-`/tc polish` splits into a cheap **orchestrator** (this session) and a **Sonnet
+`/polish` splits into a cheap **orchestrator** (this session) and a **Sonnet
 sub-agent** that does the actual fix-finding + marking in a **fresh, minimal
 context** — so the slow part (model reasoning) runs on a faster model and is not
 taxed by a long main-session context.
@@ -265,10 +267,10 @@ review discipline is *for*, so a non-maintained doc legitimately skips it.
 
 The engine computes the scope deterministically and **writes no files**:
 
-- Tokenize the baseline (git HEAD) and the on-disk file by pandoc `Str` node, in
-  document order; `Code`/`Math`/`RawInline` carry text in a string field (not
-  `Str` children), so they never enter the stream and are protected by
-  construction.
+- Tokenize the baseline (the resolved cumulative-since-last-polish ref, §8) and
+  the on-disk file by pandoc `Str` node, in document order; `Code`/`Math`/
+  `RawInline` carry text in a string field (not `Str` children), so they never
+  enter the stream and are protected by construction.
 - `difflib` over the two token streams → the inserted/replaced tokens are the
   **dictated scope** (M2). No baseline → whole-document prose (M1).
 - Existing track-changes marks are reduced to their effective accepted text
@@ -293,10 +295,38 @@ header track-changes would.
 
 ---
 
-## 8. Baseline (M2) edge cases
+## 8. Baseline (M2): the cumulative-since-last-polish resolver
 
-- **Baseline = last git commit** (`HEAD`) by default; override with
-  `--baseline-ref <ref>` (e.g. a git tag used as a named checkpoint).
+`analyze` (and `polish-cli.sh resolve`) auto-resolve the baseline so each run
+scopes to **cumulative edits since the last polish** — critical when every edit is
+checkpointed (e.g. a `done.py` writing `Instructor edits: <file>`), which would
+otherwise leave `HEAD` current and the scope empty. Resolution precedence (first
+match wins):
+
+1. **Explicit `--baseline-ref <ref>`** — always wins (a one-off override).
+2. **Pinned checkpoint** — a per-file entry set with `polish-cli.sh set <file>
+   [<ref>]` (clear with `clear <file>`); stored in the repo-tracked
+   `.polish-baselines.json`, so it survives across machines.
+3. **AUTO (common case):** the most recent commit touching the file whose subject
+   matches the **resolution pattern** (default `^Accept polish marks`) — the last
+   polish point. So each **accepted** run resets the window with no bookkeeping.
+   The anchor is the **resolution commit, not the polish call**, so a
+   marked-but-unreviewed run never scopes its own prose out next time.
+4. **FALLBACK (first-ever polish):** the commit just before the current unbroken
+   run of commits matching the **edit-streak pattern** (default
+   `^Instructor edits: <basename>`) — the last settled state before this streak.
+5. **`HEAD`** otherwise (an empty scope, correctly).
+
+**Reset convention:** commit a polish resolution with a subject beginning
+`Accept polish marks` so the AUTO path finds it. **Configurable, not
+course-specific:** `.polish-baselines.json` may carry a `config` block overriding
+`resolution_pattern` / `edit_streak_pattern` (defaults above; `<basename>` in the
+edit-streak pattern is substituted with the file's name) — a project with a
+different checkpoint convention sets its own. `polish-cli.sh show <file>` prints
+the resolved baseline and its source.
+
+- **Baseline auto-resolves** (above); override with `--baseline-ref <ref>` (e.g. a
+  git tag used as a named checkpoint).
 - **Dirty tree:** polish cannot distinguish prior uncommitted non-dictation edits
   from this session's dictation; it warns and treats ALL changes since the
   baseline as new. Commit a baseline first to scope precisely.
@@ -325,7 +355,7 @@ passed its Pattern-1 verification, and was **retired on first real-lecture use**
   nodes the source lacks — figure/table caption prefixes, cross-reference
   expansions, callout titles, and the output of every code chunk — so the indices
   drift and the lens shades the wrong words or none.
-- **Evidence:** running `/tc polish` on a real dictated edit of a lecture, a
+- **Evidence:** running `/polish` on a real dictated edit of a lecture, a
   dictated `## 2.` heading rename that was unmistakably present in `git diff` did
   **not** shade. An incomplete "see everything I changed" lens is worse than
   none: you cannot trust it, so you re-read manually anyway.
@@ -349,4 +379,4 @@ lens is a standing trust hazard; do not reintroduce it.
 
 Dictation is **not** an import. But a dictated *paraphrase of a source* is a
 fidelity event: when the author says "use the source wording," **defer to
-`/tc import`** (verified-import) rather than polishing a paraphrase into place.
+`/import`** (verified-import) rather than polishing a paraphrase into place.

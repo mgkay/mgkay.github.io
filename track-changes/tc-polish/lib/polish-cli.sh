@@ -12,7 +12,7 @@
 #   audit <file> --runs N [--mode M2] [--baseline REF] [--flagged a,b]
 #       Append a `dictated:` breadcrumb to .tc-history.md (call after edits).
 #
-# polish has no `setup` step: /tc polish is explicitly invoked, so the invocation is
+# polish has no `setup` step: /polish is explicitly invoked, so the invocation is
 # the opt-in (there is no `.polish-on` marker). The only prerequisite is that the
 # target is already track-changes-tracked (a `.tc-tracked` marker / `tc-track:`
 # key), since AI fixes become marks via that hook. polish is yellow-only — no
@@ -51,13 +51,21 @@ cmd_audit() {
   py "$ENGINE" audit "$file" "$@"
 }
 
+# Baseline resolver surface (9.6.0): resolve/set/clear/show pass straight through
+# to the engine, which owns the git logic + the repo-tracked state file.
+cmd_baseline() {
+  local sub="$1"; shift || true
+  py "$ENGINE" "$sub" "$@"
+}
+
 main() {
   local sub="${1:-}"; shift || true
   case "$sub" in
-    analyze) cmd_analyze "$@" ;;
-    audit)   cmd_audit "$@" ;;
+    analyze)              cmd_analyze "$@" ;;
+    audit)                cmd_audit "$@" ;;
+    resolve|set|clear|show) cmd_baseline "$sub" "$@" ;;
     *)
-      echo "usage: polish-cli.sh {analyze <file> | audit <file> ...}" >&2
+      echo "usage: polish-cli.sh {analyze <file> [--baseline-ref REF] | audit <file> ... | resolve <file> [--ref REF] | set <file> [REF] | clear <file> | show <file>}" >&2
       return 2 ;;
   esac
 }

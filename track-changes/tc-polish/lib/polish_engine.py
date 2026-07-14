@@ -176,6 +176,163 @@ def git_baseline(path, ref="HEAD"):
     return r.stdout, info
 
 
+# --- cumulative baseline resolver (v9.6.0) ---------------------------------
+#
+# Under commit-as-you-go (every edit checkpointed, e.g. a `done.py` writing
+# "Instructor edits: <file>"), HEAD is always current, so a HEAD-baselined polish
+# sees ZERO dictated tokens. This resolver instead scopes to *cumulative edits
+# since the last polish*. Precedence (first match wins):
+#   1. explicit ref (the caller pinned --baseline-ref)         -> always wins
+#   2. pinned checkpoint (per-file, in the repo-tracked state)  -> cross-machine
+#   3. AUTO: newest commit touching the file whose subject matches the
+#      resolution pattern (default `^Accept polish marks`) -> the last polish
+#      point, so each ACCEPTED run resets the window with no bookkeeping.
+#   4. FALLBACK: the commit just before the current unbroken run of commits
+#      matching the edit-streak pattern (default `^Instructor edits: <basename>`).
+#   5. HEAD otherwise (correctly an empty scope).
+# The reset anchor is the RESOLUTION commit, not the polish call, so a
+# marked-but-unreviewed run never scopes its own prose out next time.
+
+_STATE_BASENAME = ".polish-baselines.json"
+_DEFAULT_CONFIG = {
+    "resolution_pattern": "^Accept polish marks",
+    "edit_streak_pattern": "^Instructor edits: <basename>",
+}
+
+
+def _git(root, *args):
+    try:
+        return subprocess.run(["git", "-C", root, *args],
+                              capture_output=True, text=True,
+                              encoding="utf-8").stdout
+    except (FileNotFoundError, OSError):
+        return ""
+
+
+def _rel_to_root(root, path):
+    return os.path.relpath(os.path.abspath(path), root).replace(os.sep, "/")
+
+
+def state_path(file_path):
+    """Repo-root `.polish-baselines.json` (repo-tracked so a pin/config survives
+    across machines); falls back to the file's own dir outside a git repo."""
+    root = _git_root(file_path)
+    base = root or os.path.dirname(os.path.abspath(file_path))
+    return os.path.join(base, _STATE_BASENAME)
+
+
+def load_state(file_path):
+    try:
+        with open(state_path(file_path), encoding="utf-8") as f:
+            data = json.load(f)
+            return data if isinstance(data, dict) else {}
+    except (FileNotFoundError, ValueError, OSError):
+        return {}
+
+
+def save_state(file_path, state):
+    try:
+        with open(state_path(file_path), "w", encoding="utf-8") as f:
+            json.dump(state, f, indent=2, sort_keys=True)
+            f.write("\n")
+        return True
+    except OSError:
+        return False
+
+
+def resolved_config(state):
+    """Effective pattern config: built-in defaults overlaid with the state file's
+    `config` block (a project with a different checkpoint convention overrides the
+    two defaults). Empty/missing values fall back to the default."""
+    cfg = dict(_DEFAULT_CONFIG)
+    for k, v in (state.get("config") or {}).items():
+        if k in cfg and isinstance(v, str) and v.strip():
+            cfg[k] = v
+    return cfg
+
+
+def _commits_for(root, rel):
+    """[(sha, subject)] for commits touching `rel`, newest first."""
+    out = _git(root, "log", "--format=%H%x1f%s", "--", rel)
+    rows = []
+    for line in out.splitlines():
+        if "\x1f" in line:
+            sha, subj = line.split("\x1f", 1)
+            rows.append((sha, subj.strip()))
+    return rows
+
+
+def resolve_baseline(file_path, explicit_ref=None):
+    """Return (baseline_ref, source_label) per the precedence above. Never raises;
+    degrades to ('HEAD', ...) outside a git repo or with no usable history."""
+    root = _git_root(file_path)
+    if not root:
+        return "HEAD", "default (not a git repository)"
+    if explicit_ref:
+        sha = _git(root, "rev-parse", explicit_ref).strip()
+        return (sha or explicit_ref), "explicit ref"
+
+    rel = _rel_to_root(root, file_path)
+    state = load_state(file_path)
+    pin = (state.get("pins") or {}).get(rel)
+    if isinstance(pin, dict) and pin.get("baseline"):
+        return pin["baseline"], "pinned checkpoint"
+
+    cfg = resolved_config(state)
+    try:
+        res_re = re.compile(cfg["resolution_pattern"])
+        streak_re = re.compile(
+            cfg["edit_streak_pattern"].replace(
+                "<basename>", re.escape(os.path.basename(file_path))))
+    except re.error:
+        return "HEAD", "default (invalid pattern in config)"
+
+    commits = _commits_for(root, rel)
+    # AUTO: the most recent polish-resolution commit = the last polish point.
+    for sha, subj in commits:
+        if res_re.search(subj):
+            return sha, "auto (last polish resolution)"
+    # FALLBACK: the boundary just before the current edit-streak.
+    i = 0
+    while i < len(commits) and streak_re.search(commits[i][1]):
+        i += 1
+    if 0 < i < len(commits):
+        return commits[i][0], "auto (before the edit streak)"
+    if commits:
+        return commits[0][0], "auto (file HEAD; no edit streak)"
+    return "HEAD", "default (no history for file)"
+
+
+def set_baseline(file_path, ref="HEAD"):
+    """Pin an explicit per-file checkpoint. Returns (sha, subject) or None."""
+    root = _git_root(file_path)
+    if not root:
+        return None
+    sha = _git(root, "rev-parse", ref).strip()
+    if not sha:
+        return None
+    subj = _git(root, "log", "-1", "--format=%s", sha).strip()
+    state = load_state(file_path)
+    pins = state.setdefault("pins", {})
+    pins[_rel_to_root(root, file_path)] = {"baseline": sha, "note": subj}
+    save_state(file_path, state)
+    return sha, subj
+
+
+def clear_baseline(file_path):
+    """Remove the per-file pin (back to AUTO). Returns True if one was removed."""
+    root = _git_root(file_path)
+    if not root:
+        return False
+    state = load_state(file_path)
+    pins = state.get("pins") or {}
+    if pins.pop(_rel_to_root(root, file_path), None) is not None:
+        state["pins"] = pins
+        save_state(file_path, state)
+        return True
+    return False
+
+
 # --- protected-token classification (F4 bright line) -----------------------
 
 _GREEK_OR_NONASCII_RE = re.compile(r"[^\x00-\x7f]")
@@ -292,11 +449,22 @@ def nonrendering_line_ranges(text):
 
 _MD_NUM_RE = re.compile(r"</mark><sup>(\d+)</sup>")
 _TEX_NUM_RE = re.compile(r"\\tcn\{(\d+)\}")
+# track-changes' single mark-number space also includes WHOLE-REGION insertions
+# (Fix D / v9), which carry their number in a region attribute — not a <sup>/\tcn.
+# A polish mark that ignores these collides with a pending region (observed: engine
+# said next=1 while §3 held regions 14-29). Count both region forms too.
+_MD_REGION_NUM_RE = re.compile(r'tc-n\s*=\s*"(\d+)"')
+_TEX_REGION_NUM_RE = re.compile(r"\\begin\{tcregion\}\{(\d+)\}")
 
 
 def next_mark_n(text):
-    nums = [int(x) for x in _MD_NUM_RE.findall(text)] + \
-           [int(x) for x in _TEX_NUM_RE.findall(text)]
+    """Next free number across track-changes' ENTIRE single mark-number space:
+    inline marks (md `</mark><sup>N</sup>`, LaTeX `\\tcn{N}`) AND whole-region
+    insertions (md `tc-n="N"`, LaTeX `\\begin{tcregion}{N}`). max(all)+1, or 1."""
+    nums = ([int(x) for x in _MD_NUM_RE.findall(text)]
+            + [int(x) for x in _TEX_NUM_RE.findall(text)]
+            + [int(x) for x in _MD_REGION_NUM_RE.findall(text)]
+            + [int(x) for x in _TEX_REGION_NUM_RE.findall(text)])
     return (max(nums) + 1) if nums else 1
 
 
@@ -389,7 +557,12 @@ def tracking_status(file_path):
 
 # --- analyze ----------------------------------------------------------------
 
-def analyze(file_path, baseline_ref="HEAD"):
+def analyze(file_path, baseline_ref=None):
+    """Compute the dictated scope. When `baseline_ref` is None the baseline is
+    AUTO-resolved (cumulative edits since the last polish — see resolve_baseline);
+    an explicit ref always wins. Diff stays baseline->on-disk, so uncommitted
+    edits are in scope, and prior marks/regions are reduced to accepted text
+    (strip_marks) before tokenizing so pending regions never pollute the scope."""
     with open(file_path, "r", encoding="utf-8", errors="replace") as f:
         current_raw = f.read()
     allowlist = _load_allowlist(
@@ -398,7 +571,8 @@ def analyze(file_path, baseline_ref="HEAD"):
     current_text = strip_marks(current_raw)
     current_tokens = pandoc_tokens(current_text)
 
-    base_text, ginfo = git_baseline(file_path, baseline_ref)
+    resolved_ref, baseline_source = resolve_baseline(file_path, baseline_ref)
+    base_text, ginfo = git_baseline(file_path, resolved_ref)
     tracked, treason = tracking_status(file_path)
     nr = nonrendering_line_ranges(current_raw)
     nr_kinds = {}
@@ -409,6 +583,8 @@ def analyze(file_path, baseline_ref="HEAD"):
         "tracked": tracked,
         "tracking_reason": treason,
         "warnings": ginfo.get("warnings", []),
+        "baseline_source": baseline_source,
+        "resolved_baseline": resolved_ref,
         "next_mark_n": next_mark_n(current_raw),
         # Compact summary first (what the workflow / sub-agent reads); the full
         # list stays available but need not be forwarded into a prompt.
@@ -437,7 +613,7 @@ def analyze(file_path, baseline_ref="HEAD"):
     dictated = sorted(dictated)
 
     report["mode"] = "M2"
-    report["baseline_ref"] = ginfo.get("baseline_ref", baseline_ref)
+    report["baseline_ref"] = ginfo.get("baseline_ref", resolved_ref)
     report["dictated_tokens"] = [current_tokens[i] for i in dictated]
     report["flagged_protected"] = sorted(
         {current_tokens[i] for i in dictated
@@ -452,18 +628,56 @@ def main(argv=None):
     sub = p.add_subparsers(dest="cmd", required=True)
     a = sub.add_parser("analyze", help="compute dictated scope + flags")
     a.add_argument("file")
-    a.add_argument("--baseline-ref", default="HEAD")
+    a.add_argument("--baseline-ref", default=None,
+                   help="explicit baseline (default: auto-resolve cumulative "
+                        "edits since the last polish)")
     au = sub.add_parser("audit", help="append a dictated: breadcrumb")
     au.add_argument("file")
     au.add_argument("--runs", type=int, default=1)
     au.add_argument("--mode", default="M2")
     au.add_argument("--baseline", default="HEAD")
     au.add_argument("--flagged", default="")
+    rb = sub.add_parser("resolve", help="print the resolved baseline ref for a file")
+    rb.add_argument("file")
+    rb.add_argument("--ref", default=None, help="explicit override (one-off)")
+    rb.add_argument("--verbose", action="store_true",
+                    help="explain the source on stderr")
+    sb = sub.add_parser("set", help="pin an explicit per-file checkpoint")
+    sb.add_argument("file")
+    sb.add_argument("ref", nargs="?", default="HEAD")
+    cb = sub.add_parser("clear", help="remove the per-file pin (back to auto)")
+    cb.add_argument("file")
+    shw = sub.add_parser("show", help="show the resolved baseline + its source")
+    shw.add_argument("file")
     args = p.parse_args(argv)
 
     if args.cmd == "analyze":
         rep = analyze(args.file, args.baseline_ref)
         print(json.dumps(rep, indent=2, ensure_ascii=False))
+        return 0
+    if args.cmd == "resolve":
+        ref, src = resolve_baseline(args.file, args.ref)
+        if args.verbose:
+            sys.stderr.write("baseline for %s: %s  [%s]\n"
+                             % (args.file, ref, src))
+        print(ref)
+        return 0
+    if args.cmd == "set":
+        res = set_baseline(args.file, args.ref)
+        if not res:
+            sys.stderr.write("polish: cannot pin baseline (no git repo or bad "
+                             "ref %r)\n" % args.ref)
+            return 2
+        sha, subj = res
+        print("pinned baseline -> %s (%s)" % (sha[:9], subj))
+        return 0
+    if args.cmd == "clear":
+        print("cleared pinned baseline (back to auto)"
+              if clear_baseline(args.file) else "no pinned baseline to clear")
+        return 0
+    if args.cmd == "show":
+        ref, src = resolve_baseline(args.file)
+        print("%s  [%s]" % (ref, src))
         return 0
     if args.cmd == "audit":
         flagged = [s for s in (args.flagged.split(",") if args.flagged else []) if s]
