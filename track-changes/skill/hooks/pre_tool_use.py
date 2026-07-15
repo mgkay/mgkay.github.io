@@ -266,6 +266,19 @@ def _source_gate(tool_name, file_path, source_text, payload, ftype):
     # (as opposed to an edit to the body of an already-present region).
     new_sourced = [r for r in touched_sourced if r.get('start') in added]
 
+    # v9.7: a class-recording TRANSCRIPT gloss pairs with a gray excerpt the
+    # SAME way a sourced region does — the gray is verbatim-verified against the
+    # staged source (the transcript) — but WITHOUT a reader-facing citation: the
+    # gray is temporary confirmation scaffolding and the green gloss is the
+    # instructor's own spoken words, polished. 9.1.0's "ironclad sourced" gate
+    # wired the gray block to `sourced`-only, silently dropping the 8.1.0
+    # transcript pairing; a new transcript region is now an accepted partner for
+    # a new gray excerpt. (A transcript region with NO gray still stands alone,
+    # as before — it never reaches this gate because `new_gray` is empty.)
+    new_transcript = [r for r in tc_grammar.extract_regions(prop_norm, ftype)
+                      if r.get('prov') == 'transcript'
+                      and r.get('start') in added and r.get('end')]
+
     if not new_gray and not touched_sourced:
         return None  # gate is a no-op — everything proceeds as today
 
@@ -276,25 +289,29 @@ def _source_gate(tool_name, file_path, source_text, payload, ftype):
         # 0-indexed slice [start:end-1]) — the text that survives /tc accept.
         return '\n'.join(prop_lines[r['start']:r['end'] - 1])
 
-    # === New-claim path: a brand-new sourced region and/or a new gray excerpt.
-    # They must appear together as ONE verified pair, fully checked: staged,
-    # excerpt contained, tc-src/tc-n, AND cited.
+    # === New-claim path: a brand-new sourced OR transcript region paired with a
+    # new gray excerpt. They must appear together as ONE verified pair: staged,
+    # excerpt contained, tc-src/tc-n (and, for `sourced` only, cited). A gray
+    # excerpt pairs with EITHER provenance; the difference is the citation rule
+    # below (sourced must cite, transcript need not).
+    new_pairable = new_sourced + new_transcript
     if new_gray or new_sourced:
-        if len(new_gray) > 1 or len(new_sourced) > 1:
+        if len(new_gray) > 1 or len(new_pairable) > 1:
             _emit(hdr + '\n'
-                  'stage and land ONE sourced excerpt per write. This write adds '
-                  f'{len(new_gray)} gray excerpt(s) and {len(new_sourced)} new '
-                  'sourced region(s); split it into one `/tc source` + write per '
-                  'pair (each excerpt is verified independently).')
-            _log(f'SOURCE-BLOCK {file_path}: multiple new gray/sourced in one write')
+                  'stage and land ONE verified excerpt per write. This write adds '
+                  f'{len(new_gray)} gray excerpt(s) and {len(new_pairable)} new '
+                  'sourced/transcript region(s); split it into one `/tc source` + '
+                  'write per pair (each excerpt is verified independently).')
+            _log(f'SOURCE-BLOCK {file_path}: multiple new gray/region in one write')
             return 2
-        if new_gray and not new_sourced:
+        if new_gray and not new_pairable:
             _emit(hdr + '\n'
                   'a new gray `.tc-verbatim` excerpt has no accompanying green '
-                  '`sourced` region. The gray block is scaffolding; add the '
-                  'interpretation that will stay in the document, carrying its '
-                  'citation, as a `tc-prov="sourced"` region.')
-            _log(f'SOURCE-BLOCK {file_path}: gray excerpt, no sourced region')
+                  'region. The gray block is scaffolding; add the interpretation '
+                  'that will stay in the document as a `tc-prov="sourced"` region '
+                  '(with a citation) or, for class-recording narration, a '
+                  '`tc-prov="transcript"` region (no citation).')
+            _log(f'SOURCE-BLOCK {file_path}: gray excerpt, no sourced/transcript region')
             return 2
         if new_sourced and not new_gray:
             _emit(hdr + '\n'
@@ -307,7 +324,8 @@ def _source_gate(tool_name, file_path, source_text, payload, ftype):
             return 2
 
         gray_body = new_gray[0].get('body') or ''
-        region = new_sourced[0]
+        region = new_sourced[0] if new_sourced else new_transcript[0]
+        is_sourced = region.get('prov') == 'sourced'
 
         rec = srcstage.load(file_path)
         if rec is None:
@@ -375,10 +393,13 @@ def _source_gate(tool_name, file_path, source_text, payload, ftype):
             _log(f'SOURCE-BLOCK {file_path}: empty sourced region body')
             return 2
 
-        # Reader-facing citation (9.1.0). Rule A: staged by citekey => the region
-        # must cite THAT key. Rule B: otherwise => any citation/footnote token.
+        # Reader-facing citation (9.1.0) — SOURCED regions only. Rule A: staged by
+        # citekey => the region must cite THAT key. Rule B: otherwise => any
+        # citation/footnote token. A `transcript` gloss carries NO citation (it is
+        # the instructor's own class narration, not an external source), so this
+        # block is skipped for transcript (v9.7).
         citekey = rec.get('citekey')
-        if citekey:
+        if is_sourced and citekey:
             if not tc_cite.cites_key(body, ftype, citekey):
                 _emit(hdr + '\n'
                       f'the sourced region is staged from @{citekey} but does not '
@@ -387,7 +408,7 @@ def _source_gate(tool_name, file_path, source_text, payload, ftype):
                       'metadata (tc-src) is not a citation.')
                 _log(f'SOURCE-BLOCK {file_path}: region does not cite @{citekey}')
                 return 2
-        elif not tc_cite.has_citation(body, ftype):
+        elif is_sourced and not tc_cite.has_citation(body, ftype):
             forms = ('`[@key]`, `@key`, or a footnote `^[...]`' if ftype in
                      ('md', 'qmd')
                      else r'`\cite{key}`, `\autocite{key}`, or `\footnote{...}`')
@@ -426,10 +447,11 @@ def _source_gate(tool_name, file_path, source_text, payload, ftype):
         sourced_excerpt = (sourcetext.anchor_text(gray_body, ftype)
                            or gray_plain)
         tc_audit.write_sourced_entry(file_path, rec, region['N'], expected,
-                                     sourced_excerpt, body)
+                                     sourced_excerpt, body,
+                                     prov=region.get('prov') or 'sourced')
         srcstage.clear(file_path)
-        _log(f'SOURCE-OK {file_path}: region {region["N"]} tc-src {expected}; '
-             'sentinel written, record cleared')
+        _log(f'SOURCE-OK {file_path}: {region.get("prov") or "sourced"} region '
+             f'{region["N"]} tc-src {expected}; sentinel written, record cleared')
         return None
 
     # === Edit path: touched sourced region(s), none brand-new, no new gray.

@@ -1080,6 +1080,24 @@ CLI prints for that staging — `path#locator` (or bare `path` for a whole
 source), or `@citekey locator` (or bare `@citekey`) — and it must be copied
 **verbatim** into the green region opener.
 
+**Transcript pairing (v9.7).** The same gray+green write serves the
+class-recording **transcript** workflow: the AI finds the span of the
+instructor's recording that matches a figure's narration, drops it in as the
+gray `.tc-verbatim` block, and writes the green region with
+`tc-prov="transcript"` instead of `"sourced"` — a **polished gloss** of the
+spoken words, so the instructor can confirm the gloss preserves the meaning.
+The gray excerpt is verified verbatim exactly as for a sourced region (staged
+via `/tc source`, re-read at write time, refused fail-closed if fabricated),
+and `tc-src`/`tc-n` are still required, **but a `transcript` region carries no
+reader-facing citation** — it is the lecture's own voice, not an external
+source. The gray block is temporary scaffolding (deleted once the gloss is
+confirmed; `/tc accept`/`reject` removes it, 9.3.0). Md:
+`::: {.tc-region tc-n="N" tc-prov="transcript" tc-src="<src>"}`; LaTeX:
+`\begin{tcregion}{N}[transcript][<src>]`. Verified transcript pairs are logged
+under a `transcript:` audit key so the citations manifest never lists an
+uncited excerpt. (Before 9.7, 9.1.0's sourced gate wired every gray block to a
+cited `sourced` region, silently blocking this pairing.)
+
 ### Contextual excerpts and the source anchor (9.1.1)
 
 A gray `.tc-verbatim` excerpt may include a **contiguous passage of surrounding

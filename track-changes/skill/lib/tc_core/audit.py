@@ -205,7 +205,7 @@ def record(source_text, tool_name, ftype, abs_file_path, log_path,
 # ---------------------------------------------------------------------------
 
 def write_sourced_entry(abs_file_path, rec, region_n, src_display,
-                        excerpt, supports):
+                        excerpt, supports, prov='sourced'):
     """Append a `sourced:` audit entry to the project's `.tc-history.md`.
 
     Fields:
@@ -246,7 +246,11 @@ def write_sourced_entry(abs_file_path, rec, region_n, src_display,
         citekey = rec.get('citekey')
         url = rec.get('url')
         lines = [f"\n## {ts} -- {rel}  (source-validation)"]
-        lines.append("sourced:")
+        # v9.7: a transcript gloss is verified the same way but logged under its
+        # own key so the `sourced:` manifest (citations) never lists an uncited
+        # transcript excerpt. Any non-'sourced' prov falls back to 'sourced' for
+        # back-compatibility with the reader.
+        lines.append("transcript:" if prov == 'transcript' else "sourced:")
         lines.append(f"  - n: {region_n}")
         lines.append(f"    from: {_fmt_str(src)}")
         lines.append(f"    locator: {locator}")

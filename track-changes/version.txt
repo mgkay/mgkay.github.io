@@ -1,3 +1,29 @@
+9.7.0
+2026-07-14
+track-changes v9.7.0 — restore the AI-driven transcript gray+gloss pairing (regression fix).
+- REGRESSION FIXED: the class-recording TRANSCRIPT workflow (8.1.0) — the AI finds the
+  matching span of the instructor's recording, drops it in as a gray `.tc-verbatim` block,
+  and writes a green `tc-prov="transcript"` gloss (polished wording) so the instructor can
+  confirm the gloss preserves the meaning — was silently blocked by 9.1.0's "ironclad
+  sourced" gate, which wired EVERY new gray block to require a `sourced` region carrying a
+  reader-facing citation. A gray excerpt now pairs with EITHER a `sourced` region (must
+  cite) OR a `transcript` region (NO citation — it is the lecture's own voice, not an
+  external source). Verification is unchanged for both: the gray excerpt is still re-read
+  from the staged source and refused fail-closed if fabricated/paraphrased (containment),
+  and `tc-src`/`tc-n` are still enforced. Only the citation requirement is lifted for
+  `transcript`. The accept-side already removed gray scaffolding for sourced/`transcript`
+  regions alike (9.3.0), so the write gate was the sole out-of-step piece.
+- STAGING: `/tc source <transcript>#L<a>-L<b> <target>` now offers both green shapes — (a)
+  `sourced` (document source, cited) and (b) `transcript` (class narration, uncited) — and
+  the "must carry a citation" rule is stated as sourced-only.
+- AUDIT: a verified transcript pair is logged under a `transcript:` key (not `sourced:`) so
+  the citations manifest never lists an uncited transcript excerpt; evidence (verbatim
+  excerpt + supported gloss) is recorded identically.
+- Hook + tc_source + audit change only; grammar unchanged (`transcript` was already a
+  PROV_VALUE since 8.1.0); no new hooks (suite stays 6); no document migration. New tests
+  Z39–Z41 (transcript lands uncited; fabricated excerpt still refused; sourced still
+  requires a citation). Full suite 691/691.
+
 9.6.0
 2026-07-14
 track-changes v9.6.0 — tc-polish cumulative baseline + region-aware numbering.

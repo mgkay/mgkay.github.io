@@ -554,13 +554,32 @@ def _render(rec, target, resolved, locator_str, slice_text):
         cite_body = ('<your sourced prose, supported by the quotation above> '
                      '<citation>')
     out.append(
-        '  2. IMMEDIATELY AFTER it, a green `sourced` region carrying YOUR '
-        'interpretation / paraphrase of that quotation AND a reader-facing '
-        'citation (the interpretation is what stays in the document):')
+        '  2. IMMEDIATELY AFTER it, a green region carrying YOUR wording of that '
+        'quotation (the wording is what stays in the document). Use ONE of:')
     out.append('')
+    out.append('     (a) a `sourced` region — a DOCUMENT source (chapter, paper, '
+               'web page). It MUST carry a reader-facing citation:')
     out.append(green_open)
     out.append(cite_body)
     out.append(green_close)
+    out.append('')
+    if tgt_ftype == 'tex':
+        tr_open = '\\begin{tcregion}{%d}[transcript][%s]' % (next_n, expected)
+        tr_close = '\\end{tcregion}'
+    else:
+        tr_open = ('::: {.tc-region tc-n="%d" tc-prov="transcript" '
+                   'tc-src="%s"}' % (next_n, expected))
+        tr_close = ':::'
+    out.append('     (b) a `transcript` region — the instructor\'s own '
+               'CLASS-RECORDING narration, polished. NO citation (it is the '
+               'lecture\'s own voice, not an external source):')
+    out.append(tr_open)
+    out.append('<your polished gloss of the spoken excerpt above>')
+    out.append(tr_close)
+    out.append('')
+    out.append('The gray excerpt is verified verbatim either way; only `sourced` '
+               'requires a citation. Pick (b) when the gray block is a transcript '
+               'of what was said in class.')
     out.append('')
     out.append('Rules:')
     out.append(
@@ -584,16 +603,17 @@ def _render(rec, target, resolved, locator_str, slice_text):
         'in a SEPARATE authored (uncited) sentence outside it.')
     if citekey:
         out.append(
-            '  - The green region MUST cite `@%s` (staged by citekey): include '
+            '  - A `sourced` region staged by citekey MUST cite `@%s`: include '
             '`%s` in the region body — the hook refuses a sourced region that '
-            'does not cite that key. tc-src metadata is NOT a citation.'
+            'does not cite that key. tc-src metadata is NOT a citation. (A '
+            '`transcript` region needs no citation.)'
             % (citekey, cite_example))
     else:
         out.append(
-            '  - The green region MUST carry a reader-facing citation (`%s`), '
+            '  - A `sourced` region MUST carry a reader-facing citation (`%s`), '
             'or re-stage by citekey with `/tc source @citekey <locator>`. The '
             'hook refuses an uncited sourced region — tc-src metadata is NOT a '
-            'citation.' % cite_example)
+            'citation. (A `transcript` region needs no citation.)' % cite_example)
     return '\n'.join(out)
 
 
