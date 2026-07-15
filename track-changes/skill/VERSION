@@ -1,3 +1,57 @@
+9.8.0
+2026-07-15
+track-changes v9.8.0 — mechanically enforce "PCV for all changes" (maintainer tooling).
+- MOTIVATION: 9.7.0 was edited, reinstalled, and PUBLISHED as a direct edit with no PCV
+  artifacts and no critic pass, caught only retroactively. An instruction in CLAUDE.md is
+  advisory; this adds mechanical enforcement at the chokepoints a change must pass to become
+  real. All three mechanisms are DEVELOPER-LOCAL — end users install via the curl bootstrap
+  and never run install.sh, so none of this ships or fires for them.
+- A. DEPLOY GATE: lib/pcv_gate.py (new) checks a version's PCV record is complete (charge +
+  plan + build-record with Critic & Verification sections + a decision-log
+  [MILESTONE:VERIFICATION_COMPLETE] entry). install.sh (local install) and the new publish.sh
+  (Pages) refuse to deploy an incomplete version; TC_FORCE_DEPLOY=1 overrides with a logged
+  entry (pcvplans/logs/deploy-overrides.log). publish.sh also replaces the error-prone MANUAL
+  Pages sync with a deterministic fixed-mapping sync (--dry-run previews) that EXCLUDES the
+  maintainer-only files below, so they never ship.
+- B+C. GOVERNANCE HOOK: hooks/pcv_dev_gate.py (new; PreToolUse) blocks edits to the INSTALLED
+  copy (~/.claude/skills/{track-changes,verified-import,tc-polish}/**) and to skill SOURCE
+  (v*/...) without an in-flight charge (a charge-<next>.md > VERSION, or pcvplans/.pcv-active).
+  Installed MAINTAINER-ONLY via install.sh --dev-guards (registered FIRST in settings.json by
+  lib/dev_guards_register.py); NEVER in the public bootstrap. Path-matching is normalized
+  (expanduser+realpath+normcase), component-exact + pcvplans-sibling (no false hits on a folder
+  merely containing "track-changes"), with a fast token pre-filter (no disk touch for unrelated
+  paths) and fail-OPEN on error (never wedges editing).
+- The 6 MARK/import hooks and the mark protocol are UNTOUCHED; the governance hook is a separate,
+  maintainer-local 7th PreToolUse hook (not part of the shipped 6). No shipped-skill content
+  change (published files identical; only version.txt/index footer bump). New tests: Category AC
+  (3). Full suite 696/696. Built THROUGH its own gate (dogfood).
+
+9.7.0
+2026-07-14
+track-changes v9.7.0 — restore the AI-driven transcript gray+gloss pairing (regression fix).
+- REGRESSION FIXED: the class-recording TRANSCRIPT workflow (8.1.0) — the AI finds the
+  matching span of the instructor's recording, drops it in as a gray `.tc-verbatim` block,
+  and writes a green `tc-prov="transcript"` gloss (polished wording) so the instructor can
+  confirm the gloss preserves the meaning — was silently blocked by 9.1.0's "ironclad
+  sourced" gate, which wired EVERY new gray block to require a `sourced` region carrying a
+  reader-facing citation. A gray excerpt now pairs with EITHER a `sourced` region (must
+  cite) OR a `transcript` region (NO citation — it is the lecture's own voice, not an
+  external source). Verification is unchanged for both: the gray excerpt is still re-read
+  from the staged source and refused fail-closed if fabricated/paraphrased (containment),
+  and `tc-src`/`tc-n` are still enforced. Only the citation requirement is lifted for
+  `transcript`. The accept-side already removed gray scaffolding for sourced/`transcript`
+  regions alike (9.3.0), so the write gate was the sole out-of-step piece.
+- STAGING: `/tc source <transcript>#L<a>-L<b> <target>` now offers both green shapes — (a)
+  `sourced` (document source, cited) and (b) `transcript` (class narration, uncited) — and
+  the "must carry a citation" rule is stated as sourced-only.
+- AUDIT: a verified transcript pair is logged under a `transcript:` key (not `sourced:`) so
+  the citations manifest never lists an uncited transcript excerpt; evidence (verbatim
+  excerpt + supported gloss) is recorded identically.
+- Hook + tc_source + audit change only; grammar unchanged (`transcript` was already a
+  PROV_VALUE since 8.1.0); no new hooks (suite stays 6); no document migration. New tests
+  Z39–Z41 (transcript lands uncited; fabricated excerpt still refused; sourced still
+  requires a citation). Full suite 691/691.
+
 9.6.0
 2026-07-14
 track-changes v9.6.0 — tc-polish cumulative baseline + region-aware numbering.

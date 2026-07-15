@@ -1,3 +1,31 @@
+9.8.0
+2026-07-15
+track-changes v9.8.0 — mechanically enforce "PCV for all changes" (maintainer tooling).
+- MOTIVATION: 9.7.0 was edited, reinstalled, and PUBLISHED as a direct edit with no PCV
+  artifacts and no critic pass, caught only retroactively. An instruction in CLAUDE.md is
+  advisory; this adds mechanical enforcement at the chokepoints a change must pass to become
+  real. All three mechanisms are DEVELOPER-LOCAL — end users install via the curl bootstrap
+  and never run install.sh, so none of this ships or fires for them.
+- A. DEPLOY GATE: lib/pcv_gate.py (new) checks a version's PCV record is complete (charge +
+  plan + build-record with Critic & Verification sections + a decision-log
+  [MILESTONE:VERIFICATION_COMPLETE] entry). install.sh (local install) and the new publish.sh
+  (Pages) refuse to deploy an incomplete version; TC_FORCE_DEPLOY=1 overrides with a logged
+  entry (pcvplans/logs/deploy-overrides.log). publish.sh also replaces the error-prone MANUAL
+  Pages sync with a deterministic fixed-mapping sync (--dry-run previews) that EXCLUDES the
+  maintainer-only files below, so they never ship.
+- B+C. GOVERNANCE HOOK: hooks/pcv_dev_gate.py (new; PreToolUse) blocks edits to the INSTALLED
+  copy (~/.claude/skills/{track-changes,verified-import,tc-polish}/**) and to skill SOURCE
+  (v*/...) without an in-flight charge (a charge-<next>.md > VERSION, or pcvplans/.pcv-active).
+  Installed MAINTAINER-ONLY via install.sh --dev-guards (registered FIRST in settings.json by
+  lib/dev_guards_register.py); NEVER in the public bootstrap. Path-matching is normalized
+  (expanduser+realpath+normcase), component-exact + pcvplans-sibling (no false hits on a folder
+  merely containing "track-changes"), with a fast token pre-filter (no disk touch for unrelated
+  paths) and fail-OPEN on error (never wedges editing).
+- The 6 MARK/import hooks and the mark protocol are UNTOUCHED; the governance hook is a separate,
+  maintainer-local 7th PreToolUse hook (not part of the shipped 6). No shipped-skill content
+  change (published files identical; only version.txt/index footer bump). New tests: Category AC
+  (3). Full suite 696/696. Built THROUGH its own gate (dogfood).
+
 9.7.0
 2026-07-14
 track-changes v9.7.0 — restore the AI-driven transcript gray+gloss pairing (regression fix).
