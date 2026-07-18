@@ -58,8 +58,15 @@ tc_history_sha1() {
     return 0
   fi
   # Python fallback.
-  local py
+  local py bin
   for py in python3 python "py -3" py; do
+    # Skip the Windows "App Execution Alias" python stub under
+    # .../Microsoft/WindowsApps/ (executing it hangs the probe; 9.8.1).
+    # command -v resolves a path only, so it cannot hang.
+    bin="${py%% *}"
+    case "$(command -v "${bin}" 2>/dev/null)" in
+      */Microsoft/WindowsApps/*) continue ;;
+    esac
     if ${py} -c "import sys; sys.exit(0 if sys.version_info[0]>=3 else 49)" >/dev/null 2>&1; then
       ${py} -c "import sys,hashlib; print(hashlib.sha1(sys.stdin.read().encode()).hexdigest())" <<< "$s" 2>/dev/null
       return $?

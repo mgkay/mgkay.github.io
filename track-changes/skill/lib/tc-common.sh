@@ -386,8 +386,17 @@ tc_max_n() {
 # hooks to sweep stale tc_core.exempt sentinels (verified-import F2 / Q4).
 # ---------------------------------------------------------------------------
 tc_resolve_python() {
-  local cand
+  local cand bin
   for cand in python3 python "py -3" py; do
+    # Skip the Windows Store "App Execution Alias" stub under
+    # .../Microsoft/WindowsApps/ (e.g. python3.exe). Executing it blocks
+    # indefinitely when no Store Python is installed and cannot be killed
+    # by a timeout, which stalls the calling hook (9.8.1). `command -v`
+    # only resolves a path (no execution), so it is safe to probe.
+    bin="${cand%% *}"
+    case "$(command -v "${bin}" 2>/dev/null)" in
+      */Microsoft/WindowsApps/*) continue ;;
+    esac
     if ${cand} -c "import sys; sys.exit(0 if sys.version_info[0] >= 3 else 49)" >/dev/null 2>&1; then
       printf '%s' "${cand}"
       return 0

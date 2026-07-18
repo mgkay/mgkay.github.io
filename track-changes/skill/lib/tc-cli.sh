@@ -148,8 +148,15 @@ USAGE
 # returns non-zero. Mirrors the probe used by tc_enable_disable.
 # ---------------------------------------------------------------------------
 tc_resolve_python() {
-  local cand
+  local cand bin
   for cand in python3 python "py -3" py; do
+    # Skip the Windows "App Execution Alias" python stub under
+    # .../Microsoft/WindowsApps/ (executing it hangs the probe; 9.8.1).
+    # command -v resolves a path only, so it cannot hang.
+    bin="${cand%% *}"
+    case "$(command -v "${bin}" 2>/dev/null)" in
+      */Microsoft/WindowsApps/*) continue ;;
+    esac
     if ${cand} -c "import sys; sys.exit(0 if sys.version_info[0] >= 3 else 49)" >/dev/null 2>&1; then
       printf '%s' "${cand}"
       return 0
@@ -310,8 +317,15 @@ tc_enable_disable() {
 
   # Resolve Python (mirrors the interpreter resolution in pre_tool_use.py).
   local py=""
-  local cand
+  local cand bin
   for cand in python3 python "py -3" py; do
+    # Skip the Windows "App Execution Alias" python stub under
+    # .../Microsoft/WindowsApps/ (executing it hangs the probe; 9.8.1).
+    # command -v resolves a path only, so it cannot hang.
+    bin="${cand%% *}"
+    case "$(command -v "${bin}" 2>/dev/null)" in
+      */Microsoft/WindowsApps/*) continue ;;
+    esac
     if ${cand} -c "import sys; sys.exit(0 if sys.version_info[0] >= 3 else 49)" >/dev/null 2>&1; then
       py="${cand}"
       break

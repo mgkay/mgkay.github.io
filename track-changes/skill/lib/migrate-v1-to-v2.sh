@@ -45,8 +45,15 @@ TARGET_ABS="$(cd "${TARGET_DIR}" && pwd)"
 
 # Python 3 probe (mirrors hooks/pre-tool-use.sh::tc_resolve_python).
 resolve_python3() {
-  local cand
+  local cand bin
   for cand in python3 python "py -3" py; do
+    # Skip the Windows "App Execution Alias" python stub under
+    # .../Microsoft/WindowsApps/ (executing it hangs the probe; 9.8.1).
+    # command -v resolves a path only, so it cannot hang.
+    bin="${cand%% *}"
+    case "$(command -v "${bin}" 2>/dev/null)" in
+      */Microsoft/WindowsApps/*) continue ;;
+    esac
     if ${cand} -c "import sys; sys.exit(0 if sys.version_info[0] >= 3 else 49)" >/dev/null 2>&1; then
       printf '%s' "${cand}"
       return 0

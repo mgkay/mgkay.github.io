@@ -1,5 +1,47 @@
-9.8.0
-2026-07-15
+9.8.2
+2026-07-18
+track-changes v9.8.2 — document the markdown-note fallback for source-validation when an annotated highlight is not technically possible (docs).
+- MOTIVATION: §16 documented WHEN the annotated-PDF twin cannot be built (image-only PDF,
+  "no text layer") but not WHAT replaces it. Hit live in an ISE 754 session: the source
+  backing the Holmstrom (1982) lecture endnote was an image-only JSTOR scan (no text layer,
+  no OCR installed), so the highlight could not be snapped onto the verified excerpt. The
+  claim was verified by reading the scanned pages and recorded as a hand-written markdown
+  note in the topic's validation/ folder. Undocumented, that invites a silent omission (no
+  evidence artifact for a scanned source) or an ad-hoc, non-portable response.
+- CHANGE: SKILL.md §16 ("/tc manifest and the validation/ folder") gains a "Fallback when
+  highlighting is not technically possible" paragraph. When a source has no searchable text
+  (image-only scan, no text layer, no OCR), a hand-written markdown verification note in
+  validation/ replaces the annotated twin, recording the claim, the verbatim excerpt(s)
+  transcribed from the source, exact page references, the claim->support mapping, the
+  verdict, and why the highlight was impossible. The same fallback covers the manual
+  footnote-plus-evidence path (a settled paraphrase-with-citation kept as ordinary cited
+  text, still verified); a fully highlight-compliant twin still needs a text-layer copy
+  (save-then-source).
+- SCOPE: documentation only. No code / hook / grammar / protocol / CSS / test change; the
+  annotator's skip-image-only behavior is unchanged. Hook count unchanged (6 shipped +
+  maintainer-local governance hook). No new tests (documentation).
+
+9.8.1
+2026-07-17
+track-changes v9.8.1 — skip the Windows Store python alias stub in the interpreter probe.
+- MOTIVATION: on Windows with the Microsoft Store "App Execution Alias" enabled but no Store
+  Python installed, `python3` resolves to a reparse-point stub under
+  .../Microsoft/WindowsApps/ that BLOCKS INDEFINITELY when executed and cannot be killed by a
+  timeout. The shared Python-3 probe runs `python3` FIRST, so the UserPromptSubmit hook (and
+  every other probe caller) hung until "UserPromptSubmit hook timed out after 30s". Raising the
+  timeout does not help — the stub outlasts any timeout; it only delays the same failure.
+- FIX: before executing a candidate, resolve its base binary with `command -v` (a path lookup,
+  NO execution, so it cannot hang) and skip any candidate resolving under
+  .../Microsoft/WindowsApps/. The loop then continues to the real interpreter (`python`/`py`).
+  The pattern targets ONLY the per-user alias-stub dir: a python.org install, the `py` launcher,
+  and even a real Store Python (under Program Files/WindowsApps, a different path) are unaffected;
+  off Windows and on correctly-configured Windows the guard is a no-op.
+- SCOPE: all 8 bash probe sites guarded — 6 shipped (lib/tc-common.sh, lib/tc-cli.sh x2,
+  lib/tc-history.sh, hooks/pre-commit.sh, lib/migrate-v1-to-v2.sh) + 2 test-harness
+  (tests/run-tests.sh preflight, tests/lib/helpers.sh tc_test_python) so the suite runs on an
+  alias-affected machine. hooks/pre_tool_use.py needs no change (already runs under Python; no
+  shell-probe). No protocol/grammar/hook-count/document change. New test Category AD (2 tests).
+
 track-changes v9.8.0 — mechanically enforce "PCV for all changes" (maintainer tooling).
 - MOTIVATION: 9.7.0 was edited, reinstalled, and PUBLISHED as a direct edit with no PCV
   artifacts and no critic pass, caught only retroactively. An instruction in CLAUDE.md is

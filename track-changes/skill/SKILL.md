@@ -1252,6 +1252,24 @@ regenerated summary page — it never touches the original, reports every
 unmatched excerpt (nonzero exit), and skips an image-only PDF with a clear
 "no text layer" message. Committing `validation/` is per-project policy.
 
+**Fallback when highlighting is not technically possible.** The annotated
+twin snaps each highlight onto text *located in the source*, so it cannot be
+produced for a source with **no searchable text** — an image-only scan with no
+text layer, and no OCR available to synthesize one. In that case the
+highlighted twin is **replaced by a hand-written markdown verification note**
+in the same `validation/` folder, recording: the claim under review, the
+**verbatim supporting excerpt(s) transcribed from the source**, their **exact
+page references**, the claim→support mapping, the verdict, and a one-line note
+of *why* the automatic highlight was not possible. This is the documented
+substitute, not an omission — it carries the same evidentiary content (which
+text, on which page) a highlight would, in a form a human can check against the
+scan. A fully highlight-compliant twin still needs a text-layer copy of the
+source (the save-then-source path under **Web sources** above). The same
+markdown-note fallback covers the manual footnote-plus-evidence path, where a
+settled paraphrase-with-citation is kept as ordinary cited text (no green
+`sourced` region) but is still verified against the source, the note being the
+durable record.
+
 ### Web sources (9.2.0)
 
 A **web page** is a citable source type. `/tc source <url>` (or `/tc source
