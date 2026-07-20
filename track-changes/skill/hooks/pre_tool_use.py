@@ -516,6 +516,34 @@ def main():
         except Exception as e:
             _log(f'exemption check failed: {e}; proceeding to analyzer')
 
+    # F2 race fix (9.8.3). The sentinel above is written by verified-import
+    # DURING this same PreToolUse event, in a SEPARATE process. Claude Code runs
+    # the two PreToolUse hooks in PARALLEL, so this gate's exempt.consume can run
+    # before verified-import's exempt.write lands the sentinel — wrongly blocking
+    # the clean import (observed: verified-import logs an exempt sha, this gate
+    # then BLOCKs the same write). The race-free signal is the pending-import
+    # RECORD, which `/tc import` staging writes synchronously BEFORE the write
+    # event. If a live pending-import exists for this target, this write is a
+    # verified import: allow it clean. verified-import (whenever it runs)
+    # independently enforces the coverage gate — it exits 2 on a dropped-content
+    # import, which blocks the whole call — and it (not this gate) clears the
+    # pending and writes the audit, so coverage/audit are never skipped by hook
+    # order. vi_verify is found sibling-relative (…/verified-import/lib), the way
+    # verified-import finds tc_core, so this resolves in both the deployed tree
+    # and the source/test tree; best-effort, so track-changes is unaffected when
+    # verified-import is absent.
+    try:
+        _vi_lib = os.path.join(os.path.dirname(_SKILL_ROOT),
+                               'verified-import', 'lib')
+        if _vi_lib not in sys.path:
+            sys.path.insert(0, _vi_lib)
+        import vi_verify
+        if vi_verify.load_pending(file_path) is not None:
+            _log(f'EXEMPT (pending verified import) {tool_name} {file_path}')
+            return 0
+    except Exception as e:
+        _log(f'pending-import check skipped ({e}); proceeding to analyzer')
+
     # v9 source-validation gate (Dilemma A): a NEW gray `.tc-verbatim` excerpt
     # must be verified verbatim against a live `/tc source` staging before it
     # can land. Runs before the analyzer verdict; on the verified path it writes

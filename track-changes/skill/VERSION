@@ -1,3 +1,28 @@
+9.8.3
+2026-07-20
+track-changes v9.8.3 — fix the /tc import clean-landing failure when the two PreToolUse hooks run in parallel.
+- MOTIVATION: /tc import lands a converted block clean via a two-hook handshake — verified-import's
+  PreToolUse hook (declared first) writes a one-shot sha-bound exempt sentinel over the proposed
+  bytes, and the track-changes gate consumes it to skip the mark requirement. Claude Code runs the two
+  Write|Edit|MultiEdit PreToolUse hooks IN PARALLEL, not in declared order, so the gate's consume
+  routinely runs before verified-import's write lands the sentinel: no sentinel is found and the clean
+  import is wrongly BLOCKED. Observed live in an ISE 754 session (tc.log: "verified import ... exempt
+  sha 3636a9caec40" immediately followed by "BLOCK Edit ... 1 violations"). A sandbox confirmed the
+  handshake works when the hooks run sequentially and fails only under parallel execution; the modules
+  are correct (deterministic proposed bytes, round-tripping content_sha, LF file — no CRLF divergence).
+- CHANGE: track-changes/hooks/pre_tool_use.py — the gate now ALSO honors a live pending-import RECORD
+  as the clean-import signal. That record is written synchronously by /tc import staging BEFORE the
+  write event, so it is race-free regardless of hook order. The gate allows the write clean when a live
+  pending exists and does NOT clear it — verified-import remains the sole owner of the coverage gate,
+  the audit entry, and the pending clear, so coverage/audit are never skipped. vi_verify is located
+  sibling-relative (.../verified-import/lib), the way verified-import finds tc_core, so it resolves in
+  both the deployed and source trees; best-effort import. The existing sentinel path is retained for
+  the verified-import-first ordering.
+- SCOPE: one guarded block in the track-changes PreToolUse gate + new hermetic test Category AE (3
+  tests: live-pending allows, no-pending blocks, expired-pending blocks). verified-import's hook, the
+  /tc source intra-hook sentinel, mark grammar, protocol, and CSS are unchanged. Hook count unchanged
+  (6 shipped + maintainer-local governance hook). Suite 702/702 (699 + 3 AE), 0 regressions.
+
 9.8.2
 2026-07-18
 track-changes v9.8.2 — document the markdown-note fallback for source-validation when an annotated highlight is not technically possible (docs).
