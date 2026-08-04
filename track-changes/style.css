@@ -61,8 +61,20 @@ header .affiliation {
 /* Navigation */
 nav {
   display: flex;
-  gap: 1.5rem;
-  margin-top: 0.75rem;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.4rem 1.25rem;
+  margin-top: 0.9rem;
+}
+/* Answers "what are those?" -- the links are the document's parts, numbered to
+   match the part headings, so the strip reads as a table of contents. */
+nav .navlabel {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gray-400);
 }
 nav a {
   color: var(--red);
@@ -84,30 +96,39 @@ nav a.active {
  * styled as page dividers rather than as larger headings, because size alone is
  * precisely what had already failed. */
 
-/* A major part: deliberately a different KIND of thing. Eyebrow label, the
-   header's own red rule, and a lot of air. */
+/* A major part.
+ *
+ * Three defects in the first attempt, all reported by the instructor:
+ *   1. a 3px red border-TOP put a second red horizontal line a few lines under
+ *      the header's own red rule, which reads as an accident;
+ *   2. the "Part 1" label was a 0.7rem mono eyebrow -- so the one word a reader
+ *      scans for was the smallest text in the block ("very small text, easy to
+ *      miss");
+ *   3. at 1.6rem against 1.2rem sections it still did not feel major.
+ *
+ * So: no horizontal rule at all (a thick LEFT bar and a tinted band instead, which
+ * cannot be mistaken for the header's line), the part number set at FULL heading
+ * size in red, and more size against the sections beneath it. */
 h2.part {
-  font-size: 1.6rem;
+  font-size: 1.8rem;
   font-weight: 700;
   letter-spacing: -0.02em;
-  margin: 4.5rem 0 1.75rem;
-  padding-top: 1.25rem;
-  border-top: 3px solid var(--red);
+  margin: 5rem 0 1.75rem;
+  padding: 1rem 1.1rem;
+  border-left: 6px solid var(--red);
   border-bottom: none;
+  background: var(--gray-50);
+  line-height: 1.25;
 }
-h2.part .num {
-  display: block;
-  font-family: var(--mono);
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--red);
-  margin-bottom: 0.4rem;
-}
+/* The part NUMBER, at heading size and in red -- not an eyebrow. */
+h2.part .num { color: var(--red); }
+/* The separator is an HTML entity in the markup, NOT a CSS `content` escape: the
+   escape form rendered as a replacement glyph followed by "b7" in Chrome. A
+   literal entity in the document cannot be mis-parsed. */
+h2.part .sep { color: var(--gray-400); font-weight: 400; }
 /* The first part follows the page lede, so it needs less air above it than one
    that follows a whole part. */
-main > h2.part:first-of-type { margin-top: 2.5rem; }
+main > h2.part:first-of-type { margin-top: 2.25rem; }
 /* A section within a part: keeps the thin rule the old h2 had, which is the right
    weight for a section once something heavier sits above it. */
 h3 {
@@ -294,7 +315,7 @@ footer a { color: var(--gray-600); }
 /* Mobile */
 @media (max-width: 600px) {
   header h1 { font-size: 1.4rem; }
-  h2.part { font-size: 1.3rem; margin-top: 3rem; }
+  h2.part { font-size: 1.4rem; margin-top: 3rem; padding: 0.8rem 0.9rem; }
   h3 { font-size: 1.05rem; }
   .phases { flex-direction: column; gap: 0; }
   .phase-arrow { transform: rotate(90deg); padding: 0.25rem 0; }
