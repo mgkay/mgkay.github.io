@@ -76,23 +76,59 @@ nav a.active {
   font-weight: 600;
 }
 
-/* Headings */
-h2 {
-  font-size: 1.35rem;
-  margin: 2.5rem 0 0.75rem;
+/* Headings — three levels, and they have to LOOK like three.
+ *
+ * The page reached seventeen sections, all at one level, with a 1.35rem -> 1.1rem
+ * step down to subsections. That is not a hierarchy a reader can see; it is
+ * seventeen peers. So there is now a level ABOVE the sections: three parts,
+ * styled as page dividers rather than as larger headings, because size alone is
+ * precisely what had already failed. */
+
+/* A major part: deliberately a different KIND of thing. Eyebrow label, the
+   header's own red rule, and a lot of air. */
+h2.part {
+  font-size: 1.6rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin: 4.5rem 0 1.75rem;
+  padding-top: 1.25rem;
+  border-top: 3px solid var(--red);
+  border-bottom: none;
+}
+h2.part .num {
+  display: block;
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--red);
+  margin-bottom: 0.4rem;
+}
+/* The first part follows the page lede, so it needs less air above it than one
+   that follows a whole part. */
+main > h2.part:first-of-type { margin-top: 2.5rem; }
+/* A section within a part: keeps the thin rule the old h2 had, which is the right
+   weight for a section once something heavier sits above it. */
+h3 {
+  font-size: 1.2rem;
+  margin: 2.5rem 0 0.7rem;
   padding-bottom: 0.25rem;
   border-bottom: 1px solid var(--gray-200);
   letter-spacing: -0.01em;
+  color: var(--gray-900);
 }
-h3 {
-  font-size: 1.1rem;
-  margin: 1.75rem 0 0.5rem;
-  color: var(--gray-800);
-}
+/* A sub-section: no rule, lighter, clearly subordinate. */
 h4 {
-  font-size: 0.95rem;
-  margin: 1.25rem 0 0.4rem;
+  font-size: 1rem;
+  margin: 1.75rem 0 0.45rem;
   color: var(--gray-700);
+}
+h5 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin: 1.25rem 0 0.35rem;
+  color: var(--gray-600);
 }
 
 /* Paragraphs and lists */
@@ -258,7 +294,8 @@ footer a { color: var(--gray-600); }
 /* Mobile */
 @media (max-width: 600px) {
   header h1 { font-size: 1.4rem; }
-  h2 { font-size: 1.15rem; }
+  h2.part { font-size: 1.3rem; margin-top: 3rem; }
+  h3 { font-size: 1.05rem; }
   .phases { flex-direction: column; gap: 0; }
   .phase-arrow { transform: rotate(90deg); padding: 0.25rem 0; }
   .cols { grid-template-columns: 1fr; gap: 0.75rem; }

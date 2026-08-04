@@ -1,3 +1,28 @@
+9.13.2
+2026-08-04
+track-changes v9.13.2 -- the landing page gets a heading hierarchy. Presentation only.
+- THE DEFECT, measured: 17 `<h2>` sections on one page, all the same weight, with a
+  1.35rem -> 1.1rem step down to subsections. That is not a hierarchy a reader can see; it is 17
+  peers with slightly smaller text between them. Caused by accretion over five increments, each
+  adding a reasonable `<h2>` and nobody re-reading the outline afterwards.
+- NOW THREE PARTS, grouped strictly in the page's existing order so NOTHING MOVED: "What it is,
+  and how you use it" (the lede, Commands, the review pass) / "Why it works, and what it looks
+  like" (why it exists, enforcement, the five worked examples) / "Installing, and living with it"
+  (prerequisites through Learn more). Read top to bottom the page is identical.
+- A part is styled as a different KIND of thing, not a bigger heading -- mono uppercase "PART N"
+  eyebrow, the header's own 3px red rule, generous space -- because size alone is exactly what
+  had already failed. Sections keep the thin rule the old h2 had; sub-sections lose it.
+- Levels: h2 = part (3), h3 = section (17), h4 = sub-section (13). No level is skipped anywhere,
+  verified by walking the whole heading sequence; every existing anchor is preserved, including
+  the ones reference/tc-edits.md links into.
+- One page still, per the instructor's preference. No content added, removed, or reordered; no
+  prose rewritten; no skill source touched.
+- TC-AI-53 pins the structure so the flat outline cannot creep back the way it arrived. TC-AI-38's
+  section slicer was repaired deliberately: it found a section's end by scanning for the next
+  `<h2>`, which after the demotion would have run past several sections and passed on the wrong
+  slice -- a silent widening that reports success.
+- 873-test suite (+1 Category AI: 89); 0 regressions.
+
 9.13.1
 2026-08-04
 track-changes v9.13.1 -- the two long-deferred items closed on evidence; the third stays deferred.
