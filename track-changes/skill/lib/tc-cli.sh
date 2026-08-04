@@ -270,6 +270,43 @@ tc_default_working_file() {
 # Human-only override for genuine edge cases: TC_FORCE=1.
 # Fail-open outside a git repo (the invariant is meaningless there).
 # ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
+# tc_autocommit_file <file> <message>   (9.13.0)
+#
+# Commit ONE path and nothing else.
+#
+# WHY THIS EXISTS. 8.1.0 requires resolution to run on COMMITTED CONTENT; it
+# never required the HUMAN to be the one who commits. Those were conflated, and
+# the result was two manual commits per review round -- at the two moments the
+# author is trying to finish. That friction is what keeps a review command from
+# being used at all.
+#
+# `git commit -- <path>` is a pathspec commit: git commits exactly that path's
+# working-tree content and leaves the index and every other dirty file alone.
+# Never `-a`, never bare, never a directory -- a tool that sweeps unrelated work
+# into a commit is far worse than the friction it removes. TC-AI-45 plants an
+# unrelated dirty file and an unrelated STAGED file and asserts both survive.
+#
+# Never `--no-verify`: bypassing the user's own pre-commit hooks would be a much
+# larger liberty than the one being taken here. A hook that refuses is a commit
+# failure, and a commit failure must never be followed by a resolution.
+# ---------------------------------------------------------------------------
+tc_autocommit_file() {
+  local file="$1" msg="$2" dir base
+  dir="$(dirname -- "${file}")"
+  base="$(basename -- "${file}")"
+  if git -C "${dir}" commit -q -m "${msg}" -- "${base}" >/dev/null 2>&1; then
+    echo "tc: committed ${base} — \"${msg}\""
+    echo "tc: only ${base} was committed; any other changes are untouched."
+    return 0
+  fi
+  echo "tc: ERROR — could not commit ${base}; nothing was resolved." >&2
+  echo "A pre-commit hook may have refused, or the repository may be mid-merge" >&2
+  echo "or rebase. Commit ${base} yourself and re-run, or set TC_NO_AUTOCOMMIT=1" >&2
+  echo "to restore the manual workflow." >&2
+  return 3
+}
+
 tc_require_clean() {
   local file="$1" sub="$2" dir top
   [ "${TC_FORCE:-0}" = "1" ] && return 0
@@ -281,15 +318,35 @@ tc_require_clean() {
     return 3
   fi
   if ! git -C "${dir}" diff --quiet HEAD -- "$(basename -- "${file}")" 2>/dev/null; then
-    echo "tc ${sub}: BLOCKED — ${file} has uncommitted changes." >&2
-    echo "Marks resolve only from COMMITTED content, so the approved text is" >&2
-    echo "exactly what git history shows was reviewed. Sequence:" >&2
-    echo "  1. commit the file as it stands (instructor tweaks as their own" >&2
-    echo "     commit; any AI corrections as MARKED edits in their own commit)," >&2
-    echo "  2. review the diff(s)," >&2
-    echo "  3. re-run /tc ${sub}." >&2
-    echo "(Human-only override: TC_FORCE=1 — never for AI use.)" >&2
-    return 3
+    # 9.13.0: the invariant is SATISFIED rather than enforced against the user.
+    # Resolution still runs on committed content and history still shows exactly
+    # what each approval covered -- the tool just performs the commit instead of
+    # refusing until the author does. The line the invariant actually draws is
+    # unmoved: AI text is never applied and approved in one step, because what
+    # gets committed here is resolved only by the author's own accept/reject.
+    #
+    # ACCEPTED REDUCTION (instructor-approved): the old message prescribed
+    # commit -> REVIEW THE DIFF -> re-run, and the middle step is now skipped.
+    # The author reviews when they edit and again when they rule on the marks,
+    # and the diff stays in history to read at leisure.
+    if [ "${TC_NO_AUTOCOMMIT:-0}" = "1" ]; then
+      echo "tc ${sub}: BLOCKED — ${file} has uncommitted changes." >&2
+      echo "(TC_NO_AUTOCOMMIT=1 is set, so the commit was not made for you.)" >&2
+      echo "Marks resolve only from COMMITTED content, so the approved text is" >&2
+      echo "exactly what git history shows was reviewed. Sequence:" >&2
+      echo "  1. commit the file as it stands (instructor tweaks as their own" >&2
+      echo "     commit; any AI corrections as MARKED edits in their own commit)," >&2
+      echo "  2. review the diff(s)," >&2
+      echo "  3. re-run /tc ${sub}." >&2
+      echo "(Human-only override: TC_FORCE=1 — never for AI use.)" >&2
+      return 3
+    fi
+    # Neutral message ON PURPOSE: at this point the tooling does not know whose
+    # text is dirty. Inferring "AI corrections" by diffing marks against HEAD is
+    # possible and deliberately not done -- a commit message that guesses at
+    # authorship and guesses wrong is worse than one that states what happened.
+    tc_autocommit_file "${file}" \
+      "track-changes: commit $(basename -- "${file}") before resolving" || return 3
   fi
   return 0
 }
@@ -711,22 +768,61 @@ case "${sub}" in
       set -- analyze
     else
       case "$1" in
-        analyze|snapshots|restore|diff|show|resolve) ;;
+        # `resolve` was removed here in 9.13.0. It had survived 9.10.0's
+        # withdrawal in this case list alone, reaching an argparse that rejects
+        # it — a dead branch advertising a command that does not exist.
+        analyze|snapshots|restore|diff|show) ;;
         *) set -- analyze "$@" ;;
       esac
     fi
-    # 10.0.0 (C3): `resolve` is the one MUTATING form, and it is deliberately
-    # NOT gated by tc_require_committed. 8.1.0 makes accept/reject refuse on a
-    # dirty file; this command runs only on one, since uncommitted author edits
-    # are its whole input. The replacement invariant lives in the backend: an
-    # AI baseline must exist (no git-HEAD fallback), the resolution is journaled
-    # against that baseline's sha256, and the pre-resolution bytes are saved
-    # first so it is undoable.
-    PYTHONUTF8=1 ${py} "${SCRIPT_DIR}/tc_edits.py" "$@"
-    _tc_edits_rc=$?
-    if [ "${1:-analyze}" = "resolve" ]; then
-      exit ${_tc_edits_rc}
+    # 9.13.0: `analyze` names the file and the edited regions in TC_EDITS_ACT_FILE
+    # so this shell can finish the round — commit the author's edits, then accept
+    # exactly those regions. A file rather than a stdout sentinel: the report is
+    # read by humans and must not carry machine tokens.
+    _tc_act=""
+    if [ "${1:-analyze}" = "analyze" ] && [ "${TC_NO_AUTOCOMMIT:-0}" != "1" ]; then
+      _tc_act="$(mktemp 2>/dev/null || echo "${TMPDIR:-/tmp}/tc-edits-act.$$")"
+      : > "${_tc_act}"
     fi
+    TC_EDITS_ACT_FILE="${_tc_act}" PYTHONUTF8=1 \
+      ${py} "${SCRIPT_DIR}/tc_edits.py" "$@"
+    _tc_edits_rc=$?
+    if [ -n "${_tc_act}" ] && [ -s "${_tc_act}" ] && [ "${_tc_edits_rc}" = "0" ]; then
+      _tc_af="$(sed -n '1p' "${_tc_act}")"
+      _tc_ar="$(sed -n '2p' "${_tc_act}")"
+      rm -f "${_tc_act}"
+      if [ -n "${_tc_af}" ] && [ -f "${_tc_af}" ]; then
+        _tc_dir="$(dirname -- "${_tc_af}")"
+        _tc_base="$(basename -- "${_tc_af}")"
+        if git -C "${_tc_dir}" rev-parse --show-toplevel >/dev/null 2>&1 \
+           && git -C "${_tc_dir}" ls-files --error-unmatch -- "${_tc_base}" >/dev/null 2>&1 \
+           && ! git -C "${_tc_dir}" diff --quiet HEAD -- "${_tc_base}" 2>/dev/null; then
+          echo ""
+          # The author's OWN commit, with the message tc-polish's 9.6.0
+          # cumulative-baseline resolver matches (`^Instructor edits: <basename>`).
+          # Any other wording silently breaks that resolver.
+          tc_autocommit_file "${_tc_af}" "Instructor edits: ${_tc_base}" \
+            || exit 3
+        fi
+        if [ -n "${_tc_ar}" ]; then
+          echo "tc: accepting region(s) ${_tc_ar} — you reviewed them by editing them."
+          tc_run_resolve accept "${_tc_af}" "${_tc_ar}" || exit 3
+          # The accept itself rewrites the file (the wrapper comes off), so the
+          # tree would otherwise be left dirty by the very command that exists to
+          # spare the author a commit -- and the AI's marks would then land on top
+          # of an uncommitted mechanical change, mixing the two in one diff.
+          # Committed separately from the author's edits so the two authorships
+          # stay distinguishable in history.
+          if ! git -C "${_tc_dir}" diff --quiet HEAD -- "${_tc_base}" 2>/dev/null; then
+            tc_autocommit_file "${_tc_af}" \
+              "track-changes: accept region(s) ${_tc_ar} in ${_tc_base}" || exit 3
+          fi
+        fi
+        echo "tc: your text is committed and settled. Anything Claude proposes"
+        echo "    from here arrives as marks for you to accept or reject."
+      fi
+    fi
+    [ -n "${_tc_act}" ] && rm -f "${_tc_act}" 2>/dev/null
     echo "tc edits: the author's own text stays CLEAN (never mark it); only YOUR corrections to it get marks, and nothing outside the reported spans is touched. If the author's OWN text contains a defect: write an unambiguous mechanical error (spelling, obvious typo) as a normal mark; anything touching meaning, FLAG and hold for them to decide. Full rules: reference/tc-edits.md." ;;
   help|--help|-h)
     print_usage

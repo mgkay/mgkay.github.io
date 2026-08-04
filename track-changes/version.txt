@@ -1,3 +1,36 @@
+9.13.0
+2026-08-04
+track-changes v9.13.0 -- the commit is the tool's job, not yours.
+- BEHAVIOUR-CHANGING: track-changes now CREATES GIT COMMITS in your repository. Read the next
+  three entries before upgrading.
+- THE FINDING: 8.1.0 requires resolution to run on COMMITTED CONTENT. It never required the
+  HUMAN to be the one who commits. Those were conflated, and the cost was TWO manual commits per
+  review round -- at the two moments you are trying to finish. `/tc edits` refused until you
+  committed; then the AI's marks made the file dirty again and `/tc accept` refused too.
+- NOW: `/tc edits <file>` commits your edits ("Instructor edits: <file>") and accepts the
+  regions you edited -- you reviewed them by editing them -- then commits that too, separately.
+  `/tc accept`/`/tc reject` likewise commit the file instead of refusing. One command after you
+  finish editing; you re-engage only when Claude's corrections arrive as marks.
+- ONLY THE NAMED FILE IS EVER COMMITTED. `git commit -- <path>`, never `-a`, never bare. Other
+  dirty files, and other STAGED files, are left exactly as they were, and the report says so.
+  TC-AI-45 plants both and asserts they survive; `git commit -a` passes every other test.
+- NEVER `--no-verify`: a pre-commit hook that refuses is a commit FAILURE, it is reported, and
+  NOTHING is resolved afterwards.
+- THE LINE THAT DOES NOT MOVE: AI corrections are never auto-accepted. The round stops and hands
+  them to you. Untouched regions and pending inline marks stay pending -- they are AI proposals
+  you have not read, and approving text unread is the one thing the invariant forbids.
+- ACCEPTED REDUCTION: the old gate prescribed commit -> REVIEW THE DIFF -> re-run. The middle
+  step is now skipped. You review when you edit and again when you rule on the marks, and the
+  diff stays in history.
+- `TC_NO_AUTOCOMMIT=1` restores the old refusal in full.
+- A bare `/tc edits` across SEVERAL changed files reports only and commits nothing -- resolving a
+  whole working set from one unqualified command is the over-reach the scoping exists to prevent.
+- Also: `resolve` finally removed from the tc-cli dispatch list, where it had survived 10.0.0's
+  withdrawal as a dead branch reaching an argparse that rejects it.
+- No grammar change, no new hook (6), no migration.
+- 868-test suite (+25 Category AI: 84); 0 regressions. These are the FIRST tests of the
+  committed-content gate in the project's history.
+
 9.12.0
 2026-08-04
 track-changes v9.12.0 -- an AI edit inside a region body is now recorded, and named at accept.

@@ -244,9 +244,10 @@ grouped below by what you&rsquo;re doing. New here? The short version is
 <div class="callout">
   <p>Every accept or reject is recorded as a deliberate decision, so the skill never silently undoes
   a choice you made &mdash; even if Claude edits the same passage again later. And
-  <code>accept</code> / <code>reject</code> run only on a <strong>committed</strong> file, so an
-  approval always attaches to text git shows was reviewed (human-only override:
-  <code>TC_FORCE=1</code>).</p>
+  <code>accept</code> / <code>reject</code> resolve only <strong>committed</strong> text, so an
+  approval always attaches to what git shows was reviewed &mdash; <strong>and they commit the file
+  for you</strong> when it isn&rsquo;t, naming what they did and touching nothing else in the
+  repository. You are never left holding a commit step.</p>
 </div>
 
 <h2 id="workflow">A typical review pass</h2>
@@ -278,15 +279,19 @@ editing the text yourself. Both lanes end in the same place.</p>
         partial-reject command because deleting a passage already is one.</li>
     </ul>
   </li>
-  <li><strong>Commit before you resolve.</strong> <code>/tc accept</code> and <code>/tc reject</code>
-    refuse to run on a file with uncommitted changes, so if you hand-edited in step&nbsp;3, commit
-    first &mdash; conventionally your edits in one commit and Claude&rsquo;s marked corrections in
-    another. That is deliberate: an approval then always attaches to text git can show was
-    reviewed, and the two authorships stay separable in the history.</li>
-  <li><strong>Resolve, and repeat.</strong> <code>/tc accept</code> / <code>/tc reject</code> on
-    what Claude proposed in step&nbsp;3, then back to step&nbsp;1. Every decision lands in
-    <code>.tc-history.md</code> alongside the document.</li>
+  <li><strong>Resolve, and repeat.</strong> <code>/tc accept</code> / <code>/tc reject</code> on what
+    Claude proposed, then back to step&nbsp;1. Every decision lands in <code>.tc-history.md</code>
+    alongside the document.</li>
 </ol>
+
+<div class="callout">
+  <p><strong>You never have to commit anything by hand.</strong> Resolution runs on committed text, so
+  that every approval attaches to something git can show was reviewed &mdash; but <em>the tool
+  performs the commit</em>, names it on screen, and touches <strong>only the file you named</strong>.
+  Unrelated work in the same repository is left alone, and your writing and Claude&rsquo;s corrections
+  still land as separate commits. (Prefer the old behaviour, where the commands refuse until you
+  commit? Set <code>TC_NO_AUTOCOMMIT=1</code>.)</p>
+</div>
 
 <p>The other commands slot into that loop rather than replacing it.
 <a href="#ex-source"><code>/tc source</code></a> is how new writing gets grounded in a document or
@@ -424,15 +429,17 @@ only what the <em>AI</em> is proposing on top, and you accept or reject those ex
 enforcement is unchanged: Claude physically cannot slip an unmarked change into that paragraph while
 &ldquo;just fixing your typos.&rdquo;</p>
 
-<p>Then you finish the way you would with any other AI edit &mdash; commit, and resolve the two
-highlights:</p>
+<p>Then you rule on the two highlights, and that is the end of it:</p>
 
-<pre class="snippet">git commit -am "Instructor edits: facility-location.md"
-/tc accept 1-2</pre>
+<pre class="snippet">/tc accept 1-2</pre>
+
+<p>No commit step of your own. Resolution has to run on committed text &mdash; so that every approval
+attaches to something git can show was reviewed &mdash; and the tool commits the file for you before
+resolving, naming what it did. Your edits and Claude&rsquo;s corrections still land as separate
+commits, so the two authorships stay distinguishable in history.</p>
 
 <p>That is the whole loop: <em>you edit &rarr; <code>/tc edits</code> &rarr; Claude marks its
-corrections &rarr; commit &rarr; accept.</em> Nothing is left pending, and the history shows your
-edits and Claude&rsquo;s corrections as separate commits.</p>
+corrections &rarr; you accept or reject.</em> Two commands, both yours, and nothing left pending.</p>
 
 <div class="callout">
   <p><strong>Why a snapshot and not git.</strong> The baseline is the file <em>as Claude last left
@@ -510,14 +517,26 @@ substitution is usually neccessary.
 and shows what changed within it &mdash; useful on a region long enough that you want confirmation
 the edit went where you meant.</p>
 
-<p><strong>3. Commit, then accept.</strong> The commit is not optional:
-<code>/tc accept</code> refuses to run on a file with uncommitted changes, so that an approval always
-attaches to text git can show was reviewed.</p>
+<p><strong>3. You run one command. It does the rest.</strong> Not
+<code>/tc accept</code> &mdash; just <code>/tc edits</code>, the same command that produced the report
+above. <strong>track-changes commits your edits and accepts the region for you</strong>, and tells you
+it did:</p>
 
-<pre class="snippet">git commit -am "Instructor edits: facility-location.md"
-/tc accept 1</pre>
+<pre class="snippet">/tc edits facility-location.md</pre>
 
-<pre class="report">tc: 1 mark(s) accepted in &hellip;/facility-location.md: 1</pre>
+<pre class="report">tc: committed facility-location.md &mdash; "Instructor edits: facility-location.md"
+tc: only facility-location.md was committed; any other changes are untouched.
+tc: accepting region(s) 1 &mdash; you reviewed them by editing them.
+tc: 1 mark(s) accepted in &hellip;/facility-location.md: 1
+tc: committed facility-location.md &mdash; "track-changes: accept region(s) 1 in facility-location.md"
+tc: your text is committed and settled. Anything Claude proposes
+    from here arrives as marks for you to accept or reject.</pre>
+
+<p>The commit is not a chore you were left with &mdash; resolution has to run on committed text so
+that every approval attaches to something git can show was reviewed, and the tool now satisfies that
+itself. It commits <strong>only the file you named</strong>: other work in progress elsewhere in the
+repository is left exactly as it was. Your edits and the acceptance land as two separate commits, so
+your writing and the mechanical change stay distinguishable in history.</p>
 
 <pre class="snippet">Vetted paragraph the author wrote last year.
 
@@ -531,14 +550,21 @@ kept as Claude wrote it. <code>accept</code> never asked who wrote the body. So 
 <em>is</em> the review, and accepting it ratifies the version you edited; the lines you left alone are
 approved by the fact that you read them looking for the ones that weren&rsquo;t.</p>
 
-<p><strong>4. Now Claude cleans up after you.</strong> Your rewrite carried a typo. That correction
-is Claude&rsquo;s, so it lands as an ordinary highlight while your prose stays plain:</p>
+<p><strong>4. Claude cleans up after you &mdash; and this is where you re-engage.</strong> Your rewrite
+carried a typo. The correction is Claude&rsquo;s, not yours, so it arrives as an ordinary highlight
+while your prose stays plain:</p>
 
-<pre class="snippet">The greedy algorithm rarely finds the optimal solution, so vertex
-substitution is usually &lt;mark&gt;&lt;s&gt;neccessary&lt;/s&gt;necessary&lt;/mark&gt;&lt;sup&gt;1&lt;/sup&gt;.</pre>
+<div class="example">The greedy algorithm rarely finds the optimal solution, so vertex substitution is usually <mark><s>neccessary</s>necessary</mark><sup>1</sup>.</div>
 
-<p>Mark&nbsp;1 again, because resolving a mark frees its number &mdash; the next one is always the
-lowest still unused in that file.</p>
+<p>One highlight, over the four characters that changed. Everything around it &mdash;
+&ldquo;rarely,&rdquo; &ldquo;so vertex substitution&rdquo; &mdash; is your writing and carries no
+mark, because you are the author and you do not review yourself. The markup behind it, if you want
+it: <code>&lt;mark&gt;&lt;s&gt;neccessary&lt;/s&gt;necessary&lt;/mark&gt;&lt;sup&gt;1&lt;/sup&gt;</code>
+&mdash; mark&nbsp;1 again, because resolving a mark frees its number.</p>
+
+<p><strong>This is the only point in the round where you have a decision to make.</strong> Accept it,
+reject it, or edit again and repeat. <code>/tc accept 1</code> works without any commit ceremony
+either &mdash; it commits the pending state for you first, the same way.</p>
 
 <div class="callout">
   <p><strong>The order matters, and mechanically so.</strong> Polish comes <em>after</em> the accept,
@@ -814,7 +840,7 @@ complete file list live in the
 </main>
 
 <footer>
-  <p>track-changes v9.12.0 &middot; M. G. Kay &middot; NC State ISE<br>
+  <p>track-changes v9.13.0 &middot; M. G. Kay &middot; NC State ISE<br>
   <a href="bootstrap.md" download>Download bootstrap.md</a></p>
 </footer>
 

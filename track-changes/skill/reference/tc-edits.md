@@ -181,8 +181,21 @@ inline marks. It resolves as one unit — `/tc accept N` or `/tc reject N`,
 all-or-nothing, and that is unchanged. What makes it workable is that the region
 **body is editable before resolution**:
 
-> **Edit the body → commit → `/tc accept N`, which keeps the body AS THE AUTHOR
+> **Edit the body → `/tc edits <file>` → done.** The command commits the author's
+> edits and accepts the regions they edited, **which keeps the body AS THE AUTHOR
 > LEFT IT.**
+
+**The author never commits by hand (9.13.0).** 8.1.0 requires resolution to run on
+COMMITTED CONTENT; it never required the *human* to be the one who commits, and
+conflating those cost two manual commits per review round — at the two moments the
+author is trying to finish. `/tc edits` now commits their edits (message
+`Instructor edits: <basename>`, which tc-polish's baseline resolver matches) and
+then accepts; `/tc accept`/`/tc reject` likewise commit the file rather than
+refusing. Only ever the named file, never `-a`. `TC_NO_AUTOCOMMIT=1` restores the
+old refusal.
+
+**Do not offer to run `git commit` for the author, and do not suggest they run it.**
+The tooling does it. Telling them otherwise recreates the friction this removed.
 
 `accept` never inspected who wrote the body. So the author's rewrite survives, the
 AI lines they left alone survive, and **a passage they deleted stays deleted** —
@@ -218,8 +231,10 @@ Once `accept` removes the wrapper the body is ordinary prose again and the norma
 rule applies: an unmarked change to it is refused, so the correction must be a
 mark the author can review. Hence:
 
-> **author edits → commit → `/tc accept N` → THEN mark corrections → commit →
-> `/tc accept`**
+> **author edits → `/tc edits <file>` (commits + accepts) → THEN mark corrections
+> → `/tc accept` (commits + resolves)**
+
+Two commands, both the author's. Every commit in between is the tooling's.
 
 A resolved number is freed, so the first correction may reuse the region's own
 number. Take the next free number from the report rather than assuming.

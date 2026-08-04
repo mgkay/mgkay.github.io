@@ -1178,7 +1178,44 @@ def _cmd_analyze_all(args):
     elif len(files) > 1:
         print("\ntc edits: %d file(s) changed since the last AI write."
               % len(files))
+        # 9.13.0 (D9): a bare `/tc edits` across a whole working set does NOT
+        # commit or accept. Committing and resolving several files from one
+        # unqualified command is exactly the over-reach the pathspec-scoped
+        # commit exists to prevent, so the multi-file form stays the read-only
+        # survey 9.9.3 built. Name a file to finish it.
+        print("tc edits: reporting only — name a single file to commit and "
+              "resolve it.")
+    if len(files) == 1 and not args.json:
+        _write_act_file(reports[0])
     return 0
+
+
+def _write_act_file(rep):
+    """9.13.0: hand the shell what it needs to finish the round.
+
+    `/tc edits` now commits the author's edits and accepts the regions they
+    edited, so the author types ONE command after editing instead of three. The
+    git work stays in tc-cli.sh, where every other git operation lives; this only
+    reports WHAT to act on, through a file named by TC_EDITS_ACT_FILE rather than
+    a sentinel line on stdout — the report is read by humans and must not carry
+    machine tokens.
+
+    Two lines: the absolute path, then the comma-separated numbers of regions
+    whose bodies the author edited (empty when none). Only regions they actually
+    edited: an untouched pending region and a pending inline mark are AI
+    proposals the author has not reviewed, and must stay pending. TC-AI-46.
+    """
+    dest = os.environ.get("TC_EDITS_ACT_FILE")
+    if not dest or rep.get("status") != "ok":
+        return
+    ns = [str(r.get("n")) for r in (rep.get("regions_touched") or [])
+          if r.get("n") is not None]
+    try:
+        with open(dest, "w", encoding="utf-8") as f:
+            f.write("%s\n%s\n" % (os.path.abspath(rep.get("file") or ""),
+                                  ",".join(ns)))
+    except (IOError, OSError):
+        pass
 
 
 def _cmd_diff(args):
@@ -1393,6 +1430,7 @@ def main(argv=None):
             print(json.dumps(rep, indent=2, ensure_ascii=False))
         else:
             print(render(rep, show_diff=not args.no_diff))
+        _write_act_file(rep)
         return 0
     if args.cmd == "snapshots":
         return _cmd_snapshots(args)
