@@ -1,3 +1,33 @@
+9.13.1
+2026-08-04
+track-changes v9.13.1 -- the two long-deferred items closed on evidence; the third stays deferred.
+- FR-4 CLOSED. No defect exists. Logged as "a clean repro" of a hook bug; both diagnoses are now
+  disproved. 9.9.3: the non-inline detector has no HTML handling at all, and "spans a non-inline
+  construct" is a HINT appended to a block, never a block reason -- the log conflated the hint
+  with the cause. 9.13.1: the follow-up worry is disproved too -- stripping `<https://...>` before
+  citation detection does NOT hide a citation, because the footnote brackets sit OUTSIDE the
+  stripped span, so the footnote match still fires. Seven shapes measured. Reviving it would need
+  the original 2026-08-01 blocked payload, which no longer exists. Pinned by TC-AI-51 so the
+  non-bug cannot be "fixed".
+- FR-9 CLOSED, resolved by 9.13.0. The invariant asked for the author's tweaks in one commit and
+  the AI's marks in another; that was documented-but-impossible while the two were interleaved
+  hunks in one file. 9.13.0 made the split fall out of the ORDERING instead: measured per commit,
+  the documented flow yields one commit carrying only the author's text and another carrying only
+  the AI's. The originally proposed mechanism (write the baseline, commit, write the current
+  content, commit) is now unnecessary AND worse -- it would write stale content into the user's
+  file to manufacture a commit. Pinned by TC-AI-52, which classifies each commit by what its diff
+  ADDS rather than counting commits.
+- RESIDUAL, documented rather than engineered: asking for corrections WITHOUT running /tc edits
+  first puts both authorships in one commit. Honest, but the attribution is gone and cannot be
+  recovered. reference/tc-edits.md now tells the model to run /tc edits first.
+- BODY-HASH TRIGGER: still deferred, WITH ITS REVISIT CONDITION INTACT. 9.12.0 deferred it on the
+  rule "escalate if the accept-time NOTE fires with any regularity in real use." 9.12.0 was
+  installed today; the NOTE has fired zero times outside tests. Building it now would be exactly
+  the guess-about-frequency the deferral exists to avoid, and would add the refusal path 9.12.0
+  deliberately declined. Not an omission -- the correct disposition.
+- No behaviour change. One shipped doc line, two tests. No new hook (6), no migration.
+- 872-test suite (+4 Category AI: 88); 0 regressions.
+
 9.13.0
 2026-08-04
 track-changes v9.13.0 -- the commit is the tool's job, not yours.

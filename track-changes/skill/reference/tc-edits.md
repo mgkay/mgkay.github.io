@@ -236,6 +236,15 @@ mark the author can review. Hence:
 
 Two commands, both the author's. Every commit in between is the tooling's.
 
+**Run `/tc edits` BEFORE proposing any correction, not after.** That ordering is
+what puts the author's text in its own commit and yours in another — measured: in
+the documented flow one commit carries only their edits and a later one carries
+only your marks. If the author asks for corrections *without* running `/tc edits`
+first, both authorships land in a single commit. Nothing is lost and the commit is
+honest (both changes really did precede it), but the attribution the invariant asks
+for is gone, and it cannot be recovered afterwards. So when an author asks for
+proofreading on a file they have hand-edited, run `/tc edits` first.
+
 A resolved number is freed, so the first correction may reuse the region's own
 number. Take the next free number from the report rather than assuming.
 
