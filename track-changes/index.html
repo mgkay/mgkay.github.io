@@ -39,6 +39,9 @@
       font-weight: 700; letter-spacing: 0.02em; color: #b9770f;
       font-family: var(--mono);
     }
+    /* base label, verbatim from the shipped tc-clean.css: an `authored` region
+       (no tc-prov, or tc-prov="authored") reads "tracked +N". */
+    .tc-region[data-tc-n]::before { content: "tracked +" attr(data-tc-n); }
     .tc-region[data-tc-prov="sourced"] {
       border-left-color: #2e8b57; background: #edf7f0;
     }
@@ -203,7 +206,10 @@ grouped below by what you&rsquo;re doing. New here? The short version is
     <em>yourself</em>, and this shows Claude exactly what you changed since it last wrote, so it can
     proofread just that and return its corrections as ordinary highlights. <strong>Your text stays
     clean; only Claude&rsquo;s corrections to it are marked.</strong> It reports and never edits.
-    With no file, it lists every file you&rsquo;ve changed. See <a href="#ex-edits">below</a>.</li>
+    With no file, it lists every file you&rsquo;ve changed. See <a href="#ex-edits">below</a>.
+    <br><strong>This is also how you review a long region:</strong> edit its body, delete the parts
+    you reject, then <code>/tc accept N</code> &mdash; which keeps the body <em>as you left it</em>.
+    <a href="#ex-region">Worked through here.</a></li>
 </ul>
 
 <h3>Ground writing in a source</h3>
@@ -266,6 +272,10 @@ editing the text yourself. Both lanes end in the same place.</p>
         it. Claude sees exactly the lines you touched, proofreads only those, and returns
         <em>its</em> suggestions as new highlights &mdash; while your own wording stays clean and
         unmarked.</li>
+      <li><em>Either way, for a long block Claude wrote as a single numbered region</em>, editing it
+        is the review: fix what is wrong, delete what you reject, and
+        <a href="#ex-region"><code>/tc accept N</code> keeps the body as you left it</a>. There is no
+        partial-reject command because deleting a passage already is one.</li>
     </ul>
   </li>
   <li><strong>Commit before you resolve.</strong> <code>/tc accept</code> and <code>/tc reject</code>
@@ -370,8 +380,10 @@ reading it you fixed two things by hand: <em>weighted</em> should have been
 
 <pre class="snippet">/tc edits</pre>
 
-<p>This is its <strong>actual output</strong> (only the leading directories of the path are
-shortened):</p>
+<p>What comes back is a <strong>brief for Claude</strong>, not a verdict on your writing. It answers
+three things: which lines you touched and how they read before and after, which tokens must be left
+alone, and &mdash; last &mdash; that none of it has actually been proofread yet. This is its real
+output (only the leading directories of the path are shortened):</p>
 
 <pre class="report">tc edits &mdash; &hellip;/lectures/facility-location.md
   baseline: snapshot gen 0, captured 2026-08-04T11:31:53Z
@@ -395,15 +407,12 @@ shortened):</p>
 <span class="flag">  NOT PROOFREAD: nothing above has been checked for grammar, dropped words, or sense.
     Read the span diffs, then mark any correction as 1+.</span></pre>
 
-<p>Two things to notice. It <strong>never edits the document</strong> &mdash; it reports, and every
-correction that follows goes through the ordinary highlight-and-review path. And the baseline is a
-<strong>snapshot of the file as Claude last left it</strong>, not a git commit. That distinction is
-the whole point: in one uncommitted file, your edits and the AI&rsquo;s are indistinguishable to
-git, so nothing git can tell you would isolate <em>yours</em>.</p>
+<p>It <strong>never edits the document.</strong> It reports, and every correction that follows goes
+through the ordinary highlight-and-review path.</p>
 
-<p>Now Claude has a precise brief, and proofreading those five lines it catches what you introduced
-while typing &mdash; a doubled &ldquo;the,&rdquo; and <em>weights is</em> for <em>weights are</em>.
-Its corrections come back as ordinary numbered highlights:</p>
+<p>So Claude now proofreads five lines instead of a whole file, and catches what you introduced while
+typing &mdash; a doubled &ldquo;the,&rdquo; and <em>weights is</em> for <em>weights are</em>. Its
+corrections come back as ordinary numbered highlights:</p>
 
 <div class="example">&hellip; substitution. The greedy algorithm rarely finds <mark><s>the </s></mark><sup>1</sup>the optimal solution, even when the demand weights <mark><s>is</s>are</mark><sup>2</sup> uniform.</div>
 
@@ -414,6 +423,23 @@ this page: <strong>your text is not marked. Only Claude&rsquo;s corrections to i
 only what the <em>AI</em> is proposing on top, and you accept or reject those exactly as always. The
 enforcement is unchanged: Claude physically cannot slip an unmarked change into that paragraph while
 &ldquo;just fixing your typos.&rdquo;</p>
+
+<p>Then you finish the way you would with any other AI edit &mdash; commit, and resolve the two
+highlights:</p>
+
+<pre class="snippet">git commit -am "Instructor edits: facility-location.md"
+/tc accept 1-2</pre>
+
+<p>That is the whole loop: <em>you edit &rarr; <code>/tc edits</code> &rarr; Claude marks its
+corrections &rarr; commit &rarr; accept.</em> Nothing is left pending, and the history shows your
+edits and Claude&rsquo;s corrections as separate commits.</p>
+
+<div class="callout">
+  <p><strong>Why a snapshot and not git.</strong> The baseline is the file <em>as Claude last left
+  it</em>, captured automatically on every AI write. It has to be: in one uncommitted file your edits
+  and the AI&rsquo;s sit interleaved, so no git command can isolate <em>yours</em> &mdash; which is
+  the one thing this report needs to know.</p>
+</div>
 
 <p>The report is deliberately literal about what it did and didn&rsquo;t check, and it ends by
 saying so. Every line above <code>NOT PROOFREAD</code> is a <em>mechanical</em> result &mdash;
@@ -429,6 +455,110 @@ nothing needed fixing. The <code>lint:</code> line is an invitation: a project c
 checker in a <code>.tc-edits.json</code> file and have its house rules enforced inside the edited
 lines only. And if one of your edits had landed inside a tracked region, the report would have named
 the region and shown what changed within it, rather than leaving you to notice.</p>
+
+<h2 id="ex-region">See it: a block Claude wrote, that you edited before accepting</h2>
+
+<p>For a substantial new passage &mdash; a new subsection, a worked derivation &mdash; Claude
+doesn&rsquo;t scatter inline highlights through it. It wraps the whole thing as <strong>one numbered
+region</strong>, which resolves as a unit: <code>/tc accept 1</code> or <code>/tc reject 1</code>,
+all or nothing.</p>
+
+<p>That looks like it forces a bad bargain. If most of a long block is right and one claim is wrong,
+accepting swallows the error and rejecting throws away good writing. It doesn&rsquo;t &mdash; and
+this is the most useful thing to know about reviewing AI work here: <strong>the block is yours to
+edit before you accept it.</strong> Accepting keeps whatever the body says at that moment.</p>
+
+<p>Here is a short region as it renders, with its number in the corner:</p>
+
+<div class="doc-preview">
+<p>Vetted paragraph the author wrote last year.</p>
+<div class="tc-region" data-tc-n="1" data-tc-prov="authored">
+<p>The p-median problem minimizes total demand-weighted distance.
+The greedy algorithm always finds the optimal solution.
+Vertex substitution is therefore rarely needed.</p>
+</div>
+</div>
+
+<p>The same thing as markdown, through four states. Every one below is real: the commands were run
+against the installed skill and the files are its actual output.</p>
+
+<p><strong>1. As Claude wrote it.</strong> One region, mark&nbsp;1. The vetted paragraph above it is
+untouched.</p>
+
+<pre class="snippet">Vetted paragraph the author wrote last year.
+
+::: {.tc-region tc-n="1" tc-prov="authored"}
+The p-median problem minimizes total demand-weighted distance.
+The greedy algorithm always finds the optimal solution.
+Vertex substitution is therefore rarely needed.
+:::</pre>
+
+<p><strong>2. You edit the body in place.</strong> The second sentence is wrong, so you rewrite it.
+The third depended on it, so you <em>delete</em> it &mdash; <strong>deleting part of a region is how
+you reject that part.</strong> There is no partial-reject command because you already have one. And,
+being human at a keyboard, you mistype &ldquo;necessary.&rdquo;</p>
+
+<pre class="snippet">Vetted paragraph the author wrote last year.
+
+::: {.tc-region tc-n="1" tc-prov="authored"}
+The p-median problem minimizes total demand-weighted distance.
+The greedy algorithm rarely finds the optimal solution, so vertex
+substitution is usually neccessary.
+:::</pre>
+
+<p>Running <code>/tc edits</code> here reports that your edit landed <em>inside</em> region&nbsp;1
+and shows what changed within it &mdash; useful on a region long enough that you want confirmation
+the edit went where you meant.</p>
+
+<p><strong>3. Commit, then accept.</strong> The commit is not optional:
+<code>/tc accept</code> refuses to run on a file with uncommitted changes, so that an approval always
+attaches to text git can show was reviewed.</p>
+
+<pre class="snippet">git commit -am "Instructor edits: facility-location.md"
+/tc accept 1</pre>
+
+<pre class="report">tc: 1 mark(s) accepted in &hellip;/facility-location.md: 1</pre>
+
+<pre class="snippet">Vetted paragraph the author wrote last year.
+
+The p-median problem minimizes total demand-weighted distance.
+The greedy algorithm rarely finds the optimal solution, so vertex
+substitution is usually neccessary.</pre>
+
+<p>The wrapper is gone and <strong>the body is exactly what you left</strong>: your rewrite kept, the
+sentence you deleted still deleted, the first line &mdash; which you read and were happy with &mdash;
+kept as Claude wrote it. <code>accept</code> never asked who wrote the body. So editing the region
+<em>is</em> the review, and accepting it ratifies the version you edited; the lines you left alone are
+approved by the fact that you read them looking for the ones that weren&rsquo;t.</p>
+
+<p><strong>4. Now Claude cleans up after you.</strong> Your rewrite carried a typo. That correction
+is Claude&rsquo;s, so it lands as an ordinary highlight while your prose stays plain:</p>
+
+<pre class="snippet">The greedy algorithm rarely finds the optimal solution, so vertex
+substitution is usually &lt;mark&gt;&lt;s&gt;neccessary&lt;/s&gt;necessary&lt;/mark&gt;&lt;sup&gt;1&lt;/sup&gt;.</pre>
+
+<p>Mark&nbsp;1 again, because resolving a mark frees its number &mdash; the next one is always the
+lowest still unused in that file.</p>
+
+<div class="callout">
+  <p><strong>The order matters, and mechanically so.</strong> Polish comes <em>after</em> the accept,
+  not before. Inside a region body the gate counts every line as already covered by the region&rsquo;s
+  own number, so a change Claude makes in there needs no highlight and <strong>nothing in the
+  document shows it</strong> &mdash; measured, not assumed. Once the wrapper is gone the ordinary rule
+  applies again and an unmarked change to your prose is refused, which is what makes step&nbsp;4
+  reviewable. Edit, commit, accept, <em>then</em> ask for polish.</p>
+  <p>It is not untraceable, though. Every edit Claude makes inside a region body is recorded in
+  <code>.tc-history.md</code>, and <code>/tc accept</code> <strong>tells you</strong> when the region
+  you are accepting had its body modified after it was written &mdash; so if the order above does get
+  reversed, you find out before the wrapper comes off rather than after. It is a notice, not a refusal:
+  Claude is still free to revise a region it wrote, which is how a draft improves before you ever see
+  it.</p>
+</div>
+
+<p>One caveat if the region is <a href="#ex-source">green rather than amber</a> &mdash; a passage
+grounded in a source. Accepting it also checks that anything the body <em>gained</em> since Claude
+wrote it still has a basis in the verified excerpt, and names what doesn&rsquo;t, so an edit
+can&rsquo;t quietly widen a claim the citation is standing behind.</p>
 
 <h2 id="ex-source">See it: AI writing grounded in a source</h2>
 
@@ -631,7 +761,9 @@ is untouched, so your review state is preserved.</p>
 <h3>Add brand-new sections without breaking the page</h3>
 <p>Wrapping a brand-new heading or code block in an inline highlight would break how the document
 displays, so a new block is flagged with a single marker on the line just above it &mdash; you still
-see it&rsquo;s new, and the page still renders. LaTeX uses an equivalent marked environment.</p>
+see it&rsquo;s new, and the page still renders. Larger new content becomes a single numbered
+<strong>region</strong> instead, resolved as one unit; <a href="#ex-region">reviewing one</a> means
+editing its body and then accepting it. LaTeX uses an equivalent marked environment.</p>
 
 <h3>Catch half-finished edits at commit</h3>
 <p>If you keep documents in git, track-changes can optionally warn you at commit time when a file
@@ -682,7 +814,7 @@ complete file list live in the
 </main>
 
 <footer>
-  <p>track-changes v9.11.1 &middot; M. G. Kay &middot; NC State ISE<br>
+  <p>track-changes v9.12.0 &middot; M. G. Kay &middot; NC State ISE<br>
   <a href="bootstrap.md" download>Download bootstrap.md</a></p>
 </footer>
 

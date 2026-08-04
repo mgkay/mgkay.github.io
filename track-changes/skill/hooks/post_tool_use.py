@@ -107,11 +107,23 @@ def main():
         _log(f'cannot read {abs_file}; skip')
         return 0
 
+    # 9.12.0: take the PreToolUse note of which region BODIES this write changed.
+    # One-shot, so a write that never landed leaves nothing to colour the next
+    # one. Popped before record() because a write that ONLY touches a region body
+    # introduces and resolves no mark, and record() would otherwise write no
+    # entry at all — which is the defect being closed.
+    region_touches = []
+    try:
+        region_touches = tc_audit.pop_region_touch(abs_file)
+    except Exception as e:
+        _log(f'region-body pop failed: {e}')
+
     # In-process audit (the only path — the v2 daemon fast-path was dropped
     # in v3 C5).
     try:
         tc_audit.record(source_text, tool_name, ftype, abs_file,
-                        log_path, cache_path, rel_for_log)
+                        log_path, cache_path, rel_for_log,
+                        region_touches=region_touches)
     except Exception as e:
         _log(f'in-process record failed: {e}')
 

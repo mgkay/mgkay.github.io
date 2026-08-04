@@ -459,6 +459,42 @@ def _source_gate(tool_name, file_path, source_text, payload, ftype):
     return _enforce_cited_edits(touched_sourced, _region_body, ftype, hdr)
 
 
+def _stash_region_body_touches(file_path, source_text, payload, tool_name, ftype):
+    """9.12.0: note which region BODIES this write changes, for PostToolUse.
+
+    Runs only on the allow path, and only after the analyzer has passed — a
+    refused write changes nothing and must leave no note.
+
+    This is the one place with the true pre-image: `source_text` is the file as
+    it stands (the author's edits already in it) and the payload carries what the
+    AI proposes, so any body difference between them is THIS write's doing. See
+    the header comment in tc_core.audit for why the cheaper PostToolUse
+    snapshot-diff is wrong rather than merely different.
+
+    Best-effort throughout: this is a record, and no failure of it may block or
+    alter a write that the gate has already allowed."""
+    try:
+        import tc_analyzer
+        proposed = tc_analyzer._build_proposed(source_text, payload, tool_name)
+        if proposed is None or proposed == source_text:
+            return
+        import tc_edits
+        edited, _vanished = tc_edits.region_edits(source_text, proposed, ftype)
+        touches = [{'n': e['n'], 'added': e.get('added', 0),
+                    'removed': e.get('removed', 0), 'prov': e.get('prov')}
+                   for e in edited
+                   if e.get('added') or e.get('removed')
+                   or e.get('ws_only_lines')]
+        if not touches:
+            return
+        from tc_core import audit as tc_audit
+        tc_audit.stash_region_touch(file_path, touches)
+        _log('region-body touch staged for %s: %s'
+             % (file_path, ','.join(str(t['n']) for t in touches)))
+    except Exception as e:                      # never block on a record
+        _log(f'region-body stash skipped ({e})')
+
+
 def main():
     payload = _read_payload()
     if payload is None:
@@ -577,6 +613,8 @@ def main():
 
     violations = result['violations']
     if not violations:
+        _stash_region_body_touches(file_path, source_text, payload,
+                                   tool_name, ftype)
         return 0
 
     _emit_block(tool_name, file_path, violations, ftype, result['suggest_draft'], subagent_detected)

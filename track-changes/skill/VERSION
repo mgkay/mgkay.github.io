@@ -1,3 +1,70 @@
+9.12.0
+2026-08-04
+track-changes v9.12.0 -- an AI edit inside a region body is now recorded, and named at accept.
+- THE HOLE: everything the AI writes INSIDE a `.tc-region` body is UNMARKED. Region lines are
+  covered by the region's own number, so no per-change mark is required -- measured against the
+  real gate: rewriting a body line, adding a line, and replacing the whole body were all allowed
+  with no mark (only deletion is separately gated), while the same write to prose OUTSIDE the
+  region was correctly refused.
+- That is RIGHT for a region the AI wrote that nobody has touched: it is one unit pending review,
+  and inline marks do not belong inside it. It stops being right the moment the AUTHOR edits the
+  body -- the workflow 9.11.2 documents. From then on the region holds both authorships, the v6
+  guarantee ("everything the AI writes is tracked") does not hold inside it, and `/tc accept N`
+  absorbs any AI tidying into the author's own prose with nothing to show it.
+- NOW RECORDED: every AI write that changes a region body appends a `region-body:` entry to
+  `.tc-history.md`, naming the region and the added/removed counts. Unconditional -- no trigger,
+  no snapshot dependency.
+- NOW NAMED AT THE DECIDING MOMENT: `/tc accept N` prints a NOTE when the log shows that region's
+  body was modified after it was created, because accept is what makes the change unrecoverable
+  as information. ADVISORY: exit code unchanged, never a refusal.
+- WHY NOT A REFUSAL: it would break the author who wants the AI to keep working on a still-pending
+  region they have edited (accept early, or /draft, both worse), and a hard guarantee resting on
+  the best-effort snapshot trigger reads as a guarantee it is not. Marks inside a region were
+  rejected too: they contradict the grammar and force nested resolution. See charge-9.12.0.md.
+- HONEST LIMIT: this does NOT prevent the absorption. Same standing as 9.1.0's citation scanner
+  and 9.10.0's provenance check -- a conservative flag with the author as backstop. Absence of a
+  record means NOT RECORDED, never "clean": a region predating 9.12.0 has no entries.
+- DEFERRED, recorded with its revisit condition: a body-hash trigger (hash each region body as the
+  gate writes it, so a later write can tell the body on disk is not what the AI last wrote) would
+  be sound enough to carry a real refusal. Escalate if the accept-time warning fires with any
+  regularity in real use.
+- Detection is in PreToolUse (the only place with the true pre-image), recording in PostToolUse.
+  Diffing snapshot generations would be less code and WRONG -- that diff is the author's edits plus
+  the AI's, inseparably, so it would attribute the author's own region edits to the AI. TC-AI-41
+  pins this.
+- Additive: no new module, no new hook (6), no grammar change, no migration.
+- 843-test suite (+16 Category AI: 59); 0 regressions.
+
+9.11.2
+2026-08-04
+track-changes v9.11.2 -- documenting how you review a REGION, and un-shipping a withdrawn command.
+- THE MISSING POINT, now documented in both places a reader looks: a region is atomic, but its
+  BODY IS EDITABLE BEFORE RESOLUTION. Edit it, commit, then `/tc accept N` -- which keeps the
+  body AS THE AUTHOR LEFT IT. `accept` never inspected who wrote the body. Deleting part of a
+  region IS how that part is rejected, which is why there is no partial-reject command. The
+  unedited remainder is approved by having read the region looking for the parts that weren't.
+  This was the conclusion the 10.0.0 withdrawal turned on and it appeared in no user-facing
+  document -- only in the version chain and a build record.
+- VERIFIED, not recalled: a 4-line region, one line rewritten and one deleted by hand,
+  committed, `/tc accept 1` -- wrapper gone, rewrite kept, deletion honoured, untouched lines
+  kept, neighbouring prose intact. Promoted into the suite as TC-AI-36, because the landing
+  page now promises this to readers.
+- ORDER MATTERS, and it is now stated: polish AFTER the accept, never before. Measured against
+  the real gate, an AI edit INSIDE a region body needs no mark and lands invisibly -- every line
+  is already covered by the region's own number (editing a line, adding a line and rewriting the
+  whole body were all allowed unmarked; only deletion is separately gated). Once the wrapper is
+  gone the ordinary rule applies again and an unmarked change is refused.
+- FIXED: `reference/tc-edits.md` documented `/tc edits resolve` -- WITHDRAWN before 10.0.0 ever
+  deployed -- for four releases, in the file the MODEL reads. Shipped instructions for something
+  argparse rejects. TC-AI-19 could not see it because its derived check only ever opened
+  README.md and GUIDE.md; it now globs the whole shipped doc surface (SKILL.md, reference/*.md,
+  commands/*.md), which is the general fix rather than naming the file that happened to be wrong.
+- The `#ex-edits` walkthrough now COMPLETES -- through commit and accept. It previously ended
+  with two unresolved highlights and no next step, and orientation for the report block moved
+  ahead of it while the snapshot-vs-git mechanics moved below the payoff.
+- No source change to any behaviour: docs, one test widened, three tests added.
+- 827-test suite (+9 Category AI: 43); 0 regressions.
+
 9.11.1
 2026-08-04
 track-changes v9.11.1 -- the landing page joins the repo; the report stops reassuring.

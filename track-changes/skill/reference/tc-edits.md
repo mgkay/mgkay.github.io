@@ -1,6 +1,6 @@
-# `/tc edits` — report what the author changed, and resolve what they edited
+# `/tc edits` — report what the author changed
 
-*(9.9.0 Phase A; 9.9.3 frictions; 10.0.0 Phase B — `resolve`)*
+*(9.9.0; 9.9.3 frictions; 9.11.1 report wording; 9.11.2 region review. 10.0.0's `resolve` was withdrawn — see the end of "Reviewing a REGION you edited".)*
 
 *Reference for the `/tc edits` subcommand of `track-changes`. Lazy-loaded; `SKILL.md §17` is the summary.*
 
@@ -172,93 +172,87 @@ config must live in the document's own repository. Opt out with `--no-lint` or
 
 **Do not run `/tc edits` with lint enabled in a repository you would not build.**
 
-## Two phases, two commands
+## Reviewing a REGION you edited
 
-**`/tc edits <file>` reports and never writes.** That is Phase A, and it covers
-edits to clean (unwrapped) prose — the dominant case as a document matures and
-its marks get resolved. Where an edited span overlaps a tracked **region**, it
-names the region and stops.
+**This is the case the command exists for, and the one most easily got wrong.**
 
-**`/tc edits resolve <file> [<ranges>]` acts.** That is Phase B (10.0.0), and it
-is the subject of the section below.
+For a substantial passage the AI writes a single numbered **region** rather than
+inline marks. It resolves as one unit — `/tc accept N` or `/tc reject N`,
+all-or-nothing, and that is unchanged. What makes it workable is that the region
+**body is editable before resolution**:
 
-## Resolving a region you edited (10.0.0)
+> **Edit the body → commit → `/tc accept N`, which keeps the body AS THE AUTHOR
+> LEFT IT.**
 
-```
-/tc edits resolve <file> [<ranges>]
-```
+`accept` never inspected who wrote the body. So the author's rewrite survives, the
+AI lines they left alone survive, and **a passage they deleted stays deleted** —
+deletion *is* how a portion is rejected, in the editor where they are already
+working. There is no partial-accept or partial-reject command because there is no
+need for one. The unedited remainder is approved by the act of having read the
+region looking for the parts that needed changing.
 
-**Dissolves** every region whose body you edited: the wrapper goes, the body
-stays. Your edits and the AI text you left alone both become clean prose; a
-paired gray `.tc-verbatim` excerpt goes with it (the 9.3.0 rule) and `tc-join`
-is honoured. A region you emptied entirely leaves nothing behind — no fence
-pair, no orphaned blank lines.
+`/tc edits` supports this by naming the region an edited span landed in and showing
+what changed *inside* it. It still only reports.
 
-### Why dissolve, and not "accept the part I didn't touch"
+### Ordering: polish AFTER the accept, never before
 
-An edited span is **your** writing, and the provenance model says author material
-lands clean and untracked. So that text stops being AI content. The parts you did
-*not* touch are AI text you have just reviewed — which is what `accept` means.
-Both halves become clean prose, so the region has nothing left to assert.
+**Do not "fix up" the author's edit while it is still inside the region.** Measured
+against the real gate: inside a region body every line counts as already covered by
+the region's own number, so an AI edit there is accepted **with no mark** — nothing
+in the *document* shows it, and `accept` would then absorb it into the author's own
+prose. (Editing a line, adding a line, and rewriting the whole body were all allowed
+unmarked; only deletion is separately gated.)
 
-This is why there is no reject branch: **anything you disagree with, you delete
-before invoking.** Deletion *is* how a portion is refused, and it happens in the
-editor where you are already working.
+**It is no longer untraceable (9.12.0), but it is still unmarked.** Every AI write
+that changes a region body is now recorded in `.tc-history.md` under
+`region-body:`, and `/tc accept N` **warns** when the log shows that region's body
+was modified after it was created. That makes ignoring this rule *visible* — it does
+not make it harmless. The warning is advisory, exit code unchanged: it names the
+risk and the author rules on it. Absence of a record means **not recorded**, never
+"clean" — a region predating 9.12.0 has no entries.
 
-### The surface has no flags, deliberately
+So the rule stands as a rule, and the correct move is unchanged: accept first, then
+mark corrections.
 
-`<file>` is **required** — bare `/tc edits` reports every changed file, which is
-right for a report and catastrophic for a mutation. There is no `--yes`: nothing
-in this family prompts, so a confirmation flag would name a mechanism that does
-not exist, and `/tc edits <file>` is already the look-first step. There is no
-`--dry-run`: it would only duplicate that. All three are *rejected* by argparse
-rather than ignored, so a stale invocation fails loudly.
+Once `accept` removes the wrapper the body is ordinary prose again and the normal
+rule applies: an unmarked change to it is refused, so the correction must be a
+mark the author can review. Hence:
 
-### A narrower invariant, not none
+> **author edits → commit → `/tc accept N` → THEN mark corrections → commit →
+> `/tc accept`**
 
-8.1.0 makes `accept`/`reject` refuse on a file with uncommitted changes, because
-approval could otherwise attach to content the reviewer never read. `resolve`
-runs **only** on a dirty file — your uncommitted edits are its whole input — so
-that gate cannot apply. Three things replace it:
-
-1. **An AI baseline must exist.** No snapshot, no resolve (exit 3). It does *not*
-   fall back to git HEAD: HEAD cannot separate your edits from the AI's, and this
-   operation accepts text on the strength of that separation.
-2. **The resolution is journaled** — the baseline's sha256 and the pre-resolution
-   body land in `.tc-history.md`, which is git-committed. git never saw the
-   pre-resolution state, so that is the only durable handle on what was approved.
-3. **It is undoable** — the pre-resolution bytes are saved first:
-   `/tc edits restore <file> --gen 0 --yes`.
-
-### Ordering
-
-`resolve` leaves the file dirty, and `accept`/`reject` refuse on a dirty file. So:
-
-> **resolve everything you mean to → commit → accept the rest**
-
-Any further hand edit restarts the cycle, which is why it is worth batching the
-resolves rather than interleaving them with accepts. The command says so whenever
-anything is left pending.
+A resolved number is freed, so the first correction may reuse the region's own
+number. Take the next free number from the report rather than assuming.
 
 ### Green regions are checked, and the check is honest
 
-For a `sourced` or `transcript` region, the content your edit **introduced** is
-compared against the gray excerpt plus the text already standing in the region.
-Anything unaccounted for is named on screen *before* the dissolve — which then
-removes a provenance claim that has become false. That is the correction; the
-alternative is leaving a false claim in place.
+For a `sourced` or `transcript` region, `/tc accept` compares content the body
+**gained** since the write gate saw it against the durable excerpt record, and names
+anything unaccounted for *before* accept removes the provenance claim. An edit must
+not quietly widen a claim the citation is standing behind.
 
 **It is a conservative flag, not a proof.** It cannot see a contradiction, a
 deletion, or a new claim rebuilt from words already present, and a swapped
-quantifier or single digit can slip through. Your reading is the backstop, the
-same standing the 9.1.0 citation scanner ships with.
+quantifier or single digit can slip through. Absent a durable record it reports
+`not-checked` rather than passing silently. The author's reading is the backstop,
+the same standing the 9.1.0 citation scanner ships with.
 
 ### Still atomic
 
-`/tc accept` and `/tc reject` are unchanged for a region you have **not** edited:
-all-or-nothing, no inline marks inside. An edited **inline mark** is reported,
-not resolved — "accept all but the edit" is not meaningful for a few characters
-inside a `<mark>` — and it stays in the pending list.
+`/tc accept` and `/tc reject` remain the only region resolutions, both
+all-or-nothing, and no inline marks belong inside a region. An edited **inline
+mark** is reported, not resolved — "accept all but the edit" is not meaningful for a
+few characters inside a `<mark>` — and it stays in the pending list.
+
+> **Withdrawn: the `resolve` subcommand.** 10.0.0 added a `resolve`/`dissolve`
+> subcommand for exactly this, and it was withdrawn before deployment: `/tc accept N`
+> on an author-edited region already produces byte-identically what it produced, so
+> all it bought was one commit per session, in exchange for inverting the 8.1.0
+> committed-content invariant. **This file documented it through 9.11.1** — shipped
+> instructions for something argparse rejects, in the file the model reads — because
+> TC-AI-19's derived check only ever opened `README.md` and `GUIDE.md`. It now globs
+> the whole shipped doc surface. If any text still tells you to resolve a region with
+> anything but `/tc accept`, that text is wrong.
 
 ## Options
 
@@ -282,7 +276,6 @@ inside a `<mark>` — and it stays in the pending list.
 | `/tc edits diff <file> [--gen N]` | **(9.9.3)** unified diff of the file on disk against a stored generation. Read-only. |
 | `/tc edits show <file> [--gen N]` | **(9.9.3)** print a stored generation verbatim to stdout (metadata goes to stderr, so it pipes). Read-only. |
 | `/tc edits restore <file> [--gen N] [--yes]` | overwrite the file from a generation (the current bytes are snapshotted first) |
-| `/tc edits resolve <file> [<ranges>]` | **(10.0.0)** dissolve the regions you edited. See above. |
 
 Bare `/tc edits` does **not** use the most-recently-modified working-file heuristic
 that `/tc status`, `/tc list`, `/tc accept`, and `/tc reject` use. That heuristic
@@ -308,10 +301,10 @@ count; they are never shortened silently.
 
 ## What this skill does not do
 
-- **`/tc edits <file>` does not edit the document, ever.** Only
-  `/tc edits resolve` and `/tc edits restore` write, and both are named for it.
-- It does not resolve **inline marks**, or regions you have not edited —
-  `/tc accept` / `/tc reject` own those.
+- **`/tc edits <file>` does not edit the document, ever.** `/tc edits restore` is the
+  only writing subcommand, and it is named for it.
+- **It does not resolve anything.** `/tc accept` / `/tc reject` own every resolution —
+  inline marks and regions alike, edited or not.
 - It does not know your conventions; your linter does.
 - It does not suspend tracking. `/draft` remains user-only; every AI correction
   written after this report is tracked.

@@ -602,6 +602,37 @@ def resolve(path, decision, ns):
             except Exception:
                 support = {"status": "not-checked", "tokens": [],
                            "reason": "the support check could not run"}
+        # 9.12.0: the AI can write into a region body with no mark -- region lines
+        # are covered by the region's own number -- so if the author edited that
+        # body and then asked for polish in place, accept is about to absorb AI
+        # text into their prose with nothing in the document to show it. The touch
+        # IS recorded (PreToolUse stashes, PostToolUse logs), so name it here,
+        # at the moment accept makes it unrecoverable as information.
+        #
+        # ADVISORY, and it must stay that way: exit code unchanged, never a
+        # refusal. A refusal was considered and rejected (charge-9.12.0.md) --
+        # it would break the author who wants the AI to keep working on a
+        # still-pending region they have edited. TC-AI-43 asserts the exit code
+        # is identical either way, so a later increment cannot quietly promote it.
+        #
+        # Absence of a record means NOT RECORDED, never "clean": a region
+        # predating 9.12.0 has no entries, the same distinction 9.10.0 draws with
+        # `not-checked`. So the wording never implies the body is untouched.
+        if decision == 'accept':
+            try:
+                from tc_core import audit as _tca
+                _touched = _tca.read_region_touches(path)
+                _n = _touched.get(str(r['N']))
+                if _n:
+                    print("tc: NOTE region %s -- the AI modified this region's "
+                          "body %d time(s) after it was created (see "
+                          ".tc-history.md `region-body:`)." % (r['N'], _n))
+                    print("    Content inside a region body carries no mark, so "
+                          "if you edited this body yourself, accept is about to "
+                          "keep AI wording as your own prose. Read it before "
+                          "committing.")
+            except Exception:
+                pass
         if prov == 'sourced':
             sourced_resolved.append(r['N'])
         resolved.append(r['N'])

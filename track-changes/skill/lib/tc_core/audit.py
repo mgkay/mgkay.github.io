@@ -78,6 +78,113 @@ def cache_path_for(abs_file, home=None):
     return os.path.join(cache_dir, sha + '.marks')
 
 
+# ---------------------------------------------------------------------------
+# 9.12.0 — region-body touches: stash (PreToolUse) then record (PostToolUse).
+#
+# Everything the AI writes INSIDE a `.tc-region` body is untracked: region lines
+# are covered by the region's own number, so no per-change mark is required.
+# That is correct for a region the AI wrote that nobody has touched -- it is one
+# unit pending review -- and wrong the moment the author edits the body, which is
+# the workflow 9.11.2 documents. From then on the region holds both authorships
+# and `/tc accept N` absorbs any AI tidying with no mark and no record.
+#
+# 9.12.0 records rather than refuses (see charge-9.12.0.md for why: a refusal
+# breaks the author who wants the AI to keep working on a still-pending region,
+# and would rest on a best-effort trigger). Recording needs NO trigger at all --
+# record every touch, and let the accept-time warning carry the judgment.
+#
+# WHY THE SPLIT. Only PreToolUse has the true pre-image (the file on disk plus
+# the proposed content), so only it can attribute a body change to THIS write.
+# Diffing snapshot generations in PostToolUse would need almost no new code and
+# is WRONG: that diff is the author's edits since the last AI write PLUS this
+# write, inseparably -- it would attribute the author's own region edits to the
+# AI, in a feature whose entire purpose is telling those two apart. Rejected on
+# the same grounds as the 9.10.0 git-HEAD fallback. TC-AI-41 pins this.
+# ---------------------------------------------------------------------------
+
+def _pending_region_path(abs_file, home=None):
+    sd = _state_dir(home)
+    if sd is None:
+        return None
+    d = os.path.join(sd, 'pending-region')
+    try:
+        os.makedirs(d, exist_ok=True)
+    except OSError:
+        return None
+    sha = hashlib.sha1(os.path.abspath(abs_file).encode('utf-8')).hexdigest()
+    return os.path.join(d, sha + '.json')
+
+
+def stash_region_touch(abs_file, touches, home=None):
+    """PreToolUse: note which region bodies THIS write changes.
+
+    `touches` is a list of {'n', 'added', 'removed'}. Best-effort; a failure here
+    must never block a write."""
+    p = _pending_region_path(abs_file, home)
+    if p is None or not touches:
+        return False
+    try:
+        with open(p, 'w', encoding='utf-8') as f:
+            json.dump({'file': os.path.abspath(abs_file), 'touches': touches}, f)
+        return True
+    except (IOError, OSError):
+        return False
+
+
+def pop_region_touch(abs_file, home=None):
+    """PostToolUse: take the stash and delete it. One-shot, so a write that never
+    landed cannot leave a note that colours the next one."""
+    p = _pending_region_path(abs_file, home)
+    if p is None or not os.path.exists(p):
+        return []
+    try:
+        with open(p, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+    except (IOError, ValueError):
+        data = {}
+    try:
+        os.remove(p)
+    except OSError:
+        pass
+    if os.path.abspath(data.get('file') or '') != os.path.abspath(abs_file):
+        return []
+    return data.get('touches') or []
+
+
+_RB_ITEM_RE = re.compile(r'^  - region: (?P<n>\d+)\s*$')
+
+
+def read_region_touches(abs_file_path):
+    """Region numbers whose body the AI has modified, per the audit log.
+
+    Returns {N: count}. Absence means NOT RECORDED, never "clean" -- a region
+    predating 9.12.0 has no entries, the same distinction 9.10.0 draws with
+    `not-checked`."""
+    out = {}
+    log_path = log_path_for(os.path.abspath(abs_file_path))
+    if not log_path or not os.path.exists(log_path):
+        return out
+    try:
+        with open(log_path, 'r', encoding='utf-8') as f:
+            lines = f.read().split('\n')
+    except (IOError, OSError):
+        return out
+    in_sec = False
+    for ln in lines:
+        if ln.startswith('region-body:'):
+            in_sec = True
+            continue
+        if in_sec:
+            m = _RB_ITEM_RE.match(ln)
+            if m:
+                n = m.group('n')
+                out[n] = out.get(n, 0) + 1
+                continue
+            if not ln.startswith('    '):
+                in_sec = False
+    return out
+
+
 def find_project_root(abs_file):
     """Walk up from abs_file's directory looking for .git/. Return the root or None."""
     if not abs_file:
@@ -108,12 +215,18 @@ def log_path_for(abs_file, marker_path=None):
 # ---------------------------------------------------------------------------
 
 def record(source_text, tool_name, ftype, abs_file_path, log_path,
-           cache_path, rel_path_for_log):
+           cache_path, rel_path_for_log, region_touches=None):
     """Diff current marks vs prior cache, append a log entry for introduced +
     resolved marks, then write the new cache state. Best-effort: I/O errors are
-    swallowed; the user's workflow is never blocked."""
+    swallowed; the user's workflow is never blocked.
+
+    `region_touches` (9.12.0) is the PreToolUse stash: region bodies THIS write
+    changed. It is recorded even when no mark changed, because an unmarked write
+    into a region body is exactly the case that otherwise leaves no trace."""
     result = {'introduced': [], 'resolved': [], 'imported': [],
-              'lineage': [], 'wrote_log': False}
+              'lineage': [], 'wrote_log': False, 'region_touches': []}
+    region_touches = region_touches or []
+    result['region_touches'] = region_touches
     current_marks = grammar.extract_marks(source_text, ftype)
     current_by_n = {m['N']: m for m in current_marks}
 
@@ -139,7 +252,10 @@ def record(source_text, tool_name, ftype, abs_file_path, log_path,
         except IOError:
             pass
 
-    if not introduced and not resolved:
+    # 9.12.0: a write that only changes a region body introduces and resolves
+    # NOTHING -- that is the whole defect -- so the early return has to account
+    # for it or the entry is never written.
+    if not introduced and not resolved and not region_touches:
         _write_cache()
         return result
 
@@ -166,6 +282,16 @@ def record(source_text, tool_name, ftype, abs_file_path, log_path,
                 lines.append(f"    was_old: {_fmt_str(m['old'])}")
             if m.get('new', ''):
                 lines.append(f"    was_new: {_fmt_str(m['new'])}")
+    if region_touches:
+        # A summary, not a diff dump: this can fire several times on a region
+        # revised before review, and .tc-history.md is read by humans.
+        lines.append("region-body:")
+        for t in region_touches:
+            lines.append(f"  - region: {t.get('n', '?')}")
+            lines.append(f"    added: {t.get('added', 0)}")
+            lines.append(f"    removed: {t.get('removed', 0)}")
+            if t.get('prov'):
+                lines.append(f"    prov: {t['prov']}")
     entry = '\n'.join(lines) + '\n'
 
     try:
