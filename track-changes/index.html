@@ -98,6 +98,15 @@
       background: #f4f4f4; border: 1px solid #ddd; border-radius: 4px;
       padding: 0.6em 0.8em; overflow-x: auto; font-size: 0.92em;
     }
+    /* Command OUTPUT, as distinct from a command you type. Real captured text. */
+    pre.report {
+      background: #f7f7f7; border: 1px solid #ddd; border-left: 4px solid #6b7f9e;
+      border-radius: 0 4px 4px 0; padding: 0.65em 0.9em; overflow-x: auto;
+      font-size: 0.76rem; line-height: 1.55; color: #333;
+    }
+    pre.report .add { color: #1f6b43; }
+    pre.report .del { color: #a33b3b; }
+    pre.report .dim { color: #777; }
     /* Two capability cards near the top */
     .caps { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1.5rem 0 1rem; }
     .cap {
@@ -119,6 +128,10 @@
   <p class="affiliation">NC State &middot; ISE</p>
   <nav>
     <a href="index.html" class="active">Home</a>
+    <a href="#commands">Commands</a>
+    <a href="#workflow">Workflow</a>
+    <a href="#ex-edit">Examples</a>
+    <a href="#install">Install</a>
   </nav>
 </header>
 
@@ -153,6 +166,135 @@ mark-and-review core), <code>verified-import</code> (<code>/tc import</code>, fo
 material cleanly), and <code>tc-polish</code> (<code>/tc polish</code>, for cleaning up
 voice-dictated prose). You stay the author; the AI is a copy-editor whose work you sign off on,
 change by change &mdash; and whose sourcing you can open and check.</p>
+
+<h2 id="commands">Commands</h2>
+
+<p>The suite adds two slash commands: <code>/tc</code> (with subcommands) and <code>/draft</code>,
+grouped below by what you&rsquo;re doing. New here? The short version is
+<a href="#workflow">a typical review pass</a>, and the worked examples start
+<a href="#ex-edit">further down</a>; nothing runs until you
+<a href="#install">install the suite</a> and
+<a href="#turn-on">turn it on for a folder</a>.</p>
+
+<h3>Turn tracking on and off</h3>
+<ul class="cmds">
+  <li><code>/tc mark [&lt;dir&gt;]</code> &mdash; Track a whole folder (drops the
+    <code>.tc-tracked</code> marker). The usual way to start.</li>
+  <li><code>/tc enable &lt;file&gt;</code> / <code>/tc disable &lt;file&gt;</code> &mdash; Track, or
+    explicitly exclude, a single file.</li>
+  <li><code>/tc status [&lt;file&gt;]</code> &mdash; Show whether a file is tracked and which rule
+    decided it.</li>
+  <li><code>/draft</code> &mdash; Pause tracking for just your next message, then it resumes by
+    itself. For a large rewrite or brand-new draft that would be too noisy to highlight line by
+    line.</li>
+</ul>
+
+<h3>Review and resolve changes</h3>
+<ul class="cmds">
+  <li><code>/tc list &lt;file&gt;</code> &mdash; List every highlight by number with a preview of what
+    changed. The natural start of a review pass.</li>
+  <li><code>/tc accept &lt;file&gt; &lt;ranges&gt;</code> / <code>/tc reject &lt;file&gt; &lt;ranges&gt;</code>
+    &mdash; Keep or discard the listed highlights and remove the wrappers. Ranges are flexible:
+    <code>1-25,!7,!11</code> means &ldquo;1 through 25, except 7 and 11.&rdquo;</li>
+  <li><code>/tc accept-all &lt;file&gt;</code> / <code>/tc reject-all &lt;file&gt;</code> &mdash;
+    Resolve every highlight at once.</li>
+  <li><code>/tc edits [&lt;file&gt;]</code> &mdash; The other direction: you edited the document
+    <em>yourself</em>, and this shows Claude exactly what you changed since it last wrote, so it can
+    proofread just that and return its corrections as ordinary highlights. <strong>Your text stays
+    clean; only Claude&rsquo;s corrections to it are marked.</strong> It reports and never edits.
+    With no file, it lists every file you&rsquo;ve changed. See <a href="#ex-edits">below</a>.</li>
+</ul>
+
+<h3>Ground writing in a source</h3>
+<ul class="cmds">
+  <li><code>/tc source &lt;file&gt;#&lt;locator&gt; [&lt;target&gt;]</code> &mdash; Stage a source slice
+    (a line range, a PDF page range <code>#p.12-14</code>, or a whole file); Claude then writes the
+    verified gray excerpt + green interpretation. A citation can be named by BibTeX key:
+    <code>/tc source @daskin2013 p.114</code>.</li>
+  <li><code>/tc manifest [&lt;doc&gt;]</code> &mdash; Regenerate the document&rsquo;s source manifest in
+    <code>validation/&lt;doc&gt;.sources.md</code> &mdash; the durable, committable record of every
+    sourced passage.</li>
+</ul>
+
+<h3>Bring in trusted material</h3>
+<ul class="cmds">
+  <li><code>/tc import &lt;source&gt;[#L&lt;a&gt;-L&lt;b&gt;] [&lt;target&gt;]</code> &mdash; Insert vetted
+    material and let it land <em>clean</em> (no highlights), reproducing the source faithfully; Claude
+    marks only a genuinely significant change. See <a href="#importing">below</a>.</li>
+  <li><code>/tc coverage &lt;doc&gt; &lt;source&gt;</code> &mdash; Audit a whole document against the
+    source it was built from and name any content the conversion dropped. The same completeness check
+    <code>/tc import</code> applies per-insert, run over the finished file.</li>
+</ul>
+
+<h3>Clean up voice dictation</h3>
+<ul class="cmds">
+  <li><code>/tc polish [&lt;file&gt;]</code> &mdash; Clean up voice-dictated prose (recognition slips,
+    grammar, dropped words); every fix lands as an ordinary highlight you review. It never rewrites a
+    token it can&rsquo;t recognize as plain prose (jargon, code, math): it leaves that alone and flags
+    it. (Part of <code>tc-polish</code>.)</li>
+</ul>
+
+<div class="callout">
+  <p>Every accept or reject is recorded as a deliberate decision, so the skill never silently undoes
+  a choice you made &mdash; even if Claude edits the same passage again later. And
+  <code>accept</code> / <code>reject</code> run only on a <strong>committed</strong> file, so an
+  approval always attaches to text git shows was reviewed (human-only override:
+  <code>TC_FORCE=1</code>).</p>
+</div>
+
+<h2 id="workflow">A typical review pass</h2>
+
+<p>Once the suite is installed and a folder is marked, there is nothing to launch and nothing to
+remember mid-task &mdash; the enforcement runs on its own. A working session settles into a short
+loop, and the only real decision is <em>how</em> you want to correct the AI: by telling it, or by
+editing the text yourself. Both lanes end in the same place.</p>
+
+<ol class="steps">
+  <li><strong>Work with Claude normally.</strong> Don&rsquo;t invoke anything. Every change it makes
+    to a tracked file arrives as a numbered highlight, because the alternative &mdash; an unmarked
+    edit &mdash; is refused at the save.</li>
+  <li><strong>See what&rsquo;s waiting</strong> &mdash; <code>/tc list</code>. Every pending
+    highlight by number, with a preview of what changed.</li>
+  <li><strong>Correct it, one of two ways.</strong>
+    <ul>
+      <li><em>Tell Claude.</em> &ldquo;Accept 1 through 9 except 4, and reject 4&rdquo; &mdash; or
+        run <code>/tc accept 1-9,!4</code> and <code>/tc reject 4</code>. Best when the AI&rsquo;s
+        proposals are mostly right and you are ruling on them.</li>
+      <li><em>Or just fix the text yourself,</em> in your editor, and then run
+        <code>/tc edits</code>. Best when explaining the correction would take longer than making
+        it. Claude sees exactly the lines you touched, proofreads only those, and returns
+        <em>its</em> suggestions as new highlights &mdash; while your own wording stays clean and
+        unmarked.</li>
+    </ul>
+  </li>
+  <li><strong>Commit before you resolve.</strong> <code>/tc accept</code> and <code>/tc reject</code>
+    refuse to run on a file with uncommitted changes, so if you hand-edited in step&nbsp;3, commit
+    first &mdash; conventionally your edits in one commit and Claude&rsquo;s marked corrections in
+    another. That is deliberate: an approval then always attaches to text git can show was
+    reviewed, and the two authorships stay separable in the history.</li>
+  <li><strong>Resolve, and repeat.</strong> <code>/tc accept</code> / <code>/tc reject</code> on
+    what Claude proposed in step&nbsp;3, then back to step&nbsp;1. Every decision lands in
+    <code>.tc-history.md</code> alongside the document.</li>
+</ol>
+
+<p>The other commands slot into that loop rather than replacing it.
+<a href="#ex-source"><code>/tc source</code></a> is how new writing gets grounded in a document or
+a web page; <a href="#importing"><code>/tc import</code></a> brings in material you have already
+vetted without turning it into a wall of highlights; <code>/tc polish</code> cleans up a stretch of
+voice dictation. All three produce ordinary highlights, so they land in step&nbsp;2 and you review
+them the same way. And when a change would be too large or too structural to read as highlights
+&mdash; a brand-new draft, a wholesale rewrite &mdash; <code>/draft</code> pauses tracking for
+exactly one message.</p>
+
+<div class="callout">
+  <p><strong><code>/tc polish</code> or <code>/tc edits</code>?</strong> Both end with Claude&rsquo;s
+  corrections as highlights over prose you wrote, and the difference is whose text is under review.
+  <code>/tc polish</code> takes <em>your dictation</em> and does an editorial pass on it.
+  <code>/tc edits</code> is scoped by <em>what you changed</em> since Claude last wrote the file
+  &mdash; which git cannot work out on its own, because your edits and the AI&rsquo;s sit
+  undifferentiated in the same dirty file. Use polish after dictating; use edits after hand-editing,
+  especially when correcting the AI&rsquo;s own draft.</p>
+</div>
 
 <h2>Why it exists</h2>
 
@@ -212,6 +354,71 @@ number is a handle: tell Claude <em>&ldquo;accept 1, reject 2&rdquo;</em> (or ru
 rejected one rolls back to your original wording. Both decisions &mdash; with timestamps and the
 old and new text &mdash; are appended to a <code>.tc-history.md</code> log in your project, so
 <code>git diff</code> and <code>git blame</code> surface AI-attributed changes months later.</p>
+
+<h2 id="ex-edits">See it: when you edit the document yourself</h2>
+
+<p>Reviewing an AI draft, you often don&rsquo;t want to <em>describe</em> a fix &mdash; a wrong term,
+a claim that&rsquo;s backwards &mdash; you just want to correct it. So you do, straight in your
+editor. That leaves an awkward gap: your edits are unmarked and unproofread, and Claude has no idea
+which of the file&rsquo;s hundreds of lines you touched. Asking it to re-read the whole document
+invites it to &ldquo;improve&rdquo; passages you never asked about.</p>
+
+<p><code>/tc edits</code> closes the gap. Say Claude drafted a paragraph on the p-median problem, and
+reading it you fixed two things by hand: <em>weighted</em> should have been
+<em>demand-weighted</em>, and the claim about the greedy algorithm was simply wrong. Then:</p>
+
+<pre class="snippet">/tc edits</pre>
+
+<p>This is its <strong>actual output</strong> (only the leading directories of the path are
+shortened):</p>
+
+<pre class="report">tc edits &mdash; &hellip;/lectures/facility-location.md
+  baseline: snapshot gen 0, captured 2026-08-04T04:25:10Z
+  2 edited span(s), 5 line(s) changed (2 content, 0 whitespace-only):
+    - lines 6-8              +3    -3     content
+<span class="del">        -minimize the total weighted distance between each demand point and the facility
+        -serving it. It is NP-hard in general, but instances with a few hundred candidate
+        -sites are routinely solved to optimality by modern MIP solvers.</span>
+<span class="add">        +minimize the total demand-weighted distance between each demand point and the
+        +facility serving it. It is NP-hard in general, but instances with a few hundred
+        +candidate sites are routinely solved to optimality by modern MIP solvers.</span>
+    - lines 11-12            +2    -2     content
+<span class="del">        -substitution. The greedy algorithm always finds the optimal solution when the
+        -demand weights are uniform.</span>
+<span class="add">        +substitution. The greedy algorithm rarely finds the the optimal solution, even
+        +when the demand weights is uniform.</span>
+  no tracked REGION overlaps an edited span (inline marks are not checked &mdash; see /tc list)
+  polish: nothing flagged in the edited text (6 new token(s); run /tc polish for the full editorial pass)
+  lint: not configured. configure a project linter in .tc-edits.json: {"lint": {"command": ["python", "tools/lint.py", "{file}"]}}
+  next mark number: 1</pre>
+
+<p>Two things to notice. It <strong>never edits the document</strong> &mdash; it reports, and every
+correction that follows goes through the ordinary highlight-and-review path. And the baseline is a
+<strong>snapshot of the file as Claude last left it</strong>, not a git commit. That distinction is
+the whole point: in one uncommitted file, your edits and the AI&rsquo;s are indistinguishable to
+git, so nothing git can tell you would isolate <em>yours</em>.</p>
+
+<p>Now Claude has a precise brief, and proofreading those five lines it catches what you introduced
+while typing &mdash; a doubled &ldquo;the,&rdquo; and <em>weights is</em> for <em>weights are</em>.
+Its corrections come back as ordinary numbered highlights:</p>
+
+<div class="example">&hellip; substitution. The greedy algorithm rarely finds <mark><s>the </s></mark><sup>1</sup>the optimal solution, even when the demand weights <mark><s>is</s>are</mark><sup>2</sup> uniform.</div>
+
+<p>And this is the part worth being precise about, because it is the reverse of everything else on
+this page: <strong>your text is not marked. Only Claude&rsquo;s corrections to it are.</strong> Your
+&ldquo;rarely&rdquo; and &ldquo;even when&rdquo; sit in the paragraph as plain, unhighlighted prose
+&mdash; you are the author and you don&rsquo;t review yourself. What lands as highlights 1 and 2 is
+only what the <em>AI</em> is proposing on top, and you accept or reject those exactly as always. The
+enforcement is unchanged: Claude physically cannot slip an unmarked change into that paragraph while
+&ldquo;just fixing your typos.&rdquo;</p>
+
+<p>The report is deliberately literal about what it did and didn&rsquo;t check. The
+&ldquo;polish&rdquo; line is a quick mechanical scan for dictation artifacts &mdash; here it found
+none, which is why the grammar slips were caught by Claude reading the passage, not by that scan.
+The &ldquo;lint&rdquo; line is an invitation: a project can register its own checker in a
+<code>.tc-edits.json</code> file and have its house rules enforced inside the edited lines only. And
+if one of your edits had landed inside a tracked region, the report would have named the region and
+shown what changed within it, rather than leaving you to notice.</p>
 
 <h2 id="ex-source">See it: AI writing grounded in a source</h2>
 
@@ -342,7 +549,7 @@ you haven&rsquo;t. The suite also needs <strong>Python&nbsp;3</strong> and <stro
 (present on most setups by default); PDF and Word sources for the sourcing feature use Python
 libraries the installer notes.</p>
 
-<h2>Installation</h2>
+<h2 id="install">Installation</h2>
 
 <ol class="steps">
   <li><strong>Start a Claude Code session</strong> &mdash; anywhere; the suite installs into your
@@ -360,7 +567,7 @@ libraries the installer notes.</p>
   safe.</p>
 </div>
 
-<h2>Turn it on for your files</h2>
+<h2 id="turn-on">Turn it on for your files</h2>
 
 <p>track-changes is <strong>off by default</strong> &mdash; it ignores every file until you opt in,
 per folder or per file. The usual way is to mark a whole folder at once, from inside Claude Code:</p>
@@ -391,69 +598,6 @@ on its own, through a <em>hook</em> Claude Code triggers before every save:</p>
     any turn you&rsquo;ve paused it with <code>/draft</code>, the checks do nothing. There is no
     separate app or window.</li>
 </ul>
-
-<h2 id="commands">Commands</h2>
-
-<p>The suite adds two slash commands: <code>/tc</code> (with subcommands) and <code>/draft</code>.
-Here is the full set, grouped by what you&rsquo;re doing.</p>
-
-<h3>Turn tracking on and off</h3>
-<ul class="cmds">
-  <li><code>/tc mark [&lt;dir&gt;]</code> &mdash; Track a whole folder (drops the
-    <code>.tc-tracked</code> marker). The usual way to start.</li>
-  <li><code>/tc enable &lt;file&gt;</code> / <code>/tc disable &lt;file&gt;</code> &mdash; Track, or
-    explicitly exclude, a single file.</li>
-  <li><code>/tc status [&lt;file&gt;]</code> &mdash; Show whether a file is tracked and which rule
-    decided it.</li>
-  <li><code>/draft</code> &mdash; Pause tracking for just your next message, then it resumes by
-    itself. For a large rewrite or brand-new draft that would be too noisy to highlight line by
-    line.</li>
-</ul>
-
-<h3>Review and resolve changes</h3>
-<ul class="cmds">
-  <li><code>/tc list &lt;file&gt;</code> &mdash; List every highlight by number with a preview of what
-    changed. The natural start of a review pass.</li>
-  <li><code>/tc accept &lt;file&gt; &lt;ranges&gt;</code> / <code>/tc reject &lt;file&gt; &lt;ranges&gt;</code>
-    &mdash; Keep or discard the listed highlights and remove the wrappers. Ranges are flexible:
-    <code>1-25,!7,!11</code> means &ldquo;1 through 25, except 7 and 11.&rdquo;</li>
-  <li><code>/tc accept-all &lt;file&gt;</code> / <code>/tc reject-all &lt;file&gt;</code> &mdash;
-    Resolve every highlight at once.</li>
-</ul>
-
-<h3>Ground writing in a source</h3>
-<ul class="cmds">
-  <li><code>/tc source &lt;file&gt;#&lt;locator&gt; [&lt;target&gt;]</code> &mdash; Stage a source slice
-    (a line range, a PDF page range <code>#p.12-14</code>, or a whole file); Claude then writes the
-    verified gray excerpt + green interpretation. A citation can be named by BibTeX key:
-    <code>/tc source @daskin2013 p.114</code>.</li>
-  <li><code>/tc manifest [&lt;doc&gt;]</code> &mdash; Regenerate the document&rsquo;s source manifest in
-    <code>validation/&lt;doc&gt;.sources.md</code> &mdash; the durable, committable record of every
-    sourced passage.</li>
-</ul>
-
-<h3>Bring in trusted material</h3>
-<ul class="cmds">
-  <li><code>/tc import &lt;source&gt;[#L&lt;a&gt;-L&lt;b&gt;] [&lt;target&gt;]</code> &mdash; Insert vetted
-    material and let it land <em>clean</em> (no highlights), reproducing the source faithfully; Claude
-    marks only a genuinely significant change. See <a href="#importing">below</a>.</li>
-</ul>
-
-<h3>Clean up voice dictation</h3>
-<ul class="cmds">
-  <li><code>/tc polish [&lt;file&gt;]</code> &mdash; Clean up voice-dictated prose (recognition slips,
-    grammar, dropped words); every fix lands as an ordinary highlight you review. It never rewrites a
-    token it can&rsquo;t recognize as plain prose (jargon, code, math): it leaves that alone and flags
-    it. (Part of <code>tc-polish</code>.)</li>
-</ul>
-
-<div class="callout">
-  <p>Every accept or reject is recorded as a deliberate decision, so the skill never silently undoes
-  a choice you made &mdash; even if Claude edits the same passage again later. And
-  <code>accept</code> / <code>reject</code> run only on a <strong>committed</strong> file, so an
-  approval always attaches to text git shows was reviewed (human-only override:
-  <code>TC_FORCE=1</code>).</p>
-</div>
 
 <h2>More the suite handles</h2>
 
