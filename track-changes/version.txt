@@ -1,3 +1,238 @@
+9.11.0
+2026-08-03
+track-changes v9.11.0 -- an install stops accumulating.
+- BEHAVIOR-CHANGING FOR `install.sh`: it now MOVES files. Until now it only ever copied, so an
+  installed tree was the union of every version ever installed over it. Measured on the live
+  install right after the 9.10.0 upgrade, five files the source does not ship: hooks/pre-tool-use.sh
+  and hooks/post-tool-use.sh (THE v2 ENFORCEMENT AND AUDIT HOOKS), lib/tc_activation.py,
+  lib/tc_audit.py, lib/tc_provenance.py. Nothing referenced them -- but tc_selfcheck answered 27
+  modules where the source has 26, and that check is the gate both deployment paths use.
+- WHAT IT DOES NOW: `copy_one` (the one funnel every shipped file passes through) records what
+  this run deployed; after copying, and before the self-check, any other *.py/*.sh under lib/ or
+  hooks/ is QUARANTINED to <skill>/.stale/<UTC-timestamp>/<relative path> and NAMED on stdout.
+  Nothing is deleted. Remove .stale/ yourself once you have looked at it.
+- YOUR DATA IS NOT TOUCHED. state/ (the /tc edits snapshot store, the mark cache) and validation/
+  (source snapshots, manifests, dated web captures) are never visited. reference/, tools/ and
+  commands/ are left alone in this release -- a stale .md is noise, not a hazard, and every path
+  not pruned is a path that cannot be pruned wrongly.
+- KEPT REGARDLESS: hooks/pcv_dev_gate.py. `--dev-guards` installs it with a bare cp outside
+  copy_one, so it is invisible to the record BY CONSTRUCTION and a naive prune would delete the
+  maintainer's own governance hook on the next ordinary install.
+- DERIVED, NEVER TYPED. An enumerated prune list would carry the same blind spot as the
+  enumerated copy list that caused 9.9.0. The record is a by-product of copying.
+- NOTHING IS PRUNED on a failed copy (a partial record must never become a prune list) or under
+  --dev-guards (it deploys one file and is not a full install).
+- IF YOU KEEP YOUR OWN FILE under a skill's lib/ or hooks/, it will be quarantined. Move it
+  elsewhere. The quarantine is recoverable and the report names it.
+- THE PAGES BOOTSTRAP STILL DOES NOT PRUNE, and now says so. It downloads an enumerated list with
+  no copy-step record, so it cannot tell an obsolete file from one it never knew about. Run
+  `bash install.sh` from a source checkout to clean an accumulated tree.
+- 9.11.0, not 9.10.1: an upgrade that moves files is behavior users must be told about.
+- No source, grammar, or resolution change. Hook count stays 6. No document migration.
+- 803-test suite (+11 Category AI: 20); 0 regressions.
+
+9.10.0
+2026-08-03
+track-changes v9.10.0 -- accept-time provenance check; the Phase B `resolve` command withdrawn.
+- MINOR. REGION ATOMICITY IS INTACT: `/tc accept N` keeps the whole region and
+  `/tc reject N` removes it, both all-or-nothing, inline marks still forbidden inside.
+- WITHDRAWN BEFORE DEPLOYMENT: 10.0.0's `/tc edits resolve`. It dissolved a region whose
+  body the author had edited -- but `/tc accept N` on that same region already produces
+  BYTE-IDENTICALLY the same result (wrapper gone, author's text kept, AI's text kept,
+  paired gray removed). `accept` never inspected who wrote the body. What `resolve` bought
+  was one commit per review session, and for that it inverted the 8.1.0 committed-content
+  invariant and replaced git-native undo with a 3-generation snapshot store. Removed with
+  it: decision='dissolve', _journal_baseline, snapshot.load_ai_baseline, the `pre-resolve`
+  tagging, and nine tests. Net -184 lines of skill source.
+  To refuse part of a region, DELETE it before accepting -- deletion is partial rejection.
+- NEW, on `/tc accept`: a PROVENANCE CHECK for a `sourced`/`transcript` region. Content the
+  region gained since the write gate saw it, with no basis in its gray excerpt, is NAMED
+  before accept removes the now-false claim, and recorded in `.tc-history.md`. The
+  comparand is the durable `supports:` audit record with NO git-HEAD fallback -- 8.1.0
+  forces the author to commit their own edits first, so HEAD contains them and a fallback
+  would compare their text against itself and always pass. With no record the answer is
+  `not-checked`, never a silent pass. A CONSERVATIVE FLAG, NOT A PROOF: recombination,
+  contradiction, deletion and quantifier swaps all measure zero, with human review as the
+  documented backstop, exactly as 9.1.0's citation scanner.
+- FIXED: a transcript region's durable evidence was WRITE-ONLY. `write_sourced_entry` logs
+  it under a `transcript:` key (deliberately, so the citation manifest never lists an
+  uncited excerpt) and nothing ever read that key back. `read_sourced_entries` gains an
+  opt-in `include_transcript`; the manifest keeps its default, asserted.
+- FIXED: `/tc accept` on a region the author EMPTIED left stray blank lines behind.
+- FIXED (pre-existing): a resolved region's body never reached the git-committed audit --
+  `audit.record` uses `extract_marks`, which is inline-only. Now logged as `was_body`.
+- NEW: `/tc edits` reports the region-SCOPED diff -- what changed INSIDE a region, matched
+  across the baseline by mark number -- not merely that a span overlapped one. Plus a
+  warning that a region whose body is only a footnote definition renders as an empty div,
+  so the "yellow is the visible contract" guarantee silently fails there.
+- No new module, no new hook (count stays 6), back-compatible grammar, no document
+  migration. 792-test suite (Category AI 9; 0 regressions).
+
+9.9.3
+2026-08-02
+track-changes v9.9.3 -- /tc edits first-use frictions: the report now shows WHAT changed, and finds its own files.
+- ORIGIN: the instructor's first live /tc edits run (2026-08-02), recorded as an 11-item friction
+  log. Instructor's ordering: 9.9.3 before Phase B.
+- FR-2 (the load-bearing one): the report located edits but did not SHOW them, so proofreading
+  required re-reading the file and diffing it against the AI's own memory of what it had written.
+  That works only in the session that authored the baseline -- a fresh, resumed, or compacted
+  session had line numbers and nothing else, so the review step Phase A exists to support was not
+  self-contained. compute_spans already built each span's before/after and discarded it; it is now
+  returned and rendered. --no-diff restores counts-only; a long diff truncates LOUDLY (a silently
+  shortened diff is worse than none -- the reviewer would believe they saw the whole edit).
+- FR-1: bare `/tc edits` no longer errors. Deliberately NOT the working-file heuristic the
+  resolution subcommands use -- that picks the most-recently-modified tracked file because no
+  better state existed, and here it does: new snapshot.list_files() + current_sha256() +
+  tc_edits.changed_files() compare shas, so the store names exactly which files the author changed
+  and no snapshot content is read for unchanged ones.
+- FR-3: the snapshot store had no read path (list + restore only), which is why FR-2 had no
+  workaround. New `/tc edits diff` and `/tc edits show`, both read-only and asserted so.
+- FR-6/7/10/11 (output honesty): the polish line states whether anything is PROPOSED instead of
+  reporting a bare token count; site-scoped lint findings, which have no location BY CONSTRUCTION,
+  are no longer framed as a configuration gap; a run that touches no region now says inline marks
+  are unchecked (D8) rather than staying silent, since silence read as "no overlap"; and the footer
+  states the rule for a defect in the AUTHOR's own text (unambiguous mechanical errors become
+  normal marks, anything touching meaning is flagged and held).
+- FR-4 NOT FIXED -- ITS DIAGNOSIS WAS DISPROVED. The log proposed exempting bare autolinks from the
+  non-inline-construct test, while flagging that the regex was inferred and should be confirmed
+  first. Confirming it disproved it: six shapes through the real hook all exit 0; the non-inline
+  detector recognizes only fenced-code/display-math/yaml/gfm-table/quarto-div/latex and has NO HTML
+  handling; cite.py's _MD_HTML_TAG sits on the sourced-citation path an authored mark never
+  reaches; and "spans a non-inline construct" is a HINT appended to a block, never a block reason.
+  The log conflated the hint with the cause, and the fix as written would have changed code that is
+  not on the failing path. Recorded in the friction log with the evidence; still open pending the
+  real payload.
+- No new shipped module, so no manifest change (checked against the 9.9.2 rule, not assumed). No
+  grammar, hook, protocol, or resolution change; hook count stays 6. 783-test suite (748 + 35 new
+  Category AH; 0 regressions).
+
+track-changes v9.9.2 -- verify the INSTALLED artifact: a deployed tree now checks itself, and both deployment paths refuse to report success over one that cannot load.
+- MOTIVATION: 9.9.1 fixed the instance and added build-time guards, but the hole 9.9.0 exposed is a
+  property of the PROCESS -- nothing in the PCV loop ever exercised the installed artifact. 9.9.0 was
+  built, tested green at 721/721, PCV-recorded, and shipped a subcommand that raised ImportError on
+  its first real invocation. Three gaps: install.sh reported "install complete" without checking that
+  what it deployed could be loaded; the Pages bootstrap path (which never runs install.sh) had only an
+  ENUMERATED list of file-existence reads, the same fragile pattern a third time; and no test drove
+  the installed CLI's behavior, since presence is not loadability and loadability is not function.
+- CONSTRAINT: detecting a MISSING module means knowing what should be there, and a user's machine has
+  no source tree to compare against. So the expectation has to ship WITH the package, or install-time
+  verification degrades into a third hand-written list with the same blind spot as the first two.
+- CHANGE (self-declaration): tc_core.MODULES in lib/tc_core/__init__.py -- the package declares its
+  own contents, beside the modules it names. TC-AG-5 fails if it drifts from the directory in either
+  direction, so a list the suite enforces against its own subject is not the same thing as a list
+  nobody checks.
+- CHANGE (new shipped file): lib/tc_selfcheck.py runs two checks that do not subsume each other --
+  every DECLARED module present and importable (catches a module that never shipped; an absent file
+  leaves nothing to walk), and every DEPLOYED *.py across the three skills importable (catches a
+  module that shipped but cannot load). sys.path/sys.modules restored per attempt so one failure
+  cannot contaminate the next; deployed-but-undeclared drift reported too. Stdlib only; verified that
+  no suite module imports a third-party package at module scope, so a failure is a real defect.
+  Exit 0 / 1 (failures named) / 2 (not a track-changes tree).
+- CHANGE (install gate): install.sh runs the self-check after copy_files and FAILS the install
+  (exit 2) instead of printing "install complete" over a broken tree. An installer that verifies only
+  what it was told to copy cannot catch its own omission, so it must check the RESULT.
+- CHANGE (bootstrap gate): bootstrap.md Step 4 runs the self-check as the PRIMARY verification gate,
+  replacing the enumerated steps 4/4a-4g, with the rationale stated inline. This is what gives a
+  Pages install the same protection the maintainer's install.sh gets.
+- TESTS: new Category AG drives the INSTALLED copies, never the source tree -- self-check passes on a
+  fresh install; NEGATIVE CONTROL deleting a declared tc_core module (non-zero, names it, "NOT
+  DEPLOYED", and independently flags the downstream tc_edits.py ImportError); install.sh refusing at
+  the self-check gate specifically; the installed /tc edits end to end on a fixture (the invocation
+  that crashed on 9.9.0); MODULES matching the directory; installed /tc list + /tc status.
+- PROCESS: the dev CLAUDE.md now carries the standing rule -- verification means the INSTALLED
+  artifact; a new shipped file is not done until it is in BOTH deployment manifests (and in
+  tc_core.MODULES when it belongs to the package); run the feature from the installed tree before
+  calling it verified; never hand-fix ~/.claude/skills to make something work.
+- Additive: no mark-grammar change, no change to any existing resolution path, no new hook (stays 6),
+  no document migration. 748-test suite (725 + 23 Category AG; 0 regressions).
+
+track-changes v9.9.1 — packaging fix: 9.9.0's two new tc_core modules were listed in no deployment manifest, so an installed 9.9.0 could not run /tc edits at all.
+- DEFECT: 9.9.0 added four shipped files. Its packaging pass updated the two skill-level entries
+  (lib/tc_edits.py, reference/tc-edits.md) in both manifests and MISSED lib/tc_core/marknum.py and
+  lib/tc_core/snapshot.py in all four enumerated lists (install.sh's REQUIRED_FILES + copy block;
+  bootstrap.md's download list + verify steps). publish.sh was unaffected — it whole-tree syncs, so
+  the modules reached Pages; the bootstrap just never downloaded them.
+- IMPACT: (1) /tc edits was dead on arrival — tc_edits.py imports tc_core.marknum at module scope,
+  so every invocation aborted with ImportError. (2) SILENT: post_tool_use.py imports tc_core.snapshot
+  inside its deliberate best-effort try/except, so the hook exited 0 on every AI write and stored
+  NOTHING — the baseline /tc edits diffs against never accumulated, and would have fallen back to
+  git HEAD forever even after marknum was restored. tc-polish was unaffected (its marknum import has
+  a documented local fallback for a pre-9.9.0 track-changes).
+- FIX: both modules added to install.sh (REQUIRED_FILES + copy_one block) and bootstrap.md
+  (download list + verify steps 4f/4g). install.sh's header source manifest, which had also drifted
+  past tc_edits.py and tc-edits.md, corrected. bootstrap.md's version strings bumped from the stale
+  9.6.0 (unchanged since 9.7.0 shipped) to 9.9.1 — at 9.6.0 the bootstrap would have refused to
+  upgrade a 9.8.3 install and reported a 9.9.1 install as "newer than this bootstrap".
+- REGRESSION TESTS (the general defect, not the instance): new TC-T-8 and TC-T-9 derive their
+  expectations from the SOURCE TREE at run time rather than from a list — T8 installs into a scratch
+  HOME and asserts every file under track-changes/{hooks,lib,reference,tools} reached the installed
+  skill; T9 asserts the same set appears in bootstrap.md's download manifest. Excluded: the three
+  maintainer-local 9.8.0 governance files a user install never receives. The exclusion list fails
+  safe — a new unexcluded, uninstalled file fails the test loudly, so omitting a module now takes a
+  deliberate act rather than an oversight. Verified as a NEGATIVE CONTROL: against the pre-fix
+  manifests both tests FAIL, naming exactly the two missing modules.
+- WHY 721 GREEN TESTS MISSED IT: the suite exercises the SOURCE tree, where both modules are present;
+  nothing drove the INSTALLED tree's tc_edits.py. The one install-side check (T1) was an ENUMERATED
+  spot-check of three tc_core files — the same failure mode as an enumerated copy list.
+- Manifest and test only: no source file edited, no behavior, grammar, or resolution-path change,
+  no new hook (stays 6), no document migration. 725-test suite (721 + 4; Category T 58 -> 62;
+  0 regressions).
+
+track-changes v9.9.0 — /tc edits Phase A: a new track-changes subcommand for the review loop where the AUTHOR edits the document instead of dictating corrections.
+- MOTIVATION: the protocol already described this loop in prose ("hand-tweak, then AI-verified accept")
+  but had no tooling for it. Observed live four times in one ISE 754 session (2026-08-01): the author
+  resolved AI-marked content by editing the .qmd directly, and every instance cost a manual git diff, a
+  manual proofread, a /draft round-trip, and hand-applied fixes. Six dictation-grade errors still
+  reached the file that way, plus four convention slips caught only because the AI happened to hold the
+  convention in memory. Two structural blockers: git cannot separate the author's edits from the AI's
+  when both are uncommitted in one working tree (the normal review state), and conventions were checked
+  at commit time, after the text was written and the moment of authorship had passed.
+- CHANGE (new subcommand): /tc edits [file] — lives IN the track-changes skill
+  (lib/tc_edits.py + reference/tc-edits.md), dispatched by /tc the way /tc source and
+  /tc manifest are; no fourth skill directory and no new hook. It REPORTS and never edits
+  the document, like
+  /tc polish analyze. It diffs the file against a snapshot of "the file as the AI last left it" and
+  reports the edited line spans (each classified content vs whitespace-only, so on-save formatter noise
+  stays visibly separate), tc-polish's dictated scope over just those spans, the project linter's
+  findings INSIDE them, any tracked region an edit overlaps, and the next free mark number. The model
+  then emits corrections as ordinary marks through the always-on gate: the author's own text stays
+  clean and only the AI's corrections are marked.
+- CHANGE (baseline): new tc_core/snapshot.py, written by the existing PostToolUse hook BEFORE its
+  /draft early return — that early return is exactly what makes the audit log blind to /draft writes,
+  which is where most AI editing in this workflow happens. Per-user store (state/snapshots/, keyed by
+  sha1 of the abspath, mirroring the .marks cache) rather than per-repo: no .gitignore entry needed in
+  any consumer repo, and a verbatim content copy can never be committed by accident. Exact bytes, so a
+  restore is byte-faithful; 3 generations per file, 4 MiB cap, 30-day opportunistic prune. Two rejected
+  alternatives, recorded so they are not re-proposed: git HEAD (cannot separate the two authors) and
+  reconstruction from .tc-history.md (blind to /draft). Cold start falls back to git HEAD and says so.
+  The store doubles as an undo buffer: /tc edits snapshots | restore (diff shown; --yes required; the
+  pre-restore bytes are saved first, so a restore is itself undoable).
+- CHANGE (absorption guard): an empty diff means "no change since the last AI write", which is also
+  what an AI write that ABSORBED the author's edits looks like. Warned on two independent signals — an
+  uncommitted file, OR a differing previous snapshot generation (the signal that survives the file
+  having been committed) — naming --gen 1 as the recovery.
+- CHANGE (lint, D6): the convention command is PROJECT-supplied, configured in a repo-local
+  .tc-edits.json (git root first, then the document's own directory). The skill stays generic — it is
+  published for anyone and knows nothing about any project's rules. Argument list with NO shell (a
+  string command is refused outright), argv printed before it runs, findings bucketed into in-span /
+  elsewhere-in-file / other-files / unlocatable (listed, never dropped). Non-zero exit is normal; a
+  missing executable, timeout, or bad config is loud and non-fatal. --no-lint / TC_EDITS_NO_LINT=1 opt
+  out. Trust model documented in SKILL.md: this is executable configuration, like a repo's build
+  scripts.
+- CHANGE (shared): new tc_core/marknum.py is the single mark-number allocator (polish delegates, with
+  its local copy retained only as a degraded-mode fallback and an anti-drift test asserting parity);
+  polish_engine.analyze gains --baseline-file (a non-git baseline, mutually exclusive with
+  --baseline-ref); tc_core.activation gains tc_should_track_inherent (activation ignoring the per-turn
+  /draft suspension). Fixed along the way: the diff normalizes line endings on both sides, without
+  which every line of a CRLF document read as edited.
+- SCOPE: Phase A is CLEAN-PROSE scope. A region overlapping an edited span is reported, never resolved
+  — region splitting, partial accept of an untouched remainder, provenance retyping, the inverted
+  dirty-file invariant, and the heavy-edit threshold are all Phase B (a later 10.0.0, which is where
+  region atomicity actually breaks). Additive: no mark-grammar change, no change to any existing
+  resolution path, NO new hook (count stays 6 shipped + the maintainer-local governance hook), no
+  document migration. Suite 721/721 (702 + 19 new Category AF), 0 regressions. BUILD AND TEST ONLY —
+  install.sh/publish.sh deliberately not run against the real HOME or Pages in this increment.
+
 9.8.3
 2026-07-20
 track-changes v9.8.3 — fix the /tc import clean-landing failure when the two PreToolUse hooks run in parallel.

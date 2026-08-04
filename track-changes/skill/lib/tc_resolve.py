@@ -434,6 +434,56 @@ def _owned_line_empty_span(text, start, end, repl):
     return (line_start, swallow_end)
 
 
+def _empty_region_span(text, opener_start, closer_end):
+    """10.0.0 (C2): the span to remove for a region whose body the AUTHOR emptied.
+
+    "Any portion of a region that I don't agree with … I would just delete" is
+    how partial rejection happens, so a region can arrive with nothing left
+    between its delimiters. Dissolving it must leave NOTHING behind — not an
+    empty fence pair, and not the doubled paragraph separator that removing a
+    block from between two blank lines would otherwise produce.
+
+    This mirrors the two cases `_owned_line_empty_span` encodes rather than
+    approximating them, but it cannot call that helper: that one assumes `start`
+    and `end` share a line (it scans for the enclosing line's bounds), which is
+    false for a region spanning at least two delimiter lines.
+
+      - Base case: opener line through the closer line's trailing newline.
+        `closer_end` already includes that newline.
+      - Block-paragraph case: when the region is flanked by blank lines on BOTH
+        sides, the two separators would collapse into two adjacent blanks, so
+        consume ONE following blank line and leave a single separator.
+      - At EOF, stop at end-of-text.
+
+    ONE DELIBERATE DIVERGENCE. `_owned_line_empty_span` tests "preceded by a
+    blank line" as `text[line_start - 1] == '\\n'`, which is really "not at BOF"
+    — for an inline mark it is paired with a genuine `followed_blank` test and
+    the imprecision is latent. Here it would be a live bug: a region sitting
+    directly beneath a paragraph with no blank line between them would consume
+    the blank BELOW it and weld two paragraphs together. So this checks that the
+    preceding LINE is actually blank. The older helper is left alone rather than
+    "fixed" in passing — changing it would alter inline-mark resolution, which
+    is out of scope for 10.0.0 and covered by other categories.
+    """
+    if opener_start <= 0:
+        preceded_blank = True          # BOF: nothing above to weld to
+    else:
+        prev_nl = text.rfind('\n', 0, opener_start - 1)
+        preceded_blank = text[prev_nl + 1:opener_start - 1].strip() == ''
+    if closer_end >= len(text):
+        return (opener_start, len(text))
+    next_nl = text.find('\n', closer_end)
+    if next_nl == -1:
+        followed_blank = text[closer_end:].strip() == ''
+        follow_end = len(text)
+    else:
+        followed_blank = text[closer_end:next_nl].strip() == ''
+        follow_end = next_nl + 1
+    if preceded_blank and followed_blank:
+        return (opener_start, follow_end)
+    return (opener_start, closer_end)
+
+
 def resolve(path, decision, ns):
     """Apply `decision` ('accept' | 'reject') to the marks whose N is in
     `ns` (a collection of string or int values). Edits the file in place,
@@ -489,7 +539,17 @@ def resolve(path, decision, ns):
         join_applied = None
         # v9.4.0 (Issue 2): a region carrying tc-join="prev"|"next" rejoins an
         # adjacent body paragraph on ACCEPT instead of leaving a standalone block.
-        if decision == 'accept' and r.get('join') in ('prev', 'next'):
+        # 10.0.0 (C2): a region whose body the author emptied has nothing to
+        # merge, so tc-join does not apply and a `join` attribute on one is NOT
+        # an error — it is simply moot. Computed before the join branch so the
+        # ordering the plan fixes (join -> gray -> fences -> orphan) collapses
+        # correctly to (gray -> whole-span) for this case.
+        # 9.10.0: a region the author emptied by hand. `accept` previously
+        # left the blank body lines and a doubled separator behind.
+        body_empty = (decision == 'accept'
+                      and not text[r['opener_end']:r['closer_start']].strip())
+        if decision == 'accept' and not body_empty \
+                and r.get('join') in ('prev', 'next'):
             jspan, subsumes_gray = _join_splice(r, text, ftype, gray_blocks)
             if jspan is not None:
                 spans.append(jspan)
@@ -501,7 +561,14 @@ def resolve(path, decision, ns):
                 join_applied = 'fallback'
                 join_fallbacks.append(r['N'])
         if not used_join:
-            if decision == 'accept':
+            if body_empty:
+                # Nothing to keep: remove opener through closer with the
+                # blank-line rule, and skip the orphan probe (it looks for a
+                # single-line body, and there is none).
+                s0, s1 = _empty_region_span(text, r['opener_start'],
+                                            r['closer_end'])
+                spans.append((s0, s1, ''))
+            elif decision == 'accept':
                 # Keep the body; strip the closer then the opener delimiter line.
                 spans.append((r['closer_start'], r['closer_end'], ''))
                 spans.append((r['opener_start'], r['opener_end'], ''))
@@ -519,6 +586,22 @@ def resolve(path, decision, ns):
             if gspan is not None:
                 spans.append((gspan[0], gspan[1], ''))
                 gray_removed = True
+        # 9.10.0: the provenance check, on the ONE path a green region resolves.
+        # Lazily imported because `tc_edits` imports this module at load time;
+        # by the time `resolve()` runs, both are in sys.modules, so this is a
+        # dict lookup. Kept there rather than duplicated here so "what is new"
+        # has one implementation (`compute_spans`).
+        support = None
+        if decision == 'accept' and prov in ('sourced', 'transcript'):
+            try:
+                import tc_edits as _te
+                support = _te.support_check(
+                    path, r['N'], prov,
+                    text[r['opener_end']:r['closer_start']].split('\n'),
+                    text, ftype, r['line'])
+            except Exception:
+                support = {"status": "not-checked", "tokens": [],
+                           "reason": "the support check could not run"}
         if prov == 'sourced':
             sourced_resolved.append(r['N'])
         resolved.append(r['N'])
@@ -526,6 +609,19 @@ def resolve(path, decision, ns):
                  'new': '(region)', 'prov': prov, 'gray_removed': gray_removed}
         if join_applied:
             entry['join'] = join_applied
+        if support is not None:
+            entry['support'] = support
+        if decision == 'accept':
+            # First-pass critic finding 1: `audit.record` uses
+            # `grammar.extract_marks`, which is INLINE MARKS ONLY, so a plain
+            # `authored` region's body has never reached the durable log.
+            # Dissolving therefore loses nothing that exists today — but the gap
+            # is real, and recording the pre-resolution body here closes it
+            # rather than leaning on the ephemeral snapshot store. For a region
+            # the author emptied, this entry is the ONLY surviving record of
+            # what the AI had written there.
+            entry['body'] = text[r['opener_end']:r['closer_start']]
+            entry['body_empty'] = body_empty
         resolved_marks.append(entry)
     spans.sort(key=lambda s: s[0], reverse=True)
     new_text = text
@@ -566,9 +662,13 @@ def resolve(path, decision, ns):
             f.write(out_text)
         wrote_file = True
 
+    # Against what was actually RESOLVED, not what was requested. For accept and
+    # reject the two coincide. Keyed on `resolved` rather than `want` so a
+    # requested-but-unresolvable number still counts as pending.
+    _done = set(resolved)
     remaining = sorted(
-        [m['N'] for m in marks if m['N'] not in want]
-        + [r['N'] for r in regions if r['N'] not in want], key=_n_key)
+        [m['N'] for m in marks if m['N'] not in _done]
+        + [r['N'] for r in regions if r['N'] not in _done], key=_n_key)
 
     # Audit attribution (explicit) + cache update. Best-effort.
     wrote_log = _write_explicit_audit(path, ftype, decision, resolved_marks,
@@ -579,6 +679,14 @@ def resolve(path, decision, ns):
             'remaining': remaining, 'wrote_file': wrote_file,
             'wrote_log': wrote_log,
             'sourced_resolved': sorted(set(sourced_resolved), key=_n_key),
+            'support_flags': [
+                {'N': m['N'], 'prov': m.get('prov', '?'),
+                 'tokens': (m.get('support') or {}).get('tokens', []),
+                 'reason': (m.get('support') or {}).get('reason', '')}
+                for m in resolved_marks
+                if (m.get('support') or {}).get('status') == 'unsupported'
+                or ((m.get('support') or {}).get('status') == 'not-checked'
+                    and (m.get('support') or {}).get('reason'))],
             'join_fallbacks': sorted(set(join_fallbacks), key=_n_key),
             'orphan_warnings': orphan_warnings}
 
@@ -593,6 +701,9 @@ def _n_key(n):
 # ---------------------------------------------------------------------------
 # Audit side effects.
 # ---------------------------------------------------------------------------
+
+_ACTION_WORD = {'accept': 'accepted', 'reject': 'rejected'}
+
 
 def _write_explicit_audit(path, ftype, decision, resolved_marks, post_text):
     """Append a `resolved:` block carrying `decision: explicit` (F7) so a
@@ -617,7 +728,7 @@ def _write_explicit_audit(path, ftype, decision, resolved_marks, post_text):
         lines.append(f"  - mark: {m['N']}")
         lines.append(f"    was_type: {m.get('type', '?')}")
         lines.append(f"    decision: explicit")
-        lines.append(f"    action: {'accepted' if decision == 'accept' else 'rejected'}")
+        lines.append(f"    action: {_ACTION_WORD.get(decision, decision)}")
         if m.get('old', ''):
             lines.append(f"    was_old: {tc_audit._fmt_str(m['old'])}")
         if m.get('new', ''):
@@ -626,6 +737,22 @@ def _write_explicit_audit(path, ftype, decision, resolved_marks, post_text):
             lines.append(f"    gray_removed: true")  # v9.3.0 paired .tc-verbatim
         if m.get('join'):
             lines.append(f"    join: {m['join']}")   # v9.4.0 paragraph-join
+        if m.get('body_empty'):
+            lines.append(f"    body_empty: true")    # 10.0.0 author emptied it
+        if 'body' in m:
+            # 9.10.0: the pre-resolution body. Git-committed and permanent.
+            # Closes a PRE-EXISTING gap: `audit.record` uses `extract_marks`,
+            # which is inline-only, so a region's body never reached this log.
+            lines.append(f"    was_body: {tc_audit._fmt_str(m['body'])}")
+        sup = m.get('support') or {}
+        if sup.get('status') in ('supported', 'unsupported'):
+            # 9.10.0: so "why did this stop being green" is answerable from the
+            # git-committed log alone.
+            lines.append(f"    support: {sup['status']}")
+            lines.append(f"    prov_at_resolve: {m.get('prov', '?')}")
+            if sup.get('tokens'):
+                lines.append("    unsupported_tokens: %s"
+                             % ', '.join(sup['tokens']))
     entry = '\n'.join(lines) + '\n'
     try:
         os.makedirs(os.path.dirname(log_path), exist_ok=True)
@@ -809,6 +936,24 @@ def _cmd_resolve(path, decision, spec, all_marks=False):
         print("    \"%s\"" % _preview(w['text'], 72))
         print("    If it was carved from a paragraph, add tc-join=\"prev\" (or "
               "\"next\") to that region and re-accept to rejoin it.")
+    # 9.10.0: the provenance check. Informational — accept has already happened,
+    # and resolving is what REMOVES a claim that has gone false, so a flag is
+    # not a reason to stop. What it buys is that the drift is named at all.
+    for sup in res.get('support_flags', []):
+        if sup.get('reason'):
+            print("tc: NOTE -- region %s (%s): %s."
+                  % (sup['N'], sup['prov'], sup['reason']))
+            continue
+        print("tc: WARNING -- region %s was `%s`, so it claimed that text came "
+              "from its source, but this edit introduced content with no basis "
+              "in the gray excerpt:" % (sup['N'], sup['prov']))
+        print("    %s" % ', '.join(sup['tokens'][:12])
+              + (" (+%d more)" % (len(sup['tokens']) - 12)
+                 if len(sup['tokens']) > 12 else ""))
+        print("    Resolving REMOVED that claim, which is the correction. This "
+              "is a conservative flag, not a proof: it cannot see "
+              "contradiction, deletion, or a claim rebuilt from words already "
+              "present. Your reading is the backstop.")
     # v9.3.0 (Issue 2): accept of a sourced region auto-(re)generates evidence.
     if decision == 'accept' and res.get('sourced_resolved'):
         _post_accept_evidence(path)

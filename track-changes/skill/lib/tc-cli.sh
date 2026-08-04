@@ -140,6 +140,18 @@ Cooperating skills (routes to the installed companion skill):
                           pass; changes surface as track-changes marks;
                           never changes meaning; never auto-corrects a flagged
                           protected token.
+  /tc edits <file> [--baseline auto|snapshot|git] [--gen N] [--no-lint]
+                          Run tc-edits (9.9.0): after YOU hand-edit a tracked
+                          file, report what changed since the AI last wrote —
+                          edited line spans (diffed against an automatic
+                          snapshot, not git), tc-polish's scope over just those
+                          spans, the project linter's findings inside them, any
+                          tracked region an edit overlaps, and the next free
+                          mark number. Reports only; never edits the document.
+                          Your text stays clean — only the AI's corrections to
+                          it get marks. Also: /tc edits snapshots <file>,
+                          /tc edits diff|show <file> [--gen N], and
+                          /tc edits restore <file> [--gen N] [--yes].
 USAGE
 }
 
@@ -680,6 +692,42 @@ case "${sub}" in
     [ -f "$PC" ] || { echo "tc polish: tc-polish not installed — reinstall the track-changes suite (see bootstrap)." >&2; exit 2; }
     bash "$PC" analyze "$@"
     echo "tc polish: follow tc-polish SKILL.md bright-line rules — improve freely, never change meaning, never auto-correct a flagged protected token." ;;
+  edits)
+    # In-skill subcommand (9.9.0) — dispatched straight to the backend the way
+    # `source`/`manifest`/`coverage` are, NOT routed to a companion skill. `import`
+    # and `polish` shell out because those skills do things track-changes
+    # deliberately does not; reporting what changed in a tracked file is core.
+    # Default subcommand is `analyze`, so `/tc edits <file>` just works.
+    if ! py="$(tc_resolve_python)"; then
+      echo "tc: ERROR — Python 3 not found" >&2
+      exit 2
+    fi
+    # 9.9.3 (FR-1): bare `/tc edits` no longer errors. It does NOT use the
+    # most-recently-modified working-file heuristic the resolution subcommands
+    # use — this command has better information: the snapshot store knows
+    # exactly which files have baselines, so it reports every file with a real
+    # delta. `analyze` with no path means precisely that.
+    if [ $# -lt 1 ]; then
+      set -- analyze
+    else
+      case "$1" in
+        analyze|snapshots|restore|diff|show|resolve) ;;
+        *) set -- analyze "$@" ;;
+      esac
+    fi
+    # 10.0.0 (C3): `resolve` is the one MUTATING form, and it is deliberately
+    # NOT gated by tc_require_committed. 8.1.0 makes accept/reject refuse on a
+    # dirty file; this command runs only on one, since uncommitted author edits
+    # are its whole input. The replacement invariant lives in the backend: an
+    # AI baseline must exist (no git-HEAD fallback), the resolution is journaled
+    # against that baseline's sha256, and the pre-resolution bytes are saved
+    # first so it is undoable.
+    PYTHONUTF8=1 ${py} "${SCRIPT_DIR}/tc_edits.py" "$@"
+    _tc_edits_rc=$?
+    if [ "${1:-analyze}" = "resolve" ]; then
+      exit ${_tc_edits_rc}
+    fi
+    echo "tc edits: the author's own text stays CLEAN (never mark it); only YOUR corrections to it get marks, and nothing outside the reported spans is touched. If the author's OWN text contains a defect: write an unambiguous mechanical error (spelling, obvious typo) as a normal mark; anything touching meaning, FLAG and hold for them to decide. Full rules: reference/tc-edits.md." ;;
   help|--help|-h)
     print_usage
     ;;

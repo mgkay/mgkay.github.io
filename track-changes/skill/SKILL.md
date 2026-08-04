@@ -485,6 +485,7 @@ The skill installs a single unified `/tc` command with subcommands, plus
 | `/tc accept [<file>] <ranges>` | accept the listed marks (keep new text, strip the wrapper); range syntax `1-25,!7,!11` |
 | `/tc reject [<file>] <ranges>` | reject the listed marks (restore old text, strip the wrapper) |
 | `/tc accept-all [<file>]` / `/tc reject-all [<file>]` | resolve every mark |
+| `/tc edits <file>` | report what the AUTHOR changed since the AI last wrote (9.9.0; in-skill — see §17) |
 | `/tc help` | show the subcommand list |
 
 For the resolution subcommands (`list`/`accept`/`reject`/`accept-all`/
@@ -968,6 +969,14 @@ content *is*, mechanically, not by whether you were "approved":
     atomic unit.
   This is what makes large first-pass content land tracked without anyone
   reaching for `/draft`.
+  - **Atomicity.** `/tc accept N` keeps the whole region, `/tc reject N` removes
+    the whole region, and inline marks stay forbidden inside. There is no
+    "accept the part I didn't touch" — and none is needed: when the author
+    edits a region's body by hand, `accept` keeps **both** halves, so their
+    edits and the AI text they left alone all land as clean prose. To refuse a
+    portion, delete it before accepting. (10.0.0 briefly added a separate
+    `edits resolve` subcommand for this; it was withdrawn in 9.10.0 on measuring
+    that `accept` already produced byte-identical output.)
   - **Paragraph continuity on acceptance (9.4.0).** A region is a *block*, so a
     sentence carved out of the middle or end of a paragraph (e.g. to ground it in
     a source) sits as its own block; on `/tc accept` the wrapper is stripped but
@@ -1328,6 +1337,90 @@ citekeys; before an **anonymous submission**, strip them with a single
 one-pass search-replace over `tc-src="…"` (and the LaTeX `[<src>]` region
 argument). This is a documented per-project step, like the gray-deletion
 timing above — there is no v9 mechanism that does it automatically.
+
+## 17. The author hand-edits the document: `/tc edits` (9.9.0, 9.10.0)
+
+Everything above assumes the AI proposes and the author reviews. The **other**
+direction is just as common: the author opens the document and **edits the prose
+directly** until it reads right, then wants the AI to check the edit. This
+section is the summary; the full rules live in `reference/tc-edits.md`.
+
+`/tc edits` is a **subcommand of this skill**, not a cooperating skill: the backend
+is `lib/tc_edits.py`, dispatched by `/tc` exactly the way `/tc source` and
+`/tc manifest` are. (`/tc import` and `/tc polish` route out to other skills because
+those skills do things track-changes deliberately does not — verified import and
+editorial rewriting. Reporting what changed in a tracked file is core business.) It
+owns no hook: the snapshots it reads are captured by this skill's existing
+PostToolUse hook.
+
+```
+/tc edits <file>
+```
+
+reports, without touching the document:
+
+- the **edited line spans**, each classified `content` or `whitespace-only`;
+- **tc-polish's dictated scope** over just those spans;
+- the **project linter's findings inside** them (a project-supplied command in a
+  repo-local `.tc-edits.json`; this skill knows nothing about any project's rules);
+- any **tracked region** an edited span overlaps;
+- the **next free mark number** (`tc_core.marknum`, the single allocator).
+
+### The rule that matters
+
+**The author's own text lands CLEAN. Only the AI's corrections to it get marks.**
+
+An edited span is the *author's* writing, so wrapping it in a `<mark>` or a
+`tc-prov="authored"` region would misattribute the author's prose to the AI and
+defeat the whole point of the provenance colors. What gets a mark is the
+*correction proposed to it*, wrapped around only the changed characters
+(§3). Nothing outside the reported spans is touched.
+
+### Why a snapshot and not git
+
+During a review session the working tree is dirty with **both** the author's
+edits and the AI's, in one diff git cannot separate. So the baseline is captured
+directly: the **PostToolUse hook snapshots the file on every AI write** —
+including `/draft` writes, which the audit log never sees (§11's early return is
+exactly why reconstructing a baseline from `.tc-history.md` cannot work) — into a
+per-user store keyed by the file's absolute path. The hook does not fire for the
+author's IDE edits, so the snapshot is precisely "state as of the last AI write."
+
+Three generations are kept, which also makes the store an undo buffer:
+`/tc edits snapshots <file>` and `/tc edits restore <file> [--gen N] [--yes]`.
+
+Two limits, both reported rather than hidden: an AI write between the author's
+edit and the command **absorbs** that edit into the baseline (warned on an
+uncommitted file or a differing previous generation, with `--gen 1` as the
+recovery), and an on-save formatter's reflow appears in the diff as if the author
+made it (hence the `whitespace-only` classification). On a fresh clone with no
+snapshot the command falls back to git HEAD **and says so**.
+
+### Resolving a region you edited (9.10.0)
+
+Use **`/tc accept N`**. It keeps the whole body — the AI text you left alone
+*and* the sentences you rewrote — strips the wrapper, and removes a paired gray
+`.tc-verbatim` block. Nothing special is needed, and nothing is lost: your edits
+are your own writing, which lands clean, and the untouched text is AI content
+you have just reviewed, which is what accepting means. **To refuse part of a
+region, delete it before accepting.**
+
+Two things 9.10.0 added on that path:
+
+- **A region you emptied resolves cleanly** — no stray blank lines where the
+  fences were.
+- **A green region is checked.** For `sourced`/`transcript`, content the region
+  gained since the write gate saw it, with no basis in the gray excerpt, is
+  **named before accept removes the provenance claim**. The comparand is the
+  durable `supports:` audit record; with no record the answer is "not checked",
+  never a silent pass. It is a **conservative flag, not a proof** — it cannot
+  see contradiction, deletion, or a claim rebuilt from words already present —
+  and ships with human review as the backstop, exactly as 9.1.0's citation
+  scanner. The result is written to `.tc-history.md`, so "why did this stop
+  being green" is answerable later.
+
+Remember the 8.1.0 gate still applies: commit your edits first. That commit is
+also your undo.
 
 ## Companion tool: `decap` (author-side dictation pre-clean)
 

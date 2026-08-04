@@ -2,7 +2,7 @@
 # polish-cli.sh — command plumbing for the `polish` skill (yellow-only).
 #
 # Subcommands:
-#   analyze <file> [--baseline-ref REF]
+#   analyze <file> [--baseline-ref REF] [--baseline-file PATH]
 #       Run the engine; print a human-readable report (scope M1/M2, dictated
 #       run, flagged protected tokens, non-rendering regions, next mark number,
 #       warnings). The MODEL then performs the polish edits as track-changes
@@ -65,7 +65,7 @@ main() {
     audit)                cmd_audit "$@" ;;
     resolve|set|clear|show) cmd_baseline "$sub" "$@" ;;
     *)
-      echo "usage: polish-cli.sh {analyze <file> [--baseline-ref REF] | audit <file> ... | resolve <file> [--ref REF] | set <file> [REF] | clear <file> | show <file>}" >&2
+      echo "usage: polish-cli.sh {analyze <file> [--baseline-ref REF] [--baseline-file PATH] | audit <file> ... | resolve <file> [--ref REF] | set <file> [REF] | clear <file> | show <file>}" >&2
       return 2 ;;
   esac
 }

@@ -60,6 +60,25 @@ def main():
         return 0
 
     reason = tc_activation.tc_should_track(file_path)
+
+    # 9.9.0 (D1): capture the file as the AI just left it, BEFORE the /draft
+    # early return below. That early return is exactly what makes the audit log
+    # blind to `/draft` writes — and `/draft` is where most AI editing in the
+    # hand-tweak review workflow happens, so a baseline missing those writes
+    # would attribute them to the instructor. Keyed off INHERENT tracking (the
+    # file's own activation, ignoring the per-turn suspension) so a /draft write
+    # to a tracked deliverable is captured while an ordinary .md elsewhere in the
+    # tree is not. Best-effort: a snapshot failure must never disturb exit 0.
+    try:
+        if tc_activation.is_tracking_active(
+                tc_activation.tc_should_track_inherent(file_path)):
+            from tc_core import snapshot as tc_snapshot
+            if tc_snapshot.save(file_path, tool=tool_name) is None:
+                _log(f'snapshot not stored for {file_path} '
+                     '(unreadable, oversize, or no writable state dir)')
+    except Exception as e:
+        _log(f'snapshot skipped: {e}')
+
     # Audit log fires for genuine on-* tracking, not for /draft suspends.
     if not reason.startswith('on-'):
         return 0

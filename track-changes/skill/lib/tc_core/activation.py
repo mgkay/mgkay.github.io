@@ -178,6 +178,22 @@ def tc_should_track(file_path):
         return 'off-default'
     if tc_sentinel_active_draft():
         return 'draft'
+    return tc_should_track_inherent(file_path)
+
+
+def tc_should_track_inherent(file_path):
+    """Activation IGNORING the per-turn /draft suspension (9.9.0).
+
+    Answers "is this file a tracked deliverable?" rather than "is tracking active
+    on this turn?" — the same distinction tc-polish's `tracking_status()` already
+    needed and open-coded. Two callers need it:
+      * the PostToolUse snapshot step, which must capture /draft writes too (they
+        are AI writes, and a baseline missing them would attribute them to the
+        human);
+      * any tooling reporting a file's inherent status.
+    Never returns 'draft'. Every other return value matches tc_should_track."""
+    if not file_path:
+        return 'off-default'
     yaml_val = tc_check_yaml_override(file_path)
     if yaml_val == 'on':
         return 'on-file'

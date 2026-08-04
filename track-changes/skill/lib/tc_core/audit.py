@@ -388,12 +388,13 @@ def _sv_finalize(raw, ts):
     }
 
 
-def _sv_parse_entry(body_lines, ts):
+def _sv_parse_entry(body_lines, ts, include_transcript=False):
     """Parse the `sourced:` items in one entry's body (the lines after its
     header). Returns a list of finalized dicts (good or malformed), in order."""
+    _keys = ('sourced:', 'transcript:') if include_transcript else ('sourced:',)
     start = None
     for idx, ln in enumerate(body_lines):
-        if ln.strip() == 'sourced:' and not ln.startswith(' '):
+        if ln.strip() in _keys and not ln.startswith(' '):
             start = idx + 1
             break
     if start is None:
@@ -430,7 +431,7 @@ def _sv_parse_entry(body_lines, ts):
     return items
 
 
-def read_sourced_entries(abs_file_path):
+def read_sourced_entries(abs_file_path, include_transcript=False):
     """Read the project `.tc-history.md` for `sourced:` audit entries naming
     `abs_file_path`. Return a list (FILE ORDER) of dicts, each either:
 
@@ -475,5 +476,6 @@ def read_sourced_entries(abs_file_path):
     for ent in entries:
         if ent['rel'] != my_rel:
             continue
-        results.extend(_sv_parse_entry(ent['body'], ent['ts']))
+        results.extend(_sv_parse_entry(ent['body'], ent['ts'],
+                                       include_transcript=include_transcript))
     return results

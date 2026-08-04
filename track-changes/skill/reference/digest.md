@@ -61,7 +61,8 @@ leaves a single-line paragraph sandwiched between two paragraphs.
 `/tc accept-all [<file>]` · `/tc reject-all [<file>]` · `/tc help` ·
 `/tc import [--allow-partial] <source>[#L<a>-L<b>] [<target>]` ·
 `/tc coverage <doc> <source> [--units N,N,…]` · `/tc polish [<file>]` ·
-`/tc source <file>#<loc>|@citekey [<target>]` · `/tc manifest [<doc>]`.
+`/tc source <file>#<loc>|@citekey [<target>]` · `/tc manifest [<doc>]` ·
+`/tc edits <file>` (9.9.0).
 Ranges use `1-25,!7` syntax. Omit `<file>` on a resolution command to use the
 working file (most-recently-modified tracked file). Bare `/tc` prints the menu.
 `/draft` = suspend this turn — **USER-ONLY (v6, v7-confirmed shadow-proof: the

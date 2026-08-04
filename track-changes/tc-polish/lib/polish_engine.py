@@ -457,10 +457,37 @@ _MD_REGION_NUM_RE = re.compile(r'tc-n\s*=\s*"(\d+)"')
 _TEX_REGION_NUM_RE = re.compile(r"\\begin\{tcregion\}\{(\d+)\}")
 
 
+def _tc_lib_dirs():
+    """Candidate locations of track-changes' shared `lib` (which holds tc_core):
+    sibling-relative first (works in the source/test tree AND the deployed tree,
+    the way verified-import finds tc_core), then the installed HOME path."""
+    skill_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    return [
+        os.path.join(os.path.dirname(skill_root), "track-changes", "lib"),
+        os.path.join(os.environ.get("HOME") or os.path.expanduser("~"),
+                     ".claude", "skills", "track-changes", "lib"),
+    ]
+
+
 def next_mark_n(text):
     """Next free number across track-changes' ENTIRE single mark-number space:
     inline marks (md `</mark><sup>N</sup>`, LaTeX `\\tcn{N}`) AND whole-region
-    insertions (md `tc-n="N"`, LaTeX `\\begin{tcregion}{N}`). max(all)+1, or 1."""
+    insertions (md `tc-n="N"`, LaTeX `\\begin{tcregion}{N}`). max(all)+1, or 1.
+
+    9.9.0 (seed C4): the CANONICAL implementation is `tc_core.marknum`, shared with
+    tc-edits so two minting sites cannot collide. The local computation below is a
+    degraded-mode fallback for a tc-polish installed against a pre-9.9.0
+    track-changes; test AF9 asserts the two agree, so it cannot quietly drift."""
+    for d in _tc_lib_dirs():
+        if not os.path.isdir(d):
+            continue
+        try:
+            if d not in sys.path:
+                sys.path.insert(0, d)
+            from tc_core import marknum
+            return marknum.next_mark_n(text)
+        except Exception:
+            continue
     nums = ([int(x) for x in _MD_NUM_RE.findall(text)]
             + [int(x) for x in _TEX_NUM_RE.findall(text)]
             + [int(x) for x in _MD_REGION_NUM_RE.findall(text)]
@@ -557,12 +584,20 @@ def tracking_status(file_path):
 
 # --- analyze ----------------------------------------------------------------
 
-def analyze(file_path, baseline_ref=None):
+def analyze(file_path, baseline_ref=None, baseline_file=None):
     """Compute the dictated scope. When `baseline_ref` is None the baseline is
     AUTO-resolved (cumulative edits since the last polish — see resolve_baseline);
     an explicit ref always wins. Diff stays baseline->on-disk, so uncommitted
     edits are in scope, and prior marks/regions are reduced to accepted text
-    (strip_marks) before tokenizing so pending regions never pollute the scope."""
+    (strip_marks) before tokenizing so pending regions never pollute the scope.
+
+    9.9.0 (D5): `baseline_file` supplies the baseline TEXT from a file instead of
+    from git, and takes precedence over every git-side resolution — the pin, the
+    AUTO/FALLBACK patterns, and the dirty-tree warning are all skipped, because
+    with a byte-exact baseline none of them apply. This is how `/tc edits` scopes
+    polish to "since the AI last wrote" (a `tc_core.snapshot` generation) without
+    polish needing to know anything about spans or snapshots: one scoping
+    implementation, two baseline sources."""
     with open(file_path, "r", encoding="utf-8", errors="replace") as f:
         current_raw = f.read()
     allowlist = _load_allowlist(
@@ -571,8 +606,22 @@ def analyze(file_path, baseline_ref=None):
     current_text = strip_marks(current_raw)
     current_tokens = pandoc_tokens(current_text)
 
-    resolved_ref, baseline_source = resolve_baseline(file_path, baseline_ref)
-    base_text, ginfo = git_baseline(file_path, resolved_ref)
+    if baseline_file:
+        try:
+            with open(baseline_file, "r", encoding="utf-8", errors="replace") as f:
+                base_text = f.read()
+            ginfo = {"warnings": [], "baseline_ref": baseline_file}
+            baseline_source = "explicit baseline file"
+            resolved_ref = baseline_file
+        except OSError as e:
+            base_text = None
+            ginfo = {"warnings": ["baseline file unreadable (%s) — treating the "
+                                  "whole file as M1" % e]}
+            baseline_source = "explicit baseline file (unreadable)"
+            resolved_ref = baseline_file
+    else:
+        resolved_ref, baseline_source = resolve_baseline(file_path, baseline_ref)
+        base_text, ginfo = git_baseline(file_path, resolved_ref)
     tracked, treason = tracking_status(file_path)
     nr = nonrendering_line_ranges(current_raw)
     nr_kinds = {}
@@ -628,9 +677,17 @@ def main(argv=None):
     sub = p.add_subparsers(dest="cmd", required=True)
     a = sub.add_parser("analyze", help="compute dictated scope + flags")
     a.add_argument("file")
-    a.add_argument("--baseline-ref", default=None,
-                   help="explicit baseline (default: auto-resolve cumulative "
-                        "edits since the last polish)")
+    # XOR, not precedence: passing both is a usage error rather than a silent
+    # surprise about which one won (9.9.0 critic finding 2/8).
+    ab = a.add_mutually_exclusive_group()
+    ab.add_argument("--baseline-ref", default=None,
+                    help="explicit baseline (default: auto-resolve cumulative "
+                         "edits since the last polish)")
+    ab.add_argument("--baseline-file", default=None,
+                    help="baseline TEXT from a file instead of git (9.9.0); "
+                         "skips every git-side resolution. Used by /tc edits "
+                         "with a snapshot. Mutually exclusive with "
+                         "--baseline-ref.")
     au = sub.add_parser("audit", help="append a dictated: breadcrumb")
     au.add_argument("file")
     au.add_argument("--runs", type=int, default=1)
@@ -652,7 +709,7 @@ def main(argv=None):
     args = p.parse_args(argv)
 
     if args.cmd == "analyze":
-        rep = analyze(args.file, args.baseline_ref)
+        rep = analyze(args.file, args.baseline_ref, args.baseline_file)
         print(json.dumps(rep, indent=2, ensure_ascii=False))
         return 0
     if args.cmd == "resolve":

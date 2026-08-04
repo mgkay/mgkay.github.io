@@ -87,6 +87,82 @@ def missing_tokens(src_text, tgt_text):
     return sorted(tokenize(src_text) - tokenize(tgt_text))
 
 
+# ---------------------------------------------------------------------------
+# Reverse direction (10.0.0, C4) — the `/tc edits resolve` support check.
+#
+# Spec of record: pcvplans/gate-b-c5-support-check.md. Read it before changing
+# anything here; the obvious formulation is wrong in a way measurement caught.
+#
+# THE OBVIOUS FORMULATION, AND WHY IT FAILS. "Tokens in the region body that are
+# absent from its gray excerpt" is what the charge, the plan, the first critic
+# pass and the handoff note all described. Measured on the real fixture (region
+# 27 of ISE754-dev 2-loc-2.qmd at b6eb907): the AI's CORRECTLY sourced body
+# scores 14 unsupported tokens, 0.67 of its content tokens, against the bad
+# rewrite's 31. Nothing separates them. The cause is structural rather than a
+# tuning problem — a green region is a GLOSS, unverbatim by design, since
+# verbatim reuse is what /tc import is for — so its legitimate vocabulary is
+# mostly absent from its excerpt.
+#
+# WHAT WORKS. Scope to what the EDIT introduced, and compare against the excerpt
+# UNION the text already standing in the region: 0 and 1 against 24 on the same
+# fixture.
+#
+# The second union term is FALSE-POSITIVE SUPPRESSION, NOT VERIFICATION. An
+# earlier draft justified it as "the prior body was gated at write time, so it
+# is supported by construction". That is false in three code paths — the gate
+# never compared body to excerpt, a body edit to an existing sourced region
+# skips re-verification, and transcript regions are not in its trigger set at
+# all. Admitting that vocabulary removes the glossing baseline; it asserts
+# nothing about truth, and the recombination blind spot below is its direct
+# consequence.
+#
+# DOCUMENTED BLIND SPOTS — this is a conservative flag, not a proof, and it
+# ships that way with the instructor as backstop, exactly as 9.1.0's citation
+# scanner did. All measured:
+#   - recombination of existing vocabulary into a NEW claim  -> 0 (the largest)
+#   - contradiction (a negation flip)                        -> 0
+#   - deletion of the supported half                         -> 0
+#   - quantifier swap (all -> most)                          -> 0
+# The fixture's separation is driven by TOPIC DRIFT (retailer, trucks, fleet),
+# not by claim validity. An in-topic rewrite that changes what the region
+# asserts is the common case and is invisible here.
+# ---------------------------------------------------------------------------
+
+# `tokenize` drops numbers under two significant characters, tuned for the
+# IMPORT direction where a dropped `r_f` is the failure and false positives are
+# cheap. This direction runs the other way: on a quantitative lecture, `3` -> `8`
+# is among the highest-consequence silent edits a reviewer could miss. So single
+# digits count HERE ONLY. `missing_tokens` is untouched; TC-AI-9k asserts both.
+_SINGLE_NUM_RE = re.compile(r"(?<![\w.])\d(?![\w.])")
+
+
+def _tokens_with_single_digits(text):
+    toks = tokenize(text)
+    toks.update(_SINGLE_NUM_RE.findall(text))
+    return toks
+
+
+def unsupported_tokens(added_text, excerpt, prior_body, ftype='md',
+                       strip_citations=None):
+    """Content tokens the EDIT introduced with no basis in excerpt or prior body.
+
+    DATA-ONLY, per this module's contract: a pure function returning a sorted
+    list. The caller maps the result to behaviour — here, to a line in the
+    `/tc edits resolve` report. Empty list means "nothing introduced that is
+    unaccounted for", which is NOT the same as "true".
+
+    `strip_citations` is injected rather than imported so this module keeps its
+    stdlib-only, no-sibling-import contract; `tc_edits` passes `cite`'s. Applied
+    to `added_text` ONLY — never to the comparand, whose citation vocabulary
+    would otherwise silently join the supported set (a recorded residual).
+    """
+    if strip_citations is not None:
+        added_text = strip_citations(added_text, ftype)
+    known = (_tokens_with_single_digits(excerpt or '')
+             | _tokens_with_single_digits(prior_body or ''))
+    return sorted(_tokens_with_single_digits(added_text or '') - known)
+
+
 def parse_units(text):
     """Split a staging file on `<!-- slide N -->` markers into {N: body}.
 
