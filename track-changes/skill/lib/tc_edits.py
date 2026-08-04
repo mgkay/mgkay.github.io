@@ -1004,18 +1004,32 @@ def render(rep, show_diff=True):
         # actionable — "31 token(s) new" only restates what the span counts
         # already say. Report whether polish has anything to PROPOSE, and keep
         # the count as the subordinate detail it is.
+        # 9.11.1: this line is named for what it REPORTS. Its only payload is
+        # the protected-token set — jargon/code/math that must never be
+        # auto-corrected — but it was labelled "polish", so the empty branch
+        # ("nothing flagged in the edited text") meant *no un-correctable
+        # tokens* and read as *no errors found*. Nearly opposite messages, and
+        # the reassuring one was the wrong one: measured on a fixture carrying a
+        # doubled "the" and "weights is" for "weights are", it printed exactly
+        # that. Same defect 9.9.3 fixed on the region line above (D8/FR-10),
+        # never carried across.
+        #
+        # "run /tc polish for the full editorial pass" is gone with it. In THIS
+        # flow the editorial pass is the model reading these spans, now — the
+        # pointer sent the reader away at the moment the work should start. The
+        # polish-vs-edits distinction belongs in reference/tc-edits.md and on
+        # the landing page, where someone choosing between two commands looks.
         toks = p.get("dictated_tokens") or []
         flagged = p.get("flagged_protected") or []
         if flagged:
-            add("  polish: %d protected token(s) to review by hand — never "
-                "auto-correct these: %s" % (len(flagged), ", ".join(flagged)))
-            add("    (%d token(s) new in the edited text; run /tc polish for "
-                "the full editorial pass)" % len(toks))
+            add("  protected: %d token(s) to leave alone (jargon/code/math — "
+                "never auto-correct): %s" % (len(flagged), ", ".join(flagged)))
+            add("    (%d token(s) new in the edited text)" % len(toks))
         else:
-            add("  polish: nothing flagged in the edited text (%d new token(s); "
-                "run /tc polish for the full editorial pass)" % len(toks))
+            add("  protected: none in the edited text (%d new token(s))"
+                % len(toks))
     else:
-        add("  polish: skipped — %s" % (p.get("reason") or "?"))
+        add("  protected: skipped — %s" % (p.get("reason") or "?"))
 
     li = rep.get("lint") or {}
     if li.get("status") == "ok":
@@ -1045,6 +1059,20 @@ def render(rep, show_diff=True):
 
     if rep.get("next_mark_n"):
         add("  next mark number: %d" % rep["next_mark_n"])
+
+    # 9.11.1: state the remaining work instead of letting the report end on a
+    # list of clean-looking checks. Every line above reports something MECHANICAL
+    # (spans, protected tokens, region overlap, lint) and none of it is a
+    # proofread, so a reader reaching the end had no cue that the actual review
+    # had not happened yet. Printed only when there is prose to read: with no
+    # content span the instruction is noise, and the empty-diff and
+    # whitespace-only cases already say what they are.
+    if any(s.get("kind") == "content" for s in spans):
+        n = rep.get("next_mark_n")
+        add("  NOT PROOFREAD: nothing above has been checked for grammar, "
+            "dropped words, or sense.")
+        add("    Read the span diffs, then mark any correction%s."
+            % ("" if not n else " as %d+" % n))
     for w in rep.get("warnings", []):
         add("  ! %s" % w)
     return "\n".join(L)

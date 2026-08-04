@@ -22,16 +22,34 @@ errors (`dimesional`, `is might be`, a missing verb) still reached the file.
 1. **Diffs** the file against a snapshot of *the file as the AI last left it*.
 2. **Reports the edited spans** — line ranges, added/removed counts, and whether
    each span is a real content change or whitespace-only.
-3. **Runs tc-polish** scoped to those spans (`--baseline-file`, so polish's own
-   dictated-scope machinery does the work against the snapshot instead of git).
+3. **Runs tc-polish's mechanical scan** scoped to those spans (`--baseline-file`, so
+   polish's own dictated-scope machinery works against the snapshot instead of git),
+   and reports the **`protected:`** line — tokens the model must *leave alone*
+   (domain jargon, code, math).
 4. **Runs the project's linter** over the file and reports only the findings that
    land *inside* the edit.
 5. **Reports any tracked region** an edited span overlaps.
 6. **Reports the next free mark number.**
+7. **States that nothing has been proofread** (`NOT PROOFREAD`), whenever there is at
+   least one content span.
 
 It **does not edit the document.** The model then writes corrections as ordinary
 `<mark>…</mark><sup>N</sup>` marks, which land through the always-on PreToolUse gate
 like any other AI edit and are reviewed with `/tc accept` / `/tc reject`.
+
+**Every line of the report is MECHANICAL, and the last line says so (9.11.1).**
+Nothing above `NOT PROOFREAD` is a reading of the prose: the spans say what moved,
+`protected:` says what not to touch, the region and lint lines say what was hit. The
+proofread is the model reading the span diffs — *this* invocation, not a later one.
+
+`protected:` was called `polish:` through 9.11.0, and its empty branch printed
+`nothing flagged in the edited text`. Its only payload was and is the protected-token
+set, so that meant *"no un-correctable tokens"* and read as *"no errors found"* —
+measured on prose carrying a doubled `the` and `weights is` for `weights are`, which
+a mechanical scan does not and cannot catch. The line also pointed at `/tc polish`
+"for the full editorial pass", sending the reader away at the moment the pass should
+be starting. **`protected: none` means nothing needed protecting, never that nothing
+needed fixing.**
 
 ## The one rule for the model
 

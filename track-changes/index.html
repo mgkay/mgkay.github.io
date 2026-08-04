@@ -107,6 +107,7 @@
     pre.report .add { color: #1f6b43; }
     pre.report .del { color: #a33b3b; }
     pre.report .dim { color: #777; }
+    pre.report .flag { color: #8a5a00; font-weight: 700; }
     /* Two capability cards near the top */
     .caps { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1.5rem 0 1rem; }
     .cap {
@@ -373,7 +374,7 @@ reading it you fixed two things by hand: <em>weighted</em> should have been
 shortened):</p>
 
 <pre class="report">tc edits &mdash; &hellip;/lectures/facility-location.md
-  baseline: snapshot gen 0, captured 2026-08-04T04:25:10Z
+  baseline: snapshot gen 0, captured 2026-08-04T11:31:53Z
   2 edited span(s), 5 line(s) changed (2 content, 0 whitespace-only):
     - lines 6-8              +3    -3     content
 <span class="del">        -minimize the total weighted distance between each demand point and the facility
@@ -388,9 +389,11 @@ shortened):</p>
 <span class="add">        +substitution. The greedy algorithm rarely finds the the optimal solution, even
         +when the demand weights is uniform.</span>
   no tracked REGION overlaps an edited span (inline marks are not checked &mdash; see /tc list)
-  polish: nothing flagged in the edited text (6 new token(s); run /tc polish for the full editorial pass)
+  protected: none in the edited text (6 new token(s))
   lint: not configured. configure a project linter in .tc-edits.json: {"lint": {"command": ["python", "tools/lint.py", "{file}"]}}
-  next mark number: 1</pre>
+  next mark number: 1
+<span class="flag">  NOT PROOFREAD: nothing above has been checked for grammar, dropped words, or sense.
+    Read the span diffs, then mark any correction as 1+.</span></pre>
 
 <p>Two things to notice. It <strong>never edits the document</strong> &mdash; it reports, and every
 correction that follows goes through the ordinary highlight-and-review path. And the baseline is a
@@ -412,13 +415,20 @@ only what the <em>AI</em> is proposing on top, and you accept or reject those ex
 enforcement is unchanged: Claude physically cannot slip an unmarked change into that paragraph while
 &ldquo;just fixing your typos.&rdquo;</p>
 
-<p>The report is deliberately literal about what it did and didn&rsquo;t check. The
-&ldquo;polish&rdquo; line is a quick mechanical scan for dictation artifacts &mdash; here it found
-none, which is why the grammar slips were caught by Claude reading the passage, not by that scan.
-The &ldquo;lint&rdquo; line is an invitation: a project can register its own checker in a
-<code>.tc-edits.json</code> file and have its house rules enforced inside the edited lines only. And
-if one of your edits had landed inside a tracked region, the report would have named the region and
-shown what changed within it, rather than leaving you to notice.</p>
+<p>The report is deliberately literal about what it did and didn&rsquo;t check, and it ends by
+saying so. Every line above <code>NOT PROOFREAD</code> is a <em>mechanical</em> result &mdash;
+which lines moved, which tokens are off-limits, whether a region was touched, what a linter said.
+None of it is a reading. So the report closes by naming the work that is left rather than trailing
+off after a list of clean-looking checks: the grammar slips in this example were caught by Claude
+<em>reading</em> the passage, which is the step the last line exists to demand.</p>
+
+<p><code>protected:</code> lists tokens Claude must <strong>leave alone</strong> &mdash; domain
+jargon, code, math &mdash; because a copy-editor &ldquo;fixing&rdquo; a term it doesn&rsquo;t
+recognize is worse than leaving it. &ldquo;None&rdquo; means nothing needed protecting, not that
+nothing needed fixing. The <code>lint:</code> line is an invitation: a project can register its own
+checker in a <code>.tc-edits.json</code> file and have its house rules enforced inside the edited
+lines only. And if one of your edits had landed inside a tracked region, the report would have named
+the region and shown what changed within it, rather than leaving you to notice.</p>
 
 <h2 id="ex-source">See it: AI writing grounded in a source</h2>
 
@@ -672,7 +682,7 @@ complete file list live in the
 </main>
 
 <footer>
-  <p>track-changes v9.11.0 &middot; M. G. Kay &middot; NC State ISE<br>
+  <p>track-changes v9.11.1 &middot; M. G. Kay &middot; NC State ISE<br>
   <a href="bootstrap.md" download>Download bootstrap.md</a></p>
 </footer>
 

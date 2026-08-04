@@ -1,3 +1,34 @@
+9.11.1
+2026-08-04
+track-changes v9.11.1 -- the landing page joins the repo; the report stops reassuring.
+- REPORT WORDING (`/tc edits`): the `polish:` line is renamed `protected:`, which is what it
+  has always reported -- jargon/code/math tokens the model must LEAVE ALONE. Its empty branch
+  used to print "nothing flagged in the edited text", meaning *no un-correctable tokens* and
+  reading as *no errors found*. Measured on prose carrying a doubled "the" and "weights is"
+  for "weights are": it printed exactly that. `protected: none` means nothing needed
+  protecting, never that nothing needed fixing.
+- DROPPED with it: "run /tc polish for the full editorial pass". In this flow the editorial
+  pass is the model reading those spans NOW; the pointer sent the reader away at the moment
+  the work should start. The polish-vs-edits distinction lives in reference/tc-edits.md and
+  on the landing page, where someone choosing between two commands actually looks.
+- NEW closing line: `NOT PROOFREAD: nothing above has been checked for grammar, dropped
+  words, or sense.` Every line above it is MECHANICAL. Printed only when there is at least
+  one content span -- with none the instruction is noise.
+- THE LANDING PAGE IS NOW IN THIS REPO (`pages/`): index.html, style.css, img/. They lived
+  only in the Pages repo -- outside this repo, outside PCV, outside the private mirror --
+  while publish.sh rewrote the page's footer. "Never hand-edit Pages" could not be honored
+  for the one file most likely to need editing.
+- publish.sh syncs `pages/` generically, so a new asset needs no edit there. The page is a
+  BYTE COPY: the destination-`sed` that rewrote the footer is GONE (it would have made source
+  and destination differ permanently, so every publish would re-copy). The footer version now
+  lives in the source and is checked twice -- the suite fails on drift, and publish.sh
+  refuses.
+- publish.sh REPORTS stale Pages files. Its comment had promised this since v9 and no such
+  code existed; 9.11.1 made the comment true rather than deleting the claim. Reporting only,
+  never deletion -- publish is copy-based by design.
+- No grammar, hook (6), or resolution change. No migration.
+- 818-test suite (+17 Category AI: 34, +1 AH: 36); 0 regressions.
+
 9.11.0
 2026-08-03
 track-changes v9.11.0 -- an install stops accumulating.
