@@ -100,7 +100,7 @@ and the questions are drawn from that construct alone.</p>
 <div class="bar" id="drillbar">
   <label for="cardno">Or drill one construct — syntax card #</label>
   <input id="cardno" type="number" min="1" max="38" inputmode="numeric"
-         placeholder="18" aria-label="syntax card number">
+         placeholder="1–38" aria-label="syntax card number">
   <button id="go">Go</button>
   <span class="spacer"></span>
   <button id="restart">Shuffle and restart</button>
@@ -129,7 +129,7 @@ and the questions are drawn from that construct alone.</p>
   </div>
 </div>
 
-<h2>The syntax card</h2>
+<h2 id="the-syntax-card">The syntax card</h2>
 <p>Every construct the published lectures use, in the order a reader meets it,
 with the lecture that introduces it. Reading Julia in this course means
 recognizing these on sight. <strong>Click a number to be quizzed on that
@@ -241,9 +241,16 @@ Lectures: <a href="https://mgkay.github.io/ise754f26/">https://mgkay.github.io/i
     start(pool());
     if (c) $('quiz').scrollIntoView({behavior: 'smooth', block: 'center'});
   }
+  // EVERY BAD INPUT GETS A USEFUL SENTENCE, never the number it failed to
+  // parse: an empty box reaching this said "There is no syntax card NaN",
+  // which describes the parse rather than what to do about it.
   function drill(n) {
+    const last = CARDS.length;
+    if (!Number.isFinite(n)) {
+      return note('Type a syntax card number, 1 to ' + last + '.');
+    }
     const c = CARDS.find(x => x.n === n);
-    if (!c) return note('There is no syntax card ' + n + '.');
+    if (!c) return note('There is no card ' + n + '; they run 1 to ' + last + '.');
     if (!c.count) return note('Card ' + c.n + ' has no questions yet.');
     setCard(c);
   }
