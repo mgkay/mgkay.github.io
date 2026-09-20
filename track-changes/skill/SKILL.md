@@ -1022,6 +1022,29 @@ accepted (a conversion's definition-of-done should gate on none remaining).
 For the mechanically-verified `sourced` discipline (staging, the write-time
 excerpt check, and the evidence manifest), see §16.
 
+**THE VOCABULARY IS CLOSED, and a wrong value is refused rather than defaulted
+(9.14.0).** `tc-prov` accepts those four and `tc-join` accepts `prev`/`next`;
+anything else is an ERROR. **Absent is still legal and always will be** — every
+pre-v6 mark carries no attribute and must keep reading as authored — but ABSENT
+and WRONG are no longer the same thing. Until 9.14.0 every parser answered an
+unrecognized value with the default, so `tc-prov="gap"`, or a typo like
+`tc-prov="trancript"`, became `authored`: the region rendered as ordinary yellow
+AI prose and `/tc accept` would bake it into the document as body text, which is
+the precise conflation this mechanism exists to prevent. `tc-join="previous"`
+became no-join, so a paragraph meant to rejoin stayed split and nothing said so.
+
+Enforced at the two points that matter. The **PreToolUse hook refuses a write
+that ADDS** a bad value, naming the value and the legal set. **`accept`/`reject`
+refuse** while any bad value is present, because accept is the destructive
+direction; **`list` warns and still lists**, being read-only and deliberately
+never gated. The hook is scoped to values a write ADDS, so a document already
+carrying one is reported rather than wedged, and correcting it is an ordinary
+allowed edit.
+
+If the intent is a category the vocabulary does not have, it needs a construct
+of its own. A provenance value the tool will not honor is worse than no marking
+at all: it reads as a *declared* provenance while being none.
+
 **The corpus-example rule (standing convention).** Worked examples lifted from
 the spreadsheet/MATLAB corpus have mixed, predictable provenance: the
 **scenario / statement / data** is lifted → `/tc import` (clean, `imported`); the

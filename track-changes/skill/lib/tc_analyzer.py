@@ -413,6 +413,29 @@ def _block_sibling_covered_lines(proposed_lines, added_set, ftype):
     return covered
 
 
+# A line that carries no words of its own: blank, or a Quarto div fence (`:::`, and the
+# attribute form `::: {.callout-note ...}`). Adding one of these around prose the author
+# already wrote authors nothing, which is why wrapping a passage in a callout must not
+# demand a mark. Deliberately SHORT and explicit rather than a general Quarto parse --
+# the scoping note named this whitelist as the one place the estimate could run away, so
+# it stays a list that can be read in a second and extended on evidence.
+_TC_NO_WORDS_RE = re.compile(r'^\s*(?::{3,}.*)?$')
+
+
+def _authors_no_words(src_lines, prp_lines):
+    """True when the proposed text introduces no content line the source lacked.
+
+    Multiset, not set: a line duplicated in the proposal is one occurrence the source
+    does not account for, so duplicating a paragraph is correctly NOT word-free.
+    """
+    from collections import Counter
+
+    def content(lines):
+        return Counter(ln.strip() for ln in lines if not _TC_NO_WORDS_RE.match(ln))
+
+    return not (content(prp_lines) - content(src_lines))
+
+
 def analyze(source_text, payload, tool_name, ftype):
     """Run the full analyzer pipeline.
 
@@ -427,7 +450,7 @@ def analyze(source_text, payload, tool_name, ftype):
     violations=[], suggest_draft=False (caller exits 0).
     """
     result = {'proposed_text': source_text, 'violations': [],
-              'suggest_draft': False, 'imported': []}
+              'suggest_draft': False, 'imported': [], 'relocation': None}
     proposed_text = _build_proposed(source_text, payload, tool_name)
     if proposed_text is None:
         return result
@@ -489,6 +512,52 @@ def analyze(source_text, payload, tool_name, ftype):
             if dl.startswith('-') and not dl.startswith('---'):
                 has_minus_only = True
                 break
+
+    # *** STRUCTURAL EDITS THAT AUTHOR NO WORDS (2026-09-20). ***
+    #
+    # THE COST THIS REMOVES, measured on ISE 754 lecture 3.1: six `/draft` turns in one
+    # lecture, each one stopping work until the author was available, and not one of them
+    # introduced a word of AI prose. He asked for a digression to go in a collapsed
+    # callout, a list to be wrapped in a div, a figure to move below its section's opening
+    # paragraph, an orphaned excerpt to be deleted. The hook refused all of them, in BOTH
+    # directions: the addition at the new position as "content not wrapped in a mark", the
+    # removal at the old as "deletion with no deletion marker".
+    #
+    # WHY THIS DOES NOT WEAKEN THE GUARANTEE. The promise is that nothing unmarked is ever
+    # the AI's. A relocation, a fence and a deletion all leave the words exactly as the
+    # author wrote them, so no unmarked AI prose can enter through any of them. The
+    # predicate is therefore NOT "a move happened" -- which would admit a move that also
+    # adds a sentence -- but "no content line appears that was not already in the file".
+    #
+    # FAIL-CLOSED BY CONSTRUCTION. It is whole-edit, not per-line: a single unexplained
+    # content line anywhere makes it False and every ordinary rule applies untouched. A
+    # mixed edit is refused, which is right -- `TC-AK-1` is exactly that case and is the
+    # control this feature is guarded by.
+    #
+    # WHAT IT KNOWINGLY ADMITS, on the instructor's explicit ruling of 2026-09-20: the
+    # author's own lines may be REORDERED unmarked, which can change meaning without
+    # adding a word. That is inseparable from allowing a move at all. It is accepted
+    # because the relocation is RECORDED -- post_tool_use writes a `relocated:` entry to
+    # the history -- so the change is explained rather than invisible, which is the same
+    # bargain a disposition makes against a suppressed finding.
+    authors_no_words = _authors_no_words(_src_lines, _prp_lines)
+    if authors_no_words and diff_text.strip():
+        # THE PAYLOAD IS THE POINT, not the flag. The instructor accepted this widening
+        # on the condition that the change is RECORDED rather than invisible, so what
+        # goes to the history has to be enough to find the passage again: how many
+        # content lines arrived and departed, and the first of them as a locator.
+        def _content(sign):
+            return [dl[1:].rstrip() for dl in diff_lines
+                    if dl.startswith(sign) and not dl.startswith(sign * 3)
+                    and dl[1:].strip() and not _TC_NO_WORDS_RE.match(dl[1:])]
+        _in, _out = _content('+'), _content('-')
+        result['relocation'] = {
+            'arrived': len(_in),
+            'departed': len(_out),
+            'first': (_in or _out or [''])[0].strip()[:120],
+        }
+    if authors_no_words:
+        added_line_nums = []
 
     # Region detection (for sibling-form errors AND mask).
     regions = []
@@ -741,7 +810,8 @@ def analyze(source_text, payload, tool_name, ftype):
                     add_v(ln, "added content not wrapped in \\tc{...}\\tcn{N} highlight (Fix #10: per-region coverage)")
                 inline_violation_added = True
 
-    if not is_pure_resolution and has_minus_only and not added_line_nums:
+    if (not is_pure_resolution and has_minus_only and not added_line_nums
+            and not authors_no_words):
         if ftype in ('md', 'qmd'):
             add_v(1, "deletion(s) detected with no <mark><s>...</s></mark><sup>N</sup> deletion marker")
         else:

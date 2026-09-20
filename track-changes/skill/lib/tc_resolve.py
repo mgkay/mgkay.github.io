@@ -842,6 +842,57 @@ def _update_cache(path, ftype, post_text):
 #   tc_resolve.py reject-all <file>
 # ---------------------------------------------------------------------------
 
+def _unknown_vocab(path):
+    """[{line, attr, value, legal, form}] for closed-vocabulary attributes in
+    `path` present with an unrecognized value. Empty on any read failure, so
+    this can never be the reason a command dies."""
+    try:
+        ftype = file_type(path)
+        with open(path, 'r', encoding='utf-8', newline='') as f:
+            text = f.read()
+    except (IOError, OSError, ValueError):
+        return []
+    try:
+        return tc_grammar.unknown_attr_values(text, ftype)
+    except Exception:
+        return []
+
+
+def _report_unknown_vocab(path, bad, stream):
+    ftype = file_type(path)
+    for b in bad:
+        stream.write('  ' + tc_grammar.describe_unknown_attr(b, ftype) + '\n')
+
+
+def _block_on_unknown_vocab(path, sub):
+    """Closed-vocabulary invariant (9.14.0): a resolution REFUSES while the file
+    carries a `tc-prov`/`tc-join` value outside its whitelist.
+
+    Because an unrecognized value silently became the default, `/tc accept` on
+    such a region would strip its wrapper and bake the text into the document as
+    though the default had been the author's declared intent. Accept is the
+    destructive direction, so this is the one place the check cannot be
+    advisory.
+
+    NOT A WEDGE: the PreToolUse gate refuses only writes that ADD a bad value,
+    so correcting one to a legal value is an ordinary allowed edit, and a human
+    editing the file by hand was never gated at all. Returns 3 or None."""
+    bad = _unknown_vocab(path)
+    if not bad:
+        return None
+    sys.stderr.write(
+        f"tc {sub}: BLOCKED -- {len(bad)} unrecognized closed-vocabulary "
+        f"value(s) in {path}:\n")
+    _report_unknown_vocab(path, bad, sys.stderr)
+    sys.stderr.write(
+        "Resolving would strip the wrapper and keep the text as though the "
+        "DEFAULT\nprovenance had been declared all along. Correct each value "
+        "first; if the\nintent is a category the vocabulary does not have, it "
+        "needs a construct of\nits own rather than a provenance value the tool "
+        "will not honor.\n")
+    return 3
+
+
 def _cmd_list(path):
     try:
         marks = list_marks(path)
@@ -851,6 +902,17 @@ def _cmd_list(path):
     except ValueError as e:
         sys.stderr.write(f"tc: ERROR -- {e}\n")
         return 2
+    # Advisory here, blocking at accept/reject: `list` is the read-only
+    # subcommand and is deliberately never gated, but it is also where the
+    # author looks first, so it is the right place to SAY there is a bad value.
+    bad = _unknown_vocab(path)
+    if not bad:
+        pass
+    else:
+        sys.stderr.write(f"tc: WARNING -- {len(bad)} unrecognized "
+                         f"closed-vocabulary value(s); accept/reject will "
+                         f"refuse until they are corrected:\n")
+        _report_unknown_vocab(path, bad, sys.stderr)
     if not marks:
         print(f"tc: no marks in {path}")
         return 0
@@ -908,6 +970,9 @@ def _post_accept_evidence(path):
 
 
 def _cmd_resolve(path, decision, spec, all_marks=False):
+    rc = _block_on_unknown_vocab(path, decision)
+    if rc is not None:
+        return rc
     try:
         existing = list_marks(path)
     except (IOError, OSError):

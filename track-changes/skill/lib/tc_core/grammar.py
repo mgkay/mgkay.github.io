@@ -185,6 +185,107 @@ def join_from_attrs(attrs):
     return norm_join(m.group(1)) if m else None
 
 
+# --- Present-but-unrecognized closed-vocabulary values (9.14.0) -------------
+# ABSENT AND WRONG ARE NOT THE SAME THING, and every normalizer above treats
+# them as one. `prov_from_attrs`, `norm_prov` and `norm_join` each answer an
+# unrecognized value with the default, which is right for ABSENT -- a v1-v5 mark
+# carries no attribute and must keep meaning 'authored', so the default is
+# load-bearing back-compatibility -- and silently wrong for PRESENT-BUT-WRONG.
+#
+# What that costs: `tc-prov="gap"` or a typo like `tc-prov="trancript"` becomes
+# 'authored'. The region then renders as ordinary yellow AI prose and `/tc
+# accept` bakes it into the document as body text, which is the exact
+# conflation the provenance mechanism exists to prevent. `tc-join="previous"`
+# silently becomes no-join, so the author is told nothing and the paragraph
+# they meant to rejoin stays split.
+#
+# The normalizers are deliberately NOT changed: every caller wants a usable
+# value, and raising there would turn a typo into a crash in the middle of a
+# resolution. Instead the wrong value is DETECTED here and refused at the two
+# places that matter -- the write, by the PreToolUse hook, and the resolution,
+# by the CLI. A value that is absent still costs nothing.
+#
+# The general lesson, filed the same day from an unrelated instance in the ISE
+# 754 lecture tooling: a closed whitelist needs its else-branch, and a parser
+# that answers "not in my list" with a default cannot tell anyone it was handed
+# something wrong.
+_CLOSED_ATTRS = (
+    ('tc-prov', _PROV_ATTR_RE, PROV_VALUES),
+    ('tc-join', _JOIN_ATTR_RE, JOIN_VALUES),
+)
+
+
+def bad_attr_values(attrs):
+    """[(attr, value, legal)] for each closed-vocabulary attribute PRESENT in an
+    md attribute string with a value outside its whitelist.
+
+    Empty for an absent attribute, which is legal by design. An empty value
+    (`tc-prov=""`) counts as present and wrong: it was typed."""
+    out = []
+    if not attrs:
+        return out
+    for name, rx, legal in _CLOSED_ATTRS:
+        m = rx.search(attrs)
+        if m is not None and m.group(1).strip() not in legal:
+            out.append((name, m.group(1), legal))
+    return out
+
+
+def unknown_attr_values(text, ftype):
+    """Every closed-vocabulary attribute in `text` that is present with an
+    unrecognized value.
+
+    Returns [{line, attr, value, legal, form}] where `form` is 'region' or
+    'mark', sorted by line. Detection is STRUCTURAL -- only the attribute block
+    of a real fenced div / `<mark>` / `\\tc` / `tcregion` is inspected -- so
+    prose or a code sample that merely names `tc-prov` is never flagged.
+    """
+    out = []
+
+    def line_of(offset):
+        return 1 + text.count('\n', 0, offset)
+
+    if ftype in ('md', 'qmd'):
+        for idx, line in enumerate(text.split('\n'), start=1):
+            mo = _MD_FENCE_OPEN_RE.match(line)
+            if mo:
+                for attr, value, legal in bad_attr_values(mo.group('attrs')):
+                    out.append({'line': idx, 'attr': attr, 'value': value,
+                                'legal': legal, 'form': 'region'})
+        # Whole-text, because a mark body may span lines (MD_MARK_RE is DOTALL).
+        for tm in MD_MARK_RE.finditer(text):
+            for attr, value, legal in bad_attr_values(tm.group('attrs')):
+                out.append({'line': line_of(tm.start()), 'attr': attr,
+                            'value': value, 'legal': legal, 'form': 'mark'})
+    elif ftype == 'tex':
+        for mo in TEX_HEAD_RE.finditer(text):
+            p = mo.group('prov')
+            if p is not None and p not in PROV_VALUES:
+                out.append({'line': line_of(mo.start()), 'attr': 'prov',
+                            'value': p, 'legal': PROV_VALUES, 'form': 'mark'})
+        for mo in TEX_REGION_OPEN_RE.finditer(text):
+            for grp, name, legal in (('prov', 'prov', PROV_VALUES),
+                                     ('join', 'join', JOIN_VALUES)):
+                v = mo.group(grp)
+                if v is not None and v.strip() and v.strip() not in legal:
+                    out.append({'line': line_of(mo.start()), 'attr': name,
+                                'value': v, 'legal': legal, 'form': 'region'})
+    return sorted(out, key=lambda d: (d['line'], d['attr']))
+
+
+def describe_unknown_attr(bad, ftype):
+    """One actionable line for a single `unknown_attr_values` entry."""
+    legal = ', '.join(f'`{v}`' for v in bad['legal'])
+    if ftype == 'tex':
+        shown = f"[{bad['value']}]"
+    else:
+        shown = f"{bad['attr']}=\"{bad['value']}\""
+    return (f"line {bad['line']}: {shown} is not a recognized value. "
+            f"The vocabulary is closed: {legal}. An unrecognized value used to "
+            f"fall back silently to the default, so the {bad['form']} would "
+            f"have read as though it carried the default all along.")
+
+
 def classify_md(body):
     m = _MD_S_REP_RE.match(body)
     if m:

@@ -337,10 +337,15 @@ enforced <strong>mechanically, at the moment of the write</strong>, by a hook Cl
 before any save:</p>
 
 <ul>
-  <li><strong>An unmarked edit to a tracked file is refused</strong> &mdash; and the assistant
+  <li><strong>An unmarked edit that introduces words is refused</strong> &mdash; and the assistant
     cannot switch tracking off for itself. Only you can, and only for a single message
     (<code>/draft</code>). Every AI change is marked whether or not the assistant remembered
-    to.</li>
+    to.<br>
+    <em>The exception, and it is narrow:</em> an edit that only <strong>moves, wraps or
+    deletes text you already wrote</strong> &mdash; relocating a block, putting a passage in a
+    collapsed callout &mdash; adds no words, so it lands without a mark and is written to the
+    audit log instead as a <code>relocated:</code> entry. If a single new word rides along, the
+    whole edit is refused as before.</li>
   <li><strong>A passage presented as grounded in a source is refused</strong> unless its quoted
     excerpt is genuinely present in that source <em>and</em> the passage carries a citation a
     reader can follow. A sourced claim is either real and attributed, or it doesn&rsquo;t land.</li>
@@ -351,7 +356,7 @@ agent</strong> and relying on the record afterward. The enforcement holds no mat
 was prompted, so your role narrows to what only you can do &mdash; deciding which files are in
 scope, and reviewing the marked changes and verified excerpts the agent produced. The skill turns
 &ldquo;please track your edits and cite your sources&rdquo; from a hope you cannot audit into a
-property of the file: an unmarked edit never lands, and a fabricated citation never lands. (It
+property of the file: unmarked AI prose never lands, and a fabricated citation never lands. (It
 cannot force an agent to <em>decide</em> a claim needs a source &mdash; but every source it does
 cite is verified, and the manifest makes what it grounded, and in what, auditable at a glance.)</p>
 
@@ -832,6 +837,13 @@ setup or another editor, ask Claude, or see <code>SKILL.md</code> in the
     passages survive a PDF build.</li>
   <li><strong>It&rsquo;s light and quiet.</strong> The background checks add a fraction of a second
     per edit, and do nothing on files you haven&rsquo;t opted in.</li>
+  <li><strong>Restructuring doesn&rsquo;t cost you a round trip.</strong> Asking the assistant to
+    move a figure, box a digression in a callout, or drop a stale block used to be refused &mdash;
+    none of those adds a word, but the hook could not tell. Since 9.15.0 they are allowed and
+    <em>recorded</em>: the log gets how many lines arrived and departed and where to look, so the
+    change is explained rather than invisible. The trade is worth knowing &mdash; your own
+    sentences can be <em>reordered</em> without a mark, which can change emphasis. The record is
+    what makes that reviewable.</li>
 </ul>
 
 <h3>Learn more</h3>
@@ -842,7 +854,7 @@ complete file list live in the
 </main>
 
 <footer>
-  <p>track-changes v9.13.3 &middot; M. G. Kay &middot; NC State ISE<br>
+  <p>track-changes v9.15.0 &middot; M. G. Kay &middot; NC State ISE<br>
   <a href="bootstrap.md" download>Download bootstrap.md</a></p>
 </footer>
 

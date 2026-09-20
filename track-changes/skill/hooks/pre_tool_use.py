@@ -162,6 +162,51 @@ def _added_line_set(src_text, prop_text):
     return added
 
 
+def _prov_gate(tool_name, file_path, source_text, payload, ftype):
+    """Closed-vocabulary gate (9.14.0): refuse a write that ADDS a `tc-prov` or
+    `tc-join` value outside its whitelist.
+
+    Until now an unrecognized value fell back to the default in silence, so
+    `tc-prov="gap"` -- or a plain typo -- produced a region that rendered as
+    ordinary yellow authored prose and that `/tc accept` would bake into the
+    document as body text. Absent stays legal and untouched: a v1-v5 mark
+    carries no attribute and must keep meaning 'authored'.
+
+    Scoped to values the write ADDS, deliberately. A document may already hold a
+    bad value written before this gate existed, and blocking every later edit to
+    that file would wedge it with no way out; the CLI reports those instead, at
+    `list` and before any `accept`/`reject`. So this refuses the mistake being
+    made now, and never a mistake already on disk.
+
+    Returns 2 (blocked, message emitted) or None (all clear).
+    """
+    from tc_core import grammar as _g
+    try:
+        import tc_analyzer
+        proposed = tc_analyzer._build_proposed(source_text, payload, tool_name)
+    except Exception as e:
+        _log(f'prov gate: cannot build proposed ({e}); passing')
+        return None
+    if proposed is None or proposed == source_text:
+        return None
+    bad = _g.unknown_attr_values(proposed, ftype)
+    if not bad:
+        return None
+    added = _added_line_set(source_text, proposed)
+    new_bad = [b for b in bad if b['line'] in added]
+    if not new_bad:
+        _log(f'prov gate: {len(bad)} pre-existing bad value(s), none added; passing')
+        return None
+    lines = '\n'.join('  ' + _g.describe_unknown_attr(b, ftype) for b in new_bad)
+    _emit(f'[track-changes] BLOCKED {tool_name} {os.path.basename(file_path)}\n'
+          f'{len(new_bad)} unrecognized closed-vocabulary value(s):\n{lines}\n'
+          'Fix the value, or -- if the intent is a category the vocabulary does '
+          'not have -- use a construct of its own rather than a provenance value '
+          'it will not honor.')
+    _log(f'PROV-BLOCK: {[(b["attr"], b["value"]) for b in new_bad]}')
+    return 2
+
+
 def _enforce_cited_edits(regions, body_of, ftype, hdr):
     """Always-cited invariant (9.1.0) for EDITED (not brand-new) sourced
     regions: each must keep a non-empty body with a reader-facing citation, so a
@@ -580,6 +625,19 @@ def main():
     except Exception as e:
         _log(f'pending-import check skipped ({e}); proceeding to analyzer')
 
+    # Closed-vocabulary gate (9.14.0). Runs BEFORE the source gate and the
+    # analyzer, because a region whose tc-prov is wrong is not a region whose
+    # provenance can be judged: every downstream check would read it as the
+    # default and agree with itself. Cheap, and a no-op for any write that adds
+    # no such value.
+    try:
+        prov_rc = _prov_gate(tool_name, file_path, source_text, payload, ftype)
+    except Exception as e:
+        _log(f'prov gate raised ({e}); proceeding')
+        prov_rc = None
+    if prov_rc is not None:
+        return prov_rc
+
     # v9 source-validation gate (Dilemma A): a NEW gray `.tc-verbatim` excerpt
     # must be verified verbatim against a live `/tc source` staging before it
     # can land. Runs before the analyzer verdict; on the verified path it writes
@@ -615,6 +673,16 @@ def main():
     if not violations:
         _stash_region_body_touches(file_path, source_text, payload,
                                    tool_name, ftype)
+        # Stashed only on the ALLOW path, and only here: a write that is about to be
+        # refused relocates nothing, and a note left by a blocked write would colour
+        # the next one. PostToolUse pops it and writes the `relocated:` entry.
+        if result.get('relocation'):
+            try:
+                from tc_core import audit as tc_audit
+                tc_audit.stash_relocation(os.path.abspath(file_path),
+                                          result['relocation'])
+            except Exception as e:
+                _log(f'relocation stash failed: {e}')
         return 0
 
     _emit_block(tool_name, file_path, violations, ftype, result['suggest_draft'], subagent_detected)

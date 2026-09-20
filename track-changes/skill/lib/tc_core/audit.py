@@ -131,6 +131,64 @@ def stash_region_touch(abs_file, touches, home=None):
         return False
 
 
+def _pending_relocation_path(abs_file, home=None):
+    sd = _state_dir(home)
+    if sd is None:
+        return None
+    d = os.path.join(sd, 'pending-relocation')
+    try:
+        os.makedirs(d, exist_ok=True)
+    except OSError:
+        return None
+    sha = hashlib.sha1(os.path.abspath(abs_file).encode('utf-8')).hexdigest()
+    return os.path.join(d, sha + '.json')
+
+
+def stash_relocation(abs_file, relocation, home=None):
+    """PreToolUse: note that THIS write relocates text without authoring any.
+
+    THE RECORD IS THE CONDITION THE FEATURE SHIPPED ON. A structural edit -- a block
+    moved, a div wrapped around existing prose, an excerpt deleted -- is allowed through
+    unmarked because it introduces no words. What it CAN do is reorder the author's own
+    sentences, which changes meaning without adding any, and the instructor accepted that
+    on 2026-09-20 expressly on the condition that it is written down rather than silent.
+    This is that. Without it the widening is a different bargain from the one he agreed to.
+
+    Kept in its own stash rather than folded into the region-touch one, because that one
+    returns early when its list is empty and a relocation frequently touches no region.
+    Best-effort: a failure here must never block a write."""
+    p = _pending_relocation_path(abs_file, home)
+    if p is None or not relocation:
+        return False
+    try:
+        with open(p, 'w', encoding='utf-8') as f:
+            json.dump({'file': os.path.abspath(abs_file),
+                       'relocation': relocation}, f)
+        return True
+    except (IOError, OSError):
+        return False
+
+
+def pop_relocation(abs_file, home=None):
+    """PostToolUse: take the relocation stash and delete it. One-shot, for the same
+    reason `pop_region_touch` is: a write that never landed must not colour the next."""
+    p = _pending_relocation_path(abs_file, home)
+    if p is None or not os.path.exists(p):
+        return None
+    try:
+        with open(p, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+    except (IOError, ValueError):
+        data = {}
+    try:
+        os.remove(p)
+    except OSError:
+        pass
+    if os.path.abspath(data.get('file') or '') != os.path.abspath(abs_file):
+        return None
+    return data.get('relocation') or None
+
+
 def pop_region_touch(abs_file, home=None):
     """PostToolUse: take the stash and delete it. One-shot, so a write that never
     landed cannot leave a note that colours the next one."""
@@ -215,7 +273,8 @@ def log_path_for(abs_file, marker_path=None):
 # ---------------------------------------------------------------------------
 
 def record(source_text, tool_name, ftype, abs_file_path, log_path,
-           cache_path, rel_path_for_log, region_touches=None):
+           cache_path, rel_path_for_log, region_touches=None,
+           relocation=None):
     """Diff current marks vs prior cache, append a log entry for introduced +
     resolved marks, then write the new cache state. Best-effort: I/O errors are
     swallowed; the user's workflow is never blocked.
@@ -255,7 +314,11 @@ def record(source_text, tool_name, ftype, abs_file_path, log_path,
     # 9.12.0: a write that only changes a region body introduces and resolves
     # NOTHING -- that is the whole defect -- so the early return has to account
     # for it or the entry is never written.
-    if not introduced and not resolved and not region_touches:
+    # A RELOCATION INTRODUCES AND RESOLVES NOTHING -- that is what makes it a relocation
+    # -- so it has to be named in this early return or the entry is never written and the
+    # change goes unrecorded, which is the one thing it was not allowed to do. Same shape
+    # as the `region_touches` clause above it, and for the same reason.
+    if not introduced and not resolved and not region_touches and not relocation:
         _write_cache()
         return result
 
@@ -292,6 +355,17 @@ def record(source_text, tool_name, ftype, abs_file_path, log_path,
             lines.append(f"    removed: {t.get('removed', 0)}")
             if t.get('prov'):
                 lines.append(f"    prov: {t['prov']}")
+    if relocation:
+        # The reader of this block is a human asking "what moved, and where do I look?",
+        # so it carries a locator rather than a diff. `words: none authored` is stated
+        # explicitly because that sentence is the entire justification for the passage
+        # having landed without a mark.
+        lines.append("relocated:")
+        lines.append(f"  - arrived: {relocation.get('arrived', 0)}")
+        lines.append(f"    departed: {relocation.get('departed', 0)}")
+        lines.append("    words: none authored")
+        if relocation.get('first'):
+            lines.append(f"    first: {_fmt_str(relocation['first'])}")
     entry = '\n'.join(lines) + '\n'
 
     try:

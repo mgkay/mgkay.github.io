@@ -118,12 +118,23 @@ def main():
     except Exception as e:
         _log(f'region-body pop failed: {e}')
 
+    # The relocation note, popped for the same reason and on the same terms: a
+    # structural edit introduces and resolves no mark, so without this the write that
+    # moved a passage would leave NO entry at all -- and being recorded is the condition
+    # the instructor allowed it to land unmarked on.
+    relocation = None
+    try:
+        relocation = tc_audit.pop_relocation(abs_file)
+    except Exception as e:
+        _log(f'relocation pop failed: {e}')
+
     # In-process audit (the only path — the v2 daemon fast-path was dropped
     # in v3 C5).
     try:
         tc_audit.record(source_text, tool_name, ftype, abs_file,
                         log_path, cache_path, rel_for_log,
-                        region_touches=region_touches)
+                        region_touches=region_touches,
+                        relocation=relocation)
     except Exception as e:
         _log(f'in-process record failed: {e}')
 

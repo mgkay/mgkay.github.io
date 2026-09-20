@@ -33,8 +33,9 @@ each change. Default-OFF. (Full spec lives in `SKILL.md`, lazy-loaded on demand.
 `tc-prov="transcript"` (v7) for AI wording over the instructor's own spoken
 transcript; `tc-prov="sourced"` (v9) for AI text supported by a document
 source (carries `tc-src`; verified vs a gray excerpt — see §Source-validation);
-default (absent) = `authored`. Region numbers share the single mark-number
-space. A transcript/sourced region is conventionally preceded by a TEMPORARY
+default (absent) = `authored`, but a WRONG value is an ERROR, never a silent
+default (9.14.0): hook + `accept`/`reject` refuse. Region numbers share the
+single mark-number space. A transcript/sourced region is conventionally preceded by a TEMPORARY
 gray `.tc-verbatim` block quoting the raw source — scaffolding, not a region:
 `/tc list` ignores it, and **`/tc accept`/`/tc reject` of the region removes the
 paired gray block automatically (9.3.0)** (or delete it by hand anytime) — the
