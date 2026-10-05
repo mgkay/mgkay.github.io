@@ -323,6 +323,17 @@ canonical commands rather than conversational batches:
   set of marks. The range syntax is `1-25,!7,!11`: comma-separated inclusive
   ranges, with `!N` excluding `N`.
 - `/tc accept-all <file>` / `/tc reject-all <file>` — resolve every mark.
+- `/tc renumber <file> [<from>] [--keep <ranges>]` (9.16.0) — renumber every
+  mark and region in READING order from `<from>` (default 1), holding the
+  `--keep` numbers and never reusing them. A mark is numbered when it is made,
+  so numbers record the order of work; renumbered, one paragraph's marks are
+  one range to accept. Only digits change (verified: the text with every number
+  blanked is byte-identical), a duplicate number is refused, and a
+  `renumbered:` entry records the map, which the support check and the manifest
+  follow. A mark whose own text quotes a mark number is reported, not edited.
+  Run it once, before anyone has cited a number: afterwards it would invalidate
+  the numbers a reviewer is holding. Same committed-content invariant as
+  `accept`.
 
 Batch resolution edits the file directly (accept ⇒ keep the new text and
 strip the `<mark>…</mark><sup>N</sup>` wrapper; reject ⇒ restore the old text
@@ -485,6 +496,7 @@ The skill installs a single unified `/tc` command with subcommands, plus
 | `/tc accept [<file>] <ranges>` | accept the listed marks (keep new text, strip the wrapper); range syntax `1-25,!7,!11` |
 | `/tc reject [<file>] <ranges>` | reject the listed marks (restore old text, strip the wrapper) |
 | `/tc accept-all [<file>]` / `/tc reject-all [<file>]` | resolve every mark |
+| `/tc renumber <file> [<from>] [--keep <ranges>]` | renumber marks and regions in reading order, once, before review (9.16.0) |
 | `/tc edits <file>` | report what the AUTHOR changed since the AI last wrote (9.9.0; in-skill — see §17) |
 | `/tc help` | show the subcommand list |
 

@@ -183,6 +183,55 @@ def save(abs_file, tool=None, home=None, data=None):
     return dict(entry)
 
 
+def rewrite(abs_file, fn, home=None):
+    """Apply `fn(text) -> text` to every stored generation, in place (9.16.0).
+
+    `/tc renumber` changes only mark numbers, and the baseline `/tc edits` diffs
+    against has to change with them. Otherwise every renumbered line reads as the
+    AUTHOR's edit, and since 9.13.0 `/tc edits` accepts every region an edited span
+    touches -- a renumber would have had every region accepted unread on the next
+    `/tc edits`. Rewriting in place (no rotation) keeps the generations meaning
+    what they meant: the file as the AI last left it, now in the new numbering.
+
+    A generation `fn` raises on, or that cannot be written, is left as it was.
+    Returns the list of generation numbers that FAILED (empty when all succeeded
+    or there is nothing stored). Never raises.
+    """
+    abs_file = os.path.abspath(abs_file)
+    d, k, meta_path = _paths(abs_file, home, create=False)
+    if d is None:
+        return []
+    meta = _read_meta(meta_path)
+    if not meta:
+        return []
+    failed, changed = [], False
+    for g in meta.get('gens', []):
+        if not isinstance(g, dict) or not isinstance(g.get('gen'), int):
+            continue
+        p = _gen_path(d, k, g['gen'])
+        try:
+            with open(p, 'rb') as f:
+                raw = f.read()
+            new = fn(raw.decode('utf-8')).encode('utf-8')
+        except Exception:
+            failed.append(g['gen'])
+            continue
+        if new == raw:
+            continue
+        try:
+            with open(p, 'wb') as f:
+                f.write(new)
+        except OSError:
+            failed.append(g['gen'])
+            continue
+        g['sha256'] = hashlib.sha256(new).hexdigest()
+        g['size'] = len(new)
+        changed = True
+    if changed:
+        _write_meta(meta_path, meta)
+    return failed
+
+
 def load(abs_file, gen=0, home=None):
     """Return (text, meta_entry) for `gen`, or (None, None).
 

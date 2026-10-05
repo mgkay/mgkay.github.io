@@ -29,6 +29,8 @@
 #                                    ranges syntax: 1-25,!7,!11
 #   /tc accept-all <file>          — accept every mark in <file>
 #   /tc reject-all <file>          — reject every mark in <file>
+#   /tc renumber <file> [<from>] [--keep <ranges>]
+#                                  — renumber marks in reading order (9.16.0)
 #   /tc coverage <doc> <source> [--units N,N,...]
 #                                  — audit: per-unit content-token coverage
 #                                    of <doc> against <source> (8.2.0)
@@ -93,6 +95,12 @@ Batch resolution (edits the file; writes explicit audit attribution):
                                   (inclusive ranges; !N excludes N)
   /tc accept-all <file>           Accept every mark in <file>
   /tc reject-all <file>           Reject every mark in <file>
+  /tc renumber <file> [<from>] [--keep <ranges>]
+                                  Renumber every mark and region in READING
+                                  order from <from> (default 1), holding the
+                                  --keep numbers; only digits change, and a
+                                  renumbered: entry records the map (9.16.0).
+                                  Run it once, before anyone cites a number.
 
 Diagnostics:
   /tc status [<file>]     Show the activation chain for <file> (or CWD)
@@ -354,7 +362,7 @@ tc_require_clean() {
 tc_run_resolve() {
   local py
   case "$1" in
-    accept|reject|accept-all|reject-all)
+    accept|reject|accept-all|reject-all|renumber)
       tc_require_clean "$2" "$1" || return 3 ;;
   esac
   if ! py="$(tc_resolve_python)"; then
@@ -699,6 +707,16 @@ case "${sub}" in
     else
       tc_run_resolve "${sub}" "$1"
     fi
+    ;;
+  renumber)
+    # 9.16.0: /tc renumber <file> [<from>] [--keep <ranges>]. The file is
+    # required: renumbering is run once, deliberately, on a named document.
+    if [ $# -lt 1 ]; then
+      echo "tc renumber: missing <file>" >&2
+      echo "usage: /tc renumber <file> [<from>] [--keep <ranges>]" >&2
+      exit 1
+    fi
+    tc_run_resolve renumber "$@"
     ;;
   coverage)
     # /tc coverage <doc> <source> [--units N,N,...]  (8.2.0 audit mode)

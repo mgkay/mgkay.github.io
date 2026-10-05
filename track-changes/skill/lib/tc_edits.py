@@ -1319,7 +1319,10 @@ def gate_body_for(path, n):
         return None
     best = None
     for ent in entries:                      # file order; last wins = newest
-        if ent.get("malformed"):
+        # 9.16.0: a superseded record carries a number a renumber gave to a
+        # DIFFERENT region; reading it would check this region against that
+        # one's text.
+        if ent.get("malformed") or ent.get("superseded"):
             continue
         if str(ent.get("n")) == str(n) and (ent.get("supports") or "").strip():
             best = ent["supports"]

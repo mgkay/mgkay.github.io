@@ -63,9 +63,9 @@ leaves a single-line paragraph sandwiched between two paragraphs.
 `/tc import [--allow-partial] <source>[#L<a>-L<b>] [<target>]` ·
 `/tc coverage <doc> <source> [--units N,N,…]` · `/tc polish [<file>]` ·
 `/tc source <file>#<loc>|@citekey [<target>]` · `/tc manifest [<doc>]` ·
-`/tc edits <file>` (9.9.0).
-Ranges use `1-25,!7` syntax. Omit `<file>` on a resolution command to use the
-working file (most-recently-modified tracked file). Bare `/tc` prints the menu.
+`/tc edits <file>` · `/tc renumber <file>`.
+Ranges use `1-25,!7` syntax. Omit `<file>` on a resolution command for the
+working file (last-modified tracked file). Bare `/tc` = the menu.
 `/draft` = suspend this turn — **USER-ONLY (v6, v7-confirmed shadow-proof: the
 UserPromptSubmit hook fires on the raw prompt before command routing, so no
 skill named `draft` can intercept it); the AI cannot invoke it.**

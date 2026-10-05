@@ -676,6 +676,51 @@ def read_sourced_entries(abs_file_path, include_transcript=False):
     for ent in entries:
         if ent['rel'] != my_rel:
             continue
+        # 9.16.0: a `/tc renumber` moved every number recorded so far. Carry
+        # each record to its mark's new number; a record whose number was NOT
+        # moved but now belongs to another mark (its own mark was resolved
+        # before the renumber) is superseded, so nothing keyed on the number --
+        # the 9.10.0 support check above all -- can pair a region with another
+        # region's text.
+        rmap = _renumber_map(ent['body'])
+        if rmap:
+            targets = set(rmap.values())
+            for r in results:
+                if r.get('malformed') or r.get('superseded'):
+                    continue
+                old = str(r['n'])
+                if old in rmap:
+                    r['n'] = int(rmap[old])
+                elif old in targets:
+                    r['superseded'] = True
+            continue
         results.extend(_sv_parse_entry(ent['body'], ent['ts'],
                                        include_transcript=include_transcript))
     return results
+
+
+_RN_FROM_RE = re.compile(r'^  - from:\s*(\d+)\s*$')
+_RN_TO_RE = re.compile(r'^    to:\s*(\d+)\s*$')
+
+
+def _renumber_map(body_lines):
+    """{old: new} from an entry's `renumbered:` section (9.16.0), else {}."""
+    try:
+        i = next(k for k, ln in enumerate(body_lines)
+                 if ln.strip() == 'renumbered:' and not ln.startswith(' '))
+    except StopIteration:
+        return {}
+    out, old = {}, None
+    for ln in body_lines[i + 1:]:
+        mf = _RN_FROM_RE.match(ln)
+        if mf:
+            old = mf.group(1)
+            continue
+        mt = _RN_TO_RE.match(ln)
+        if mt and old is not None:
+            out[old] = mt.group(1)
+            old = None
+            continue
+        if ln.strip() and not ln.startswith(' '):
+            break
+    return out

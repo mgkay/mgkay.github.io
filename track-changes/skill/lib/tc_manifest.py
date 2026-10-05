@@ -281,10 +281,14 @@ def _render_manifest(doc, entries):
     # Group good entries by N in file order (for duplicate-N supersession).
     by_n = {}
     for e in good:
-        by_n.setdefault(e['n'], []).append(e)
+        # 9.16.0: a superseded record's number now belongs to another region,
+        # so it is listed as removed and never paired with a live one.
+        if not e.get('superseded'):
+            by_n.setdefault(e['n'], []).append(e)
 
     live_ns = sorted(n for n in by_n if n in live_regions)
-    removed = [e for e in good if e['n'] not in live_regions]
+    removed = [e for e in good
+               if e.get('superseded') or e['n'] not in live_regions]
 
     doc_base = os.path.basename(doc)
     doc_link = _rel_link(doc, val_dir)

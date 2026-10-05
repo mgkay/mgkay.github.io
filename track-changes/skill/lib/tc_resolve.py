@@ -834,12 +834,276 @@ def _update_cache(path, ftype, post_text):
 
 
 # ---------------------------------------------------------------------------
+# 9.16.0: `/tc renumber` -- marks numbered in READING order.
+#
+# A mark is numbered highest-plus-one when it is MADE, so its number records the
+# order of work. On ISE 754 lecture 3.4 one paragraph carried marks 15, 16, 65-79
+# and 342-345, and accepting a paragraph read end to end took twenty-three
+# numbers instead of one range. Renumbering once, before anyone has cited a
+# number, puts each paragraph's marks in one run.
+#
+# Only the DIGITS change, and that is verified rather than assumed: the text
+# with every number blanked must be byte-identical before and after. A duplicate
+# number in the input is refused, because the map could not say which mark
+# became which. The `renumbered:` entry is what lets the history -- and the
+# 9.10.0 support check, which pairs a green region with its record BY NUMBER --
+# follow a mark across the change (tc_core.audit.read_sourced_entries).
+# ---------------------------------------------------------------------------
+
+_MD_REGION_N_DIGITS_RE = re.compile(r'tc-n="(\d+)"')
+_TEX_REGION_N_DIGITS_RE = re.compile(r'\\begin\{tcregion\}\{(\d+)\}')
+_TEX_TCN_DIGITS_RE = re.compile(r'\\tcn\{(\d+)\}')
+# A mark whose own text quotes a mark number ("regions 335 and 336", "flag mark
+# 360") goes stale when numbers move. Reported, never rewritten: a tool that
+# edits prose is the thing this skill exists to prevent.
+_QUOTED_MARK_N_RE = re.compile(r'\b(?:marks?|regions?)\s+(?:and\s+)?\d+', re.I)
+
+
+def _number_sites(text, ftype):
+    """Every mark and region in DOCUMENT ORDER, as dicts {pos, N, s, e, kind,
+    body}: [s, e) is the span of the number's digits. Raises ValueError when a
+    number cannot be located exactly where the grammar says it is."""
+    sites = []
+    for m in _extract_marks_with_offsets(text, ftype):
+        n = str(m['N'])
+        if ftype == 'tex':
+            seg = text[m['start']:m['end']]
+            hits = list(_TEX_TCN_DIGITS_RE.finditer(seg))
+            if not hits or hits[-1].group(1) != n:
+                raise ValueError("cannot locate the number of mark %s" % n)
+            s = m['start'] + hits[-1].start(1)
+            e = m['start'] + hits[-1].end(1)
+        else:
+            e = m['end'] - len('</sup>')
+            s = e - len(n)
+        if text[s:e] != n:
+            raise ValueError("cannot locate the number of mark %s" % n)
+        sites.append({'pos': m['start'], 'N': n, 's': s, 'e': e,
+                      'kind': 'mark', 'body': m.get('body', '')})
+    starts = _line_starts(text)
+    rx = _TEX_REGION_N_DIGITS_RE if ftype == 'tex' else _MD_REGION_N_DIGITS_RE
+    for r in _extract_regions_with_offsets(text, ftype):
+        line = text[r['opener_start']:r['opener_end']]
+        mo = rx.search(line)
+        if not mo or mo.group(1) != str(r['N']):
+            raise ValueError("cannot locate the number of region %s" % r['N'])
+        sites.append({'pos': r['opener_start'], 'N': str(r['N']),
+                      's': r['opener_start'] + mo.start(1),
+                      'e': r['opener_start'] + mo.end(1), 'kind': 'region',
+                      'body': text[r['body_start']:r['body_end']]})
+    sites.sort(key=lambda d: d['pos'])
+    return sites
+
+
+def _blank_numbers(text, sites):
+    out, prev = [], 0
+    for d in sorted(sites, key=lambda d: d['s']):
+        out.append(text[prev:d['s']])
+        prev = d['e']
+    out.append(text[prev:])
+    return ''.join(out)
+
+
+def renumber_text(text, ftype, start=1, keep=()):
+    """Renumber every mark and region in reading order from `start`, holding the
+    numbers in `keep` and never reusing them. Pure: returns (new_text, changes,
+    notes), where `changes` is [(old, new)] in reading order for the numbers that
+    moved, and `notes` names each mark whose own text quotes a mark number.
+    Raises ValueError on a duplicate number or any failed verification."""
+    sites = _number_sites(text, ftype)
+    seen = {}
+    for d in sites:
+        seen[d['N']] = seen.get(d['N'], 0) + 1
+    dups = sorted((n for n, c in seen.items() if c > 1), key=_n_key)
+    if dups:
+        raise ValueError("duplicate mark number(s) %s: the map could not say "
+                         "which mark became which" % ', '.join(dups))
+    keep = set(str(k) for k in keep)
+    nxt = int(start)
+    for d in sites:
+        if d['N'] in keep:
+            d['new'] = d['N']
+            continue
+        while str(nxt) in keep:
+            nxt += 1
+        d['new'] = str(nxt)
+        nxt += 1
+    changes = [(d['N'], d['new']) for d in sites if d['N'] != d['new']]
+    if not changes:
+        return text, [], []
+    new_text = text
+    for d in sorted(sites, key=lambda d: d['s'], reverse=True):
+        new_text = new_text[:d['s']] + d['new'] + new_text[d['e']:]
+    # Verify, fail closed: the same sites in the same order carrying the new
+    # numbers, and nothing but digits changed.
+    after = _number_sites(new_text, ftype)
+    if ([(a['kind'], a['N']) for a in after]
+            != [(d['kind'], d['new']) for d in sites]):
+        raise ValueError("verification failed: the marks after renumbering do "
+                         "not match the plan")
+    if _blank_numbers(text, sites) != _blank_numbers(new_text, after):
+        raise ValueError("verification failed: something other than a mark "
+                         "number would change")
+    notes = []
+    for d in sites:
+        q = _QUOTED_MARK_N_RE.search(d['body'] or '')
+        if q:
+            notes.append((d['N'], d['new'], q.group(0)))
+    return new_text, changes, notes
+
+
+def remap_numbers(text, ftype, mapping):
+    """Replace each mark or region number found in `mapping` (old -> new), and
+    nothing else. For a text that is not the live document -- the `/tc edits`
+    snapshot baselines -- where marks resolved since may still sit and nothing
+    is renumbered from scratch. Raises ValueError if anything but digits would
+    change."""
+    sites = _number_sites(text, ftype)
+    hits = [d for d in sites if d['N'] in mapping]
+    if not hits:
+        return text
+    new_text = text
+    for d in sorted(hits, key=lambda d: d['s'], reverse=True):
+        new_text = new_text[:d['s']] + mapping[d['N']] + new_text[d['e']:]
+    if _blank_numbers(text, sites) != _blank_numbers(new_text,
+                                                     _number_sites(new_text, ftype)):
+        raise ValueError("verification failed while remapping a baseline")
+    return new_text
+
+
+def _write_renumber_audit(path, changes):
+    """Append a `renumbered:` entry carrying every old -> new pair. Best-effort,
+    like every other audit side effect."""
+    abs_path = os.path.abspath(path)
+    log_path = tc_audit.log_path_for(abs_path)
+    root = tc_audit.find_project_root(abs_path)
+    rel = os.path.basename(abs_path)
+    if root:
+        try:
+            rel = os.path.relpath(abs_path, root).replace(os.sep, '/')
+        except ValueError:
+            pass
+    ts = datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+    lines = [f"\n## {ts} -- {rel}  (/tc renumber)", "renumbered:"]
+    for old, new in changes:
+        lines.append(f"  - from: {old}")
+        lines.append(f"    to: {new}")
+    try:
+        os.makedirs(os.path.dirname(log_path), exist_ok=True)
+        if not os.path.exists(log_path):
+            with open(log_path, 'w', encoding='utf-8') as f:
+                f.write("# track-changes history\n#\n# Append-only audit log of "
+                        "AI-introduced and AI-introduced-then-resolved\n# marks "
+                        "for tracked files in this project.\n")
+        with open(log_path, 'a', encoding='utf-8') as f:
+            f.write('\n'.join(lines) + '\n')
+        return True
+    except (IOError, OSError):
+        return False
+
+
+def _runs(pairs):
+    """[(old, new)] as `old->new, ...` for display, in reading order."""
+    return ', '.join(f"{old}->{new}" for old, new in pairs)
+
+
+def _cmd_renumber(path, args):
+    ftype = file_type(path)
+    if ftype not in ('md', 'qmd', 'tex'):
+        sys.stderr.write(f"tc renumber: ERROR -- unsupported file type: {path}\n")
+        return 2
+    start, keep = 1, []
+    i = 0
+    while i < len(args):
+        a = args[i]
+        if a == '--keep':
+            if i + 1 >= len(args):
+                sys.stderr.write("tc renumber: --keep needs <ranges>\n")
+                return 1
+            try:
+                keep = parse_ranges(args[i + 1])
+            except ValueError as e:
+                sys.stderr.write(f"tc renumber: ERROR -- {e}\n")
+                return 1
+            i += 2
+            continue
+        if re.fullmatch(r'\d+', a):
+            start = int(a)
+            i += 1
+            continue
+        sys.stderr.write(f"tc renumber: unrecognized argument: {a}\n")
+        return 1
+    try:
+        with open(path, 'r', encoding='utf-8', newline='') as f:
+            text = f.read()
+    except (IOError, OSError):
+        sys.stderr.write(f"tc: ERROR -- cannot read file: {path}\n")
+        return 2
+    try:
+        new_text, changes, notes = renumber_text(text, ftype, start, keep)
+    except ValueError as e:
+        sys.stderr.write(f"tc renumber: REFUSED -- {e}; {path} unchanged.\n")
+        return 3
+    if not changes:
+        print(f"tc: the marks in {path} are already in reading order; "
+              f"nothing renumbered.")
+        return 0
+    try:
+        with open(path, 'w', encoding='utf-8', newline='') as f:
+            f.write(new_text)
+    except (IOError, OSError):
+        sys.stderr.write(f"tc: ERROR -- cannot write file: {path}\n")
+        return 2
+    # The map is CORRECTNESS-CRITICAL, unlike every other audit side effect:
+    # without it the support check cannot follow a green region to its record.
+    # So a failed write puts the document back rather than leaving it
+    # renumbered with no record of how.
+    if not _write_renumber_audit(path, changes):
+        try:
+            with open(path, 'w', encoding='utf-8', newline='') as f:
+                f.write(text)
+        except (IOError, OSError):
+            pass
+        sys.stderr.write(f"tc renumber: ERROR -- could not write the renumbered: "
+                         f"entry to .tc-history.md, so {path} was put back as it "
+                         f"was. Nothing renumbered.\n")
+        return 2
+    _update_cache(path, ftype, new_text)
+    # The `/tc edits` baselines move with the document, or every renumbered line
+    # would read as the author's edit and `/tc edits` would accept every region it
+    # touched (Category AL-15).
+    try:
+        from tc_core import snapshot as tc_snapshot
+        mapping = dict(changes)
+        failed = tc_snapshot.rewrite(
+            os.path.abspath(path), lambda t: remap_numbers(t, ftype, mapping))
+        if 0 in failed:
+            tc_snapshot.save(os.path.abspath(path), tool='/tc renumber')
+            print("tc: WARNING -- the /tc edits baseline could not be renumbered, "
+                  "so it was reset to the renumbered file; an edit made by hand "
+                  "since the AI last wrote it will not be reported by /tc edits.")
+    except Exception as e:
+        print(f"tc: WARNING -- the /tc edits baseline was not updated ({e}); until "
+              f"the AI next writes this file, /tc edits would read every renumbered "
+              f"line as your edit. Do not run /tc edits on it before then.")
+    print(f"tc: renumbered {len(changes)} mark(s) in reading order in {path}"
+          + (f" (kept: {', '.join(str(k) for k in keep)})" if keep else ""))
+    print(f"tc: {_runs(changes)}")
+    for old, new, q in notes:
+        print(f"tc: NOTE -- mark {new} (was {old}) quotes a mark number "
+              f"(\"{q}\"); its words are unchanged, so check it still points "
+              f"at the right mark.")
+    return 0
+
+
+# ---------------------------------------------------------------------------
 # CLI entry point. Invoked by lib/tc-cli.sh:
 #   tc_resolve.py list       <file>
 #   tc_resolve.py accept     <file> <ranges>
 #   tc_resolve.py reject     <file> <ranges>
 #   tc_resolve.py accept-all <file>
 #   tc_resolve.py reject-all <file>
+#   tc_resolve.py renumber   <file> [<from>] [--keep <ranges>]   (9.16.0)
 # ---------------------------------------------------------------------------
 
 def _unknown_vocab(path):
@@ -1059,7 +1323,9 @@ def _cmd_resolve(path, decision, spec, all_marks=False):
 def main(argv):
     if len(argv) < 2:
         sys.stderr.write("usage: tc_resolve.py "
-                         "list|accept|reject|accept-all|reject-all <file> [ranges]\n")
+                         "list|accept|reject|accept-all|reject-all <file> [ranges]\n"
+                         "       tc_resolve.py renumber <file> [<from>] "
+                         "[--keep <ranges>]\n")
         return 1
     sub = argv[0]
     path = argv[1]
@@ -1075,6 +1341,8 @@ def main(argv):
                              f"(e.g. 1-25,!7,!11)\n")
             return 1
         return _cmd_resolve(path, sub, argv[2])
+    if sub == 'renumber':
+        return _cmd_renumber(path, argv[2:])
     sys.stderr.write(f"tc_resolve.py: unknown subcommand: {sub}\n")
     return 1
 
